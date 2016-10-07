@@ -1,6 +1,7 @@
 import numpy as np
 import theano.tensor as T
 import theano
+import matplotlib.pyplot as plt
 
 # x = T.dscalar('x')
 # y = T.dscalar('y')
@@ -29,3 +30,11 @@ class Layer(object):
         else:
             self.outputs = self.activation_function(self.Wx_plus_b)
 
+#Make up some data
+x_data = np.linspace(-1,1,300)[:,np.newaxis]
+noise = np.random.normal(0, 0.05, x_data.shape)
+y_data = np.square(x_data) - 0.5 +noise
+
+#show the fake data
+plt.scatter(x_data,y_data)
+plt.show()
