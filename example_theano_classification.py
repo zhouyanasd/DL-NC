@@ -31,7 +31,3 @@ prediction = p_1>0.5
 xent = -y*T.log(p_1)-(1-y)*T.log(1-p_1)  #cost
 cost = xent.mean()
 gW,gb = T.grad(cost,[W,b])
-
-
-
-#
