@@ -1,7 +1,7 @@
 import numpy as np
 import theano.tensor as T
 import theano
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
 
 # x = T.dscalar('x')
