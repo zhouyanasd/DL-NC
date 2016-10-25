@@ -2,6 +2,7 @@
   <dictionary name="liuxiaonao">
     <words>
       <w>dataset</w>
+      <w>izhikevich</w>
       <w>theano</w>
     </words>
   </dictionary>
