@@ -37,17 +37,37 @@ class InterActFunc(object):
 
 
 class SpikingNeuron(object):
-    def __init__(self, input, activation_func):
-        self.d_t =5  # time window
+    def __init__(self, in_size, activation_func,d_t = 5):
+        self.in_size = in_size # the input size (the number of persynaptic)
+        self.d_t = d_t  # time window
         self.fired = False# is fired at last time slot
-        self.W=1
-        self.b=0.1
-        self.t = 1
+        self.W = np.abs(np.random.normal(0, 1, (1,self.in_size)))
+        self.b = 0.1
         self.output = 0
         self.activation_func=activation_func
 
-    def input_trans(self):
-        pass
+
+    def __input_trans(self, input,total_time_slot = 1000): #transmit the input to analog signal
+        self.is_input = True #input control
+        self.__I = np.zeros(total_time_slot) # the transformed input (if total_time_slot == 0)
+        self.in_time_slot = 0 # count for the input time slot
+        time_window_buffer = np.zeros((self.in_size,self.d_t)) #tiem window buffer
+        while (self.is_input == True and self.in_time_slot<=total_time_slot and
+               self.in_time_slot<=input.shape[1]):
+            in_time_slot = self.in_time_slot +1
+
+            #window slide
+            time_window_buffer[:,0:self.d_t-1]=time_window_buffer[:,1:self.d_t]
+            time_window_buffer[self.d_t-1]=input[in_time_slot]
+
+            l = np.sum(time_window_buffer,axis= 1)/self.d_t
+            self.__I[self.in_time_slot]= np.dot(self.W,l[:, np.newaxis])
+
+
+
+
+
+
 
 
     def activate(self):

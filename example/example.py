@@ -90,3 +90,21 @@ for i in range(1000):
         # plot the prediction
         lines = ax.plot(x_data, predicted_value, 'r-', lw=5)
         plt.pause(1)
+
+
+#============================================================
+#example for theano
+# import theano
+# import theano.tensor as T
+# import numpy as np
+#
+# x = T.dmatrix('x')
+# y = T.dmatrix('y')
+# s = np.dot(x,y)
+# f = theano.function([x,y],s)
+# a = np.arange(12).reshape(3,4)
+# b = np.arange(12).reshape(4,3)
+# c = np.array([[1,2],[3,4]])
+# d = np.array([[3,4],[1,2]])
+#
+# print(f(c,d))
