@@ -44,45 +44,54 @@ class SpikingNeuron(object):
         self.W = np.abs(np.random.normal(0, 1, (1,self.in_size)))
         self.b = 0.1
         self.output = 0
-        self.activation_func=activation_func
+        self.activation_func = activation_func
+
+        self.is_input = True #total_time_slot and is_input are operation control parameters
+        self.I = np.array([]) # the transformed input(private)
+        self.in_time_slot = -1 # count for the input time slot
 
 
-    def __input_trans(self, input,total_time_slot = 1000): #transmit the input to analog signal
-        self.is_input = True #input control
-        self.__I = np.zeros(total_time_slot) # the transformed input (if total_time_slot == 0)
-        self.in_time_slot = 0 # count for the input time slot
+    def input_trans(self, input,total_time_slot = 1000): #transmit the input to analog signal(private)
         time_window_buffer = np.zeros((self.in_size,self.d_t)) #tiem window buffer
-        while (self.is_input == True and self.in_time_slot<=total_time_slot and
-               self.in_time_slot<=input.shape[1]):
-            in_time_slot = self.in_time_slot +1
+        while (self.is_input == True and self.in_time_slot+1<total_time_slot and
+               self.in_time_slot+1<input.shape[1]):
+            self.in_time_slot = self.in_time_slot +1
 
             #window slide
             time_window_buffer[:,0:self.d_t-1]=time_window_buffer[:,1:self.d_t]
-            time_window_buffer[self.d_t-1]=input[in_time_slot]
+            time_window_buffer[:,self.d_t-1]=input[:,self.in_time_slot]
 
             l = np.sum(time_window_buffer,axis= 1)/self.d_t
-            self.__I[self.in_time_slot]= np.dot(self.W,l[:, np.newaxis])
+            I= (np.dot(self.W,l[:, np.newaxis])+self.b).reshape(1,)
+            self.I = np.hstack((self.I,I))
+
+
+    def activate(self,input,total_time_slot = 1000):
+         while (self.is_input == True and self.in_time_slot+1<total_time_slot and
+               self.in_time_slot+1<input.shape[1]):
+             self.in_time_slot = self.in_time_slot +1
 
 
 
-
-
-
-
-
-    def activate(self):
-        pass
 
 #---------------test---------------
 fun = InterActFunc()
 track = fun.izhikevich_spiking(I=ii)
+
+
 print(track[:,0],track.shape)
-
-
 t = np.arange(0,100,0.1)
 fig = plt.figure()
 plt.plot(t[:],track[:,0])
 fig2 = plt.figure()
 plt.plot(t[:],track[:,1])
 plt.show()
+
+# inputs = np.random.randint(size = (6,1000),low = 0, high= 2)
+# neuron = SpikingNeuron(6,fun.izhikevich_spiking)
+# neuron.input_trans(inputs)
+# print(neuron.I.shape,np.average(neuron.I))
+# fig3 = plt.figure()
+# plt.plot(neuron.I)
+# plt.show()
 #-----------------------------------
