@@ -78,7 +78,7 @@ class SpikingNeuron(object):
 #---------------test---------------
 inputs = np.random.randint(size = (5,1000),low = 0, high= 2)
 fun = InterActFunc()
-neuron = SpikingNeuron(5,fun.izhikevich_spiking,d_t=15)
+neuron = SpikingNeuron(5,fun.izhikevich_spiking,d_t= 5)
 track = neuron.activate(inputs)
 
 print(neuron.I.shape,np.average(neuron.I))
