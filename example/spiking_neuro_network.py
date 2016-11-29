@@ -7,6 +7,9 @@ def ii(t):
     i = 50
     return i
 
+class Base(object):
+    global_time = 0.0
+
 
 class InterActFunc(object):
 
@@ -72,7 +75,8 @@ class SpikingNeuron(object):
          return temp_track
 
 
-
+class Synapse(object):
+    pass
 
 
 #---------------test---------------
