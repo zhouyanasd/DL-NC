@@ -8,10 +8,20 @@ def ii(t):
     return i
 
 class Base(object):
-    global_time = 0.0
+    __global_time = 0
+
+    def get_global_time(self):
+        return self.get_global_time
+
+    def set_global_time(self,time):
+        self.__global_time = time
+
+    def add_global_time(self,dt):
+        self.__global_time = self.__global_time + dt
 
 
-class InterActFunc(object):
+
+class InterActFunc(Base):
 
     def __init__(self, time_scale=0.1):
         self.time_scale = time_scale
@@ -30,7 +40,7 @@ class InterActFunc(object):
 
 
 
-class SpikingNeuron(object):
+class SpikingNeuron(Base):
     def __init__(self, in_size, activation_func,d_t = 5):
         #public
         self.in_size = in_size # the input size (the number of persynaptic)
@@ -75,7 +85,7 @@ class SpikingNeuron(object):
          return temp_track
 
 
-class Synapse(object):
+class Synapse(Base):
     pass
 
 
