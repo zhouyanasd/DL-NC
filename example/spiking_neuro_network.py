@@ -9,9 +9,8 @@ def ii(t):
 
 class Base(object):
 
-    def __init__(self):
-        self.__global_time = 0
-        self.__global_connection = 0
+    __global_time = 0
+    __global_connection = 0
 
     def get_global_time(self):
         return self.get_global_time
