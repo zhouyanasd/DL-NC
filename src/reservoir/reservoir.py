@@ -2,6 +2,26 @@ import numpy as np
 
 from ..core import Base
 
+class Resrvoir(Base):
+    def __init__(self,n_type,r_size,s_type,s_number):
+        pass
+
+    def connect(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class SpikingNeuron(Base):
     def __init__(self, in_size, activation_func,d_t = 5):
         #public

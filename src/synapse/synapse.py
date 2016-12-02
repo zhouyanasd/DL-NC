@@ -6,4 +6,10 @@ class Synapse(Base):
         self.pre_neuron = pre_neuron
         self.post_neuron = post_neuron
         self.weight = weight
-        self .delay = delay
+        self.delay = delay
+
+    def connect(self,pre_neuron, post_neuron):
+        pass
+
+    def adjust_weight(self):
+        pass

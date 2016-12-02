@@ -8,14 +8,26 @@ class SpikingNeuron(Base):
     def __init__(self, in_size, activation_func):
         self.id = 0
 
-        self.fired = False      # is fired at last time slot
-        self.activation_func = activation_func
-        self.membrane_potential = 0
+        self.fired = False                                  # is fired at last time slot
+        self.fired_sequence = np.array([])                  # neuron fired sequence for all the time slot
+        self.activation_func = activation_func              # activation function for this neuron
+        self.membrane_potential = np.array([]).reshape(0,2) # membrane potential sequence
+        self.membrane_potential_now = np.zeros((1,2))       # the membrane potential for now
+        self.I = np.array([])                               # the transformed input sequence
+        self.I_now = 0                                      # the transformed input for now
+        self.I_inject = 0                                   # the transformed inject input for now
 
         self.in_size = in_size
         self.b = 0.1
 
-        self.I = np.array([])   # the transformed input(private)
+
+
+
+
+
+
+
+
 
 
 
