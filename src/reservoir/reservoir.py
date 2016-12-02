@@ -16,12 +16,6 @@ class Resrvoir(Base):
 
 
 
-
-
-
-
-
-
 class SpikingNeuron(Base):
     def __init__(self, in_size, activation_func,d_t = 5):
         #public
