@@ -1,1 +1,1 @@
-from.input import input_trans
+from.input import Input
