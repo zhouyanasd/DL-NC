@@ -3,6 +3,7 @@ import numpy as np
 from . import Coding
 from ..core import Base, IZNEURON_SCALE
 from ..function import ActFunction
+from ..synapse import Synapse
 
 
 class SpikingNeuron(Base):
@@ -16,8 +17,8 @@ class SpikingNeuron(Base):
         self.I = np.array([])                                                       # the transformed input sequence
         self.I_now = 0                                                              # the transformed input for now
         self.I_inject = 0                                                           # the transformed inject input for now
-        self.pre_synapse = np.array([])
-        self.post_synapse = np.array([])
+        self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))    # the pre_synapse array
+        self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))   # the pose_synapse array
 
         self.in_size = np.size(self.pre_synapse)                                    # the input size
         self.activation_func = getattr(ActFunction(),activation_func)               # activation function for this neuron
