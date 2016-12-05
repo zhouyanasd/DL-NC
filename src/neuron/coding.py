@@ -5,8 +5,9 @@ from ..core import Base
 class Coding(Base):
 
     def __init__(self,in_size):
-        self.time_window_buffer = np.zeros((in_size,d_t))                   #tiem window buffer
         self.in_size = in_size
+        self.time_window_buffer = np.zeros((self.in_size,d_t))                   #tiem window buffer
+
 
     def rate_window(self,input_t):                                     #transmit the input to analog signal(private)
         #window slide
