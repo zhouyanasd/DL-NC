@@ -20,19 +20,23 @@ class SpikingNeuron(Base):
         self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))    # the pre_synapse array
         self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))   # the pose_synapse array
 
-        self.in_size = np.size(self.pre_synapse)                                    # the input size
         self.activation_func = getattr(ActFunction(),activation_func)               # activation function for this neuron
         self.coding = getattr(Coding(self.in_size),coding_rule)                     # coding rule for this neuron
 
 
     def __trans_input(self,input_t):
 
-        #TODO: the input and weight will be calculate by synapse
+        #TODO: the input and weight will be calculate by synapse and input
         W = np.abs(np.random.normal(0, 1, (1,self.in_size)))
-        l=self.coding(input_t)
-        self.I_now=np.dot(W,l[:, np.newaxis]).reshape(1,)*IZNEURON_SCALE
+        l = self.coding(input_t)
+        self.I_now = np.dot(W,l[:, np.newaxis]).reshape(1,)*IZNEURON_SCALE
         self.I = np.hstack((self.I,self.I_now))
 
+
+    # this function must be call by reservoir in initialization
+    # the input size only can be confirmed after all the synapses resigned
+    def init(self):
+        self.in_size = np.size(self.pre_synapse)
 
 
     def activate(self,input_t,init = (-75,-4),a=0.02,b=0.2,c=-65,d=6):

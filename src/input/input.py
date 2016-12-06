@@ -4,3 +4,7 @@ from ..core import Base
 class Input(Base):
     def __init__(self):
         pass
+
+    def Possion(self):
+        pass
+

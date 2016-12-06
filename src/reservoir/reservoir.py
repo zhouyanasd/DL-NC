@@ -6,6 +6,9 @@ class Resrvoir(Base):
     def __init__(self,n_type,r_size,s_type,s_number):
         pass
 
+    def initialization(self):
+        pass
+
     def connect(self):
         pass
 
