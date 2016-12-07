@@ -4,6 +4,7 @@ from . import Coding
 from ..core import Base, IZNEURON_SCALE
 from ..function import ActFunction
 from ..synapse import Synapse
+from ..input import Input
 
 
 class SpikingNeuron(Base):
@@ -19,18 +20,26 @@ class SpikingNeuron(Base):
         self.I_inject = 0                                                           # the transformed inject input for now
         self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))    # the pre_synapse array
         self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))   # the pose_synapse array
+        self.input = np.array([], dtype =np.dtype([('input', Input)]))              # the input from external
 
         self.activation_func = getattr(ActFunction(),activation_func)               # activation function for this neuron
         self.coding = getattr(Coding(self.in_size),coding_rule)                     # coding rule for this neuron
-
+        self.__init = (-75,-4)
+        self.in_size = 0                                                            # the input size
 
     def __trans_input(self,input_t):
-
-        #TODO: the input and weight will be calculate by synapse and input
-        W = np.abs(np.random.normal(0, 1, (1,self.in_size)))
+        W = self.__get_weight()
         l = self.coding(input_t)
         self.I_now = np.dot(W,l[:, np.newaxis]).reshape(1,)*IZNEURON_SCALE
         self.I = np.hstack((self.I,self.I_now))
+
+
+    # the input and weight will be calculate by synapse and input
+    def __get_weight(self):
+        W = np.zeros((1,self.in_size))
+        for i in range(self.pre_synapse.size):
+            W[0,i] = self.pre_synapse[i].weight
+        return W
 
 
     # this function must be call by reservoir in initialization
@@ -51,3 +60,12 @@ class SpikingNeuron(Base):
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
            self.__init = (c,self.membrane_potential_now[1,1]+d)
         self.membrane_potential = np.vstack((self.membrane_potential, self.membrane_potential_now[1]))
+
+    #TODO: the neuron or synapse need the method to transmit or receive the spiking
+    def trans_fired(self):
+        pass
+
+
+    def receive(self):
+        pass
+
