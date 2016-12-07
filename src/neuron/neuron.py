@@ -20,7 +20,7 @@ class SpikingNeuron(Base):
         self.I_inject = 0                                                           # the transformed inject input for now
         self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))    # the pre_synapse array
         self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))   # the pose_synapse array
-        self.input = np.array([], dtype =np.dtype([('input', Input)]))              # the input from external
+        self.input = np.array([], dtype =np.dtype([('input', Input)]))              # the external input
 
         self.activation_func = getattr(ActFunction(),activation_func)               # activation function for this neuron
         self.coding = getattr(Coding(self.in_size),coding_rule)                     # coding rule for this neuron
@@ -44,8 +44,8 @@ class SpikingNeuron(Base):
 
     # this function must be call by reservoir in initialization
     # the input size only can be confirmed after all the synapses resigned
-    def init(self):
-        self.in_size = np.size(self.pre_synapse)
+    def initialization(self):
+        self.in_size = np.size(self.pre_synapse)+np.size(self.input)
 
 
     def activate(self,input_t,init = (-75,-4),a=0.02,b=0.2,c=-65,d=6):

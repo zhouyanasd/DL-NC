@@ -6,5 +6,6 @@ from. import input
 from. import readout
 from. import reservoir
 from. import synapse
+from. import liquid
 
 __version__ = '1.0.0'
