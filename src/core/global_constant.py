@@ -6,4 +6,9 @@ INPUT_TIME_WINDOW = 5
 
 TIME_SCALE = 0.01
 
-IZNEURON_SCALE = 20
+IZK_INTER_SCALE = 20
+
+INPUT_CONN_RATE = 0.2                      #input connection rate for each input
+
+INTER_RESERVOIR_CONN_RATE = 0.2            #neruon connection rate for each neuron in reservoir
+

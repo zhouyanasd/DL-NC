@@ -6,3 +6,9 @@ class Liquid(Base):
 
     def initialization(self):
         pass
+
+    def get_data(self):
+        pass
+
+    def advance(self):
+        pass

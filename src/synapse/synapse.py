@@ -17,3 +17,6 @@ class Synapse(Base):
 
     def adjust_weight(self):
         pass
+
+    def trans_fired(self):
+        pass
