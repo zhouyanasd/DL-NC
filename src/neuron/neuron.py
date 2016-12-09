@@ -8,7 +8,7 @@ from ..input import Input
 
 
 class SpikingNeuron(Base):
-    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), act_pram = np.array([0.02,0.2,-65,6])):
+    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
         self.id = id                                                                                                    # the neuron id
 
         self.fired = False                                                                                              # is fired at last time slot
@@ -17,6 +17,7 @@ class SpikingNeuron(Base):
         self.membrane_potential_now = np.zeros((1,2))                                                                   # the membrane potential for now
         self.I = np.array([])                                                                                           # the transformed input sequence
         self.I_now = 0                                                                                                  # the transformed input for now
+
         self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))                                        # the pre_synapse array
         self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))                                       # the pose_synapse array
         self.input = np.array([], dtype =np.dtype([('input', Input),('index',np.int64)]))                               # the external input list
@@ -24,10 +25,12 @@ class SpikingNeuron(Base):
         self.activation_func = getattr(ActFunction(),activation_func)                                                   # activation function for this neuron
         self.coding = getattr(Coding(self.in_size),coding_rule)                                                         # coding rule for this neuron
         self.__init = act_init
-        self.__act_pram = act_pram                                                                                      # pram = {'inti':(-75,-4),'a':0.02,'b':0.2,'c':-65,'d':6}
+        self.__parameters = parameters                                                                                  # pram = {'inti':(-75,-4),'a':0.02,'b':0.2,'c':-65,'d':6}
+
         self.in_size = 0                                                                                                # the input size
 
-        self.coming_fired = np.array([],dtype= np.dtype([('time', np.int64),('coming_fired_sequence',np.array)]))
+        self.coming_fired =  np.array([],dtype= np.dtype([('fired_synapse',Synapse)])).reshape(2,0)
+        #np.concatenate((coming_fired, ([syn],[syn2])),axis = 1)
 
     def __get_input(self):
         pass
@@ -58,15 +61,15 @@ class SpikingNeuron(Base):
 
     def activate(self,input_t):
         self.__trans_input(input_t)
-        a,b,c,d = self.__act_pram[0] ,self.__act_pram[1],self.__act_pram[2],self.__act_pram[3]
-        self.membrane_potential_now= self.activation_func(self.I_now,self.__init,a,b,c,d)
+        p = self.__parameters
+        self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
         if self.membrane_potential_now[1,0]<30:
            self.fired = False
            self.__init = (self.membrane_potential_now[1,0],self.membrane_potential_now[1,1])
         else:
            self.fired = True
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
-           self.__init = (c,self.membrane_potential_now[1,1]+d)
+           self.__init = (p[2],self.membrane_potential_now[1,1]+p[3])
         self.membrane_potential = np.vstack((self.membrane_potential, self.membrane_potential_now[1]))
 
     #TODO: the neuron or synapse need the method to transmit or receive the spiking
