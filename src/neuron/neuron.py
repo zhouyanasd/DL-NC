@@ -1,10 +1,9 @@
 import numpy as np
+import src
 
-from . import Coding
 from ..core import Base, IZK_INTER_SCALE
+from . import Coding
 from ..function import ActFunction
-from ..synapse import Synapse
-from ..input import Input
 
 
 class SpikingNeuron(Base):
@@ -16,9 +15,9 @@ class SpikingNeuron(Base):
         self.membrane_potential_now = np.zeros((1,2))                                                                   # the membrane potential for now
         self.I = np.array([])                                                                                           # the transformed input sequence
         self.I_now = 0                                                                                                  # the transformed input for now
-        self.pre_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))                                        # the pre_synapse array
-        self.post_synapse = np.array([], dtype =np.dtype([('synapse', Synapse)]))                                       # the pose_synapse array
-        self.input = np.array([], dtype =np.dtype([('input', Input),('index',np.int64)]))                               # the external input list
+        self.pre_synapse = np.array([], dtype =np.dtype([('synapse', src.synapse.Synapse)]))                            # the pre_synapse array
+        self.post_synapse = np.array([], dtype =np.dtype([('synapse', src.synapse.Synapse)]))                           # the pose_synapse array
+        self.input = np.array([], dtype =np.dtype([('input', src.input.Input),('index',np.int64)]))                     # the external input list
         self.in_size = 0                                                                                                # the input size
         self.coming_fired =  np.array([]).reshape(self.pre_synapse.size,0)                                              # the record of fired input from pre_synapse
         self.activation_func = getattr(ActFunction(),activation_func)                                                   # activation function for this neuron
