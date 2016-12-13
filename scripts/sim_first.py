@@ -1,6 +1,13 @@
 import numpy as np
 
+import src
 
-rng = np.random
-B = (rng.poisson(1,(5,400)),rng.poisson(2,(5,400)),rng.poisson(3,(5,400)))
-C = (1,2,3)
+# define and generate the data
+Data = src.data.Simple(5,400,3).Possion()
+
+# define and initialize the liquid
+Liquid = src.liquid.Liquid(Data, 'Input', 1)
+Liquid.initialization()
+
+
+
