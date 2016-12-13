@@ -29,4 +29,6 @@ class Input(Base):
 
 
     def register(self,input_index,neuron_id):
-        np.concatenate((self.reservoir.neuron_list[neuron_id].input,[(self,input_index)]),axis=0)
+        input_conn = np.array([(self,input_index)],dtype = np.dtype([('input', Input),('index',np.int64)]))
+        self.reservoir.neuron_list[neuron_id].input = \
+            np.concatenate((self.reservoir.neuron_list[neuron_id].input,input_conn),axis=0)

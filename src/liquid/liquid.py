@@ -23,10 +23,10 @@ class Liquid(Base):
         for r_id in range(self.r_number):
             new_reservoir = src.reservoir.Reservoir(r_id,10,5)
             new_reservoir.initialization('izhikevich_spiking','rate_window')
-            self.reservoir_list = np.concatenate((self.reservoir_list,new_reservoir),axis=0)
+            self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[r_id])      # based on the type of pre-processed data
             new_input.initialization()
-            self.input = np.concatenate((self.input,new_input),axis=0)
+            self.input = np.concatenate((self.input,[new_input]),axis=0)
 
 
     def liquid_start(self):

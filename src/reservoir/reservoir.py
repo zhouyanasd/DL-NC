@@ -16,7 +16,7 @@ class Reservoir(Base):
     def initialization(self,activation_func, coding_rule,act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
         for n_id in range (self.r_size):
             new_neuron = self.neu_class(id = n_id, activation_func =activation_func, coding_rule= coding_rule)
-            self.neuron_list = np.concatenate((self.neuron_list,new_neuron),axis= 0)
+            self.neuron_list = np.concatenate((self.neuron_list,[new_neuron]),axis= 0)
         for s_id in range (self.s_number):
             self.__init_connect(s_id)
         for neuron in self.neuron_list:
@@ -26,7 +26,7 @@ class Reservoir(Base):
         new_synapse = self.syn_class(id= s_id, pre_neuron = pre_neuron, post_neuron = post_neuron,
                                       delay = delay,weight = weight)
         new_synapse.register()
-        self.synapse_list = np.concatenate((self.synapse_list,new_synapse),axis=0)
+        self.synapse_list = np.concatenate((self.synapse_list,[new_synapse]),axis=0)
 
     def __init_connect(self,s_id):
         conn = np.arange(self.r_size)
