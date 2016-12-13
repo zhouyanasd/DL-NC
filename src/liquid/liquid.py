@@ -30,7 +30,8 @@ class Liquid(Base):
 
 
     def liquid_start(self):
-        pass
+        t = self.get_global_connection()
+
 
 
     def time_flow(self):
