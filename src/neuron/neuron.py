@@ -18,8 +18,8 @@ class SpikingNeuron(Base):
         self.pre_synapse = np.array([], dtype =np.dtype([('synapse', src.synapse.Synapse)]))                            # the pre_synapse array
         self.post_synapse = np.array([], dtype =np.dtype([('synapse', src.synapse.Synapse)]))                           # the pose_synapse array
         self.input = np.array([], dtype =np.dtype([('input', src.input.Input),('index',np.int64)]))                     # the external input list
+        self.coming_fired = 0
         self.in_size = 0                                                                                                # the input size
-        self.coming_fired =  np.array([]).reshape(self.pre_synapse.size,0)                                              # the record of fired input from pre_synapse
         self.activation_func = getattr(ActFunction(),activation_func)                                                   # activation function for this neuron
         self.coding = getattr(Coding(self.in_size),coding_rule)                                                         # coding rule for this neuron
         self.__init = act_init
@@ -29,6 +29,7 @@ class SpikingNeuron(Base):
     # the input size only can be confirmed after all the synapses resigned
     def initialization(self):
         self.in_size = np.size(self.pre_synapse)+np.size(self.input)
+        self.coming_fired = np.array([]).reshape(self.pre_synapse.size,0)
 
 
     def activate(self):
@@ -48,10 +49,11 @@ class SpikingNeuron(Base):
 
 
     def receive_spiking(self):
-        coming = np.array([])
+        coming = np.array([]).reshape(0,1)
         for syn in self.pre_synapse:
-            coming = np.concatenate((coming,[syn.spiking_buffer[0]]),axis=1)
-        self.coming_fired = np.concatenate((self.coming_fired,coming),axis=0)
+            coming = np.concatenate((coming,[[syn.spiking_buffer[0]]]),axis=0)
+        self.coming_fired = np.concatenate((self.coming_fired,coming),axis=1)
+        print(self.coming_fired)
 
 
     def reset(self):
@@ -65,11 +67,13 @@ class SpikingNeuron(Base):
 
     def __get_input(self):
         spiking = self.coming_fired[:,self.get_global_time()]
-        input = np.array([])
+        input = np.array([]).reshape(0,1)
         for i in self.input:
             value = i['input'].input_t[i['index']]
-            input = np.concatenate ((input,value),axis=1)
-        input_t = np.concatenate((spiking,input),axis=1)
+            print(value)
+            input = np.concatenate ((input,[[value]]),axis= 0)
+            print(spiking,input)
+        input_t = np.concatenate((spiking,input),axis= 0)
         return input_t
 
 
