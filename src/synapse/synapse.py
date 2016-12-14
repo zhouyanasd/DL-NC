@@ -26,3 +26,7 @@ class Synapse(Base):
         else:
             self.spiking_buffer[self.delay-1] = 0
 
+
+    def reset(self):
+        pass
+

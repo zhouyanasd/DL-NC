@@ -12,5 +12,7 @@ INPUT_CONN_RATE = 0.2                      # input connection rate for each inpu
 
 INTER_RESERVOIR_CONN_RATE = 0.2            # neuron connection rate for each neuron in reservoir
 
-MAX_SYNAPSE_DELAY = 10                     # the max synapse delay for the simulation
+MAX_SYNAPSE_DELAY = 10                     # the maximum synapse delay for the simulation
+
+MAX_OPERATION_TIME = 500                   # the maximum operation time
 

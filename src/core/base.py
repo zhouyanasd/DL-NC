@@ -8,9 +8,20 @@ class Base(object):
     [1,0,1],[1,0,0]), means neuron '0' connects to neuron '1', neuron '1' connect to neuron '0'
     and '2'.
     '''
-
+    __operation = False
     __global_time = 0
-    __global_connection =np.zeros((1,1),dtype =global_constant.CONNECTION_ARRAY_DTYPE)
+    __global_connection = np.zeros((1,1),dtype =global_constant.CONNECTION_ARRAY_DTYPE)
+
+
+    def get_operation(self):
+        return self.__operation
+
+    def set_operation_on(self):
+        self.__operation = True
+
+    def set_operation_off(self):
+        self.__operation = False
+
 
     def get_global_time(self):
         return self.__global_time
