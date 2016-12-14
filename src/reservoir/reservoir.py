@@ -28,6 +28,11 @@ class Reservoir(Base):
         new_synapse.register()
         self.synapse_list = np.concatenate((self.synapse_list,[new_synapse]),axis=0)
 
+
+    def reset(self):
+        pass
+
+
     def __init_connect(self,s_id):
         conn = np.arange(self.r_size)
         np.random.shuffle(conn)

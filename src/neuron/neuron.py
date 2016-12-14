@@ -54,6 +54,10 @@ class SpikingNeuron(Base):
         self.coming_fired = np.concatenate((self.coming_fired,coming),axis=0)
 
 
+    def reset(self):
+        pass
+
+
     def __trans_fired(self):
         for i in self.post_synapse:
             i.trans_fired()
