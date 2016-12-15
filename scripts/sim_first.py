@@ -7,7 +7,7 @@ Data = src.data.Simple(5,400,3).Possion()
 Liquid = src.liquid.Liquid(Data, 'Input', 1)
 Liquid.initialization()
 Liquid.liquid_start()
-Liquid.operate(1)
+Liquid.operate(2)
 
 
 

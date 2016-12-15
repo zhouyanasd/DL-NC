@@ -23,7 +23,7 @@ class Input(Base):
         for i in range(self.in_size):                                                           # for each input
             conn = self.__select_neuron_random()                                                # select neuron to connect randomly
             for j in conn:
-                w = np.random.uniform(-1,1,1)[0]                                                # uniform random weight
+                w = np.random.uniform(0,1)                                                      # uniform random weight
                 self.conn_neuron[i,j] = (self.reservoir.neuron_list[j],w)
                 self.register(i,j)                                                              # register the input i to the neuron id = j
 
