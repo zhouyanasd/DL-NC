@@ -38,6 +38,7 @@ class SpikingNeuron(Base):
     def activate(self):
         self.__trans_input()
         p = self.__parameters
+        print(self.id, self.I_now)
         self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
         if self.membrane_potential_now[1,0]<30:
            self.fired = False
@@ -90,8 +91,7 @@ class SpikingNeuron(Base):
 
     def __trans_input(self):
         input_t = self.__get_input()
-        print(input_t)
         W = self.__get_weight()
         l = self.coding(input_t)
-        self.I_now = np.dot(W,l[:, np.newaxis]).reshape(1)*IZK_INTER_SCALE
+        self.I_now = np.dot(W,l[:, np.newaxis])[0,0]*IZK_INTER_SCALE
         self.I = np.hstack((self.I,self.I_now))
