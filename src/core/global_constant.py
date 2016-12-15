@@ -8,7 +8,7 @@ TIME_SCALE = 0.01
 
 IZK_INTER_SCALE = 20
 
-INPUT_CONN_RATE = 0.5                      # input connection rate for each input
+INPUT_CONN_RATE = 1.5                      # input connection rate for each input
 
 INTER_RESERVOIR_CONN_RATE = 2            # neuron connection rate for each neuron in reservoir
 
