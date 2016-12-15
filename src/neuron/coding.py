@@ -12,7 +12,7 @@ class Coding(Base):
     def rate_window(self,input_t):                                     #transmit the input to analog signal(private)
         #window slide
         self.time_window_buffer[:,0:d_t-1]=self.time_window_buffer[:,1:d_t]
-        self.time_window_buffer[:,d_t-1]=input_t
+        self.time_window_buffer[:,d_t-1][:, np.newaxis]=input_t
         #caculate the value
         l = np.sum(self.time_window_buffer,axis= 1)/d_t
         return l

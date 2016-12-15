@@ -19,8 +19,12 @@ class Reservoir(Base):
             self.neuron_list = np.concatenate((self.neuron_list,[new_neuron]),axis= 0)
         for s_id in range (self.s_number):
             self.__init_connect(s_id)
+
+
+    def neu_initialization(self):
         for neuron in self.neuron_list:
             neuron.initialization()
+
 
     def connect(self,s_id,pre_neuron,post_neuron,delay,weight):
         new_synapse = self.syn_class(id= s_id, pre_neuron = pre_neuron, post_neuron = post_neuron,
@@ -39,7 +43,7 @@ class Reservoir(Base):
         conn = conn[:2]
         pre_neuron = self.neuron_list[conn[0]]
         post_neuron = self.neuron_list[conn[1]]
-        delay = np.arange(MAX_SYNAPSE_DELAY)
+        delay = np.arange(1,MAX_SYNAPSE_DELAY+1)
         np.random.shuffle(delay)
         delay = delay[0]
         weight = np.random.normal(0, 1)

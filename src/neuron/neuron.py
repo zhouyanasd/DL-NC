@@ -20,16 +20,19 @@ class SpikingNeuron(Base):
         self.input = np.array([], dtype =np.dtype([('input', src.input.Input),('index',np.int64)]))                     # the external input list
         self.coming_fired = 0
         self.in_size = 0                                                                                                # the input size
-        self.activation_func = getattr(ActFunction(),activation_func)                                                   # activation function for this neuron
-        self.coding = getattr(Coding(self.in_size),coding_rule)                                                         # coding rule for this neuron
+        self.__func = activation_func                                                   # activation function for this neuron
+        self.__coding = coding_rule                                                         # coding rule for this neuron
         self.__init = act_init
         self.__parameters = parameters                                                                                  # pram = {'inti':(-75,-4),'a':0.02,'b':0.2,'c':-65,'d':6}
 
-    # this function must be call by reservoir in initialization
-    # the input size only can be confirmed after all the synapses resigned
+    # this function must be call by reservoir in neu_initialization
+    # the input size only can be confirmed after all the self.synapses and self.input resigned
     def initialization(self):
-        self.in_size = np.size(self.pre_synapse)+np.size(self.input)
+        self.in_size = np.size(self.pre_synapse)+ np.size(self.input)
         self.coming_fired = np.array([]).reshape(self.pre_synapse.size,0)
+        self.activation_func = getattr(ActFunction(), self.__func)                                                   # activation function for this neuron
+        self.coding = getattr(Coding(self.in_size), self.__coding)
+
 
 
     def activate(self):
@@ -53,7 +56,6 @@ class SpikingNeuron(Base):
         for syn in self.pre_synapse:
             coming = np.concatenate((coming,[[syn.spiking_buffer[0]]]),axis=0)
         self.coming_fired = np.concatenate((self.coming_fired,coming),axis=1)
-        print(self.coming_fired)
 
 
     def reset(self):
@@ -66,13 +68,11 @@ class SpikingNeuron(Base):
 
 
     def __get_input(self):
-        spiking = self.coming_fired[:,self.get_global_time()]
+        spiking = self.coming_fired[:,self.get_global_time()][:,np.newaxis]
         input = np.array([]).reshape(0,1)
         for i in self.input:
             value = i['input'].input_t[i['index']]
-            print(value)
             input = np.concatenate ((input,[[value]]),axis= 0)
-            print(spiking,input)
         input_t = np.concatenate((spiking,input),axis= 0)
         return input_t
 
@@ -90,6 +90,7 @@ class SpikingNeuron(Base):
 
     def __trans_input(self):
         input_t = self.__get_input()
+        print(input_t)
         W = self.__get_weight()
         l = self.coding(input_t)
         self.I_now = np.dot(W,l[:, np.newaxis]).reshape(1)*IZK_INTER_SCALE

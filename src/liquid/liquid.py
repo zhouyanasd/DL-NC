@@ -23,11 +23,15 @@ class Liquid(Base):
         self.set_global_time(0)
         for r_id in range(self.r_number):
             new_reservoir = src.reservoir.Reservoir(r_id,5,20)
-            new_reservoir.initialization('izhikevich_spiking','rate_window')
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[r_id])      # based on the type of pre-processed data
-            new_input.initialization()
             self.input_list = np.concatenate((self.input_list,[new_input]),axis=0)
+            # the initial sequence cannot be changed
+            new_reservoir.initialization('izhikevich_spiking','rate_window')
+            new_input.initialization()
+            new_reservoir.neu_initialization()
+
+
 
 
     # TODO: the group may be set as loops
