@@ -8,3 +8,4 @@ from.global_constant import IZK_INTER_SCALE
 from.global_constant import INPUT_CONN_RATE
 from.global_constant import MAX_SYNAPSE_DELAY
 from.global_constant import MAX_OPERATION_TIME
+from.global_constant import INTER_RESERVOIR_CONN_RATE

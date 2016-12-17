@@ -46,7 +46,7 @@ class Liquid(Base):
                     i.input_t = np.zeros(feature)
             self.advance()
             self.add_global_time(1)
-            print("t: ", self.get_global_time())
+            # print("t: ", self.get_global_time())
             if self.get_global_time()>MAX_OPERATION_TIME :
                 self.set_operation_off()
 

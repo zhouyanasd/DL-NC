@@ -14,32 +14,32 @@ class Base(object):
 
 
     def get_operation(self):
-        return self.__operation
+        return Base.__operation
 
     def set_operation_on(self):
-        self.__operation = True
+        Base.__operation = True
 
     def set_operation_off(self):
-        self.__operation = False
+        Base.__operation = False
 
 
     def get_global_time(self):
-        return self.__global_time
+        return Base.__global_time
 
     def set_global_time(self,time):
-        self.__global_time = time
+        Base.__global_time = time
 
     def add_global_time(self,dt = 1):
-        self.__global_time = self.__global_time + dt
+        Base.__global_time = Base.__global_time + dt
 
 
     def get_global_connection(self):
-        return self.__global_connection
+        return Base.__global_connection
 
     def set_global_connection(self,connection):
-        self.__global_connection = connection
+        Base.__global_connection = connection
 
     def add_global_connection(self,pre_conn,post_conn,self_conn):
-        self.__global_connection = np.concatenate((self.__global_connection,post_conn),axis=0)
+        Base.__global_connection = np.concatenate((Base.__global_connection,post_conn),axis=0)
         temp_conn = np.concatenate((pre_conn,self_conn), axis=1)
-        self.__global_connection = np.concatenate((self.__global_connection,temp_conn.T),axis=1)
+        Base.__global_connection = np.concatenate((Base.__global_connection,temp_conn.T),axis=1)

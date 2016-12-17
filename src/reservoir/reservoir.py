@@ -1,14 +1,14 @@
 import numpy as np
 import src
 
-from ..core import Base, MAX_SYNAPSE_DELAY
+from ..core import Base, MAX_SYNAPSE_DELAY,INTER_RESERVOIR_CONN_RATE
 
 class Reservoir(Base):
     def __init__(self,id,r_size,s_number,n_type = 'SpikingNeuron', s_type ='Synapse'):
         self.id = id
         self.r_size = r_size
         self.neu_class = getattr(src.neuron,n_type)
-        self.s_number = s_number
+        self.s_number = s_number*INTER_RESERVOIR_CONN_RATE
         self.syn_class = getattr(src.synapse,s_type)
         self.neuron_list = np.array([], dtype =np.dtype([('neuron', self.neu_class)]))
         self.synapse_list = np.array([], dtype= np.dtype ([('synapse', self.syn_class)]))

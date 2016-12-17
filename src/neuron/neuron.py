@@ -40,13 +40,14 @@ class SpikingNeuron(Base):
         p = self.__parameters
         #print(self.id, self.I_now)
         self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
-        if self.membrane_potential_now[1,0]<30:
+        if self.membrane_potential_now[1,0] < 30:
            self.fired = False
            self.__trans_fired()
            self.__init = (self.membrane_potential_now[1,0],self.membrane_potential_now[1,1])
         else:
            self.fired = True
-           print("fired: id =", self.id,"time :",self.get_global_time())
+           self.membrane_potential_now[1,0] = 30
+           # print("fired: id =", self.id,"time :",self.get_global_time())
            self.__trans_fired()
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
            self.__init = (p[2],self.membrane_potential_now[1,1]+p[3])
