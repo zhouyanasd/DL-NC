@@ -8,7 +8,7 @@ class Reservoir(Base):
         self.id = id
         self.r_size = r_size
         self.neu_class = getattr(src.neuron,n_type)
-        self.s_number = s_number*INTER_RESERVOIR_CONN_RATE
+        self.s_number = (np.ceil(s_number*INTER_RESERVOIR_CONN_RATE)).astype(int)
         self.syn_class = getattr(src.synapse,s_type)
         self.neuron_list = np.array([], dtype =np.dtype([('neuron', self.neu_class)]))
         self.synapse_list = np.array([], dtype= np.dtype ([('synapse', self.syn_class)]))
