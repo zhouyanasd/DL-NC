@@ -22,7 +22,7 @@ class Liquid(Base):
         self.set_operation_off()
         self.set_global_time(0)
         for r_id in range(self.r_number):
-            new_reservoir = src.reservoir.Reservoir(r_id,5,20)
+            new_reservoir = src.reservoir.Reservoir(r_id,30)
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[r_id])      # based on the type of pre-processed data
             self.input_list = np.concatenate((self.input_list,[new_input]),axis=0)
