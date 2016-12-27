@@ -18,29 +18,69 @@ class Simple(Base):
 
     def Tri_function(self):
         rng = np.random
+        data = []
+        cla = []
+
+        def sin_fun(l,c,t):
+            return (np.sin(c*t*TIME_SCALE)+1)/2
+
+        def tent_map(l,c,t):
+            temp = l
+            if (temp<0.5 and temp>=0):
+                temp = (c/50)*temp
+                return temp
+            elif(temp>=0.5 and temp <=1):
+                temp = (c/50)*(1-temp)
+                return temp
+            else:
+                return 0
+
+        def constant(l,c,t):
+            return c/100
+
         def chose_fun():
-            fun_type = np.arange(3)
-            rng.shuffle(fun_type)
-            fun = fun_type[:1]
-            return fun
+            c = rng.randint(0,3)
+            if c == 0:
+                return sin_fun,c
+            elif c == 1:
+                return tent_map,c
+            elif c == 2:
+                return constant,c
+
         def change_fun(rate):
-            fun_type = np.arange(100)
-            rng.shuffle(fun_type)
-            fun = fun_type[:1]
+            fun = rng.randint(1,101)
             if fun > 100*rate:
                 return False
             else:
                 return True
-        t = np.arange(self.in_number)
-        data = []
-        for i in (self.group):
-            for j in t:
+
+
+
+        for i in range(self.group):
+            data_t = np.zeros(self.in_number)
+            cla_t = np.zeros(self.in_number)
+            cons = rng.randint(1,101)
+            fun, c  = chose_fun()
+
+            for t in range(self.in_number):
                 if change_fun(0.05):
+                    cons = rng.randint(1,101)
+                    fun, c = chose_fun()
+                    try:
+                        data_t[t] = fun(data_t[t-1],cons,t)
+                        cla_t[t] = c
+                    except IndexError:
+                        data_t[t] = fun(rng.randint(0,101),cons,t)
+                        cla_t[t] = c
+                else:
+                    try:
+                        data_t[t] = fun(data_t[t-1],cons,t)
+                        cla_t[t] = c
+                    except IndexError:
+                        data_t[t] = fun(rng.randint(0,101),cons,t)
+                        cla_t[t] = c
 
-
-                if chose_fun() == 0:
-                    sin = np.sin(t*TIME_SCALE)
-                    data_t = sin
-        data.append(data_t)
-        return data
+            data.append(data_t)
+            cla.append(cla_t)
+        return data, cla
 
