@@ -9,6 +9,7 @@ from ..function import ActFunction
 class SpikingNeuron(Base):
     def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
         self.id = id                                                                                                    # the neuron id
+        self.type = 0                                                                                                   # neuron type: 0-INHIBITORY, 1-EXCITATORY
         self.fired = False                                                                                              # is fired at last time slot
         self.fired_sequence = np.array([])                                                                              # neuron fired sequence for all the time slot
         self.membrane_potential = np.array([]).reshape(0,2)                                                             # membrane potential sequence

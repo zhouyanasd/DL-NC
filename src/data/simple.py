@@ -80,6 +80,7 @@ class Simple(Base):
                         data_t[t] = fun(rng.randint(0,101),cons,t)
                         cla_t[t] = c
 
+            data_t = data_t[np.newaxis,:]
             data.append(data_t)
             cla.append(cla_t)
         return data, cla
