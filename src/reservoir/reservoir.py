@@ -4,7 +4,7 @@ import src
 from ..core import Base, MAX_SYNAPSE_DELAY,INTER_RESERVOIR_CONN_RATE
 
 class Reservoir(Base):
-    def __init__(self,id,r_size,n_type = 'SpikingNeuron', s_type ='Synapse'):
+    def __init__(self,id,r_size,n_type = 'SpikingNeuron', s_type ='Synapse', *args, **kwargs):
         self.id = id
         self.r_size = r_size
         self.neu_class = getattr(src.neuron,n_type)
@@ -44,9 +44,7 @@ class Reservoir(Base):
         conn = conn[:2]
         pre_neuron = self.neuron_list[conn[0]]
         post_neuron = self.neuron_list[conn[1]]
-        delay = np.arange(1,MAX_SYNAPSE_DELAY+1)
-        np.random.shuffle(delay)
-        delay = delay[0]
+        delay = np.random.randint(1,MAX_SYNAPSE_DELAY+1)
         weight = np.random.normal(0, 1)
         self.connect(s_id,pre_neuron,post_neuron,delay,weight)
 

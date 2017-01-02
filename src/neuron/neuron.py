@@ -7,7 +7,8 @@ from ..function import ActFunction
 
 
 class SpikingNeuron(Base):
-    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
+    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6]),
+                 *args, **kwargs):
         self.id = id                                                                                                    # the neuron id
         self.type = 0                                                                                                   # neuron type: 0-INHIBITORY, 1-EXCITATORY
         self.fired = False                                                                                              # is fired at last time slot
@@ -39,7 +40,6 @@ class SpikingNeuron(Base):
     def activate(self):
         self.__trans_input()
         p = self.__parameters
-        #print(self.id, self.I_now)
         self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
         if self.membrane_potential_now[1,0] < 30:
            self.fired = False
@@ -48,7 +48,6 @@ class SpikingNeuron(Base):
         else:
            self.fired = True
            self.membrane_potential_now[1,0] = 30
-           # print("fired: id =", self.id,"time :",self.get_global_time())
            self.__trans_fired()
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
            self.__init = (p[2],self.membrane_potential_now[1,1]+p[3])

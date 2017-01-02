@@ -1,13 +1,13 @@
 from ..core import Base
 
-class Plasticity(Base):
+class Connnection(Base):
 
     def __init__(self):
         pass
 
-    def STDP(self):
+    def conn_normal(self):
         pass
 
-    def BCM(self):
+    def conn_izk(self):
         pass
 
