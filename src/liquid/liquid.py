@@ -22,7 +22,7 @@ class Liquid(Base):
         self.set_operation_off()
         self.set_global_time(0)
         for r_id in range(self.r_number):
-            new_reservoir = src.reservoir.Reservoir(r_id,30)
+            new_reservoir = src.reservoir.Reservoir(r_id,20)
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[r_id])      # based on the type of pre-processed data
             self.input_list = np.concatenate((self.input_list,[new_input]),axis=0)
@@ -32,12 +32,31 @@ class Liquid(Base):
             new_reservoir.neu_initialization()
 
 
+    def add_reservoir(self):
+        pass
+
+
+    def add_input(self):
+        pass
+
+
+    def conn_input_reservoir(self):
+        pass
+
+
+    def add_readout(self):
+        pass
+
+
+    def conn_readout(self):
+        pass
 
 
     # TODO: the group may be set as loops
     def operate(self, group):
         while (self.get_operation()):
             t = self.get_global_time()
+            print(t)
             for i in self.input_list:
                 try:                                                                                                    # input_t will be set to zeros when beyond the index of the data
                     i.input_t = self.data[group][:,t]

@@ -2,7 +2,7 @@ import numpy as np
 import src
 
 from ..core import Base, IZK_INTER_SCALE
-from . import Coding
+from ..function import Coding
 from ..function import ActFunction
 
 
@@ -10,7 +10,6 @@ class SpikingNeuron(Base):
     def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6]),
                  *args, **kwargs):
         self.id = id                                                                                                    # the neuron id
-        self.type = 0                                                                                                   # neuron type: 0-INHIBITORY, 1-EXCITATORY
         self.fired = False                                                                                              # is fired at last time slot
         self.fired_sequence = np.array([])                                                                              # neuron fired sequence for all the time slot
         self.membrane_potential = np.array([]).reshape(0,2)                                                             # membrane potential sequence
@@ -38,17 +37,17 @@ class SpikingNeuron(Base):
 
 
     def activate(self):
-        self.__trans_input()
+        self._trans_input()
         p = self.__parameters
         self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
         if self.membrane_potential_now[1,0] < 30:
            self.fired = False
-           self.__trans_fired()
+           self._trans_fired()
            self.__init = (self.membrane_potential_now[1,0],self.membrane_potential_now[1,1])
         else:
            self.fired = True
            self.membrane_potential_now[1,0] = 30
-           self.__trans_fired()
+           self._trans_fired()
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
            self.__init = (p[2],self.membrane_potential_now[1,1]+p[3])
         self.membrane_potential = np.vstack((self.membrane_potential, self.membrane_potential_now[1]))
@@ -65,12 +64,12 @@ class SpikingNeuron(Base):
         pass
 
 
-    def __trans_fired(self):
+    def _trans_fired(self):
         for i in self.post_synapse:
             i.trans_fired()
 
 
-    def __get_input(self):
+    def _get_input(self):
         spiking = self.coming_fired[:,self.get_global_time()][:,np.newaxis]
         input = np.array([]).reshape(0,1)
         for i in self.input:
@@ -81,7 +80,7 @@ class SpikingNeuron(Base):
 
 
     # the input and weight will be calculate by synapse and input
-    def __get_weight(self):
+    def _get_weight(self):
         W = np.zeros((1,self.in_size))
         for i in range(self.pre_synapse.size):
             W[0,i] = self.pre_synapse[i].weight
@@ -91,9 +90,9 @@ class SpikingNeuron(Base):
         return W
 
 
-    def __trans_input(self):
-        input_t = self.__get_input()
-        W = self.__get_weight()
+    def _trans_input(self):
+        input_t = self._get_input()
+        W = self._get_weight()
         l = self.coding(input_t)
         self.I_now = np.dot(W,l[:, np.newaxis])[0,0]*IZK_INTER_SCALE
         self.I = np.hstack((self.I,self.I_now))
