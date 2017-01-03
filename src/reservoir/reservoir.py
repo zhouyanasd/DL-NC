@@ -12,17 +12,15 @@ class Reservoir(Base):
         self.neu_class = getattr(src.neuron,n_type)
         self.syn_class = getattr(src.synapse,s_type)
         self.conn_fun = getattr(src.function.Connnection(),conn_type)
-        self.neuron_list = np.array([], dtype =np.dtype([('neuron', self.neu_class)]))
-        self.synapse_list = np.array([], dtype= np.dtype ([('synapse', self.syn_class)]))
+        self.neuron_list = np.array([], dtype = np.dtype([('neuron', self.neu_class)]))
+        self.synapse_list = np.array([], dtype = np.dtype ([('synapse', self.syn_class)]))
 
     def initialization(self,activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
         for n_id in range (self.r_size):
             new_neuron = self.neu_class(id = n_id, activation_func =activation_func, coding_rule= coding_rule)
             self.neuron_list = np.concatenate((self.neuron_list,[new_neuron]),axis= 0)
         for s_id in range (self.s_number):
-            pre_neuron,post_neuron = self.conn_fun(self.neuron_list)
-            delay = np.random.randint(1,MAX_SYNAPSE_DELAY+1)
-            weight = np.random.normal(0, 1)
+            pre_neuron,post_neuron,delay,weight = self.conn_fun(self.neuron_list)
             self.connect(s_id,pre_neuron,post_neuron,delay,weight)
 
 
@@ -36,14 +34,6 @@ class Reservoir(Base):
                                       delay = delay,weight = weight)
         new_synapse.register()
         self.synapse_list = np.concatenate((self.synapse_list,[new_synapse]),axis=0)
-
-
-    def set_delay(self):
-        pass
-
-
-    def set_weight(self):
-        pass
 
 
     def reset(self):

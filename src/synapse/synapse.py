@@ -1,20 +1,24 @@
 import numpy as np
 
 from ..core import Base
+from ..function import Plasticity
 
 class Synapse(Base):
 
-    def __init__(self, id, pre_neuron, post_neuron, delay, weight = np.random.normal(0, 1)):
+    def __init__(self, id, pre_neuron, post_neuron, delay, plasticity = 'STDP',weight = np.random.normal(0, 1)):
         self.id = id
         self.pre_neuron = pre_neuron
         self.post_neuron = post_neuron
         self.weight = weight
         self.delay = delay
+        self.plasticity = getattr(Plasticity(),plasticity)
         self.spiking_buffer = np.zeros(self.delay)                                                                      # the index = 0 is out and index=max is in
+
 
     def register(self):
         self.pre_neuron.post_synapse = np.concatenate((self.pre_neuron.post_synapse,[self]),axis=0)
         self.post_neuron.pre_synapse = np.concatenate((self.post_neuron.pre_synapse,[self]),axis=0)
+
 
     def adjust_weight(self):
         pass
@@ -25,7 +29,6 @@ class Synapse(Base):
             self.spiking_buffer[self.delay-1] = 1
         else:
             self.spiking_buffer[self.delay-1] = 0
-
 
     def reset(self):
         pass
