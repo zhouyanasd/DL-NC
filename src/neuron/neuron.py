@@ -7,8 +7,7 @@ from ..function import ActFunction
 
 
 class SpikingNeuron(Base):
-    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6]),
-                 *args, **kwargs):
+    def __init__(self, id, activation_func, coding_rule, act_init =(-75,-4), parameters = np.array([0.02,0.2,-65,6])):
         self.id = id                                                                                                    # the neuron id
         self.type = 1                                                                                                   # neuron type 1 = EXCITATORY/0 = INHIBITORY
         self.fired = False                                                                                              # is fired at last time slot
@@ -43,12 +42,12 @@ class SpikingNeuron(Base):
         self.membrane_potential_now = self.activation_func(self.I_now,self.__init,p[0],p[1],p[2],p[3])
         if self.membrane_potential_now[1,0] < 30:
            self.fired = False
-           self._trans_fired()
+           # self._trans_fired()
            self.__init = (self.membrane_potential_now[1,0],self.membrane_potential_now[1,1])
         else:
            self.fired = True
            self.membrane_potential_now[1,0] = 30
-           self._trans_fired()
+           # self._trans_fired()
            self.fired_sequence = np.concatenate((self.fired_sequence,[self.get_global_time()]),axis=0)
            self.__init = (p[2],self.membrane_potential_now[1,1]+p[3])
         self.membrane_potential = np.vstack((self.membrane_potential, self.membrane_potential_now[1]))
@@ -65,9 +64,9 @@ class SpikingNeuron(Base):
         pass
 
 
-    def _trans_fired(self):
-        for i in self.post_synapse:
-            i.trans_fired()
+    # def _trans_fired(self):
+    #     for i in self.post_synapse:
+    #         i.trans_fired()
 
 
     def _get_input(self):

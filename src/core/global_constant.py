@@ -18,3 +18,7 @@ MAX_OPERATION_TIME = 2000                    # the maximum operation time
 
 IN_NEURON_RATE = 0.2                        # the INHIBITORY neuron rate
 
+MAX_WEIGHT = 1.0                            # the max weight for synapse
+
+MIN_WEIGHT = -1.0                           # the min weight for synapse
+
