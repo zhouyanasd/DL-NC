@@ -14,8 +14,7 @@ class Synapse(Base):
         self.d_w = 0
         self.plasticity = getattr(Plasticity(),plasticity)
         self.spiking_buffer = np.zeros(self.delay)                                                                      # the index = 0 is out and index=max is in
-        self._last_arrive_time = 0
-        self._last_spiking_time = 0
+
 
     def register(self):
         self.pre_neuron.post_synapse = np.concatenate((self.pre_neuron.post_synapse,[self]),axis=0)

@@ -9,6 +9,8 @@ class izk_synapse(Synapse):
         self.A_minus = -0.012
         self.T_plus = 20.0
         self.T_minus = 40.0
+        self._last_arrive_time = 0
+        self._last_spiking_time = 0
 
     def adjust_weight(self):
         if (self.spiking_buffer[0] == 1):
@@ -19,6 +21,7 @@ class izk_synapse(Synapse):
             self.d_w += self.A_minus * np.exp(-np.abs(TDelay)/self.T_minus)
 
         if (self.post_neuron.fired):
+            self._last_spiking_time = self.get_global_time()
             TDelay = self.get_global_time() - self._last_arrive_time
             if (TDelay < 0): return self.weight
             self.d_w += self.A_plus * np.exp( TDelay / self.T_minus)
