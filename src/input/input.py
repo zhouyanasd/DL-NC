@@ -11,7 +11,8 @@ class Input(Base):
         self.conn_neuron = np.zeros((self.in_size, self.reservoir.r_size), dtype = np.dtype([('neuron', Neuron.SpikingNeuron),('weight',np.float64)]))
 
     def __select_neuron_random(self):
-        conn_n = np.random.randint(0,self.reservoir.r_size*INPUT_CONN_RATE,1)[0]                # get the connection number to reservoir for each input
+        conn_n = int(self.reservoir.r_size*INPUT_CONN_RATE)                                     # get the connection number to reservoir for each input
+        print(self.reservoir.r_size*INPUT_CONN_RATE,conn_n)
         if conn_n <= 0:                                                                         # connection number greater than 0
             conn_n = 1
         conn = np.arange(self.reservoir.r_size)                                                 # random selected
@@ -22,6 +23,7 @@ class Input(Base):
     def initialization(self):
         for i in range(self.in_size):                                                           # for each input
             conn = self.__select_neuron_random()                                                # select neuron to connect randomly
+            print(conn)
             for j in conn:
                 w = np.random.uniform(0,1)                                                      # uniform random weight
                 self.conn_neuron[i,j] = (self.reservoir.neuron_list[j],w)

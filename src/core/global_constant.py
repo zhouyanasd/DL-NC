@@ -8,17 +8,15 @@ TIME_SCALE = 0.1
 
 IZK_INTER_SCALE = 40
 
-INPUT_CONN_RATE = 2                         # input connection rate for each input
+INPUT_CONN_RATE = 0.6
 
-INTER_RESERVOIR_CONN_RATE = 10               # neuron connection rate for each neuron in reservoir
+INTER_RESERVOIR_CONN_RATE = 50               # neuron connection rate for each neuron in reservoir
 
 MAX_SYNAPSE_DELAY = 10                      # the maximum synapse delay for the simulation
 
-MAX_OPERATION_TIME = 2000                    # the maximum operation time
+MAX_OPERATION_TIME = 1000                    # the maximum operation time
 
-IN_NEURON_RATE = 0.2                        # the INHIBITORY neuron rate
+MAX_WEIGHT = 2.0                            # the max weight for synapse
 
-MAX_WEIGHT = 1.0                            # the max weight for synapse
-
-MIN_WEIGHT = -1.0                           # the min weight for synapse
+MIN_WEIGHT = -2.0                           # the min weight for synapse
 

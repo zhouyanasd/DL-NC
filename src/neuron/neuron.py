@@ -96,3 +96,6 @@ class SpikingNeuron(Base):
         l = self.coding(input_t)
         self.I_now = np.dot(W,l[:, np.newaxis])[0,0]*IZK_INTER_SCALE
         self.I = np.hstack((self.I,self.I_now))
+
+    def _set_type(self):
+        pass

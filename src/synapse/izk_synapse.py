@@ -2,9 +2,9 @@ from .import Synapse
 
 import numpy as np
 
-class izk_synapse(Synapse):
+class Izk_synapse(Synapse):
     def __init__(self, id, pre_neuron, post_neuron, delay, weight,*args, **kwargs):
-        Synapse.__init__( id, pre_neuron, post_neuron, delay, weight)
+        Synapse.__init__(self,id, pre_neuron, post_neuron, delay, weight)
         self.A_plus = 0.012
         self.A_minus = -0.012
         self.T_plus = 20.0
@@ -22,9 +22,12 @@ class izk_synapse(Synapse):
 
         if (self.post_neuron.fired):
             self._last_spiking_time = self.get_global_time()
-            TDelay = self.get_global_time() - self._last_arrive_time
-            if (TDelay < 0): return self.weight
-            self.d_w += self.A_plus * np.exp( TDelay / self.T_minus)
+            TDelay = self._last_arrive_time - self.get_global_time()
+            if (TDelay > 0): return self.weight
+            self.d_w += self.A_plus * np.exp( TDelay / self.T_plus)
+
+        if self.d_w != 0:
+            print("syanpse_id: ",self.id,"-->d_w: ",self.d_w)
 
         self.update()
 
