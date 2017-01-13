@@ -25,3 +25,6 @@ class Coding(Base):
 
     def spike_simple(self):
         pass
+
+    def decay_exponential(self):
+        pass

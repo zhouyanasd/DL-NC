@@ -4,6 +4,8 @@ CONNECTION_ARRAY_DTYPE = np.dtype({"names":["connection","weights"],"formats":["
 
 INPUT_TIME_WINDOW = 1
 
+OUTPUT_TIME_WINDOW = 30
+
 TIME_SCALE = 0.1
 
 IZK_INTER_SCALE = 40

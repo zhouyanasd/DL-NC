@@ -92,6 +92,14 @@ class Liquid(Base):
     def reset(self):
         pass
 
+    def pre_train_res(self):
+        pass
+
+    def train_readout(self):
+        pass
+
+    def test(self):
+        pass
 
     def input_group_flow(self):
         self.reset()
