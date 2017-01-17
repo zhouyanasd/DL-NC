@@ -2,11 +2,14 @@ import numpy as np
 import src
 
 from ..core import Base
+from ..function import Coding
 
 class Readout(Base):
-    def __init__(self):
+    def __init__(self, coding_rule):
         self.pre_reservoir_list = []
         self.read_number = 0
+        self.pre_state = np.array([])
+        self.coding = getattr(Coding(1), coding_rule)
 
     def add_pre_reservoir(self, reservoir):
         self.pre_reservoir_list.append(reservoir)
@@ -24,7 +27,8 @@ class Readout(Base):
         pass
 
     def get_state(self):
-        pass
+        for res in self.pre_reservoir_list:
+
 
     def output(self):
         pass
