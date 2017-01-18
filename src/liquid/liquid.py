@@ -66,9 +66,7 @@ class Liquid(Base):
                     i.input_t = np.zeros(feature)
             self.advance()
             self.add_global_time(1)
-            # print("t: ", self.get_global_time())
-            if self.get_global_time()>MAX_OPERATION_TIME :
-                self.set_operation_off()
+            self.__show_operation_time()
 
 
     def advance(self):
@@ -103,3 +101,8 @@ class Liquid(Base):
 
     def input_group_flow(self):
         self.reset()
+
+    def __show_operation_time(self):
+        # print("t: ", self.get_global_time())
+        if self.get_global_time()>MAX_OPERATION_TIME :
+            self.set_operation_off()
