@@ -29,7 +29,7 @@ class Readout(Base):
     def get_state(self):
         for res in self.pre_reservoir_list:
             for neu in res.neuron_list:
-                t = Base.get_global_time()
+                t = self.get_global_time()
 
 
     def output(self):
