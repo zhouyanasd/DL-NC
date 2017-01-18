@@ -1,7 +1,7 @@
 import numpy as np
 import src
 
-from ..core import Base, IZK_INTER_SCALE
+from ..core import Base, IZK_INTER_SCALE, INPUT_TIME_WINDOW
 from ..function import Coding
 from ..function import ActFunction
 
@@ -32,7 +32,7 @@ class SpikingNeuron(Base):
         self.in_size = np.size(self.pre_synapse)+ np.size(self.input)
         self.coming_fired = np.array([]).reshape(self.pre_synapse.size,0)
         self.activation_func = getattr(ActFunction(), self.__func)                                                      # activation function for this neuron
-        self.coding = getattr(Coding(self.in_size), self.__coding)
+        self.coding = getattr(Coding(self.in_size, INPUT_TIME_WINDOW), self.__coding)
 
 
 
