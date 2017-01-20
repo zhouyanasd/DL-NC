@@ -26,5 +26,7 @@ class Coding(Base):
     def spike_simple(self):
         pass
 
-    def decay_exponential(self):
-        pass
+    def decay_exponential_window(self, input_t, *args, **kwargs):
+        t = self.get_global_time()
+        tolerate = kwargs['NEURON_TIME_CONSTANT']
+
