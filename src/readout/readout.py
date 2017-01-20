@@ -1,14 +1,20 @@
+'''
+This file is code by the tired stage of the framework
+The readout class is coded as new rules
+'''
+
 import numpy as np
 import src
 
-from ..core import Base, READOUT_TIME_WINDOW
-from ..function import Coding
+from src.core import Base, READOUT_TIME_WINDOW
+from src.function import Coding
 
 class Readout(Base):
-    def __init__(self):
+    def __init__(self,coding_rule):
         self.pre_reservoir_list = []
         self.read_number = 0
         self.pre_state = np.array([])
+        self.initialization(coding_rule)
 
 
     def add_pre_reservoir(self, reservoir):
@@ -44,5 +50,5 @@ class Readout(Base):
 
     def output_t(self):
         t = self.get_global_time()
-        state = self.coding(self.pre_reservoir_list[t])
+        state = self.coding(self.pre_reservoir_list[t:t+READOUT_TIME_WINDOW])
         return state
