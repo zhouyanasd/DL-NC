@@ -33,8 +33,10 @@ class Liquid(Base):
             new_reservoir.initialization('izhikevich_spiking','rate_window')
             new_input.initialization()
             new_reservoir.neu_initialization()
-        for read_id in range(self.read_number)  :
-            new_readout = src.readout.Readout(read_id, coding_rule = 'decay_exponential_window')
+        for read_id in range(self.read_number):
+            new_readout = src.readout.Readout(read_id)
+            new_readout.add_pre_reservoir(self.reservoir_list[0])
+            new_readout.add_read_neuron_s()
 
 
 
