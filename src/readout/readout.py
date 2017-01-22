@@ -6,7 +6,7 @@ The readout class is coded as new rules
 import numpy as np
 import src
 
-from src.core import Base, READOUT_TIME_WINDOW
+from src.core import Base, READOUT_TIME_WINDOW,MAX_OPERATION_TIME
 from src.function import Coding
 
 class Readout(Base):
@@ -36,17 +36,22 @@ class Readout(Base):
     def connect(self):
         pass
 
-    def get_state_t(self):
-        t = self.get_global_time()
+    def get_state(self,t):
         t_state = np.array([]).reshape(0,1)
         for res in self.pre_reservoir_list:
             for neu in res.neuron_list:
                 t_state = np.concatenate((self.pre_reservoir_list,[[neu.fired_sequence[t]]]), axis= 0)
-        self.pre_reservoir_list = np.concatenate((self.pre_reservoir_list,t_state),axis=1)
+        return t_state
+
+    def get_state_t(self):
+        t = self.get_global_time()
+        return self.get_state(t)
 
     def get_state_all(self):
-        pass
-
+        t = 0
+        while t <= MAX_OPERATION_TIME :
+            t_state = self.get_state(t)
+            self.pre_reservoir_list = np.concatenate((self.pre_reservoir_list,t_state),axis=1)
 
     def output_t(self):
         t = self.get_global_time()
