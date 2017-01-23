@@ -13,10 +13,10 @@ class Liquid(Base):
         self.data = data
         self.res_number = res_number
         self.read_number = read_number
-        self.reservoir_list = np.array([], dtype =np.dtype([('reservoir', src.reservoir.Reservoir)]))
+        self.reservoir_list = np.array([], dtype = np.dtype([('reservoir', src.reservoir.Reservoir)]))
 
-        self.input_class =getattr(src.input,input_class)
-        self.input_list = np.array([], dtype =np.dtype([('input', src.input.Input)]))
+        self.input_class = getattr(src.input,input_class)
+        self.input_list = np.array([], dtype = np.dtype([('input', src.input.Input)]))
 
         self.readout_list = []
 
@@ -25,7 +25,7 @@ class Liquid(Base):
         self.set_operation_off()
         self.set_global_time(0)
         for res_id in range(self.res_number):
-            new_reservoir = src.reservoir.Reservoir(res_id,20,conn_type='conn_normal',n_type = 'SpikingNeuron', s_type ='Izk_synapse')
+            new_reservoir = src.reservoir.Reservoir(res_id,20,conn_type = 'conn_normal',n_type = 'SpikingNeuron', s_type ='Izk_synapse')
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[res_id])      # based on the type of pre-processed data
             self.input_list = np.concatenate((self.input_list,[new_input]),axis=0)
@@ -38,6 +38,7 @@ class Liquid(Base):
             new_readout.add_pre_reservoir(self.reservoir_list[0])
             new_readout.add_read_neuron_s()
             new_readout.initialization('decay_exponential_window')
+            self.readout_list.append(new_readout)
 
 
 
@@ -55,6 +56,7 @@ class Liquid(Base):
 
     def add_readout(self,new_readout):
         self.readout_list.append(new_readout)
+        self.read_number += 1
 
 
     def conn_readout(self):
@@ -65,7 +67,7 @@ class Liquid(Base):
     def operate(self, group):
         while (self.get_operation()):
             t = self.get_global_time()
-            if t%100 == 0:
+            if t % 100 == 0:
                 print(t)
             for i in self.input_list:
                 try:                                                                                                    # input_t will be set to zeros when beyond the index of the data
@@ -76,8 +78,13 @@ class Liquid(Base):
             self.advance()
             self.add_global_time(1)
             self.__show_operation_time(10)
-            if self.get_global_time()>MAX_OPERATION_TIME :
+            if self.get_global_time() > MAX_OPERATION_TIME :
                 self.set_operation_off()
+
+        for readout in self.readout_list:
+            readout.get_state_all()
+            output = readout.output_t()
+
 
 
     def advance(self):

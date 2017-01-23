@@ -15,6 +15,7 @@ class Readout(Base):
         self.pre_reservoir_list = []
         self.read_number = 0
         self.pre_state = np.array([])
+        self.weight = 0
 
 
     def add_pre_reservoir(self, reservoir):
