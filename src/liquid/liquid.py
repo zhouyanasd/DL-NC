@@ -27,7 +27,7 @@ class Liquid(Base):
         for res_id in range(self.res_number):
             new_reservoir = src.reservoir.Reservoir(res_id,20,conn_type='conn_normal',n_type = 'SpikingNeuron', s_type ='Izk_synapse')
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
-            new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[r_id])      # based on the type of pre-processed data
+            new_input = self.input_class(input_size = self.data[0].shape[0],reservoir = self.reservoir_list[res_id])      # based on the type of pre-processed data
             self.input_list = np.concatenate((self.input_list,[new_input]),axis=0)
             # the initial sequence cannot be changed
             new_reservoir.initialization('izhikevich_spiking','rate_window')
