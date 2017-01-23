@@ -37,6 +37,7 @@ class Liquid(Base):
             new_readout = src.readout.Readout(read_id)
             new_readout.add_pre_reservoir(self.reservoir_list[0])
             new_readout.add_read_neuron_s()
+            new_readout.initialization('decay_exponential_window')
 
 
 
