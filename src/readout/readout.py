@@ -6,7 +6,7 @@ The readout class is coded as new rules
 import numpy as np
 import src
 
-from src.core import Base, READOUT_TIME_WINDOW,MAX_OPERATION_TIME
+from src.core import Base, READOUT_TIME_WINDOW, MAX_OPERATION_TIME
 from src.function import Coding
 
 class Readout(Base):
@@ -58,3 +58,6 @@ class Readout(Base):
         t = self.get_global_time()
         state = self.coding(self.pre_reservoir_list[t:t+READOUT_TIME_WINDOW])
         return state
+
+    def LMS(self):
+        pass
