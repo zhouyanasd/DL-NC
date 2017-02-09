@@ -1,1 +1,13 @@
 .idea/
+src/__pycache__/
+src/core/__pycache__/
+src/data/__pycache__/
+src/function/__pycache__/
+src/input/__pycache__/
+src/liquid/__pycache__/
+src/neuron/__pycache__/
+src/readout/__pycache__/
+src/reservoir/__pycache__/
+src/storage/__pycache__/
+src/synapse/__pycache__/
+src/vis/__pycache__/

@@ -26,5 +26,14 @@ class Coding(Base):
     def spike_simple(self):
         pass
 
-    def decay_exponential(self):
-        pass
+    def decay_exponential_window(self, input_t, *args, **kwargs):
+        coding = np.zeros(self.d_t)
+        self.time_window_buffer = input_t
+        tolerate = kwargs['NEURON_TIME_CONSTANT']
+        for i in range(self.time_window_buffer.shape[0]):
+            spike = self.time_window_buffer[i]
+            for i in range (self.d_t):
+                if spike[i] !=0:
+                    for j in range(i,self.d_t):
+                        coding[j] = np.exp(-j/tolerate)
+        return np.max(coding, axis=1)
