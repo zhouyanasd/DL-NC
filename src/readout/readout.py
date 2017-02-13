@@ -58,6 +58,3 @@ class Readout(Base):
         t = self.get_global_time()
         state = self.coding(self.pre_reservoir_list[t:t+READOUT_TIME_WINDOW])
         return state
-
-    def LMS(self):
-        pass
