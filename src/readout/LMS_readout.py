@@ -11,21 +11,9 @@ class LMS_readout(Readout):
         self.LMS_num += class_num
 
 
-
     def LMS_train(self,all_state,):
         pass
 
     def LMS_test(self):
         pass
 
-
-# class a():
-#     def aa(self):
-#         print('a')
-#
-# class b():
-#     def aa(self):
-#         print('b')
-#
-# B=b()
-# B.aa()
