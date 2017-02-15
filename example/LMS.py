@@ -12,7 +12,8 @@ n = 9  # 多项式次数
 
 # 目标函数
 def real_func(x):
-    return np.sin(2 * np.pi * x)
+    f = np.sin(2 * np.pi * x)
+    return f
 
 
 # 多项式函数
@@ -33,7 +34,7 @@ x_points = np.linspace(0, 1, 1000)  # 画图时需要的连续点
 y0 = real_func(x)  # 目标函数
 y1 = [np.random.normal(0, 0.1) + y for y in y0]  # 添加正太分布噪声后的函数
 
-p_init = np.random.randn(1,n)  # 随机初始化多项式参数
+p_init = np.random.randn(n)  # 随机初始化多项式参数
 
 plsq = leastsq(residuals_func, p_init, args=(y1, x))
 print ('Fitting Parameters: ', plsq[0])  # 输出拟合参数
