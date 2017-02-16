@@ -5,7 +5,7 @@ from scipy.optimize import leastsq
 ###采样点(Xi,Yi)###
 Xi=np.array([8.19,2.72,6.39,8.71,4.7,2.66,3.78])
 Yi=np.array([7.01,2.78,6.47,6.71,4.1,4.23,4.05])
-Zi=np.array([3.01,1.78,4.47,5.71,1.1,2.23,1.05])
+Zi=np.array([1,0,1,1,0,1,1])
 
 Data = [Xi,Yi]
 
@@ -26,6 +26,7 @@ p0=[100,100,2]
 ###主函数从此开始###
 Para=leastsq(error,p0,args=(Zi,Data)) #把error函数中除了p以外的参数打包到args中
 k1,k2,b=Para[0]
+print(Para)
 print("k1=",k1,"k2=",k2,'\n',"b=",b)
 
 # ###绘图，看拟合效果###
