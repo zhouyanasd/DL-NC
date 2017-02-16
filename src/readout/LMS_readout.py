@@ -11,14 +11,16 @@ class LMS_readout(Readout):
         p = np.random.randn(self.read_number, self.pre_state.shape[0])
         Para = 0
         for i in self.read_number:
-            Para = leastsq(self.__error, p[i], args=(label[i],self.pre_state))
+            Para = leastsq(self.__error, p[i], args=(label[i], self.pre_state))
         return Para[0]
 
     def LMS_test(self):
         pass
 
-    def __error(self,p,y,*args):
+    def __error(self,p,y, args):
         f = 0
+
         for i in range (len(args)):
             f += p[i]*args[i]
         return f-y
+
