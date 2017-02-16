@@ -81,9 +81,6 @@ class Liquid(Base):
             if self.get_global_time() > MAX_OPERATION_TIME :
                 self.set_operation_off()
 
-        for readout in self.readout_list:
-            readout.get_state_all()
-            output = readout.output_t()
 
 
 
@@ -112,7 +109,9 @@ class Liquid(Base):
         pass
 
     def train_readout(self):
-        pass
+        for readout in self.readout_list:
+            readout.get_state_all()
+            output = readout.output_t()
 
     def test(self):
         pass
