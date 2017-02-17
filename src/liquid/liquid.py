@@ -6,11 +6,13 @@ The liquid is only one kind of data for input,
 import numpy as np
 import src
 
-from ..core import Base,MAX_OPERATION_TIME
+from src.core import Base,MAX_OPERATION_TIME
+from src.storage import Sto_state
 
 class Liquid(Base):
-    def __init__(self, data, input_class, res_number = 1, read_number =1):
+    def __init__(self, data, label, input_class, res_number = 1, read_number =1):
         self.data = data
+        self.label = label
         self.res_number = res_number
         self.read_number = read_number
         self.reservoir_list = np.array([], dtype = np.dtype([('reservoir', src.reservoir.Reservoir)]))
@@ -34,7 +36,7 @@ class Liquid(Base):
             new_input.initialization()
             new_reservoir.neu_initialization()
         for read_id in range(self.read_number):
-            new_readout = src.readout.Readout(read_id)
+            new_readout = src.readout.LMS_readout(read_id)
             new_readout.add_pre_reservoir(self.reservoir_list[0])
             new_readout.add_read_neuron_s()
             new_readout.initialization('decay_exponential_window')
@@ -82,8 +84,6 @@ class Liquid(Base):
                 self.set_operation_off()
 
 
-
-
     def advance(self):
         for res in self.reservoir_list:
             for neu in res.neuron_list:
@@ -106,15 +106,30 @@ class Liquid(Base):
         pass
 
     def pre_train_res(self):
-        pass
-
-    def train_readout(self):
+        self.liquid_start()
+        self.operate(2)
+        sto = Sto_state()
         for readout in self.readout_list:
             readout.get_state_all()
-            output = readout.output_t()
+            sto.save_state(readout.pre_state,readout.id)
+        self.liquid_stop()
 
-    def test(self):
-        pass
+    def train_readout(self):
+        for read in self.readout_list:
+            read.LMS_train(self.label)
+
+
+    def test(self, test_data, test_label):
+        self.data = test_data
+        self.label = test_label
+        self.liquid_start()
+        self.operate(1)
+        output_list = []
+        for read in self.readout_list:
+            output = read.LMS_test(test_data)
+            output_list.append(output)
+        return output_list
+
 
     def input_group_flow(self):
         self.reset()
