@@ -54,6 +54,13 @@ class Simple(Base):
             else:
                 return True
 
+        def trans_cls(cla):
+            cla_tran = []
+            for i in cla:
+                cla_t= i
+                for j in range(i):
+                    if i[j] == i:
+                        i[]
 
 
         for i in range(self.group):
@@ -83,5 +90,6 @@ class Simple(Base):
             data_t = data_t[np.newaxis,:]
             data.append(data_t)
             cla.append(cla_t)
+            trans_cls(cla)
         return data, cla
 

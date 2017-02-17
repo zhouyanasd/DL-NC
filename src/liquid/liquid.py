@@ -69,8 +69,6 @@ class Liquid(Base):
     def operate(self, group):
         while (self.get_operation()):
             t = self.get_global_time()
-            if t % 100 == 0:
-                print(t)
             for i in self.input_list:
                 try:                                                                                                    # input_t will be set to zeros when beyond the index of the data
                     i.input_t = self.data[group][:,t]
@@ -80,7 +78,7 @@ class Liquid(Base):
             self.advance()
             self.add_global_time(1)
             self.__show_operation_time(10)
-            if self.get_global_time() > MAX_OPERATION_TIME :
+            if self.get_global_time() > MAX_OPERATION_TIME:
                 self.set_operation_off()
 
 
