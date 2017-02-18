@@ -56,7 +56,7 @@ class Readout(Base):
 
     def get_state_all(self):
         t = 0
-        while t <= MAX_OPERATION_TIME:
+        while t < MAX_OPERATION_TIME:
             t_state = self.get_state(t)
             self.pre_state = np.concatenate((self.pre_state,t_state),axis=1)
             t += 1
