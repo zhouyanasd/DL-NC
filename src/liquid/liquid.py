@@ -77,7 +77,7 @@ class Liquid(Base):
                     i.input_t = np.zeros(feature)
             self.advance()
             self.add_global_time(1)
-            self.__show_operation_time(10)
+            self.show_operation_time(10)
             if self.get_global_time() > MAX_OPERATION_TIME:
                 self.set_operation_off()
 
@@ -106,10 +106,10 @@ class Liquid(Base):
     def pre_train_res(self):
         self.liquid_start()
         self.operate(2)
-        sto = Sto_state()
+        # sto = Sto_state()
         for readout in self.readout_list:
             readout.get_state_all()
-            sto.save_state(readout.pre_state,readout.id)
+            # sto.save_state(readout.pre_state,readout.id)
         self.liquid_stop()
 
     def train_readout(self):
@@ -132,6 +132,3 @@ class Liquid(Base):
     def input_group_flow(self):
         self.reset()
 
-    def __show_operation_time(self, step):
-        if self.get_global_time()%step == 0:
-            print("t: ", self.get_global_time())

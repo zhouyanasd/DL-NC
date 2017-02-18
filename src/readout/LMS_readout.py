@@ -10,7 +10,7 @@ class LMS_readout(Readout):
 
     def LMS_train(self, label):
         p = np.random.randn(self.read_number, self.pre_state.shape[0])
-        for i in self.read_number:
+        for i in range(self.read_number):
             Para = leastsq(self.__error, p[i], args = (label[i], self.pre_state))
             self.Para_list.append(Para[0])
 

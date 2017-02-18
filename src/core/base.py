@@ -32,6 +32,10 @@ class Base(object):
     def add_global_time(self,dt = 1):
         Base.__global_time = Base.__global_time + dt
 
+    def show_operation_time(self, step):
+        if self.get_global_time()%step == 0:
+            print("t: ", self.get_global_time())
+
 
     def get_global_connection(self):
         return Base.__global_connection

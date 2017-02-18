@@ -23,11 +23,10 @@ class Readout(Base):
 
     def initialization(self, coding_rule):
         neu_n =0
-        print(self.pre_reservoir_list)
         for res in self.pre_reservoir_list:
-            print(res.neuron_list.size)
             neu_n += res.neuron_list.size
         self.coding = getattr(Coding(neu_n, READOUT_TIME_WINDOW), coding_rule)
+        self.pre_state = np.array([]).reshape(neu_n,0)
 
     def add_read_neuron_s(self):
         self.read_number += 1
@@ -42,7 +41,13 @@ class Readout(Base):
         t_state = np.array([]).reshape(0,1)
         for res in self.pre_reservoir_list:
             for neu in res.neuron_list:
-                t_state = np.concatenate((self.pre_state,[[neu.fired_sequence[t]]]), axis= 0)
+                try:
+                    if neu.fired_sequence[neu.fired_sequence == t].size !=0:
+                        t_state = np.concatenate((t_state,[[1]]), axis= 0)
+                    else:
+                        t_state = np.concatenate((t_state,[[0]]), axis= 0)
+                except IndexError:
+                    t_state = np.concatenate((t_state,[[0]]), axis= 0)
         return t_state
 
     def get_state_t(self):
@@ -54,6 +59,8 @@ class Readout(Base):
         while t <= MAX_OPERATION_TIME:
             t_state = self.get_state(t)
             self.pre_state = np.concatenate((self.pre_state,t_state),axis=1)
+            t += 1
+            print("read_t:", t)
 
     def output_t(self):
         t = self.get_global_time()
