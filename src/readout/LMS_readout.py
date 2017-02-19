@@ -4,20 +4,21 @@ from scipy.optimize import leastsq
 from src.readout import Readout
 
 class LMS_readout(Readout):
-    def __int__(self, id):
+
+    def __init__(self, id):
         Readout.__init__(self, id)
-        self.Para_list = []
+        self.para_list = []
 
     def LMS_train(self, label):
         p = np.random.randn(self.read_number, self.pre_state.shape[0])
         for i in range(self.read_number):
-            Para = leastsq(self.__error, p[i], args = (label[i], self.pre_state))
-            self.Para_list.append(Para[0])
+            para = leastsq(self.__error, p[i], args = (label[i], self.pre_state))
+            self.para_list.append(para[0])
 
     def LMS_test(self, Data):
         Output = np.zeros(self.read_number)
         for i in self.read_number:
-            Output[i] = self.Para_list[i].dot(Data)
+            Output[i] = self.para_list[i].dot(Data)
         return Output
 
     def __error(self,p,y, args):

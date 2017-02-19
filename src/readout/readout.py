@@ -10,6 +10,7 @@ from src.core import Base, READOUT_TIME_WINDOW, MAX_OPERATION_TIME
 from src.function import Coding
 
 class Readout(Base):
+
     def __init__(self, id):
         self.id = id
         self.pre_reservoir_list = []
