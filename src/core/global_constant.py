@@ -10,7 +10,7 @@ OUTPUT_TIME_WINDOW = 30
 
 TIME_SCALE = 0.1
 
-IZK_INTER_SCALE = 40
+IZK_INTER_SCALE = 100
 
 INPUT_CONN_RATE = 2
 
@@ -18,7 +18,7 @@ INTER_RESERVOIR_CONN_RATE = 10              # neuron connection rate for each ne
 
 MAX_SYNAPSE_DELAY = 10                      # the maximum synapse delay for the simulation
 
-MAX_OPERATION_TIME = 1000                    # the maximum operation time
+MAX_OPERATION_TIME = 1000                   # the maximum operation time
 
 MAX_WEIGHT = 2.0                            # the max weight for synapse
 

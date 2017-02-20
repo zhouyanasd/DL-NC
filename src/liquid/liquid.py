@@ -12,7 +12,7 @@ from src.storage import Sto_state
 class Liquid(Base):
     def __init__(self, data, label, input_class, res_number = 1, read_number =1):
         self.data = data
-        self.label = label
+        self.label = label[2]
         self.res_number = res_number
         self.read_number = read_number
         self.reservoir_list = np.array([], dtype = np.dtype([('reservoir', src.reservoir.Reservoir)]))
@@ -100,8 +100,13 @@ class Liquid(Base):
         self.set_operation_off()
 
 
-    def reset(self):
-        pass
+    def reset_test(self):
+        self.liquid_stop()
+        self.set_global_time(0)
+        for res in self.reservoir_list:
+            res.reset_test()
+        for readout in self.readout_list:
+            readout.reset_test()
 
     def pre_train_res(self):
         self.liquid_start()
@@ -113,22 +118,20 @@ class Liquid(Base):
         self.liquid_stop()
 
     def train_readout(self):
-        for read in self.readout_list:
-            read.LMS_train(self.label)
+        for readout in self.readout_list:
+            readout.LMS_train(self.label)
 
 
-    def test(self, test_data, test_label):
+    def test(self, test_data):
         self.data = test_data
-        self.label = test_label
         self.liquid_start()
-        self.operate(1)
+        self.operate(0)
         output_list = []
-        for read in self.readout_list:
-            output = read.LMS_test(test_data)
+        for readout in self.readout_list:
+            readout.get_state_all()
+            output = readout.LMS_test()
             output_list.append(output)
         return output_list
 
 
-    def input_group_flow(self):
-        self.reset()
 

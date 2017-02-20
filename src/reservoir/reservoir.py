@@ -36,8 +36,9 @@ class Reservoir(Base):
         self.synapse_list = np.concatenate((self.synapse_list,[new_synapse]),axis=0)
 
 
-    def reset(self):
-        pass
+    def reset_test(self):
+        for neu in self.neuron_list:
+            neu.reset_test()
 
 
 

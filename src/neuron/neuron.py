@@ -60,8 +60,15 @@ class SpikingNeuron(Base):
         self.coming_fired = np.concatenate((self.coming_fired,coming),axis=1)
 
 
-    def reset(self):
-        pass
+    def reset_test(self):
+        self.coming_fired = np.array([]).reshape(self.pre_synapse.size,0)
+        self.fired = False                                                                                              # is fired at last time slot
+        self.fired_sequence = np.array([])                                                                              # neuron fired sequence for all the time slot
+        self.membrane_potential = np.array([]).reshape(0,2)                                                             # membrane potential sequence
+        self.membrane_potential_now = np.zeros((1,2))                                                                   # the membrane potential for now
+        self.I = np.array([])                                                                                           # the transformed input sequence
+        self.I_now = 0
+
 
 
     # def _trans_fired(self):

@@ -15,10 +15,11 @@ class LMS_readout(Readout):
             para = leastsq(self.__error, p[i], args = (label[i], self.pre_state))
             self.para_list.append(para[0])
 
-    def LMS_test(self, Data):
+    def LMS_test(self):
         Output = np.zeros(self.read_number)
-        for i in self.read_number:
-            Output[i] = self.para_list[i].dot(Data)
+        for i in range(self.read_number):
+            print(self.para_list[i],self.pre_state.T)
+            Output[i] = self.para_list[i].dot(self.pre_state.T)
         return Output
 
     def __error(self,p,y, args):
