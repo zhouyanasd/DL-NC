@@ -16,10 +16,12 @@ class LMS_readout(Readout):
             self.para_list.append(para[0])
 
     def LMS_test(self):
+        Output_list = []
         Output = np.zeros(self.read_number)
         for i in range(self.read_number):
-            Output[i] = self.para_list[i].dot(self.coded_state.T)
-        return Output
+            Output = self.para_list[i].dot(self.coded_state)
+            Output_list.append(Output)
+        return Output_list
 
     def __error(self,p,y, args):
         f = 2                      #bias

@@ -32,7 +32,7 @@ class Coding(Base):
         tolerate = kwargs['NEURON_TIME_CONSTANT']
         for k in range(self.time_window_buffer.shape[0]):
             spike = self.time_window_buffer[k]
-            for i in range (self.d_t):
+            for i in range (self.time_window_buffer.shape[1]):
                 if spike[i] !=0:
                     for j in range(i,self.d_t):
                         coding[k,j] = np.exp(-j/tolerate)
