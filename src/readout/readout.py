@@ -67,12 +67,12 @@ class Readout(Base):
             print("read_t:", t)
 
     def code_state_t(self,t):
-        coded_state_t = self.coding(self.pre_state[t:t+READOUT_TIME_WINDOW])
+        coded_state_t = self.coding(self.pre_state[:,t:t+READOUT_TIME_WINDOW], NEURON_TIME_CONSTANT = 2)
         return coded_state_t
 
     def code_state_all(self):
         t = 0
         while t<MAX_OPERATION_TIME:
-            coded_state_t = self.code_state_t(t)
+            coded_state_t = self.code_state_t(t)[:,np.newaxis]
             self.coded_state = np.concatenate((self.coded_state,coded_state_t),axis=1)
             t += 1

@@ -114,6 +114,7 @@ class Liquid(Base):
         # sto = Sto_state()
         for readout in self.readout_list:
             readout.get_state_all()
+            readout.code_state_all()
             # sto.save_state(readout.pre_state,readout.id)
         self.liquid_stop()
 
@@ -129,6 +130,7 @@ class Liquid(Base):
         output_list = []
         for readout in self.readout_list:
             readout.get_state_all()
+            readout.code_state_all()
             output = readout.LMS_test()
             output_list.append(output)
         return output_list
