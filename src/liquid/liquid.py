@@ -27,7 +27,7 @@ class Liquid(Base):
         self.set_operation_off()
         self.set_global_time(0)
         for res_id in range(self.res_number):
-            new_reservoir = src.reservoir.Reservoir(res_id,20, conn_type = 'conn_normal', n_type = 'SpikingNeuron', s_type ='Synapse')
+            new_reservoir = src.reservoir.Reservoir(res_id,100, conn_type = 'conn_normal', n_type = 'SpikingNeuron', s_type ='Synapse')
             self.reservoir_list = np.concatenate((self.reservoir_list,[new_reservoir]),axis=0)
             new_input = self.input_class(input_size = self.data[0].shape[0], reservoir = self.reservoir_list[res_id])      # based on the type of pre-processed data
             self.input_list = np.concatenate((self.input_list,[new_input]), axis=0)

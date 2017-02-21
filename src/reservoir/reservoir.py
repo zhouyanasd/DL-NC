@@ -19,6 +19,7 @@ class Reservoir(Base):
         for n_id in range (self.r_size):
             new_neuron = self.neu_class(id = n_id, activation_func =activation_func, coding_rule= coding_rule)
             self.neuron_list = np.concatenate((self.neuron_list,[new_neuron]),axis= 0)
+        self.set_inhibition_neu(int(self.r_size/5))
         for s_id in range (self.s_number):
             pre_neuron,post_neuron,delay,weight = self.conn_fun(self.neuron_list)
             self.connect(s_id,pre_neuron,post_neuron,delay,weight)
@@ -39,6 +40,11 @@ class Reservoir(Base):
     def reset_test(self):
         for neu in self.neuron_list:
             neu.reset_test()
+
+
+    def set_inhibition_neu(self, number):
+        for i in range(number):
+            self.neuron_list[i].type = 0
 
 
 
