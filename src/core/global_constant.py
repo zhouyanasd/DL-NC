@@ -10,11 +10,11 @@ OUTPUT_TIME_WINDOW = 30
 
 TIME_SCALE = 0.1
 
-IZK_INTER_SCALE = 100
+IZK_INTER_SCALE = 50
 
 INPUT_CONN_RATE = 2
 
-INTER_RESERVOIR_CONN_RATE = 10              # neuron connection rate for each neuron in reservoir
+INTER_RESERVOIR_CONN_RATE = 0.5              # neuron connection rate for each neuron in reservoir
 
 MAX_SYNAPSE_DELAY = 10                      # the maximum synapse delay for the simulation
 
