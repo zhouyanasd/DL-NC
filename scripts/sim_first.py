@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 #-----------------simulation setting----------------
 # define and generate the data
-np.random.seed(108)
-Data, cla= src.data.Simple(1,src.core.MAX_OPERATION_TIME,3).Tri_function()
+np.random.seed(107)
+Data, cla= src.data.Simple(1,src.core.MAX_OPERATION_TIME,3).Tri_function_test()
 # Data= src.data.Simple(1,1000,3).Possion()
 # define and initialize the liquid
 Liquid = src.liquid.Liquid(Data, cla,'Input', 1)

@@ -17,9 +17,11 @@ class LMS_readout(Readout):
 
     def LMS_test(self):
         Output_list = []
-        Output = np.zeros(self.read_number)
         for i in range(self.read_number):
             Output = self.para_list[i].dot(self.coded_state)
+            Output = self.__normalization_min_max(Output)  #normalization
+            Output[Output<=0.5] = -1                #classcification
+            Output[Output>0.5] = 1
             Output_list.append(Output)
         return Output_list
 
@@ -29,3 +31,9 @@ class LMS_readout(Readout):
             f += p[i]*args[i]
         return f-y
 
+    def __normalization_min_max(self,arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr))/(np.max(arr)- np.min(arr))
+            arr_n[i] = x
+        return arr_n

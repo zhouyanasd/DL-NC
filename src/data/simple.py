@@ -98,6 +98,7 @@ class Simple(Base):
         return data, cla
 
     def Tri_function_test(self):
+        self.in_number = 1000
         rng = np.random
         data = []
         cla = []

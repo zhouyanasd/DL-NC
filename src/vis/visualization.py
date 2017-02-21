@@ -25,5 +25,17 @@ class Visualization(object):
             for i in fired:
                 ax.scatter(i,0.5*j,alpha=.5)
 
+    def add_data_fig(self,fig,data):
+        t = np.arange(0,data.size)
+        plt.plot(t, data)
+
+    def add_test_result(self,fig,result,label):
+        t = np.arange(0,result.size)
+        plt.scatter(t,result,color="red")
+        plt.plot(label,"b--",color="blue")
+
+
+
+
 
 
