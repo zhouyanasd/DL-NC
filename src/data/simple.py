@@ -109,10 +109,10 @@ class Simple(Base):
         def tent_map(l,c,t):
             temp = l
             if (temp<0.5 and temp>=0):
-                temp = (c/50)*temp
+                temp = (c/100+1)*temp
                 return temp
             elif(temp>=0.5 and temp <=1):
-                temp = (c/50)*(1-temp)
+                temp = (c/100+1)*(1-temp)
                 return temp
             else:
                 return 0

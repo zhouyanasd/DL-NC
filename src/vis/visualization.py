@@ -34,6 +34,17 @@ class Visualization(object):
         plt.scatter(t,result,color="red")
         plt.plot(label,"b--",color="blue")
 
+    def add_neu_mem(self,fig,neu):
+        plt.plot(self.t,neu.membrane_potential[:,0])
+
+    def add_neu_mem_n(self,Liquid,start,end):
+        for i in range(end - start):
+            fig = plt.figure(figsize=(15,4))
+            neu = Liquid.reservoir_list[0].neuron_list[i+start]
+            self.add_neu_mem(fig,neu)
+
+
+
 
 
 
