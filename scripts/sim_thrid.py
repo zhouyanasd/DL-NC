@@ -7,8 +7,11 @@ np.random.seed(107)
 Data= src.data.Simple(1,src.core.MAX_OPERATION_TIME,3).Sin()
 
 print(Data[2][0:1000])
-#--------------------SNN topology---------------------
+#--------------------SNN topology--------------------
+Liquid = src.liquid.Liquid(Data, cla_test,'Input', 1, 1)
+Liquid.initialization()
 
+#-----------------training and testing---------------
 
 
 #--------------------plot result---------------------
