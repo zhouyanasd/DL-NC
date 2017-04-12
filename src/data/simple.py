@@ -16,6 +16,16 @@ class Simple(Base):
             data.append(data_t)
         return data
 
+    def Sin(self):
+        data = []
+        for i in range(self.group):
+            data_t = np.zeros(self.in_number)
+            c = (i+1)*2
+            for t in range(self.in_number):
+                data_t[t] = (np.sin(c*t*0.01))
+            data.append(data_t)
+        return data
+
     def Tri_function(self):
         rng = np.random
         data = []
