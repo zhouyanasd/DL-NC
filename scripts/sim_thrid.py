@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 
 #-----------------simulation setting----------------
 np.random.seed(107)
-Data= src.data.Simple(1,src.core.MAX_OPERATION_TIME,3).Sin()
+Data, label = src.data.Simple(1,src.core.MAX_OPERATION_TIME,3).Sin()
 
 print(Data[2][0:1000])
 #--------------------SNN topology--------------------
-Liquid = src.liquid.Liquid(Data, cla_test,'Input', 1, 1)
+Liquid = src.liquid.Liquid(Data,'Input', 1, 1)
 Liquid.initialization()
 
 #-----------------training and testing---------------
