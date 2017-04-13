@@ -14,6 +14,7 @@ Liquid.initialization()
 #-----------------training and testing---------------
 
 
+
 #--------------------plot result---------------------
 vis = src.vis.Visualization(src.core.Base().get_global_time())
 
