@@ -1,7 +1,7 @@
 from brian2 import *
 start_scope()
 
-tau = 10*ms
+tau = 1*ms
 eqs = '''
 dv/dt = (1-v)/tau : 1
 '''
