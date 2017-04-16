@@ -1,38 +1,42 @@
 from brian2 import *
 start_scope()
 
-# tau = 5*ms
-# eqs = '''
-# dv/dt = (1-v)/tau : 1
-# '''
-#
-# G = NeuronGroup(1, eqs, threshold='v>0.8', reset='v = 0', refractory=15*ms, method='linear')
-#
-# statemon = StateMonitor(G, 'v', record=0)
-# spikemon = SpikeMonitor(G)
-#
-# run(50*ms)
-#
-# plot(statemon.t/ms, statemon.v[0])
-# for t in spikemon.t:
-#     axvline(t/ms, ls='--', c='r', lw=3)
-# axhline(0.8, ls=':', c='g', lw=3)
-# xlabel('Time (ms)')
-# ylabel('v')
-# print("Spike times: %s" % spikemon.t[:])
-# show()
+taupre = taupost = 20*ms
+Apre = 0.01
+Apost = -Apre*taupre/taupost*1.05
+tmax = 50*ms
+N = 100
 
-tau_pre = tau_post = 20*ms
-A_pre = 0.01
-A_post = -A_pre*1.05
-delta_t = linspace(-50, 50, 100)*ms
-W = where(delta_t<0, A_pre*exp(delta_t/tau_pre), A_post*exp(-delta_t/tau_post))
+# Presynaptic neurons G spike at times from 0 to tmax
+# Postsynaptic neurons G spike at times from tmax to 0
+# So difference in spike times will vary from -tmax to +tmax
+G = NeuronGroup(N, 'tspike:second', threshold='t>tspike', refractory=100*ms)
+H = NeuronGroup(N, 'tspike:second', threshold='t>tspike', refractory=100*ms)
+G.tspike = 'i*tmax/(N-1)'
+H.tspike = '(N-1-i)*tmax/(N-1)'
 
-plot(delta_t / ms, W)
+S = Synapses(G, H,
+             '''
+             w : 1
+             dapre/dt = -apre/taupre : 1 (event-driven)
+             dapost/dt = -apost/taupost : 1 (event-driven)
+             ''',
+             on_pre='''
+             apre += Apre
+             w = w+apost
+             ''',
+             on_post='''
+             apost += Apost
+             w = w+apre
+             ''')
+S.connect(j='i')
 
+run(tmax+1*ms)
+
+plot((H.tspike-G.tspike)/ms, S.w)
 xlabel(r'$\Delta t$ (ms)')
-ylabel('W')
-ylim(-A_post, A_post)
+ylabel(r'$\Delta w$')
+ylim(-Apost, Apost)
 axhline(0, ls='-', c='k')
 
 show()
