@@ -22,15 +22,17 @@ start_scope()
 # print("Spike times: %s" % spikemon.t[:])
 # show()
 
-stimulus = TimedArray(np.hstack([[c, c, c, 0, 0]
-                                 for c in np.random.rand(1000)]),
-                                dt=10*ms)
-G = NeuronGroup(10, 'dv/dt = (-v + stimulus(t))/(10*ms) : 1',
-                threshold='v>1', reset='v=0')
-G.v = '0.5*rand()'  # different initial values for the neurons
+tau_pre = tau_post = 20*ms
+A_pre = 0.01
+A_post = -A_pre*1.05
+delta_t = linspace(-50, 50, 100)*ms
+W = where(delta_t<0, A_pre*exp(delta_t/tau_pre), A_post*exp(-delta_t/tau_post))
 
-statemon = StateMonitor(G, 'v', record=0)
+plot(delta_t / ms, W)
 
-plot(statemon.t/ms, statemon.v[0])
+xlabel(r'$\Delta t$ (ms)')
+ylabel('W')
+ylim(-A_post, A_post)
+axhline(0, ls='-', c='k')
 
 show()
