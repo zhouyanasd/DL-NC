@@ -23,10 +23,14 @@ inh = NeuronGroup(n2, eqs_i, threshold='v > 3*mV', reset='v = 0*mV',
                     refractory=1*ms, method='linear')
 
 exc.v = 0*mV
-exc.v0 = '20*mV * i / (n1-1)'
+exc.v0 = 10*mV
 
 inh.v = 0*mV
-inh.v0 = '10*mV'
+inh.v0 = '0*mV'
+
+S = Synapses(exc, inh, on_pre='v_post += 2*mV')
+S.connect(i=0,j=0)
+
 
 monitor_s_e = SpikeMonitor(exc)
 monitor_st_e = StateMonitor(exc, 'v', record=0)
