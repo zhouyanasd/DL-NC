@@ -39,59 +39,68 @@ v0 : volt
 '''
 
 #-----simulation setting-------
-P = PoissonGroup(1, 10*Hz)
+P = PoissonGroup(1, 100*Hz)
 
-exc = NeuronGroup(n1, eqs_e, threshold='v > 3*mV', reset='v = 0*mV',
+exc = NeuronGroup(n1, eqs_e, threshold='v > 0.9*mV', reset='v = 0*mV',
                     refractory=0.1*ms, method='linear')
 
-inh = NeuronGroup(n2, eqs_i, threshold='v > 3*mV', reset='v = 0*mV',
+inh = NeuronGroup(n2, eqs_i, threshold='v > 0.9*mV', reset='v = 0*mV',
                     refractory=0.1*ms, method='linear')
 
 exc.v = 0*mV
-exc.v0 = '(10+i)*mV'
+exc.v0 = '0.5*(1+i)*mV'
 
 inh.v = 0*mV
-inh.v0 = '(2+i)*mV'
+inh.v0 = '0.4*(1+i)*mV'
 
-S_ei = Synapses(exc, inh, on_pre='v_post += 1*mV')
+S_ei = Synapses(exc, inh, on_pre='v_post += 0.5*mV')
+S_ee = Synapses(exc, exc, on_pre='v_post += 0.5*mV')
+S_ii = Synapses(inh, inh, on_pre='v_post -= 1*mV')
+S_ie = Synapses(exc, exc, on_pre='v_post -= 1*mV')
 
-S_ii = Synapses(inh, inh, on_pre='v_post += 1*mV')
-
-S_ee = Synapses(exc, exc, on_pre='v_post += 1*mV')
-
-S_input = Synapses(P, exc, on_pre='v+=0.1*mV')
+S_input = Synapses(P, exc, on_pre='v+=0.3*mV')
 
 #-------network topology----------
-S_ei.connect(j='k for k in range(n2) if i!=k')
+S_ei.connect(j='k for k in range(n2)')
+S_ie.connect(j='k for k in range(n1)')
 S_ii.connect(j='k for k in range(n2) if i!=k')
 S_ee.connect(j='k for k in range(n1)')
-S_input.connect(j = 'k for k in range(n2)')
+S_input.connect(j = 'k for k in range(n1)')
 
-visualise_connectivity(S_input)
-
-
+#------run----------------
 monitor_s_e = SpikeMonitor(exc)
-monitor_st_e = StateMonitor(exc, 'v', record=0)
+monitor_st_e = StateMonitor(exc, 'v', record=True)
 monitor_s_i = SpikeMonitor(inh)
-monitor_st_i = StateMonitor(inh, 'v', record=0)
+monitor_st_i = StateMonitor(inh, 'v', record=True)
 
+run(duration)
 
+#------vis----------------
+visualise_connectivity(S_ei)
 
-# run(duration)
-# # fig1 = plt.figure()
-# # plot(monitor_s_e.v0/mV, monitor_s_e.count / duration)
-# # xlabel('v0 (mV)')
-# # ylabel('Firing rate (sp/s)')
-# # fig2 = plt.figure()
-# # plot(monitor_s_i.v0/mV, monitor_s_i.count / duration)
-# # xlabel('v0 (mV)')
-# # ylabel('Firing rate (sp/s)')
-# fig3 = plt.figure()
-# plot(monitor_st_e.t/ms, monitor_st_e.v[0])
-# xlabel('Time (ms)')
-# ylabel('v')
-# fig4 = plt.figure()
-# plot(monitor_st_i.t/ms, monitor_st_i.v[0])
-# xlabel('Time (ms)')
-# ylabel('v')
+fig1 = plt.figure()
+plot(monitor_st_e.t/ms, monitor_st_e.v[0]/mV)
+xlabel('Time (ms)')
+ylabel('v')
+
+fig2 = plt.figure()
+plot(monitor_st_e.t/ms, monitor_st_e.v[1]/mV)
+xlabel('Time (ms)')
+ylabel('v')
+
+fig3 = plt.figure()
+plot(monitor_st_i.t/ms, monitor_st_i.v[0]/mV)
+xlabel('Time (ms)')
+ylabel('v')
+
+fig4 = plt.figure()
+plot(monitor_st_i.t/ms, monitor_st_i.v[1]/mV)
+xlabel('Time (ms)')
+ylabel('v')
+
+fig5 = plt.figure()
+subplot(211)
+plot(monitor_s_e.t/ms, monitor_s_e.i, '.k')
+subplot(212)
+plot(monitor_s_i.t/ms, monitor_s_i.i, '.k')
 show()
