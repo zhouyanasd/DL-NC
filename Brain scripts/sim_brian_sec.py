@@ -56,7 +56,7 @@ inh.v0 = '0.4*(1+i)*mV'
 S_ei = Synapses(exc, inh, on_pre='v_post += 0.5*mV')
 S_ee = Synapses(exc, exc, on_pre='v_post += 0.5*mV')
 S_ii = Synapses(inh, inh, on_pre='v_post -= 1*mV')
-S_ie = Synapses(exc, exc, on_pre='v_post -= 1*mV')
+S_ie = Synapses(exc, exc, on_pre='v_post -= 0.8*mV')
 
 S_input = Synapses(P, exc, on_pre='v+=0.3*mV')
 
