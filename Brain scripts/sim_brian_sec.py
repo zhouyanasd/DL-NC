@@ -39,6 +39,8 @@ v0 : volt
 '''
 
 #-----simulation setting-------
+P = PoissonGroup(1, 10*Hz)
+
 exc = NeuronGroup(n1, eqs_e, threshold='v > 3*mV', reset='v = 0*mV',
                     refractory=0.1*ms, method='linear')
 
@@ -51,19 +53,21 @@ exc.v0 = '(10+i)*mV'
 inh.v = 0*mV
 inh.v0 = '(2+i)*mV'
 
-S_ei = Synapses(exc, inh, on_pre='v_post += 2*mV')
+S_ei = Synapses(exc, inh, on_pre='v_post += 1*mV')
 
-S_ii = Synapses(inh, inh, on_pre='v_post += 2*mV')
+S_ii = Synapses(inh, inh, on_pre='v_post += 1*mV')
 
-S_ee = Synapses(exc, exc, on_pre='v_post += 2*mV')
+S_ee = Synapses(exc, exc, on_pre='v_post += 1*mV')
+
+S_input = Synapses(P, exc, on_pre='v+=0.1*mV')
 
 #-------network topology----------
 S_ei.connect(j='k for k in range(n2) if i!=k')
 S_ii.connect(j='k for k in range(n2) if i!=k')
 S_ee.connect(j='k for k in range(n1)')
+S_input.connect(j = 'k for k in range(n2)')
 
-
-visualise_connectivity(S_ii)
+visualise_connectivity(S_input)
 
 
 monitor_s_e = SpikeMonitor(exc)
