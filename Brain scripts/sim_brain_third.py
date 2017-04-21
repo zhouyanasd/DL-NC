@@ -2,35 +2,33 @@ from brian2 import *
 start_scope()
 
 equ = '''
-dv/dt = (I*15-v) / (20*ms) : 1
-I  :1
-'''
-
-s_equ ='''
-dg/dt = (-g)/(10*ms) : 1 (clock-driven)
-dh/dt = (-h)/(9.5*ms) : 1 (clock-driven)
-s = g-h : 1
+dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
+dg/dt = (-g)/(10*ms) : 1
+dh/dt = (-h)/(9.5*ms) : 1
+I = (g-h)*20 : 1
 '''
 
 on_pre ='''
-h+=1
-g+=1
+h+=w
+g+=w
 '''
-P = PoissonGroup(10, np.arange(10)*Hz + 10*Hz)
-G = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear')
-S = Synapses(P, G, model = s_equ, on_pre = on_pre, method='linear')
+P = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
+G = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
+S = Synapses(P, G, 'w = 1 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
 S.connect(j='i')
 
-G.I = S.s
 m1=StateMonitor(G,'v',record=9)
-M = StateMonitor(S, 's', record=9)
+M = StateMonitor(G, 'I', record=9)
+m2 = SpikeMonitor(G)
 
 run(300*ms)
+
+print(m2.i)
 
 fig1 = plt.figure(figsize=(10,4))
 subplot(121)
 plot(m1.t/ms,m1.v[0],'-b', label='Neuron 9')
 
 subplot(122)
-plot(M.t/ms, M.s[0], label='s')
+plot(M.t/ms, M.I[0], label='I')
 show()

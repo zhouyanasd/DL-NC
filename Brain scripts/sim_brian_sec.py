@@ -42,10 +42,10 @@ v0 : volt
 P = PoissonGroup(1, 100*Hz)
 
 exc = NeuronGroup(n1, eqs_e, threshold='v > 0.9*mV', reset='v = 0*mV',
-                    refractory=0.1*ms, method='linear')
+                    refractory=1*ms, method='linear')
 
 inh = NeuronGroup(n2, eqs_i, threshold='v > 0.9*mV', reset='v = 0*mV',
-                    refractory=0.1*ms, method='linear')
+                    refractory=1*ms, method='linear')
 
 exc.v = 0*mV
 exc.v0 = '0.5*(1+1)*mV'
