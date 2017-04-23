@@ -19,7 +19,7 @@ S.connect(j='i')
 
 m1=StateMonitor(G,'v',record=9)
 M = StateMonitor(G, 'I', record=9)
-m2 = SpikeMonitor(G)
+m2 = SpikeMonitor(P)
 
 run(300*ms)
 
