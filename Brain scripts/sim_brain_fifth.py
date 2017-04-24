@@ -31,6 +31,8 @@ m2 = SpikeMonitor(G)
 run(300*ms)
 
 print(m2.t/ms, m2.i)
+print('num: ',m2.num_spikes)
+print('count: ', m2.count)
 
 fig1 = plt.figure(figsize=(20,8))
 subplot(231)
