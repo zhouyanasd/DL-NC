@@ -30,6 +30,27 @@ print(Para)
 print("k1=",k1,"k2=",k2,'\n',"b=",b)
 
 # ###绘图，看拟合效果###
+
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+import numpy as np
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.scatter(Xi, Yi, Zi,color="red",label="Sample Point",linewidth=3)
+
+xs = np.linspace(0, 10, 20)
+ys = np.linspace(0, 10, 20)
+X, Y = np.meshgrid(xs, ys)
+Z = k1*X+k2*Y+b
+
+ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5)
+
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
 # import matplotlib.pyplot as plt
 #
 # plt.figure(figsize=(8,6))
@@ -39,4 +60,4 @@ print("k1=",k1,"k2=",k2,'\n',"b=",b)
 # z=k1*x+k2*y+b
 # plt.plot(x,y,z,color="orange",label="Fitting Line",linewidth=2) #画拟合直线
 # plt.legend()
-# plt.show()
+plt.show()
