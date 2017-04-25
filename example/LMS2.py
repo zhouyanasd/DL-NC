@@ -3,9 +3,9 @@ import numpy as np
 from scipy.optimize import leastsq
 
 ###采样点(Xi,Yi)###
-Xi=np.array([8.19,2.72,6.39,8.71,4.7,2.66,3.78])
-Yi=np.array([7.01,2.78,6.47,6.71,4.1,4.23,4.05])
-Zi=np.array([1,0,1,1,0,1,1])
+Xi=np.array([8.19,2.72,6.39,8.71,4.7,2.66,3.78,1.25,2.69,8.65,7.23,6.35,8.26,6.98,2.65])
+Yi=np.array([7.01,2.78,6.47,6.71,4.1,4.23,4.05,2.36,7.25,6.58,9.36,8.35,7.24,5.21,2.41])
+Zi=np.array([1,0,1,1,0,1,1,1,0,0,1,0,0,1,0])
 
 Data = [Xi,Yi]
 
@@ -20,7 +20,7 @@ def error(p,y, args):
 
 
 #TEST
-p0=[100,100,2]
+p0=[100,100,0.1]
 #print( error(p0,Xi,Yi) )
 
 ###主函数从此开始###
@@ -46,18 +46,10 @@ ys = np.linspace(0, 10, 20)
 X, Y = np.meshgrid(xs, ys)
 Z = k1*X+k2*Y+b
 
-ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5)
+ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
 
 ax.set_xlabel('X Label')
 ax.set_ylabel('Y Label')
 ax.set_zlabel('Z Label')
-# import matplotlib.pyplot as plt
-#
-# plt.figure(figsize=(8,6))
-# plt.scatter(Xi,Yi,Zi,color="red",label="Sample Point",linewidth=3) #画样本点
-# x=np.linspace(0,10,1000)
-# y=np.linspace(0,10,1000)
-# z=k1*x+k2*y+b
-# plt.plot(x,y,z,color="orange",label="Fitting Line",linewidth=2) #画拟合直线
-# plt.legend()
+
 plt.show()

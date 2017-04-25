@@ -1,13 +1,19 @@
 from brian2 import *
+from scipy.optimize import leastsq
 
 start_scope()
 np.random.seed(101)
 
+def lms_train(p0,Zi,Data):
+    def error(p, y, args):
+        f = 0
+        for i in range(len(args)):
+            f += p[i] * args[i]
+        return f - y
+    Para = leastsq(error,p0,args=(Zi,Data))
+    return Para[0]
 
-def lms_train():
-    pass
-
-def lms_test():
+def lms_test(Data):
     pass
 
 
@@ -38,12 +44,19 @@ print(S.w)
 
 m1 = StateMonitor(G, ('v', 'I'), record=True)
 m2 = SpikeMonitor(G)
-m3 = PopulationRateMonitor(G[0:1])
-m4 = PopulationRateMonitor(G[1:2])
-m5 = PopulationRateMonitor(G[2:3])
+m3 = PopulationRateMonitor(G[0:1]).smooth_rate(window='gaussian', width=time_window)
+m4 = PopulationRateMonitor(G[1:2]).smooth_rate(window='gaussian', width=time_window)
+m5 = PopulationRateMonitor(G[2:3]).smooth_rate(window='gaussian', width=time_window)
+Z = PopulationRateMonitor(G).smooth_rate(window='gaussian', width=time_window)
 # print(G.state(name='v'))
 
 run(500 * ms)
+
+Data = [m3,m4,m5]
+p0=[1,1,1,0.1]
+k1,k2,k3,b = lms_train(p0,Z,Data)
+
+
 # print(m2.spike_trains()[0])
 # print(G.t)
 # print(m2.t/ms, m2.i)
@@ -73,11 +86,11 @@ plot(m1.t / ms, m1.I[2], label='I')
 
 fig2 = plt.figure(figsize=(20, 8))
 subplot(311)
-plot(m3.t / ms, m3.smooth_rate(window='gaussian', width=time_window) / Hz)
+plot(m3.t / ms, m3 / Hz)
 subplot(312)
-plot(m4.t / ms, m4.smooth_rate(window='gaussian', width=time_window) / Hz)
+plot(m4.t / ms, m4 / Hz)
 subplot(313)
-plot(m5.t / ms, m5.smooth_rate(window='gaussian', width=time_window) / Hz)
+plot(m5.t / ms, m5/ Hz)
 show()
 
 
