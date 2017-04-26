@@ -11,7 +11,9 @@ Data = [Xi,Yi]
 
 ###需要拟合的函数func及误差error###
 def error(p,y, args):
-    f = 0
+    l = len(p)
+    f = p[l-1]
+    print(y,len(args) )
     for i in range (len(args)):
         f += p[i]*args[i]
     return f-y

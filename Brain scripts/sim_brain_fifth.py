@@ -4,22 +4,28 @@ from scipy.optimize import leastsq
 start_scope()
 np.random.seed(101)
 
+#------define function------------
 def lms_train(p0,Zi,Data):
     def error(p, y, args):
-        f = 0
+        l = len(p)
+        f = p[l - 1]
         for i in range(len(args)):
             f += p[i] * args[i]
         return f - y
     Para = leastsq(error,p0,args=(Zi,Data))
     return Para[0]
 
-def lms_test(Data):
-    pass
+def lms_test(Data, p):
+    l = len(p)
+    f = p[l - 1]
+    for i in range(len(Data)):
+        f += p[i] * Data[i]
+    return f
 
-
+#-----parameter setting-------
 n = 3
-time_window = 2 * ms
-duration = 10 * ms
+time_window = 10*ms
+duration = 500 * ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -32,31 +38,27 @@ on_pre = '''
 h+=w
 g+=w
 '''
-
+#-----simulation setting-------
 P = PoissonGroup(1, 50 * Hz)
 G = NeuronGroup(n, equ, threshold='v > 0.25', reset='v = 0', method='linear', refractory=1 * ms)
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=1 * ms)
+
+#-------network topology----------
 S.connect(j='k for k in range(n)')
-
 S.w = 'rand()'
-
 print(S.w)
 
+
+#------run----------------
 m1 = StateMonitor(G, ('v', 'I'), record=True)
 m2 = SpikeMonitor(G)
-m3 = PopulationRateMonitor(G[0:1]).smooth_rate(window='gaussian', width=time_window)
-m4 = PopulationRateMonitor(G[1:2]).smooth_rate(window='gaussian', width=time_window)
-m5 = PopulationRateMonitor(G[2:3]).smooth_rate(window='gaussian', width=time_window)
-Z = PopulationRateMonitor(G).smooth_rate(window='gaussian', width=time_window)
+m3 = PopulationRateMonitor(G[0:1])
+m4 = PopulationRateMonitor(G[1:2])
+m5 = PopulationRateMonitor(G[2:3])
+m6 = PopulationRateMonitor(G)
 # print(G.state(name='v'))
 
-run(500 * ms)
-
-Data = [m3,m4,m5]
-p0=[1,1,1,0.1]
-k1,k2,k3,b = lms_train(p0,Z,Data)
-
-
+run(duration)
 # print(m2.spike_trains()[0])
 # print(G.t)
 # print(m2.t/ms, m2.i)
@@ -65,6 +67,19 @@ k1,k2,k3,b = lms_train(p0,Z,Data)
 # print('spike_trains: ', m2.spike_trains()[0])
 # print('smooth_rate_P: ', rate)
 
+#----lms_readout----
+x1 = m3.smooth_rate(window='gaussian', width=time_window)/ Hz
+x2 = m4.smooth_rate(window='gaussian', width=time_window)/ Hz
+x3 = m5.smooth_rate(window='gaussian', width=time_window)/ Hz
+Z = x2**2+x3
+Data = [x1,x2,x3]
+p0=[1,1,1,0.1]
+k1,k2,k3,b = lms_train(p0,Z,Data)
+para = [k1,k2,k3,b]
+print('k1= ',k1,'k2= ', k2, 'k3 = ', k3,'b = ', b)
+Z_t = lms_test(Data,para)
+
+#------vis----------------
 fig1 = plt.figure(figsize=(20, 8))
 subplot(231)
 plot(m1.t / ms, m1.v[0], '-b', label='')
@@ -84,13 +99,18 @@ plot(m1.t / ms, m1.v[2], '-b', label='')
 subplot(236)
 plot(m1.t / ms, m1.I[2], label='I')
 
-fig2 = plt.figure(figsize=(20, 8))
-subplot(311)
-plot(m3.t / ms, m3 / Hz)
-subplot(312)
-plot(m4.t / ms, m4 / Hz)
-subplot(313)
-plot(m5.t / ms, m5/ Hz)
+fig2 = plt.figure(figsize=(20, 10))
+subplot(411)
+plot(m3.t / ms, x1,label='neuron1' )
+subplot(412)
+plot(m4.t / ms, x2,label='neuron2' )
+subplot(413)
+plot(m5.t / ms, x3,label='neuron3')
+subplot(414)
+plot(m6.t / ms, Z,'-b', label='Z')
+plot(m6.t / ms, Z_t,'--r', label='Z_t')
+xlabel('Time (ms)')
+ylabel('rate')
 show()
 
 
