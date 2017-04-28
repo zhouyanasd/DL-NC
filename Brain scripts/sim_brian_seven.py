@@ -59,23 +59,12 @@ g+=w
 P = PoissonGroup(1, 50 * Hz)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
-# S2 = Synapses(G[1:3], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
-# S3 = Synapses(G[0:1], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
-# S4 = Synapses(G[1:3], G[0:1], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
+
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-# S2.connect(condition='i!=j')
-# S3.connect()
-# S4.connect()
-#
+
 S.w = '0.1+j*0.02'
-# S2.w = 'rand()*2'
-# S3.w = '-rand()/5'
-# S4.w = 'rand()'
-# print('S.w: ',S.w)
-# print('S2.w: ',S2.w)
-# print('S3.w: ',S3.w)
-# print('S4.w: ',S4.w)
+
 
 
 #------run----------------
@@ -98,24 +87,6 @@ Z_t = lms_test(Data,para)
 err = abs(Z_t-Z)/max(abs(Z_t-Z))
 
 #------vis----------------
-fig1 = plt.figure(figsize=(20, 8))
-subplot(231)
-plot(m1.t / ms, m1.v[1], '-b', label='')
-
-subplot(234)
-plot(m1.t / ms, m1.I[1], label='I')
-
-subplot(232)
-plot(m1.t / ms, m1.v[14], '-b', label='')
-
-subplot(235)
-plot(m1.t / ms, m1.I[14], label='I')
-
-subplot(233)
-plot(m1.t / ms, m1.v[18], '-b', label='')
-
-subplot(236)
-plot(m1.t / ms, m1.I[18], label='I')
 
 fig2 = plt.figure(figsize=(20, 10))
 subplot(511)
