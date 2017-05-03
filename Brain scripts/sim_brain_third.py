@@ -22,8 +22,12 @@ M = StateMonitor(G, 'I', record=9)
 m2 = SpikeMonitor(P)
 
 run(300*ms)
+print(G.t)
 
 print(m2.i)
+
+run(100*ms)
+print(G.t)
 
 fig1 = plt.figure(figsize=(10,4))
 subplot(121)

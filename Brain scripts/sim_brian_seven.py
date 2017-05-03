@@ -38,6 +38,12 @@ def readout(M,Y):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
+def save_para(para, name):
+    np.save('Brain scripts/Data'+str(name)+'.npy',para)
+
+def load_para(name):
+    return np.load('Brain scripts/Data'+str(name)+'.npy')
+
 #-----parameter setting-------
 n = 50
 time_window = 10*ms
@@ -64,6 +70,8 @@ S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S.connect(j='k for k in range(n)')
 
 S.w = '0.1+j*0.02'
+# S.w[0] = 1
+# print(S.w[0:3])
 
 
 
@@ -79,28 +87,23 @@ run(duration)
 
 #----lms_readout----#
 #
-Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)**2-2000
+Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
 
 Data, para = readout(M,Z)
-print(para)
+save_para(para,'para_readout_seven')
+print(load_para('para_readout_seven'))
 Z_t = lms_test(Data,para)
 err = abs(Z_t-Z)/max(abs(Z_t-Z))
 
 #------vis----------------
 
-fig2 = plt.figure(figsize=(20, 10))
-subplot(511)
-plot(M[1].t / ms, Data[1],label='neuron1' )
-subplot(512)
-plot(M[14].t / ms, Data[14],label='neuron2' )
-subplot(513)
-plot(M[18].t / ms, Data[18],label='neuron3')
-subplot(514)
+fig1 = plt.figure(figsize=(20, 10))
+subplot(211)
 plot(m6.t / ms, Z,'-b', label='Z')
 plot(m6.t / ms, Z_t,'--r', label='Z_t')
 xlabel('Time (ms)')
 ylabel('rate')
-subplot(515)
+subplot(212)
 plot(m6.t / ms, err,'-b', label='Z')
 xlabel('Time (ms)')
 ylabel('err')
