@@ -23,31 +23,37 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-def readout(M,Y):
+def readout(M):
     print(M[0])
     n = len(M)
     Data=[]
     for i in range(n):
         x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
         Data.append(x)
-    p0 = [1]*n
-    p0.append(0.1)
-    para = lms_train(p0, Z, Data)
-    return Data,para
+    return Data
+
+def get_test_data(data):
+    Data_temp = []
+    for data in data:
+        data_t = data[(duration / ms):((duration+duration_test) / ms)]
+        Data_temp.append(data_t)
+    return Data_temp
+
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 def save_para(para, name):
-    np.save('Brain scripts/Data'+str(name)+'.npy',para)
+    np.save('Brain scripts/Data/'+str(name)+'.npy',para)
 
 def load_para(name):
-    return np.load('Brain scripts/Data'+str(name)+'.npy')
+    return np.load('Brain scripts/Data/'+str(name)+'.npy')
 
 #-----parameter setting-------
 n = 50
 time_window = 10*ms
 duration = 500 * ms
+duration_test = 200*ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -73,38 +79,52 @@ S.w = '0.1+j*0.02'
 # S.w[0] = 1
 # print(S.w[0:3])
 
-
-
-#------run----------------
-m1 = StateMonitor(G, ('v', 'I'), record=True)
+#------monitor----------------
 M = []
 for i in range(G._N):
     locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
     M.append(locals()['M' + str(i)])
-m6 = PopulationRateMonitor(P)
+m_y = PopulationRateMonitor(P)
 
+#------run for train----------------
 run(duration)
 
-#----lms_readout----#
-#
-Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
+#----state_readout-----
+Data= readout(M)
+Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 
-Data, para = readout(M,Z)
-save_para(para,'para_readout_seven')
-print(load_para('para_readout_seven'))
-Z_t = lms_test(Data,para)
-err = abs(Z_t-Z)/max(abs(Z_t-Z))
+#----lms_train------
+p0 = [1]*n
+p0.append(0.1)
+para = lms_train(p0, Y, Data)
+# save_para(para,'para_readout_seven')
+# print(load_para('para_readout_seven'))
+
+#----run for test--------
+run(duration_test)
+
+#-----test_Data----------
+Data = readout(M)
+Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
+
+#-----lms_test-----------
+Y_t = lms_test(Data,para)
+err = abs(Y_t-Y)/max(abs(Y_t-Y))
 
 #------vis----------------
 
 fig1 = plt.figure(figsize=(20, 10))
-subplot(211)
-plot(m6.t / ms, Z,'-b', label='Z')
-plot(m6.t / ms, Z_t,'--r', label='Z_t')
+subplot(311)
+plot(m_y.t / ms, Y,'-b', label='Y')
+plot(m_y.t / ms, Y_t,'--r', label='Y_t')
 xlabel('Time (ms)')
 ylabel('rate')
-subplot(212)
-plot(m6.t / ms, err,'-b', label='Z')
+subplot(312)
+plot(m_y.t / ms, err,'-r', label='err')
 xlabel('Time (ms)')
 ylabel('err')
+# subplot(313)
+# plot(m_y.t / ms, Y_test,'-b', label='Y_test')
+# xlabel('Time (ms)')
+# ylabel('rate')
 show()
