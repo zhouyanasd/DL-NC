@@ -22,17 +22,16 @@ M = StateMonitor(G, 'I', record=9)
 m2 = SpikeMonitor(P)
 
 run(300*ms)
-print(G.t)
-
 print(m2.i)
 
 run(100*ms)
-print(G.t)
 
 fig1 = plt.figure(figsize=(10,4))
 subplot(121)
 plot(m1.t/ms,m1.v[0],'-b', label='Neuron 9')
+legend()
 
 subplot(122)
 plot(M.t/ms, M.I[0], label='I')
+legend()
 show()

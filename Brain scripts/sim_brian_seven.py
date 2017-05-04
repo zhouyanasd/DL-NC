@@ -32,25 +32,17 @@ def readout(M):
         Data.append(x)
     return Data
 
-def get_test_data(data):
-    Data_temp = []
-    for data in data:
-        data_t = data[(duration / ms):((duration+duration_test) / ms)]
-        Data_temp.append(data_t)
-    return Data_temp
-
-
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 def save_para(para, name):
-    np.save('Brain scripts/Data/'+str(name)+'.npy',para)
+    np.save('Data/'+str(name)+'.npy',para)
 
 def load_para(name):
-    return np.load('Brain scripts/Data/'+str(name)+'.npy')
+    return np.load('Data/'+str(name)+'.npy')
 
 #-----parameter setting-------
-n = 50
+n = 20
 time_window = 10*ms
 duration = 500 * ms
 duration_test = 200*ms
@@ -75,7 +67,7 @@ S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 
-S.w = '0.1+j*0.02'
+S.w = '0.1+j*'+str(1/n)
 # S.w[0] = 1
 # print(S.w[0:3])
 
@@ -97,8 +89,8 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
-# save_para(para,'para_readout_seven')
-# print(load_para('para_readout_seven'))
+save_para(para,'para_readout_seven')
+print(load_para('para_readout_seven'))
 
 #----run for test--------
 run(duration_test)
@@ -110,6 +102,14 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 #-----lms_test-----------
 Y_t = lms_test(Data,para)
 err = abs(Y_t-Y)/max(abs(Y_t-Y))
+
+t0 = int(duration/defaultclock.dt)
+t1 = int((duration+duration_test) / defaultclock.dt)
+
+Y_test = Y[t0:t1]
+Y_test_t = Y_t[t0:t1]
+err_test = err[t0:t1]
+t_test = m_y.t[t0:t1]
 
 #------vis----------------
 
@@ -123,8 +123,9 @@ subplot(312)
 plot(m_y.t / ms, err,'-r', label='err')
 xlabel('Time (ms)')
 ylabel('err')
-# subplot(313)
-# plot(m_y.t / ms, Y_test,'-b', label='Y_test')
-# xlabel('Time (ms)')
-# ylabel('rate')
+subplot(313)
+plot(t_test / ms, Y_test,'-b', label='Y_test')
+plot(t_test / ms, Y_test_t,'--r', label='Y_test_t')
+xlabel('Time (ms)')
+ylabel('rate')
 show()
