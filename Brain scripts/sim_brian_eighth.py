@@ -42,7 +42,7 @@ def load_para(name):
     return np.load('Data/'+str(name)+'.npy')
 #---loop-----
 
-N = 20
+N = 40
 MSE_train = []
 MSE_test = []
 
@@ -51,7 +51,7 @@ for n in range(1,N):
     # -----parameter setting-------
     time_window = 10 * ms
     duration = 500 * ms
-    duration_test = 200 * ms
+    duration_test = 500 * ms
 
     equ = '''
     dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
