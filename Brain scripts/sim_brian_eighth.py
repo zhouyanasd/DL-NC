@@ -50,8 +50,8 @@ for n in range(1,N):
     print('loop: ', n)
     # -----parameter setting-------
     time_window = 10 * ms
-    duration = 500 * ms
-    duration_test = 500 * ms
+    duration = 5000* ms
+    duration_test = 2000 * ms
 
     equ = '''
     dv/dt = (I-v) / (20*ms) : 1 (unless refractory)

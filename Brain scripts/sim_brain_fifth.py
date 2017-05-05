@@ -23,7 +23,7 @@ def lms_test(Data, p):
     return f
 
 #-----parameter setting-------
-n = 3
+n = 13
 time_window = 10*ms
 duration = 500 * ms
 
@@ -85,6 +85,11 @@ x1 = m3.smooth_rate(window='gaussian', width=time_window)/ Hz
 x2 = m4.smooth_rate(window='gaussian', width=time_window)/ Hz
 x3 = m5.smooth_rate(window='gaussian', width=time_window)/ Hz
 Z = m6.smooth_rate(window='gaussian', width=time_window)/ Hz
+
+Y = np.zeros((5000))
+Y[150:4999] = Z[0:4849]
+Z = Y
+
 Data = [x1,x2,x3]
 p0=[1,1,1,0.1]
 k1,k2,k3,b = lms_train(p0,Z,Data)

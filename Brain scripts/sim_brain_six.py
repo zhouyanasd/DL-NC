@@ -41,7 +41,7 @@ def mse(y_test, y):
 #-----parameter setting-------
 n = 50
 time_window = 10*ms
-duration = 500 * ms
+duration = 5000 * ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -68,7 +68,7 @@ S.connect(j='k for k in range(n)')
 # S3.connect()
 # S4.connect()
 #
-S.w = '0.1+j*0.02'
+S.w = '0.1+j*'+str(1/n)
 # S2.w = 'rand()*2'
 # S3.w = '-rand()/5'
 # S4.w = 'rand()'
@@ -100,33 +100,33 @@ err = abs(Z_t-Z)/max(abs(Z_t-Z))
 #------vis----------------
 fig1 = plt.figure(figsize=(20, 8))
 subplot(231)
-plot(m1.t / ms, m1.v[1], '-b', label='')
+plot(m1.t / ms, m1.v[1], '-b', label='v')
 
 subplot(234)
 plot(m1.t / ms, m1.I[1], label='I')
 
 subplot(232)
-plot(m1.t / ms, m1.v[14], '-b', label='')
+plot(m1.t / ms, m1.v[4], '-b', label='v')
 
 subplot(235)
-plot(m1.t / ms, m1.I[14], label='I')
+plot(m1.t / ms, m1.I[4], label='I')
 
 subplot(233)
-plot(m1.t / ms, m1.v[18], '-b', label='')
+plot(m1.t / ms, m1.v[8], '-b', label='v')
 
 subplot(236)
-plot(m1.t / ms, m1.I[18], label='I')
+plot(m1.t / ms, m1.I[8], label='I')
 
 fig2 = plt.figure(figsize=(20, 10))
 subplot(511)
 plot(M[1].t / ms, Data[1],label='neuron1' )
 subplot(512)
-plot(M[14].t / ms, Data[14],label='neuron2' )
+plot(M[4].t / ms, Data[4],label='neuron2' )
 subplot(513)
-plot(M[18].t / ms, Data[18],label='neuron3')
+plot(M[8].t / ms, Data[8],label='neuron3')
 subplot(514)
 plot(m6.t / ms, Z,'-b', label='Z')
-plot(m6.t / ms, Z_t,'--r', label='Z_t')
+plot(m6.t / ms, Z_t,'-r', label='Z_t')
 xlabel('Time (ms)')
 ylabel('rate')
 subplot(515)

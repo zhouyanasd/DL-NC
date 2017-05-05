@@ -44,8 +44,8 @@ def load_para(name):
 #-----parameter setting-------
 n = 20
 time_window = 10*ms
-duration = 500 * ms
-duration_test = 200*ms
+duration = 5000 * ms
+duration_test = 2000*ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -125,7 +125,7 @@ xlabel('Time (ms)')
 ylabel('err')
 subplot(313)
 plot(t_test / ms, Y_test,'-b', label='Y_test')
-plot(t_test / ms, Y_test_t,'--r', label='Y_test_t')
+plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
 xlabel('Time (ms)')
 ylabel('rate')
 show()
