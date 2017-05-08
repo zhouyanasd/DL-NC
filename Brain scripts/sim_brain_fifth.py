@@ -23,9 +23,9 @@ def lms_test(Data, p):
     return f
 
 #-----parameter setting-------
-n = 13
+n = 80
 time_window = 10*ms
-duration = 500 * ms
+duration = 5000 * ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -86,8 +86,8 @@ x2 = m4.smooth_rate(window='gaussian', width=time_window)/ Hz
 x3 = m5.smooth_rate(window='gaussian', width=time_window)/ Hz
 Z = m6.smooth_rate(window='gaussian', width=time_window)/ Hz
 
-Y = np.zeros((5000))
-Y[150:4999] = Z[0:4849]
+Y = np.zeros((50000))
+Y[150:49999] = Z[0:49849]
 Z = Y
 
 Data = [x1,x2,x3]
@@ -126,7 +126,7 @@ subplot(413)
 plot(m5.t / ms, x3,label='neuron3')
 subplot(414)
 plot(m6.t / ms, Z,'-b', label='Z')
-plot(m6.t / ms, Z_t,'--r', label='Z_t')
+plot(m6.t / ms, Z_t,'-r', label='Z_t')
 xlabel('Time (ms)')
 ylabel('rate')
 show()
