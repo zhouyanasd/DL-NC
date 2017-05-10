@@ -86,13 +86,6 @@ x2 = m4.smooth_rate(window='gaussian', width=time_window)/ Hz
 x3 = m5.smooth_rate(window='gaussian', width=time_window)/ Hz
 Z = m6.smooth_rate(window='gaussian', width=time_window)/ Hz
 
-#---------------------------------------------
-#---- for temp solve the delay condition------
-Y = np.zeros((50000))
-Y[150:49999] = Z[0:49849]
-Z = Y
-#---- for temp solve the delay condition------
-#---------------------------------------------
 
 Data = [x1,x2,x3]
 p0=[1,1,1,0.1]
@@ -134,27 +127,3 @@ plot(m6.t / ms, Z_t,'-r', label='Z_t')
 xlabel('Time (ms)')
 ylabel('rate')
 show()
-
-
-
-
-# def get_state(G, M, width):
-#     spike_trains = M.spike_trains()
-#     T = int(G.t/us)
-#     n = len(G.i)
-#     dt = G.clock.dt
-#     rate_G_ = np.zeros((n, T))
-#     rate_G = np.zeros((n, T))
-#     for g in range(n):
-#         for spike in spike_trains[g]:
-#             print('fuck: ',spike /ms* 10)
-#             rate_G_[g][int(spike /ms* 10)] = (10000 / 3)
-#     for g in range(n):
-#         width_dt = int(np.round(2 * width / dt))
-#         window = np.exp(-np.arange(-width_dt,
-#                                    width_dt + 1) ** 2 *
-#                         1. / (2 * (width / dt) ** 2))
-#         rate_G[g] = Quantity(np.convolve(spike_trains[g],
-#                                          window * 1. / sum(window),
-#                                          mode='same'), dim=hertz.dim)
-#     return rate_G

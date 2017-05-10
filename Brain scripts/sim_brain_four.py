@@ -37,14 +37,18 @@ G3 = NeuronGroup(1, equ3, method='euler', threshold='v > 1.3', reset='v = 0', re
 G3.rates = '10*Hz + i*Hz'
 G3.size = '(100-i)/150. + 0.1'
 
-m1 = StateMonitor(G1, 'I', record=0)
-m2 = StateMonitor(G1, 'v', record=0)
+m1 = StateMonitor(G1, ('v', 'I'), record=0)
+m2 = StateMonitor(G2, ('v', 'I'), record=0)
 
 run(1000 * ms)
-plt.figure(figsize=(20, 4))
-subplot(121)
+plt.figure(figsize=(20, 8))
+subplot(221)
 plot(m1.t / ms, m1.I[0], '-b', label='Neuron 0')
-subplot(122)
+subplot(222)
+plot(m2.t / ms, m2.I[0], '-b', label='Neuron 0')
+subplot(223)
+plot(m1.t / ms, m1.v[0], '-b', label='Neuron 0')
+subplot(224)
 plot(m2.t / ms, m2.v[0], '-b', label='Neuron 0')
 show()
 
