@@ -1,5 +1,6 @@
 from brian2 import *
 from scipy.optimize import leastsq
+import scipy as sp
 
 start_scope()
 np.random.seed(100)
@@ -22,8 +23,23 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
+def readout(M,Y):
+    print(M[0])
+    n = len(M)
+    Data=[]
+    for i in range(n):
+        x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
+        Data.append(x)
+    p0 = [1]*n
+    p0.append(0.1)
+    para = lms_train(p0, Z, Data)
+    return Data,para
+
+def mse(y_test, y):
+    return sp.sqrt(sp.mean((y_test - y) ** 2))
+
 #-----parameter setting-------
-n = 80
+n = 20
 time_window = 10*ms
 duration = 5000 * ms
 
@@ -38,20 +54,28 @@ on_pre = '''
 h+=w
 g+=w
 '''
+
 #-----simulation setting-------
+# stimulus = TimedArray(np.tile([100., 0.,0.,100.,0.], 1)*Hz, dt=200.*ms)
+# P = PoissonGroup(2, rates='stimulus(t)')
+
 P = PoissonGroup(1, 50 * Hz)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup(1, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 # S2 = Synapses(G[1:3], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 # S3 = Synapses(G[0:1], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 # S4 = Synapses(G[1:3], G[0:1], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 #-------network topology----------
 S.connect(j='k for k in range(n)')
+S2.connect()
 # S2.connect(condition='i!=j')
 # S3.connect()
 # S4.connect()
 #
-S.w = 'rand()'
+S.w = '0.1+j*'+str(1/n)
+S2.w = 'rand()/10'
 # S2.w = 'rand()*2'
 # S3.w = '-rand()/5'
 # S4.w = 'rand()'
@@ -63,67 +87,62 @@ S.w = 'rand()'
 
 #------run----------------
 m1 = StateMonitor(G, ('v', 'I'), record=True)
-m2 = SpikeMonitor(G)
-m3 = PopulationRateMonitor(G[0:1])
-m4 = PopulationRateMonitor(G[1:2])
-m5 = PopulationRateMonitor(G[2:3])
+m2 = SpikeMonitor(P)
+M = []
+for i in range(G._N):
+    locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
+    M.append(locals()['M' + str(i)])
 m6 = PopulationRateMonitor(P)
-# print(G.state(name='v'))
 
 run(duration)
-# print(m2.spike_trains()[0])
-# print(G.t)
-# print(m2.t/ms, m2.i)
-# print('num: ',m2.num_spikes)
-# print('count: ', m2.count)
-# print('spike_trains: ', m2.spike_trains()[0])
-# print('smooth_rate_P: ', rate)
 
-#----lms_readout----
-print(m3)
-x1 = m3.smooth_rate(window='gaussian', width=time_window)/ Hz
-x2 = m4.smooth_rate(window='gaussian', width=time_window)/ Hz
-x3 = m5.smooth_rate(window='gaussian', width=time_window)/ Hz
-Z = m6.smooth_rate(window='gaussian', width=time_window)/ Hz
+#----lms_readout----#
+#
+Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
 
-
-Data = [x1,x2,x3]
-p0=[1,1,1,0.1]
-k1,k2,k3,b = lms_train(p0,Z,Data)
-para = [k1,k2,k3,b]
-print('k1= ',k1,'k2= ', k2, 'k3 = ', k3,'b = ', b)
+Data, para = readout(M,Z)
+print(para)
 Z_t = lms_test(Data,para)
+err = abs(Z_t-Z)/max(abs(Z_t-Z))
 
 #------vis----------------
+fig0 = plt.figure(figsize=(20, 4))
+plot(m2.t/ms, m2.i, '.k')
+# hh = hist(spikemon.t/ms, 1000, histtype='stepfilled', facecolor='b')
+
 fig1 = plt.figure(figsize=(20, 8))
 subplot(231)
-plot(m1.t / ms, m1.v[0], '-b', label='')
+plot(m1.t / ms, m1.v[1], '-b', label='v')
 
 subplot(234)
-plot(m1.t / ms, m1.I[0], label='I')
-
-subplot(232)
-plot(m1.t / ms, m1.v[1], '-b', label='')
-
-subplot(235)
 plot(m1.t / ms, m1.I[1], label='I')
 
+subplot(232)
+plot(m1.t / ms, m1.v[4], '-b', label='v')
+
+subplot(235)
+plot(m1.t / ms, m1.I[4], label='I')
+
 subplot(233)
-plot(m1.t / ms, m1.v[2], '-b', label='')
+plot(m1.t / ms, m1.v[8], '-b', label='v')
 
 subplot(236)
-plot(m1.t / ms, m1.I[2], label='I')
+plot(m1.t / ms, m1.I[8], label='I')
 
 fig2 = plt.figure(figsize=(20, 10))
-subplot(411)
-plot(m3.t / ms, x1,label='neuron1' )
-subplot(412)
-plot(m4.t / ms, x2,label='neuron2' )
-subplot(413)
-plot(m5.t / ms, x3,label='neuron3')
-subplot(414)
+subplot(511)
+plot(M[1].t / ms, Data[1],label='neuron1' )
+subplot(512)
+plot(M[4].t / ms, Data[4],label='neuron2' )
+subplot(513)
+plot(M[8].t / ms, Data[8],label='neuron3')
+subplot(514)
 plot(m6.t / ms, Z,'-b', label='Z')
 plot(m6.t / ms, Z_t,'-r', label='Z_t')
 xlabel('Time (ms)')
 ylabel('rate')
+subplot(515)
+plot(m6.t / ms, err,'-b', label='Z')
+xlabel('Time (ms)')
+ylabel('err')
 show()
