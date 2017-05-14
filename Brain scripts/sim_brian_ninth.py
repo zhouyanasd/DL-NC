@@ -41,7 +41,7 @@ def mse(y_test, y):
 #-----parameter setting-------
 n = 20
 time_window = 10*ms
-duration = 5000 * ms
+duration = 4000 * ms
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -56,7 +56,7 @@ g+=w
 '''
 
 #-----simulation setting-------
-# stimulus = TimedArray(np.tile([100., 0.,0.,100.,0.], 1)*Hz, dt=200.*ms)
+# stimulus = TimedArray(np.tile([100.,0.,100.,0.], 10)*Hz, dt=100.*ms)
 # P = PoissonGroup(2, rates='stimulus(t)')
 
 P = PoissonGroup(1, 50 * Hz)
