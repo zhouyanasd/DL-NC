@@ -56,8 +56,14 @@ g+=w
 '''
 
 #-----simulation setting-------
+# stimulus = TimedArray(np.tile([100.,0.,100.,0.], 10)*Hz, dt=100.*ms)
+# P = PoissonGroup(2, rates='stimulus(t)')
 
-P = PoissonGroup(1, 50 * Hz)
+indices = zeros(int(duration/(ms*20)))
+times = np.hstack([[c, c+1, c+2, c+3, c+4] for c in np.arange(int(duration/(100*ms)))*10])*(ms*10)
+
+P = SpikeGeneratorGroup(1, indices, times)
+
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
