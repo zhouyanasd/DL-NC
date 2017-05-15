@@ -60,7 +60,7 @@ g+=w
 # P = PoissonGroup(2, rates='stimulus(t)')
 
 indices = zeros(int(duration/(ms*20)))
-times = np.hstack([[c, c+1, c+2, c+3, c+4] for c in np.arange(int(duration/(100*ms)))*10])*(ms*10)
+times = np.hstack([[c, c+1, c+2, c+3, c+4] for c in np.arange(int(duration/(100*ms)))*100])*(ms*1)
 
 P = SpikeGeneratorGroup(1, indices, times)
 
