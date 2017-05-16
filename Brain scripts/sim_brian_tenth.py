@@ -38,6 +38,16 @@ def readout(M,Y):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
+def regularSpike(interval_l,interval_s):
+    # times = np.array([])
+    # for c in np.arange(int(duration / interval_l)) * (interval_l / interval_s):
+    #     times = np.hstack((times,[c, c + 21, c + 52, c + 63, c + 14]))
+    # times = times *interval_s
+    times = np.hstack([[c, c + 1, c + 2] for c in
+                       np.arange(int(duration / interval_l)) * (interval_l / interval_s)]) * interval_s
+    indices = zeros(int(len(times)))
+    return SpikeGeneratorGroup(1, indices, times)
+
 #-----parameter setting-------
 n = 20
 time_window = 10*ms
@@ -57,12 +67,9 @@ g+=w
 
 #-----simulation setting-------
 # stimulus = TimedArray(np.tile([100.,0.,100.,0.], 10)*Hz, dt=100.*ms)
-# P = PoissonGroup(2, rates='stimulus(t)')
+# P = PoissonGroup(2, rates='stimulus(t)')111
 
-indices = zeros(int(duration/(ms*20)))
-times = np.hstack([[c, c+1, c+2, c+3, c+4] for c in np.arange(int(duration/(100*ms)))*100])*(ms*1)
-
-P = SpikeGeneratorGroup(1, indices, times)
+P = regularSpike(100*ms,20*ms)
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
