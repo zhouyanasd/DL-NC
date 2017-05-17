@@ -24,7 +24,6 @@ def lms_test(Data, p):
     return f
 
 def readout(M,Y):
-    print(M[0])
     n = len(M)
     Data=[]
     for i in range(n):
@@ -38,26 +37,56 @@ def readout(M,Y):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def regularSpike(interval_l,interval_s):
-    # times = np.array([])
-    # for c in np.arange(int(duration / interval_l)) * (interval_l / interval_s):
-    #     times = np.hstack((times,[c, c + 21, c + 52, c + 63, c + 14]))
-    # times = times *interval_s
-    times = np.hstack([[c, c + 1, c + 2] for c in
-                       np.arange(int(duration / interval_l)) * (interval_l / interval_s)]) * interval_s
+def binary_classification(neu =1, interval_l=8,interval_s = ms):
+    def tran_bin(A):
+        trans = []
+        for a in A:
+            for i in range(2):
+                trans.append(0)
+            a_ = bin(a)[2:]
+            while len(a_) <3:
+                a_ = '0'+a_
+            for i in a_:
+                trans.append(int(i))
+            for i in range(3):
+                trans.append(0)
+        return np.asarray(trans)
+    n = int(duration/(interval_l*interval_s))
+    label = np.random.randint(1,8,n)
+    seq = tran_bin(label)
+    times = where(seq ==1)[0]*interval_s
     indices = zeros(int(len(times)))
-    return SpikeGeneratorGroup(1, indices, times)
+    P = SpikeGeneratorGroup(neu, indices, times)
+    return P , label
+
+def label_to_obj(label,obj):
+    temp = []
+    for a in label:
+        if a == obj:
+            temp.append(1)
+        else:
+            temp.append(-1)
+    return np.asarray(temp)
+
+def I_to_data(mon,interval_l,interval_s):
+    dt = duration/(interval_l*interval_s)
+    data=[]
+    for m in mon.indices:
+        data_t = []
+        pass
 
 #-----parameter setting-------
-n = 20
-time_window = 10*ms
-duration = 4000 * ms
+n = 10
+time_window = 5*ms
+duration = 2000 * ms
+interval_l = 8
+interval_s = ms
 
 equ = '''
-dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
-dg/dt = (-g)/(10*ms) : 1
-dh/dt = (-h)/(9.5*ms) : 1
-I = (g-h)*20 : 1
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
+I = (g-h)*30 : 1
 '''
 
 on_pre = '''
@@ -69,7 +98,7 @@ g+=w
 # stimulus = TimedArray(np.tile([100.,0.,100.,0.], 10)*Hz, dt=100.*ms)
 # P = PoissonGroup(2, rates='stimulus(t)')
 
-P = regularSpike(100*ms,20*ms)
+P , label = binary_classification(interval_l,interval_s)
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
@@ -103,7 +132,7 @@ S4.w = 'rand()'
 
 
 #------run----------------
-m1 = StateMonitor(G, ('v', 'I'), record=True)
+m1 = StateMonitor(G, ('v', 'I'), record=True, dt = interval_l*interval_s)
 m2 = SpikeMonitor(P)
 M = []
 for i in range(G._N):
@@ -122,29 +151,14 @@ print(para)
 Z_t = lms_test(Data,para)
 err = abs(Z_t-Z)/max(abs(Z_t-Z))
 
+#----
+obj1 = label_to_obj(label,1)
+
+m1.record_single_timestep()
+
 #------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
 plot(m2.t/ms, m2.i, '.k')
-# hh = hist(spikemon.t/ms, 1000, histtype='stepfilled', facecolor='b')
-
-fig1 = plt.figure(figsize=(20, 8))
-subplot(231)
-plot(m1.t / ms, m1.v[1], '-b', label='v')
-
-subplot(234)
-plot(m1.t / ms, m1.I[1], label='I')
-
-subplot(232)
-plot(m1.t / ms, m1.v[4], '-b', label='v')
-
-subplot(235)
-plot(m1.t / ms, m1.I[4], label='I')
-
-subplot(233)
-plot(m1.t / ms, m1.v[8], '-b', label='v')
-
-subplot(236)
-plot(m1.t / ms, m1.I[8], label='I')
 
 fig2 = plt.figure(figsize=(20, 10))
 subplot(511)
