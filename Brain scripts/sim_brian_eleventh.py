@@ -23,16 +23,16 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-def readout(M,Y):
-    n = len(M)
-    Data=[]
-    for i in range(n):
-        x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
-        Data.append(x)
-    p0 = [1]*n
-    p0.append(0.1)
-    para = lms_train(p0, Z, Data)
-    return Data,para
+# def readout(M,Y):
+#     n = len(M)
+#     Data=[]
+#     for i in range(n):
+#         x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
+#         Data.append(x)
+#     p0 = [1]*n
+#     p0.append(0.1)
+#     para = lms_train(p0, Z, Data)
+#     return Data,para
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
@@ -69,11 +69,16 @@ def label_to_obj(label,obj):
     return np.asarray(temp)
 
 def I_to_data(mon,interval_l,interval_s):
-    dt = duration/(interval_l*interval_s)
+    dt = int(interval_l*interval_s)/defaultclock.dt
+    n = int(duration/(interval_l*interval_s))
     data=[]
     for m in mon.indices:
         data_t = []
-        pass
+        for i in range(n):
+            data_t.append(m.I[dt*i])
+        data.append(data_t)
+    return np.asarray(data)
+
 
 #-----parameter setting-------
 n = 10
@@ -95,8 +100,6 @@ g+=w
 '''
 
 #-----simulation setting-------
-# stimulus = TimedArray(np.tile([100.,0.,100.,0.], 10)*Hz, dt=100.*ms)
-# P = PoissonGroup(2, rates='stimulus(t)')
 
 P , label = binary_classification(interval_l,interval_s)
 
@@ -134,46 +137,45 @@ S4.w = 'rand()'
 #------run----------------
 m1 = StateMonitor(G, ('v', 'I'), record=True, dt = interval_l*interval_s)
 m2 = SpikeMonitor(P)
-M = []
-for i in range(G._N):
-    locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
-    M.append(locals()['M' + str(i)])
-m6 = PopulationRateMonitor(P)
+# M = []
+# for i in range(G._N):
+#     locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
+#     M.append(locals()['M' + str(i)])
+# m6 = PopulationRateMonitor(P)
 
 run(duration)
 
 #----lms_readout----#
 #
-Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
-
-Data, para = readout(M,Z)
-print(para)
-Z_t = lms_test(Data,para)
-err = abs(Z_t-Z)/max(abs(Z_t-Z))
+# Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
+#
+# Data, para = readout(M,Z)
+# print(para)
+# Z_t = lms_test(Data,para)
+# err = abs(Z_t-Z)/max(abs(Z_t-Z))
 
 #----
 obj1 = label_to_obj(label,1)
 
-m1.record_single_timestep()
 
 #------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
 plot(m2.t/ms, m2.i, '.k')
 
-fig2 = plt.figure(figsize=(20, 10))
-subplot(511)
-plot(M[1].t / ms, Data[1],label='neuron1' )
-subplot(512)
-plot(M[4].t / ms, Data[4],label='neuron2' )
-subplot(513)
-plot(M[8].t / ms, Data[8],label='neuron3')
-subplot(514)
-plot(m6.t / ms, Z,'-b', label='Z')
-plot(m6.t / ms, Z_t,'-r', label='Z_t')
-xlabel('Time (ms)')
-ylabel('rate')
-subplot(515)
-plot(m6.t / ms, err,'-b', label='Z')
-xlabel('Time (ms)')
-ylabel('err')
+# fig2 = plt.figure(figsize=(20, 10))
+# subplot(511)
+# plot(M[1].t / ms, Data[1],label='neuron1' )
+# subplot(512)
+# plot(M[4].t / ms, Data[4],label='neuron2' )
+# subplot(513)
+# plot(M[8].t / ms, Data[8],label='neuron3')
+# subplot(514)
+# plot(m6.t / ms, Z,'-b', label='Z')
+# plot(m6.t / ms, Z_t,'-r', label='Z_t')
+# xlabel('Time (ms)')
+# ylabel('rate')
+# subplot(515)
+# plot(m6.t / ms, err,'-b', label='Z')
+# xlabel('Time (ms)')
+# ylabel('err')
 show()
