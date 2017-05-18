@@ -23,21 +23,20 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-# def readout(M,Y):
-#     n = len(M)
-#     Data=[]
-#     for i in range(n):
-#         x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
-#         Data.append(x)
-#     p0 = [1]*n
-#     p0.append(0.1)
-#     para = lms_train(p0, Z, Data)
-#     return Data,para
+def readout(M,Z):
+    n = len(M)
+    Data=[]
+    for i in M:
+        Data.append(i[1:])
+    p0 = [1]*n
+    p0.append(0.1)
+    para = lms_train(p0, Z, Data)
+    return Data,para
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(neu =1, interval_l=8,interval_s = ms):
+def binary_classification(neu =1, interval_l=5,interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
@@ -51,7 +50,7 @@ def binary_classification(neu =1, interval_l=8,interval_s = ms):
             for i in range(3):
                 trans.append(0)
         return np.asarray(trans)
-    n = int(duration/(interval_l*interval_s))
+    n = int((duration/interval_s)/interval_l)
     label = np.random.randint(1,8,n)
     seq = tran_bin(label)
     times = where(seq ==1)[0]*interval_s
@@ -65,20 +64,25 @@ def label_to_obj(label,obj):
         if a == obj:
             temp.append(1)
         else:
-            temp.append(-1)
+            temp.append(0)
     return np.asarray(temp)
 
-def I_to_data(mon,interval_l,interval_s):
-    dt = int(interval_l*interval_s)/defaultclock.dt
-    n = int(duration/(interval_l*interval_s))
-    data=[]
-    for m in mon.indices:
-        data_t = []
-        for i in range(n):
-            data_t.append(m.I[dt*i])
-        data.append(data_t)
-    return np.asarray(data)
-
+def classification(thea, data):
+    def normalization_min_max(arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr))/(np.max(arr)- np.min(arr))
+            arr_n[i] = x
+        return arr_n
+    data_n = normalization_min_max(data)
+    data_class = []
+    for a in data_n:
+        if a >=thea:
+            b = 1
+        else:
+            b = 0
+        data_class.append(b)
+    return np.asarray(data_class),data_n
 
 #-----parameter setting-------
 n = 10
@@ -86,9 +90,16 @@ time_window = 5*ms
 duration = 2000 * ms
 interval_l = 8
 interval_s = ms
+threshold = 0.7
 
 equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
+I = (g-h)*30 : 1
+'''
+
+equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*30 : 1
@@ -101,14 +112,16 @@ g+=w
 
 #-----simulation setting-------
 
-P , label = binary_classification(interval_l,interval_s)
+P , label = binary_classification(1,interval_l,interval_s)
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
+G_readout=NeuronGroup(n,equ_1,method='linear')
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S2 = Synapses(G[1:3], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 # S3 = Synapses(G[0:1], G[1:3], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 # S4 = Synapses(G[1:3], G[0:1], 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
@@ -118,6 +131,7 @@ S.connect(j='k for k in range(n)')
 S2.connect()
 S3.connect()
 S4.connect(condition='i != j', p=0.1)
+S_readout.connect(j='i')
 # S2.connect(condition='i!=j')
 # S3.connect()
 # S4.connect()
@@ -135,47 +149,40 @@ S4.w = 'rand()'
 
 
 #------run----------------
-m1 = StateMonitor(G, ('v', 'I'), record=True, dt = interval_l*interval_s)
+m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
 m2 = SpikeMonitor(P)
-# M = []
-# for i in range(G._N):
-#     locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
-#     M.append(locals()['M' + str(i)])
-# m6 = PopulationRateMonitor(P)
+m3 = StateMonitor(G_readout, ('I'), record=True)
 
 run(duration)
 
 #----lms_readout----#
-#
-# Z = (m6.smooth_rate(window='gaussian', width=time_window)/ Hz)
-#
-# Data, para = readout(M,Z)
-# print(para)
-# Z_t = lms_test(Data,para)
-# err = abs(Z_t-Z)/max(abs(Z_t-Z))
-
-#----
-obj1 = label_to_obj(label,1)
-
+obj1 = label_to_obj(label,6)
+m1.record_single_timestep()
+Data,para = readout(m1.I,obj1)
+print(para)
+obj1_t = lms_test(Data,para)
+obj1_t_class,data_n = classification(threshold,obj1_t)
 
 #------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
 plot(m2.t/ms, m2.i, '.k')
 
-# fig2 = plt.figure(figsize=(20, 10))
-# subplot(511)
-# plot(M[1].t / ms, Data[1],label='neuron1' )
-# subplot(512)
-# plot(M[4].t / ms, Data[4],label='neuron2' )
-# subplot(513)
-# plot(M[8].t / ms, Data[8],label='neuron3')
-# subplot(514)
-# plot(m6.t / ms, Z,'-b', label='Z')
-# plot(m6.t / ms, Z_t,'-r', label='Z_t')
-# xlabel('Time (ms)')
-# ylabel('rate')
-# subplot(515)
-# plot(m6.t / ms, err,'-b', label='Z')
-# xlabel('Time (ms)')
-# ylabel('err')
+fig1 = plt.figure(figsize=(20, 4))
+subplot(111)
+plt.scatter(m1.t[1:] / ms, obj1_t_class,color="red")
+plt.scatter(m1.t[1:] / ms, obj1,color="blue")
+plt.scatter(m1.t[1:] / ms, data_n,color="green")
+axhline(threshold, ls='--', c='r', lw=3)
+
+fig2 = plt.figure(figsize=(20, 8))
+subplot(511)
+plot(m3.t / ms, m3.I[1], '-b', label='I')
+subplot(512)
+plot(m3.t / ms, m3.I[3], '-b', label='I')
+subplot(513)
+plot(m3.t / ms, m3.I[5], '-b', label='I')
+subplot(514)
+plot(m3.t / ms, m3.I[7], '-b', label='I')
+subplot(515)
+plot(m3.t / ms, m3.I[9], '-b', label='I')
 show()
