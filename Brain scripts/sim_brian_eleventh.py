@@ -96,7 +96,7 @@ equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*30 : 1
+I = (g-h)*40 : 1
 '''
 
 equ_1 = '''
@@ -136,10 +136,10 @@ S_readout.connect(j='i')
 # S3.connect()
 # S4.connect()
 #
-S.w = '0.1+j*'+str(1/n)
+S.w = '0.2+j*'+str(0.8/n)
 S2.w = '-rand()/2'
 S3.w = '0.3+j*0.3'
-S4.w = 'rand()'
+S4.w = '0'
 # S2.w = 'rand()*2'
 # S3.w = '-rand()/5'
 # print('S.w: ',S.w)
@@ -156,7 +156,7 @@ m3 = StateMonitor(G_readout, ('I'), record=True)
 run(duration)
 
 #----lms_readout----#
-obj1 = label_to_obj(label,7)
+obj1 = label_to_obj(label,6)
 m1.record_single_timestep()
 Data,para = readout(m1.I,obj1)
 print(para)
