@@ -51,7 +51,7 @@ def binary_classification(neu =1, interval_l=5,interval_s = ms):
                 trans.append(0)
         return np.asarray(trans)
     n = int((duration/interval_s)/interval_l)
-    label = np.random.randint(5,7,n)
+    label = np.random.randint(1,3,n)
     seq = tran_bin(label)
     times = where(seq ==1)[0]*interval_s
     indices = zeros(int(len(times)))
@@ -157,7 +157,7 @@ m4 = StateMonitor(G, ('I'), record=True)
 run(duration)
 
 #----lms_readout----#
-obj1 = label_to_obj(label,6)
+obj1 = label_to_obj(label,3)
 m1.record_single_timestep()
 Data,para = readout(m1.I,obj1)
 print(para)
