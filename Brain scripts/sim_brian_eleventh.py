@@ -51,7 +51,7 @@ def binary_classification(neu =1, interval_l=5,interval_s = ms):
                 trans.append(0)
         return np.asarray(trans)
     n = int((duration/interval_s)/interval_l)
-    label = np.random.randint(1,3,n)
+    label = np.random.randint(2,4,n)
     seq = tran_bin(label)
     times = where(seq ==1)[0]*interval_s
     indices = zeros(int(len(times)))
