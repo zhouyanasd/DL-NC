@@ -90,7 +90,7 @@ time_window = 5*ms
 duration = 2000 * ms
 interval_l = 8
 interval_s = ms
-threshold = 0.7
+threshold = 0.65
 
 equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
@@ -156,7 +156,7 @@ m3 = StateMonitor(G_readout, ('I'), record=True)
 run(duration)
 
 #----lms_readout----#
-obj1 = label_to_obj(label,6)
+obj1 = label_to_obj(label,7)
 m1.record_single_timestep()
 Data,para = readout(m1.I,obj1)
 print(para)
