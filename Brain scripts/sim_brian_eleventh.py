@@ -51,7 +51,7 @@ def binary_classification(neu =1, interval_l=5,interval_s = ms):
                 trans.append(0)
         return np.asarray(trans)
     n = int((duration/interval_s)/interval_l)
-    label = np.random.randint(1,8,n)
+    label = np.random.randint(5,7,n)
     seq = tran_bin(label)
     times = where(seq ==1)[0]*interval_s
     indices = zeros(int(len(times)))
@@ -139,7 +139,7 @@ S_readout.connect(j='i')
 S.w = '0.2+j*'+str(0.8/n)
 S2.w = '-rand()/2'
 S3.w = '0.3+j*0.3'
-S4.w = '0'
+S4.w = 'rand()'
 # S2.w = 'rand()*2'
 # S3.w = '-rand()/5'
 # print('S.w: ',S.w)
@@ -152,6 +152,7 @@ S4.w = '0'
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
 m2 = SpikeMonitor(P)
 m3 = StateMonitor(G_readout, ('I'), record=True)
+m4 = StateMonitor(G, ('I'), record=True)
 
 run(duration)
 
@@ -185,4 +186,16 @@ subplot(514)
 plot(m3.t / ms, m3.I[7], '-b', label='I')
 subplot(515)
 plot(m3.t / ms, m3.I[9], '-b', label='I')
+
+fig3 = plt.figure(figsize=(20, 8))
+subplot(511)
+plot(m4.t / ms, m4.I[1], '-b', label='I')
+subplot(512)
+plot(m4.t / ms, m4.I[3], '-b', label='I')
+subplot(513)
+plot(m4.t / ms, m4.I[5], '-b', label='I')
+subplot(514)
+plot(m4.t / ms, m4.I[7], '-b', label='I')
+subplot(515)
+plot(m4.t / ms, m4.I[9], '-b', label='I')
 show()
