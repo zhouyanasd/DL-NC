@@ -62,12 +62,22 @@ g+=w
 #-----simulation setting-------
 P = PoissonGroup(1, 50 * Hz)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
+S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
+S2.connect()
+S3.connect()
+S4.connect(condition='i != j', p=0.1)
 
 S.w = '0.1+j*'+str(1/n)
+S2.w = '-rand()/2'
+S3.w = '0.3+j*0.3'
+S4.w = 'rand()'
 # S.w[0] = 1
 # print(S.w[0:3])
 
