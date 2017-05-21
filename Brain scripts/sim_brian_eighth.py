@@ -86,9 +86,9 @@ for n in range(1,N):
 
     # ------monitor----------------
     M = []
-    for i in range(G._N):
-        locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
-        M.append(locals()['M' + str(i)])
+    for mi in range(G._N):
+        locals()['M' + str(mi)] = PopulationRateMonitor(G[(mi):(mi + 1)])
+        M.append(locals()['M' + str(mi)])
     m_y = PopulationRateMonitor(P)
 
     # ------run for train----------------
