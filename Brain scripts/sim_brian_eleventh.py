@@ -170,8 +170,8 @@ plot(m2.t/ms, m2.i, '.k')
 
 fig1 = plt.figure(figsize=(20, 4))
 subplot(111)
-plt.scatter(m1.t[1:] / ms, obj1_t_class,color="red")
-plt.scatter(m1.t[1:] / ms, obj1,color="blue")
+plt.scatter(m1.t[1:] / ms, obj1_t_class,s=2, color="red", marker='o')
+plt.scatter(m1.t[1:] / ms, obj1,s=2,color="blue",marker='v')
 plt.scatter(m1.t[1:] / ms, data_n,color="green")
 axhline(threshold, ls='--', c='r', lw=3)
 

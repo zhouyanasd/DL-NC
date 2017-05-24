@@ -27,7 +27,7 @@ def readout(M,Z):
     n = len(M)
     Data=[]
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     p0 = [1]*n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
@@ -36,47 +36,25 @@ def readout(M,Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(neu =1, interval_l=5,interval_s = ms):
-    def tran_bin(A):
-        trans = []
-        for a in A:
-            for i in range(2):
-                trans.append(0)
-            a_ = bin(a)[2:]
-            while len(a_) <3:
-                a_ = '0'+a_
-            for i in a_:
-                trans.append(int(i))
-            for i in range(3):
-                trans.append(0)
-        return np.asarray(trans)
-    n = int((duration/interval_s)/interval_l)
-    label = np.random.randint(1,3,n)
-    seq = tran_bin(label)
-    times = where(seq ==1)[0]*interval_s
-    indices = zeros(int(len(times)))
-    P = SpikeGeneratorGroup(neu, indices, times)
-    return P , label
-
 
 def Tri_function(duration):
     rng = np.random
     TIME_SCALE = defaultclock.dt
-    in_number = duration/TIME_SCALE
+    in_number = int(duration/TIME_SCALE)
 
     def sin_fun(l, c, t):
-        return (np.sin(c * t * TIME_SCALE) + 1) / 2
+        return (np.sin(c * t * TIME_SCALE/us) + 1) / 2
 
     def tent_map(l, c, t):
         temp = l
-        if (temp < 0.5 and temp >= 0):
-            temp = (c / 50) * temp
+        if (temp < 0.5 and temp > 0):
+            temp = (c / 101+1) * temp
             return temp
-        elif (temp >= 0.5 and temp <= 1):
-            temp = (c / 50) * (1 - temp)
+        elif (temp >= 0.5 and temp < 1):
+            temp = (c / 101+1) * (1 - temp)
             return temp
         else:
-            return 0
+            return 0.5
 
     def constant(l, c, t):
         return c / 100
@@ -97,41 +75,35 @@ def Tri_function(duration):
         else:
             return True
 
-    def trans_cls(cla):
-        cla_tran = []
-        for i in range(3):
-            cla_t = np.zeros(cla.size)
-            for j in range(cla.size):
-                if cla[j] == i:
-                    cla_t[j] = 1
-                else:
-                    cla_t[j] = -1
-            cla_tran.append(cla_t)
-        return cla_tran
-
-    data_t = np.zeros(in_number)
-    cla_t = np.zeros(in_number)
+    data = []
+    cla = []
     cons = rng.randint(1, 101)
     fun, c = chose_fun()
 
     for t in range(in_number):
-        if change_fun(0.05):
+        if change_fun(0.7) and t % 50 ==0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
             try:
-                data_t[t] = fun(data_t[t - 1], cons, t)
-                cla_t[t] = c
+                data_t= fun(data[t - 1], cons, t)
+                data.append(data_t)
+                cla.append(c)
             except IndexError:
-                data_t[t] = fun(rng.randint(0, 101), cons, t)
-                cla_t[t] = c
+                data_t = fun(rng.randint(1, 101)/100, cons, t)
+                data.append(data_t)
+                cla.append(c)
         else:
             try:
-                data_t[t] = fun(data_t[t - 1], cons, t)
-                cla_t[t] = c
+                data_t = fun(data[t - 1], cons, t)
+                data.append(data_t)
+                cla.append(c)
             except IndexError:
-                data_t[t] = fun(rng.randint(0, 101), cons, t)
-                cla_t[t] = c
-    return data_t, cla_t
+                data_t= fun(rng.randint(1, 101)/100, cons, t)
+                data.append(data_t)
+                cla.append(c)
+    cla = np.asarray(cla)
+    data = np.asarray(data)
+    return data, cla
 
 def label_to_obj(label,obj):
     temp = []
@@ -160,18 +132,20 @@ def classification(thea, data):
     return np.asarray(data_class),data_n
 
 #-----parameter setting-------
-n = 10
+n = 20
 time_window = 5*ms
-duration = 2000 * ms
+duration = 200 * ms
 interval_l = 8
 interval_s = ms
-threshold = 0.65
+threshold = 0.6
 
 equ = '''
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms) : 1
-dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*40 : 1
+dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(0.15*ms) : 1
+dh/dt = (-h)/(0.145*ms) : 1
+I = (g-h)*40 +I_0: 1
+I_0 = stimulus(t)*w_g:1
+w_g : 1
 '''
 
 equ_1 = '''
@@ -187,35 +161,30 @@ g+=w
 
 #-----simulation setting-------
 
-P , label = binary_classification(1,interval_l,interval_s)
+data , label = Tri_function(duration)
+stimulus = TimedArray(data,dt=defaultclock.dt)
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
 G_readout=NeuronGroup(n,equ_1,method='linear')
-S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
-S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
-S.connect(j='k for k in range(n)')
 S2.connect()
-S3.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
 #
-S.w = '0.2+j*'+str(0.8/n)
+G.w_g = '0.2+i*'+str(0.8/n)
+G2.w_g = '0.3+i*0.3'
+
 S2.w = '-rand()/2'
-S3.w = '0.3+j*0.3'
-S4.w = '0'
-
-
+S4.w = 'rand()'
 
 #------run----------------
-m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
-m2 = SpikeMonitor(P)
 m3 = StateMonitor(G_readout, ('I'), record=True)
 m4 = StateMonitor(G, ('I'), record=True)
 
@@ -223,22 +192,21 @@ run(duration)
 
 #----lms_readout----#
 obj1 = label_to_obj(label,2)
-m1.record_single_timestep()
-Data,para = readout(m1.I,obj1)
+Data,para = readout(m3.I,obj1)
 print(para)
 obj1_t = lms_test(Data,para)
 obj1_t_class,data_n = classification(threshold,obj1_t)
 
 #------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
-plot(m2.t/ms, m2.i, '.k')
+plot(data, 'r')
 
 fig1 = plt.figure(figsize=(20, 4))
 subplot(111)
-plt.scatter(m1.t[1:] / ms, obj1_t_class,color="red")
-plt.scatter(m1.t[1:] / ms, obj1,color="blue")
-plt.scatter(m1.t[1:] / ms, data_n,color="green")
-axhline(threshold, ls='--', c='r', lw=3)
+plt.scatter(m3.t / ms, obj1_t_class,s=2, color="red", marker='o')
+plt.scatter(m3.t / ms, obj1,s=2,color="blue",marker='*')
+plt.plot(m3.t / ms, data_n,color="green")
+axhline(threshold, ls='--', c='r', lw=1)
 
 fig2 = plt.figure(figsize=(20, 8))
 subplot(511)
