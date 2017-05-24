@@ -137,7 +137,7 @@ time_window = 5*ms
 duration = 200 * ms
 interval_l = 8
 interval_s = ms
-threshold = 0.6
+threshold = 0.5
 
 equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
@@ -191,7 +191,7 @@ m4 = StateMonitor(G, ('I'), record=True)
 run(duration)
 
 #----lms_readout----#
-obj1 = label_to_obj(label,2)
+obj1 = label_to_obj(label,1)
 Data,para = readout(m3.I,obj1)
 print(para)
 obj1_t = lms_test(Data,para)
