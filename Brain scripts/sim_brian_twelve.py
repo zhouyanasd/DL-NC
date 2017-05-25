@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 import scipy as sp
 
 start_scope()
-np.random.seed(100)
+np.random.seed(101)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -203,9 +203,9 @@ plot(data, 'r')
 
 fig1 = plt.figure(figsize=(20, 4))
 subplot(111)
-plt.scatter(m3.t / ms, obj1_t_class,s=2, color="red", marker='o')
-plt.scatter(m3.t / ms, obj1,s=2,color="blue",marker='*')
-plt.plot(m3.t / ms, data_n,color="green")
+plt.scatter(m3.t / ms, obj1_t_class,s=2, color="red", marker='o',alpha=0.6)
+plt.scatter(m3.t / ms, obj1,s=3,color="blue",marker='*',alpha=0.4)
+plt.scatter(m3.t / ms, data_n,s=2,color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 
 fig2 = plt.figure(figsize=(20, 8))
