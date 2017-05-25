@@ -191,7 +191,7 @@ m4 = StateMonitor(G, ('I'), record=True)
 run(duration)
 
 #----lms_readout----#
-obj1 = label_to_obj(label,1)
+obj1 = label_to_obj(label,0)
 Data,para = readout(m3.I,obj1)
 print(para)
 obj1_t = lms_test(Data,para)
