@@ -37,4 +37,8 @@ while True:
         continue
 
 print(a[19])
-print(a[45])
+print(a[4273])
+
+b=np.loadtxt("../Data/jv/size.txt", delimiter=None).astype(int)
+
+print(b)
