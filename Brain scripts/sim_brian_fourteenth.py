@@ -82,6 +82,9 @@ def load_Data_JV_long(path):
     data_l = np.loadtxt(path, delimiter=None).astype(int)
     return data_l
 
+def get_label():
+    pass
+
 #-----parameter setting-------
 n = 20
 time_window = 5*ms
