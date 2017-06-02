@@ -67,7 +67,7 @@ def load_Data_JV(path = "Data/jv/train.txt"):
             i -= 1
             size_d.append(i)
             continue
-    return data,size_d
+    return data.T,size_d
 
 def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
     if t =="train":
@@ -76,16 +76,19 @@ def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
         data_l = np.loadtxt(path, delimiter=None).astype(int)[0]
     else:
         raise TypeError("t must be 'train' or 'test'")
+    data_l = np.cumsum(data_l)
+    data_l_ = np.concatenate(([0], data_l))
+    size_d_ = np.asarray(size_d) + 1
+    size_d_ = np.concatenate(([0], size_d_))
     label = []
-    for i in range(len(data_l)):
-
-        for j in range(data_l[i]):
-            for l in range(size_d[j]):
-                if i == obj:
+    for i in range(len(data_l_) - 1):
+        for j in range(data_l_[i], data_l_[i + 1]):
+            for l in range(size_d_[j], size_d_[j + 1]):
+                if i == 0:
                     label.append(1)
                 else:
                     label.append(0)
-    return label
+    return asarray(label)
 
 
 
@@ -97,14 +100,18 @@ interval_l = 8
 interval_s = ms
 threshold = 0.5
 
+str='I_0 = '
+for I in range(12):
+    str=str+'stimulus['+I+'](t)*w_g'
+str = str +' : 1'
+
 equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms) : 1
 dh/dt = (-h)/(0.145*ms) : 1
 I = (g-h)*40 +I_0: 1
-I_0 = stimulus(t)*w_g:1
 w_g : 1
-'''
+'''+str
 
 equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
@@ -122,4 +129,31 @@ g+=w
 data , size_d= load_Data_JV()
 label = get_label(1,"train",size_d)
 
-print(label)
+stimulus = []
+for sti in range(12):
+    stimulus.append(TimedArray(data[sti], dt=defaultclock.dt))
+
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
+G_readout=NeuronGroup(n,equ_1,method='linear')
+
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
+S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+
+#-------network topology----------
+S2.connect()
+S4.connect(condition='i != j', p=0.1)
+S_readout.connect(j='i')
+
+G.w_g = '0.2+i*'+str(0.8/n)
+G2.w_g = '0.3+i*0.3'
+
+S2.w = '-rand()/2'
+S4.w = 'rand()'
+
+#------run----------------
+m3 = StateMonitor(G_readout, ('I'), record=True)
+m4 = StateMonitor(G, ('I'), record=True)
+
+run(duration)
