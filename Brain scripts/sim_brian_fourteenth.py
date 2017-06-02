@@ -33,15 +33,6 @@ def readout(M,Z):
     para = lms_train(p0, Z, Data)
     return Data,para
 
-def label_to_obj(label,obj):
-    temp = []
-    for a in label:
-        if a == obj:
-            temp.append(1)
-        else:
-            temp.append(0)
-    return np.asarray(temp)
-
 def classification(thea, data):
     def normalization_min_max(arr):
         arr_n = arr
@@ -66,7 +57,7 @@ def load_Data_JV(path = "Data/jv/train.txt"):
     data = np.loadtxt(path, delimiter=None)
     s = open(path, 'r')
     i = -1
-    l = []
+    size_d = []
     while True:
         lines = s.readline()
         i += 1
@@ -74,16 +65,29 @@ def load_Data_JV(path = "Data/jv/train.txt"):
             break
         if lines == '\n':#"\n" needed to be added at the end of the file
             i -= 1
-            l.append(i)
+            size_d.append(i)
             continue
-    return data,l
+    return data,size_d
 
-def load_Data_JV_long(path):
-    data_l = np.loadtxt(path, delimiter=None).astype(int)
-    return data_l
+def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
+    if t =="train":
+        data_l = np.loadtxt(path, delimiter=None).astype(int)[1]
+    elif t=="test":
+        data_l = np.loadtxt(path, delimiter=None).astype(int)[0]
+    else:
+        raise TypeError("t must be 'train' or 'test'")
+    label = []
+    for i in range(len(data_l)):
 
-def get_label():
-    pass
+        for j in range(data_l[i]):
+            for l in range(size_d[j]):
+                if i == obj:
+                    label.append(1)
+                else:
+                    label.append(0)
+    return label
+
+
 
 #-----parameter setting-------
 n = 20
@@ -114,3 +118,8 @@ g+=w
 '''
 
 #-----simulation setting-------
+
+data , size_d= load_Data_JV()
+label = get_label(1,"train",size_d)
+
+print(label)
