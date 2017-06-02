@@ -39,15 +39,18 @@ while True:
 data_l=np.loadtxt("../Data/jv/size.txt", delimiter=None).astype(int)[1]
 
 data_l = np.cumsum(data_l)
-print(data_l)
-
+data_l_ = np.concatenate(([0],data_l))
+size_l_ = np.asarray(size_l)+1
+size_l_ = np.concatenate(([0],size_l_))
 label = []
-for i in range(len(data_l)):
-    for j in range(data_l[i]):
-        for l in range(size_l[j]):
+for i in range(len(data_l_)-1):
+    for j in range(data_l_[i],data_l_[i+1]):
+        print("j:",j)
+        for l in range(size_l_[j],size_l_[j+1]):
+            print("l:",l)
             if i == 1:
                 label.append(1)
             else:
                 label.append(0)
-
-print(label)
+print(len(label))
+print(len(a))
