@@ -1,5 +1,6 @@
 import numpy as np
 
+np.random.seed(100)
 def read_from_txt(filename=None):
     """
     read dataset from txt and return np.array
@@ -51,5 +52,5 @@ for i in range(len(data_l_)-1):
             else:
                 label.append(0)
 print(len(label))
-print(len(a.T[1]))
 print(label[size_l[29]])
+print(np.dot(a[1],np.random.rand(12)))

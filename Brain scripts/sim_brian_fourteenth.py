@@ -67,7 +67,7 @@ def load_Data_JV(path = "Data/jv/train.txt"):
             i -= 1
             size_d.append(i)
             continue
-    return data.T,size_d
+    return data,size_d
 
 def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
     if t =="train":
@@ -100,18 +100,19 @@ interval_l = 8
 interval_s = ms
 threshold = 0.5
 
-str='I_0 = '
-for I in range(12):
-    str=str+'stimulus['+I+'](t)*w_g'
-str = str +' : 1'
+# st='I_0 = '
+# for I in range(12):
+#     st=st+'+stimulus['+str(I)+'](t)*w_g'
+# st = st +' : 1'
 
 equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms) : 1
 dh/dt = (-h)/(0.145*ms) : 1
 I = (g-h)*40 +I_0: 1
+I_0 = stimulus(t)*w_g:1
 w_g : 1
-'''+str
+'''
 
 equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
@@ -146,7 +147,7 @@ S2.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
-G.w_g = '0.2+i*'+str(0.8/n)
+G.w_g = 'rand(12)'#'0.2+i*'+str(0.8/n)
 G2.w_g = '0.3+i*0.3'
 
 S2.w = '-rand()/2'
