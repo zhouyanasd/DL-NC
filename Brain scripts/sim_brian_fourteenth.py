@@ -27,7 +27,7 @@ def readout(M,Z):
     n = len(M)
     Data=[]
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     p0 = [1]*n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
@@ -91,8 +91,10 @@ def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
     return asarray(label)
 
 #-----parameter setting-------
+data , size_d= load_Data_JV()
+label = get_label(1,"train",size_d)
 n = 20
-duration = 200 * ms
+duration = len(data)*defaultclock.dt
 threshold = 0.5
 
 equ_in = '''
@@ -103,7 +105,7 @@ equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms) : 1
 dh/dt = (-h)/(0.145*ms) : 1
-I = (g-h)*40 + I_0 : 1
+I = (g-h)*40 + I_0*10 : 1
 I_0 : 1 
 '''
 
@@ -125,8 +127,6 @@ g+=w
 
 #-----simulation setting-------
 
-data , size_d= load_Data_JV()
-label = get_label(1,"train",size_d)
 stimulus = TimedArray(data,dt = defaultclock.dt)
 
 Input = NeuronGroup(len(data.T), equ_1, method='linear')
@@ -157,3 +157,47 @@ m3 = StateMonitor(G_readout, ('I'), record=True)
 m4 = StateMonitor(G, ('I'), record=True)
 
 run(duration)
+
+#----lms_readout----#
+# m3.record_single_timestep()
+Data,para = readout(m3.I,label)
+print(para)
+label_t = lms_test(Data,para)
+label_t_class,data_n = classification(threshold,label_t)
+
+#------vis----------------
+fig0 = plt.figure(figsize=(20, 4))
+plot(data, 'r')
+
+fig1 = plt.figure(figsize=(20, 4))
+subplot(111)
+plt.scatter(m3.t / ms, label_t_class,s=2, color="red", marker='o',alpha=0.6)
+plt.scatter(m3.t / ms, label,s=3,color="blue",marker='*',alpha=0.4)
+plt.scatter(m3.t / ms, data_n,s=2,color="green")
+axhline(threshold, ls='--', c='r', lw=1)
+
+fig2 = plt.figure(figsize=(20, 8))
+subplot(511)
+plot(m3.t / ms, m3.I[1], '-b', label='I')
+subplot(512)
+plot(m3.t / ms, m3.I[3], '-b', label='I')
+subplot(513)
+plot(m3.t / ms, m3.I[5], '-b', label='I')
+subplot(514)
+plot(m3.t / ms, m3.I[7], '-b', label='I')
+subplot(515)
+plot(m3.t / ms, m3.I[9], '-b', label='I')
+
+fig3 = plt.figure(figsize=(20, 8))
+subplot(511)
+plot(m4.t / ms, m4.I[1], '-b', label='I')
+subplot(512)
+plot(m4.t / ms, m4.I[3], '-b', label='I')
+subplot(513)
+plot(m4.t / ms, m4.I[5], '-b', label='I')
+subplot(514)
+plot(m4.t / ms, m4.I[7], '-b', label='I')
+subplot(515)
+plot(m4.t / ms, m4.I[9], '-b', label='I')
+show()
+
