@@ -90,34 +90,32 @@ def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
                     label.append(0)
     return asarray(label)
 
-
-
 #-----parameter setting-------
 n = 20
-time_window = 5*ms
 duration = 200 * ms
-interval_l = 8
-interval_s = ms
 threshold = 0.5
 
-# st='I_0 = '
-# for I in range(12):
-#     st=st+'+stimulus['+str(I)+'](t)*w_g'
-# st = st +' : 1'
+equ_in = '''
+I = stimulus(t,i) : 1
+'''
 
 equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms) : 1
 dh/dt = (-h)/(0.145*ms) : 1
-I = (g-h)*40 +I_0: 1
-I_0 = stimulus(t)*w_g:1
-w_g : 1
+I = (g-h)*40 + I_0 : 1
+I_0 : 1 
 '''
 
 equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*30 : 1
+'''
+
+model='''
+w : 1
+I_0_post = w * I_pre : 1 (summed)
 '''
 
 on_pre = '''
@@ -129,28 +127,29 @@ g+=w
 
 data , size_d= load_Data_JV()
 label = get_label(1,"train",size_d)
+stimulus = TimedArray(data,dt = defaultclock.dt)
 
-stimulus = []
-for sti in range(12):
-    stimulus.append(TimedArray(data[sti], dt=defaultclock.dt))
+Input = NeuronGroup(len(data.T), equ_1, method='linear')
+G = NeuronGroup(n, equ, threshold = 'v > 0.20', reset ='v = 0', method='linear', refractory= 0 * ms)
+G2 = NeuronGroup(2, equ, threshold = 'v > 0.30', reset ='v = 0', method='linear', refractory= 0 * ms)
+G_readout = NeuronGroup(n,equ_1, method = 'linear')
 
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
-G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
-G_readout=NeuronGroup(n,equ_1,method='linear')
-
+S = Synapses(Input, G, model, method='linear')
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
+S3 = Synapses(Input, G2, model, method='linear')
 S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
+S.connect()
 S2.connect()
+S3.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
-G.w_g = 'rand(12)'#'0.2+i*'+str(0.8/n)
-G2.w_g = '0.3+i*0.3'
-
+S.w = '0.2+i*'+str(0.8/n)
 S2.w = '-rand()/2'
+S3.w = '0.3+j*0.3'
 S4.w = 'rand()'
 
 #------run----------------
