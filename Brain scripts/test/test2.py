@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 np.random.seed(100)
 def read_from_txt(filename=None):
@@ -20,7 +21,16 @@ def read_from_txt(filename=None):
         data = np.array(data)
         return data
 
+def normalization_min_max(arr):
+    arr_n = arr
+    for i in range(arr.size):
+        x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
+        arr_n[i] = x
+    return arr_n
+
 a = np.loadtxt("../Data/jv/train.txt", delimiter=None)
+a_ = MinMaxScaler().fit_transform(a)
+print(a_)
 print(a.shape)
 
 s = open("../Data/jv/train.txt",'r')

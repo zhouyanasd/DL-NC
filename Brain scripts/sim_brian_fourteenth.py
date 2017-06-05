@@ -1,20 +1,24 @@
 from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp
+from sklearn.preprocessing import MinMaxScaler
 
 start_scope()
 np.random.seed(100)
 
-#------define function------------
-def lms_train(p0,Zi,Data):
+
+# ------define function------------
+def lms_train(p0, Zi, Data):
     def error(p, y, args):
         l = len(p)
         f = p[l - 1]
         for i in range(len(args)):
             f += p[i] * args[i]
         return f - y
-    Para = leastsq(error,p0,args=(Zi,Data))
+
+    Para = leastsq(error, p0, args=(Zi, Data))
     return Para[0]
+
 
 def lms_test(Data, p):
     l = len(p)
@@ -23,37 +27,43 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-def readout(M,Z):
+
+def readout(M, Z):
     n = len(M)
-    Data=[]
+    Data = []
     for i in M:
         Data.append(i)
-    p0 = [1]*n
+    p0 = [1] * n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
-    return Data,para
+    return Data, para
+
 
 def classification(thea, data):
-    def normalization_min_max(arr):
-        arr_n = arr
-        for i in range(arr.size):
-            x = float(arr[i] - np.min(arr))/(np.max(arr)- np.min(arr))
-            arr_n[i] = x
-        return arr_n
     data_n = normalization_min_max(data)
     data_class = []
     for a in data_n:
-        if a >=thea:
+        if a >= thea:
             b = 1
         else:
             b = 0
         data_class.append(b)
-    return np.asarray(data_class),data_n
+    return np.asarray(data_class), data_n
+
+
+def normalization_min_max(arr):
+    arr_n = arr
+    for i in range(arr.size):
+        x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
+        arr_n[i] = x
+    return arr_n
+
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def load_Data_JV(path = "Data/jv/train.txt"):
+
+def load_Data_JV(path="Data/jv/train.txt"):
     data = np.loadtxt(path, delimiter=None)
     s = open(path, 'r')
     i = -1
@@ -63,16 +73,17 @@ def load_Data_JV(path = "Data/jv/train.txt"):
         i += 1
         if not lines:
             break
-        if lines == '\n':#"\n" needed to be added at the end of the file
+        if lines == '\n':  # "\n" needed to be added at the end of the file
             i -= 1
             size_d.append(i)
             continue
-    return data,size_d
+    return MinMaxScaler().fit_transform(data), size_d
 
-def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
-    if t =="train":
+
+def get_label(obj, t, size_d, path="Data/jv/size.txt"):
+    if t == "train":
         data_l = np.loadtxt(path, delimiter=None).astype(int)[1]
-    elif t=="test":
+    elif t == "test":
         data_l = np.loadtxt(path, delimiter=None).astype(int)[0]
     else:
         raise TypeError("t must be 'train' or 'test'")
@@ -90,11 +101,12 @@ def get_label(obj,t,size_d,path = "Data/jv/size.txt"):
                     label.append(0)
     return asarray(label)
 
-#-----parameter setting-------
-data , size_d= load_Data_JV()
-label = get_label(1,"train",size_d)
+
+# -----parameter setting-------
+data, size_d = load_Data_JV()
+label = get_label(1, "train", size_d)
 n = 20
-duration = len(data)*defaultclock.dt
+duration = len(data) * defaultclock.dt
 threshold = 0.5
 
 equ_in = '''
@@ -105,7 +117,7 @@ equ = '''
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms) : 1
 dh/dt = (-h)/(0.145*ms) : 1
-I = (g-h)*40 + I_0*10 : 1
+I = (g-h)*20 + I_0*20 : 1
 I_0 : 1 
 '''
 
@@ -115,7 +127,7 @@ dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*30 : 1
 '''
 
-model='''
+model = '''
 w : 1
 I_0_post = w * I_pre : 1 (summed)
 '''
@@ -125,56 +137,59 @@ h+=w
 g+=w
 '''
 
-#-----simulation setting-------
+# -----simulation setting-------
 
-stimulus = TimedArray(data,dt = defaultclock.dt)
+stimulus = TimedArray(data, dt=defaultclock.dt)
 
 Input = NeuronGroup(len(data.T), equ_1, method='linear')
-G = NeuronGroup(n, equ, threshold = 'v > 0.20', reset ='v = 0', method='linear', refractory= 0 * ms)
-G2 = NeuronGroup(2, equ, threshold = 'v > 0.30', reset ='v = 0', method='linear', refractory= 0 * ms)
-G_readout = NeuronGroup(n,equ_1, method = 'linear')
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
+G_readout = NeuronGroup(n, equ_1, method='linear')
 
 S = Synapses(Input, G, model, method='linear')
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 S3 = Synapses(Input, G2, model, method='linear')
 S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
-S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
-#-------network topology----------
+# -------network S2.connect()topology----------
 S.connect()
 S2.connect()
 S3.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
-S.w = '0.2+i*'+str(0.8/n)
+S.w = '0.2+j*' + str(0.8 / n)
 S2.w = '-rand()/2'
 S3.w = '0.3+j*0.3'
 S4.w = 'rand()'
 
-#------run----------------
+# ------run----------------
+m1 = StateMonitor(Input, ('I'), record=True)
 m3 = StateMonitor(G_readout, ('I'), record=True)
 m4 = StateMonitor(G, ('I'), record=True)
 
 run(duration)
 
-#----lms_readout----#
-# m3.record_single_timestep()
-Data,para = readout(m3.I,label)
-print(para)
-label_t = lms_test(Data,para)
-label_t_class,data_n = classification(threshold,label_t)
-
-#------vis----------------
+# # ----lms_readout----#
+# Data, para = readout(m3.I, label)
+# print(para)
+# label_t = lms_test(Data, para)
+# label_t_class, data_n = classification(threshold, label_t)
+#
+# # ------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
-plot(data, 'r')
-
-fig1 = plt.figure(figsize=(20, 4))
-subplot(111)
-plt.scatter(m3.t / ms, label_t_class,s=2, color="red", marker='o',alpha=0.6)
-plt.scatter(m3.t / ms, label,s=3,color="blue",marker='*',alpha=0.4)
-plt.scatter(m3.t / ms, data_n,s=2,color="green")
-axhline(threshold, ls='--', c='r', lw=1)
+subplot(211)
+plot(data.T[0], 'r')
+subplot(212)
+plot(m1.t / ms, m1.I[0], '-b', label='I')
+#
+# fig1 = plt.figure(figsize=(20, 4))
+# subplot(111)
+# plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
+# plt.scatter(m3.t / ms, label, s=3, color="blue", marker='*', alpha=0.4)
+# plt.scatter(m3.t / ms, data_n, s=2, color="green")
+# axhline(threshold, ls='--', c='r', lw=1)
 
 fig2 = plt.figure(figsize=(20, 8))
 subplot(511)
@@ -200,4 +215,3 @@ plot(m4.t / ms, m4.I[7], '-b', label='I')
 subplot(515)
 plot(m4.t / ms, m4.I[9], '-b', label='I')
 show()
-
