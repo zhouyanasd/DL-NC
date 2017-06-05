@@ -104,7 +104,7 @@ def get_label(obj, t, size_d, path="Data/jv/size.txt"):
 
 # -----parameter setting-------
 data, size_d = load_Data_JV()
-label = get_label(4, "train", size_d)
+label = get_label(2, "train", size_d)
 n = 30
 duration = len(data) * defaultclock.dt
 threshold = 0.5
@@ -114,16 +114,16 @@ I = stimulus(t,i) : 1
 '''
 
 equ = '''
-dv/dt = (I-v) / (10*ms) : 1 (unless refractory)
-dg/dt = (-g)/(5*ms) : 1
-dh/dt = (-h)/(4.5*ms) : 1
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*10 + I_0 : 1
 I_0 : 1 
 '''
 
 equ_1 = '''
-dg/dt = (-g)/(5*ms) : 1
-dh/dt = (-h)/(4.5*ms) : 1
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*20 : 1
 '''
 
@@ -159,10 +159,10 @@ S3.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
-S.w = '0.1+j*' + str(0.8 / n /12)
+S.w = 'rand()'#'0.1+j*' + str(0.8 / n /12)
 S2.w = '-rand()/2'
 S3.w = '0.03+j*0.03'
-S4.w = 'rand()'
+S4.w = '0'
 
 # ------run----------------
 m1 = StateMonitor(Input, ('I'), record=True)
@@ -194,7 +194,7 @@ fig1 = plt.figure(figsize=(20, 4))
 subplot(111)
 plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
 plt.scatter(m3.t / ms, label, s=3, color="blue", marker='*', alpha=0.4)
-plt.scatter(m3.t / ms, data_n, s=2, color="green")
+plt.plot(m3.t / ms, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 
 fig2 = plt.figure(figsize=(20, 8))
