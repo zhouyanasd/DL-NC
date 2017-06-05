@@ -95,7 +95,7 @@ def get_label(obj, t, size_d, path="Data/jv/size.txt"):
     for i in range(len(data_l_) - 1):
         for j in range(data_l_[i], data_l_[i + 1]):
             for l in range(size_d_[j], size_d_[j + 1]):
-                if i == 0:
+                if i == obj:
                     label.append(1)
                 else:
                     label.append(0)
@@ -104,8 +104,8 @@ def get_label(obj, t, size_d, path="Data/jv/size.txt"):
 
 # -----parameter setting-------
 data, size_d = load_Data_JV()
-label = get_label(1, "train", size_d)
-n = 20
+label = get_label(4, "train", size_d)
+n = 30
 duration = len(data) * defaultclock.dt
 threshold = 0.5
 
@@ -114,17 +114,17 @@ I = stimulus(t,i) : 1
 '''
 
 equ = '''
-dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(0.15*ms) : 1
-dh/dt = (-h)/(0.145*ms) : 1
-I = (g-h)*20 + I_0*20 : 1
+dv/dt = (I-v) / (10*ms) : 1 (unless refractory)
+dg/dt = (-g)/(5*ms) : 1
+dh/dt = (-h)/(4.5*ms) : 1
+I = (g-h)*10 + I_0 : 1
 I_0 : 1 
 '''
 
 equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1
-dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*30 : 1
+dg/dt = (-g)/(5*ms) : 1
+dh/dt = (-h)/(4.5*ms) : 1
+I = (g-h)*20 : 1
 '''
 
 model = '''
@@ -141,7 +141,7 @@ g+=w
 
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
-Input = NeuronGroup(len(data.T), equ_1, method='linear')
+Input = NeuronGroup(len(data.T), equ_in, method='linear')
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
 G_readout = NeuronGroup(n, equ_1, method='linear')
@@ -159,9 +159,9 @@ S3.connect()
 S4.connect(condition='i != j', p=0.1)
 S_readout.connect(j='i')
 
-S.w = '0.2+j*' + str(0.8 / n)
+S.w = '0.1+j*' + str(0.8 / n /12)
 S2.w = '-rand()/2'
-S3.w = '0.3+j*0.3'
+S3.w = '0.03+j*0.03'
 S4.w = 'rand()'
 
 # ------run----------------
@@ -171,25 +171,31 @@ m4 = StateMonitor(G, ('I'), record=True)
 
 run(duration)
 
-# # ----lms_readout----#
-# Data, para = readout(m3.I, label)
-# print(para)
-# label_t = lms_test(Data, para)
-# label_t_class, data_n = classification(threshold, label_t)
-#
-# # ------vis----------------
-fig0 = plt.figure(figsize=(20, 4))
-subplot(211)
-plot(data.T[0], 'r')
-subplot(212)
+# ----lms_readout----#
+Data, para = readout(m3.I, label)
+print(para)
+label_t = lms_test(Data, para)
+label_t_class, data_n = classification(threshold, label_t)
+
+# ------vis----------------
+fig0 = plt.figure(figsize=(20, 10))
+subplot(511)
 plot(m1.t / ms, m1.I[0], '-b', label='I')
-#
-# fig1 = plt.figure(figsize=(20, 4))
-# subplot(111)
-# plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
-# plt.scatter(m3.t / ms, label, s=3, color="blue", marker='*', alpha=0.4)
-# plt.scatter(m3.t / ms, data_n, s=2, color="green")
-# axhline(threshold, ls='--', c='r', lw=1)
+subplot(512)
+plot(m1.t / ms, m1.I[1], '-b', label='I')
+subplot(513)
+plot(m1.t / ms, m1.I[2], '-b', label='I')
+subplot(514)
+plot(m1.t / ms, m1.I[3], '-b', label='I')
+subplot(515)
+plot(m1.t / ms, m1.I[4], '-b', label='I')
+
+fig1 = plt.figure(figsize=(20, 4))
+subplot(111)
+plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
+plt.scatter(m3.t / ms, label, s=3, color="blue", marker='*', alpha=0.4)
+plt.scatter(m3.t / ms, data_n, s=2, color="green")
+axhline(threshold, ls='--', c='r', lw=1)
 
 fig2 = plt.figure(figsize=(20, 8))
 subplot(511)
