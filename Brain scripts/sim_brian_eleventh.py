@@ -86,7 +86,6 @@ def classification(thea, data):
 
 #-----parameter setting-------
 n = 10
-time_window = 5*ms
 duration = 2000 * ms
 interval_l = 8
 interval_s = ms
