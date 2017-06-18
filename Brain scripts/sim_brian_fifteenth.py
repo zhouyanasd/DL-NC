@@ -20,7 +20,10 @@ def lms_train(p0, Zi, Data):
     return Para[0]
 
 
-def lms_test(Data, p):
+def lms_test(M, p):
+    Data = []
+    for i in M:
+        Data.append(i)
     l = len(p)
     f = p[l - 1]
     for i in range(len(Data)):
@@ -40,7 +43,9 @@ def readout(M, Z):
 
 
 def classification(thea, data):
-    data_n = normalization_min_max(data)
+    data_train =  normalization_min_max(data[0:len(data)])
+    data_test =  normalization_min_max(data[len(data):])
+    data_n = np.hstack((data_train,data_test))
     data_class = []
     for a in data_n:
         if a >= thea:
@@ -103,10 +108,15 @@ def get_label(obj, t, size_d, path="Data/jv/size.txt"):
 
 
 # -----parameter setting-------
-data, size_d = load_Data_JV()
+data, size_d = load_Data_JV("Data/jv/train.txt")
+data_test, size_d_test = load_Data_JV("Data/jv/test.txt")
 label = get_label(2, "train", size_d)
-n = 30
+label_test = get_label(2, "test", size_d_test)
+data_all = np.vstack((data,data_test))
+label_all = np.hstack((label,label_test))
+n = 25
 duration = len(data) * defaultclock.dt
+duration_test = len(data_test)*defaultclock.dt
 threshold = 0.5
 
 equ_in = '''
@@ -139,7 +149,7 @@ g+=w
 
 # -----simulation setting-------
 
-stimulus = TimedArray(data, dt=defaultclock.dt)
+stimulus = TimedArray(data_all, dt=defaultclock.dt)
 
 Input = NeuronGroup(len(data.T), equ_in, method='linear')
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
@@ -169,12 +179,17 @@ m1 = StateMonitor(Input, ('I'), record=True)
 m3 = StateMonitor(G_readout, ('I'), record=True)
 m4 = StateMonitor(G, ('I'), record=True)
 
-run(duration)
+run(duration, report='text')
 
 # ----lms_readout----#
 Data, para = readout(m3.I, label)
 print(para)
-label_t = lms_test(Data, para)
+
+#------run for test-------
+run(duration_test, report='text')
+
+#-------test -----
+label_t = lms_test(m3.I, para)
 label_t_class, data_n = classification(threshold, label_t)
 
 # ------vis----------------
@@ -193,7 +208,7 @@ plot(m1.t / ms, m1.I[4], '-b', label='I')
 fig1 = plt.figure(figsize=(20, 4))
 subplot(111)
 plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
-plt.scatter(m3.t / ms, label, s=3, color="blue", marker='*', alpha=0.4)
+plt.scatter(m3.t / ms, label_all, s=3, color="blue", marker='*', alpha=0.4)
 plt.plot(m3.t / ms, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 
