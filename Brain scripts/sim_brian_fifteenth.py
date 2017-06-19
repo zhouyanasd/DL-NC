@@ -211,7 +211,7 @@ plt.scatter(m3.t / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
 plt.scatter(m3.t / ms, label_all, s=3, color="blue", marker='*', alpha=0.4)
 plt.plot(m3.t / ms, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
-axvline(duration/ms, ls='--', c='C1', lw=3)
+axvline(duration/ms, ls='--', c='green', lw=3)
 
 fig2 = plt.figure(figsize=(20, 8))
 subplot(511)
