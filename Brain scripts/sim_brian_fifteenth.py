@@ -7,6 +7,7 @@ start_scope()
 np.random.seed(100)
 
 
+
 # ------define function------------
 def lms_train(p0, Zi, Data):
     def error(p, y, args):
