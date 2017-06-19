@@ -47,6 +47,11 @@ time_window = 10*ms
 duration = 5000 * ms
 duration_test = 2000*ms
 
+taupre = taupost = 2*ms
+wmax = 1
+Apre = 0.2
+Apost = -Apre*taupre/taupost*1.05
+
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
 dg/dt = (-g)/(10*ms) : 1
@@ -59,6 +64,24 @@ h+=w
 g+=w
 '''
 
+model_STDP='''
+w : 1
+dapre/dt = -apre/taupre : 1 (clock-driven)
+dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+on_pre_STDP = '''
+h+=w
+g+=w
+apre += Apre
+w = clip(w+apost, 0, wmax)
+'''
+
+on_post_STDP='''
+apost += Apost
+w = clip(w+apre, 0, wmax)
+'''
+
 #-----simulation setting-------
 P = PoissonGroup(1, 50 * Hz)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
@@ -66,7 +89,7 @@ G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', r
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
 S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
-S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
+S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP , method='linear', delay=0.1 * ms)
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
@@ -87,6 +110,8 @@ for i in range(G._N):
     locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
     M.append(locals()['M' + str(i)])
 m_y = PopulationRateMonitor(P)
+
+mon_w = StateMonitor(S4, 'w', record=True)
 
 #------run for train----------------
 run(duration)
@@ -138,4 +163,13 @@ plot(t_test / ms, Y_test,'-b', label='Y_test')
 plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
 xlabel('Time (ms)')
 ylabel('rate')
+
+fig2 = plt.figure(figsize= (10,8))
+subplot(211)
+plot(S4.w / wmax, '.k')
+ylabel('Weight / wmax')
+xlabel('Synapse index')
+subplot(212)
+hist(S4.w / wmax, 20)
+xlabel('Weight / wmax')
 show()
