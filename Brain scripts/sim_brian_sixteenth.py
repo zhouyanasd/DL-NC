@@ -50,7 +50,7 @@ duration_test = 2000*ms
 taupre = taupost = 2*ms
 wmax = 1
 Apre = 0.2
-Apost = -Apre*taupre/taupost*1.05
+Apost = -Apre*taupre/taupost*1.5
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -124,8 +124,8 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
-save_para(para,'para_readout_seven')
-print(load_para('para_readout_seven'))
+save_para(para,'para_readout_sixteenth')
+print(load_para('para_readout_sixteenth'))
 
 #----run for test--------
 run(duration_test, report='text')
