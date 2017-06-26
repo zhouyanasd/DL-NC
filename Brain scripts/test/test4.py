@@ -30,10 +30,19 @@ M = StateMonitor(G, 'I', record=9)
 m2 = SpikeMonitor(P)
 
 run(300*ms)
-print(m2.i)
-print(G.equations)
+print(S.w)
+store("test4","../Data/test4")
+stop()
 
+start_scope()
+P1 = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
+G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
+S1 = Synapses(P, G, 'w = 2 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
+S1.connect(j='i')
+
+restore("test4","../Data/test4")
 run(100*ms)
+print(S1.w)
 
 fig1 = plt.figure(figsize=(10,4))
 subplot(121)
