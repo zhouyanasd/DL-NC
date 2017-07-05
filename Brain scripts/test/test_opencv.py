@@ -1,18 +1,16 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture("../Data/KHT/person25_boxing_d4_uncomp.avi")
+cap = cv2.VideoCapture("../Data/KHT/time_lapse.avi")
 
 while (cap.isOpened()):
     ret, frame = cap.read()
-    if ret == True:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        cv2.imshow('image', gray)
-        k = cv2.waitKey(20)
-        if (k & 0xff == ord('q')):
-            break
-    else:
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    cv2.imshow('image', gray)
+    k = cv2.waitKey(100)
+    if (k & 0xff == ord('q')):
         break
 
 cap.release()
