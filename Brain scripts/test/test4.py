@@ -1,5 +1,7 @@
 from brian2 import *
+
 start_scope()
+np.random.seed(10)
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
@@ -31,28 +33,32 @@ m2 = SpikeMonitor(P)
 
 net = Network(collect())
 net.run(300*ms)
-print(S.w)
 store("test4","../Data/test4")
 
 # start_scope()
-G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
+# G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
 m_g1=StateMonitor(G,'v',record=9)
-net.add(G1)
 net.add(m_g1)
-print(collect())
 
-net.run(10*ms)
-
-print(m_g1.t)
+net.run(100*ms)
 
 net.remove(G)
-net.remove(S)
+# net.remove(S)
 net.remove(m1)
 net.remove(M)
+net.remove(m_g1)
 
-net.run(10*ms)
+G = NeuronGroup(10, equ2, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms,name = 'neurongroup' )
+S1 = Synapses(P, G, 'w = 1 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
+# m_g2=StateMonitor(G,'v',record=9)
+net.add(G)
+net.add(S1)
+# net.add(m_g2)
 
-print(m1.t)
+S1.active = False
+
+print(collect())
+net.run(100*ms)
 # P1 = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
 # G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
 # S1 = Synapses(P, G, 'w = 2 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
@@ -62,12 +68,16 @@ print(m1.t)
 # run(100*ms)
 # print(S1.w)
 
-fig1 = plt.figure(figsize=(10,4))
-subplot(121)
+fig1 = plt.figure(figsize=(15,4))
+subplot(131)
 plot(m1.t/ms,m1.v[0],'-b', label='Neuron 9 V')
 legend()
 
-subplot(122)
+subplot(132)
 plot(M.t/ms, M.I[0], label='Neuron 9 I')
+legend()
+
+subplot(133)
+plot(m_g2.t/ms, m_g2.v[0], label='Neuron2 9 V')
 legend()
 show()
