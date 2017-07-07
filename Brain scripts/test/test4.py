@@ -42,6 +42,8 @@ net.run(100*ms)
 # net.add(m_g1)
 
 G.equations._equations['I'] = "I = (g-h)*50 : 1"
+G.equations._equations.pop('I')
+G.equations = G.equations+("I = (g-h)*50 : 1")
 # net.run(100*ms)
 
 
