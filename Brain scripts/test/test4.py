@@ -41,9 +41,10 @@ net.run(100*ms)
 # m_g1=StateMonitor(G,'v',record=9)
 # net.add(m_g1)
 
-G.equations._equations['I'] = "I = (g-h)*50 : 1"
+G.equations._equations['I'] = "I = (g-h)*30 : 1"
 G.equations._equations.pop('I')
-G.equations = G.equations+("I = (g-h)*50 : 1")
+G.equations = G.equations+("I = (g-h)*30 : 1")
+G[8:9].active = False
 # net.run(100*ms)
 
 
