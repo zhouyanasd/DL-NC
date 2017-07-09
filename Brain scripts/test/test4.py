@@ -47,7 +47,7 @@ g+=w
 P = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
 G = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
 S = Synapses(P, G, 'w = 1 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
-S.connect(j = 'i')
+S.connect(j =9, i= 9)
 
 m1 = StateMonitor(G,'v',record=9)
 M = StateMonitor(G, 'I', record=9)
