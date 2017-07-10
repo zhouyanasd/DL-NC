@@ -59,56 +59,22 @@ net = Network(collect())
 net.run(100*ms)
 visualise_connectivity(S)
 
-# store("test4","../Data/test4")
-
-# start_scope()
-# G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
-# m_g1=StateMonitor(G,'v',record=9)
-# net.add(m_g1)
 
 G.equations._equations['I'] = "I = (g-h)*30 : 1"
 G.equations._equations.pop('I')
 G.equations = G.equations+("I = (g-h)*30 : 1")
-# net.run(100*ms)
 
 
-# net.remove(G)
-# net.remove(S)
-# net.remove(m1)
-# net.remove(M)
-# net.remove(m_g1)
-
-# G = NeuronGroup(10, equ2, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms, name = 'neurongroup1' )
-# print(G.id)
-# S1 = Synapses(P, G, 'w = 1 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
-# m_g2=StateMonitor(G,'v',record=9)
-# net.add(G)
-# net.add(S1)
-# net.add(m_g2)
-
-# S1.active = False
-# print(collect())
 net.run(100*ms)
-# P1 = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
-# G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
-# S1 = Synapses(P, G, 'w = 2 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
-# S1.connect(j='i')
 
-# restore("test4","../Data/test4")
-# run(100*ms)
 
-# profiling_summary(net,show=5)
-
-fig1 = plt.figure(figsize=(15,4))
-subplot(131)
+fig1 = plt.figure(figsize=(10,4))
+subplot(121)
 plot(m1.t/ms,m1.v[0],'-b', label='Neuron 9 V')
 legend()
 
-subplot(132)
+subplot(122)
 plot(M.t/ms, M.I[0], label='Neuron 9 I')
 legend()
 
-# subplot(133)
-# plot(m_g2.t/ms, m_g2.v[0], label='Neuron2 9 V')
-# legend()
 show()
