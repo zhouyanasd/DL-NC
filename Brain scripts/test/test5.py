@@ -84,9 +84,9 @@ def add_group_neuron(net, neuron_group, num = 1,name = 'agn'):
     state = net._stored_state[name]
     neuron = state[neuron_group.name]
     N = neuron_group._N
-    neuron_group._N = N+num
-    neuron_group.stop = N+num
-    neuron_group._create_variables(None, events=list(neuron_group.events.keys()))
+    # neuron_group._N = N+num
+    # neuron_group.stop = N+num
+    # neuron_group._create_variables(None, events=list(neuron_group.events.keys()))
 
     add_para(neuron,'lastspike',np.array([-inf]*num))
     add_para(neuron,'not_refractory', np.array([True]*num))
@@ -102,7 +102,7 @@ def add_group_neuron(net, neuron_group, num = 1,name = 'agn'):
     add_neuron_to_synapse(net,num,name)
     # add_neuron_to_mon(net,num,name)
 
-    net.restore(name)
+    # net.restore(name)
 
 
 def delete_group_neuron(net, neuron_group, index, name = 'dgn'):
