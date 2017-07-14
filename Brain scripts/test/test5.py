@@ -211,7 +211,7 @@ g+=w
 '''
 
 P = PoissonGroup(5, np.arange(5)*Hz + 50*Hz)
-G = NeuronGroup(5, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
+G = NeuronGroup(5, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms,name = 'neurongroup')
 S = Synapses(P, G, 'w : 1',on_pre = on_pre, method='linear')
 S.connect(j =4, i= 4)
 S.connect(j =3, i= 3)
