@@ -53,10 +53,13 @@ def add_neuron_mon(net, mon, neuron_group, index, name = 'amn'):
         for c in m_c:
             mon.variables[c].resize_along_first = False
             mon.variables[c].resize((t, N + 1))
+            mon.variables[c].device.arrays[mon.variables[c]]._data = mon.variables[c].get_value()
             mon.variables[c].resize_along_first = True
             add_para(monitor, c, np.zeros((t, 1)))
     else:
         print(" the statemoinitor %s is not for neurongroup %s ." % (mon.name, neuron_group))
+
+    net.restore(name)
 
 
 def add_group_neuron(net, neuron_group, num=1, name='agn'):
@@ -146,6 +149,8 @@ def delete_group_neuron(net, neuron_group, index, name = 'dgn'):
     net.store(name)
     state = net._stored_state[name]
     neuron = state[neuron_group.name]
+
+    net.restore(name)
 
 
 
@@ -252,28 +257,30 @@ net.store('first')
 
 add_group_neuron(net,G,2)
 S.connect(i =2, j=6)
+S.w[2] = 0.1
+
 visualise_connectivity(S)
 
-add_neuron_mon(net,m1,G,6)
+# add_neuron_mon(net,m1,G,6)
 
 # G.equations._equations['I'] = "I = (g-h)*30 : 1"
 # G.equations._equations.pop('I')
 # G.equations = G.equations+("I = (g-h)*30 : 1")
 #
 #
-# net.run(100*ms)
-#
-#
-# fig1 = plt.figure(figsize=(10,4))
-# subplot(121)
-# plot(m1.t/ms,m1.v[0],'-b', label='Neuron 9 V')
-# legend()
-#
-# subplot(122)
-# plot(m1.t/ms, m1.I[0], label='Neuron 9 I')
-# legend()
-#
-# show()
+net.run(100*ms)
+
+
+fig1 = plt.figure(figsize=(10,4))
+subplot(121)
+plot(m1.t/ms,m1.v[5],'-b', label='Neuron 9 V')
+legend()
+
+subplot(122)
+plot(m1.t/ms, m1.I[5], label='Neuron 9 I')
+legend()
+
+show()
 
 
 #-----------Common used while debugging in Ipython---------------
@@ -295,7 +302,5 @@ add_neuron_mon(net,m1,G,6)
 # G.variables['N'].get_value()
 # obj = net.objects
 
-
-
-
-
+# m1.variables['v'].device.arrays[m1.variables['v']]._data.shape
+# x = DynamicArray((2, 3), dtype=int)
