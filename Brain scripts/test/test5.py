@@ -21,11 +21,45 @@ def visualise_connectivity(S):
     xlabel('Source neuron index')
     ylabel('Target neuron index')
 
-def add_nruon_mon():
-    pass
+
+def add_para(module, name, p):
+    para = list(module[name])
+    if p.ndim == 1:
+        para[0] = np.append(para[0], p)
+        para[1] = para[0].size
+    elif p.ndim == 2:
+        para[0] = np.append(para[0], p, axis=1)
+        para[1] = para[0].shape
+    else:
+        print('Out of the dim which can be handled')
+    module[name] = tuple(para)
+
+def add_neuron_mon(net, mon, neuron_group, index, name = 'amn'):
+    net.store(name)
+    monitor = net._stored_state[name][mon.name]
+    N = mon.n_indices
+    mon.n_indices += 1
+    if mon.source.name == neuron_group.name:
+        mon.variables['_indices'].device.arrays[mon.variables['_indices']] \
+            = np.zeros((N +1),dtype=int32)
+        mon.variables['_indices'].size = N+1
+        add_para(monitor, '_indices', np.array([index]))
+
+        t = monitor['N'][0][0]
+        m_c = monitor.copy()
+        m_c.pop('N')
+        m_c.pop('t')
+        m_c.pop('_indices')
+        for c in m_c:
+            mon.variables[c].resize_along_first = False
+            mon.variables[c].resize((t, N + 1))
+            mon.variables[c].resize_along_first = True
+            add_para(monitor, c, np.zeros((t, 1)))
+    else:
+        print(" the statemoinitor %s is not for neurongroup %s ." % (mon.name, neuron_group))
 
 
-def add_group_neuron(net, neuron_group, num = 1,name = 'agn'):
+def add_group_neuron(net, neuron_group, num=1, name='agn'):
     # {'_spikespace': (array([0, 0, 0, 0]), 4),
     #  'g': (array([0., 0., 0.]), 3),
     #  'h': (array([0., 0., 0.]), 3),
@@ -34,21 +68,8 @@ def add_group_neuron(net, neuron_group, num = 1,name = 'agn'):
     #  'not_refractory': (array([True, True, True], dtype=bool), 3),
     #  'v': (array([0., 0., 0.]), 3)}
     #
-    #'synapses': {  # 'N_incoming': (array([0, 0, 0, 1, 1]), 5),
+    # 'synapses': {  # 'N_incoming': (array([0, 0, 0, 1, 1]), 5),
     # 'N_outgoing': (array([0, 0, 0, 1, 1]), 5)}
-
-
-    def add_para(module,name,p):
-        para =  list(module[name])
-        if p.ndim == 1:
-            para[0] = np.append(para[0],p)
-            para[1] = para[0].size
-        elif p.ndim == 2:
-            para[0] = np.append(para[0], p,axis=1)
-            para[1] = para[0].shape
-        else:
-            print('Out of the dim which can be handled')
-        module[name] = tuple (para)
 
 
     def add_neuron_to_synapse(net,num,name):
@@ -56,53 +77,56 @@ def add_group_neuron(net, neuron_group, num = 1,name = 'agn'):
             if isinstance(obj, Synapses):
                 synapse_t = net._stored_state[name][obj.name]
                 if obj.source.name == neuron_group.name:
-                    add_para(synapse_t,'N_outgoing',np.array([0]*num))
+                    obj.variables['N_pre'].value = N + num
+                    add_para(synapse_t,'N_outgoing',np.array([0.]*num))
                 elif obj.target.name == neuron_group.name:
-                    add_para(synapse_t, 'N_incoming', np.array([0]*num))
+                    obj.variables['N_post'].value = N + num
+                    add_para(synapse_t, 'N_incoming', np.array([0.]*num))
 
-
-    def add_neuron_to_mon(net,num,name):
-        for obj in net.objects:
-            if isinstance(obj, StateMonitor):
-                mon_t = net._stored_state[name][obj.name]
-                if obj.source.name == neuron_group.name:
-                    add_para(mon_t, '_indices', np.arange(N,N+num))
-                    t = mon_t['N'][0][0]
-                    m_c = mon_t.copy()
-                    m_c.pop('N')
-                    m_c.pop('t')
-                    m_c.pop('_indices')
-                    for c in m_c:
-                        obj.variables[c].resize_along_first =False
-                        obj.variables[c].resize((t,N+num))
-                        print((t,N+num))
-                        obj.variables[c].resize_along_first = True
-                        add_para(mon_t,c,np.zeros((t, num)))
 
 
     net.store(name)
     state = net._stored_state[name]
     neuron = state[neuron_group.name]
     N = neuron_group._N
-    # neuron_group._N = N+num
-    # neuron_group.stop = N+num
+
+    neuron_group._N = N+num
+    neuron_group.stop = N+num
+    neuron_group.variables['N'].value = N+num
+    neuron_group.variables['lastspike'].device.arrays[ neuron_group.variables['lastspike']] \
+        = np.array([-inf]*(N+num))
+    neuron_group.variables['lastspike'].size = neuron_group.variables['lastspike'].size +num
+    neuron_group.variables['not_refractory'].device.arrays[neuron_group.variables['not_refractory']] \
+        = np.array([True ] * (N + num), dtype=bool)
+    neuron_group.variables['not_refractory'].size = neuron_group.variables['not_refractory'].size + num
+    neuron_group.variables['i'].device.arrays[neuron_group.variables['i']] \
+        = np.arange(N+num)
+    neuron_group.variables['i'].size = neuron_group.variables['i'].size + num
+    neuron_group.variables['_spikespace'].device.arrays[neuron_group.variables['_spikespace']] \
+        = np.zeros((N + num+1),dtype=int32)
+    neuron_group.variables['_spikespace'].size = neuron_group.variables['_spikespace'].size + num
     # neuron_group._create_variables(None, events=list(neuron_group.events.keys()))
 
     add_para(neuron,'lastspike',np.array([-inf]*num))
     add_para(neuron,'not_refractory', np.array([True]*num))
-    add_para(neuron, 'i', np.arange(neuron['i'][1],neuron['i'][1]+num))
+    add_para(neuron, 'i', np.arange(N,N+num))
+    add_para(neuron,'_spikespace',np.zeros(num,dtype=int32))
 
     n_c = neuron.copy()
     n_c.pop('lastspike')
     n_c.pop('not_refractory')
     n_c.pop('i')
+    n_c.pop('_spikespace')
     for c in n_c:
-        add_para(neuron, c, np.array([0]*num))
+        neuron_group.variables[c].device.arrays[neuron_group.variables[c]] \
+            = np.zeros((N+num),dtype=float64)
+        neuron_group.variables[c].size = neuron_group.variables[c].size + num
+        add_para(neuron, c, np.array([0.]*num))
 
     add_neuron_to_synapse(net,num,name)
     # add_neuron_to_mon(net,num,name)
 
-    # net.restore(name)
+    net.restore(name)
 
 
 def delete_group_neuron(net, neuron_group, index, name = 'dgn'):
@@ -212,7 +236,7 @@ g+=w
 
 P = PoissonGroup(5, np.arange(5)*Hz + 50*Hz)
 G = NeuronGroup(5, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms,name = 'neurongroup')
-S = Synapses(P, G, 'w : 1',on_pre = on_pre, method='linear')
+S = Synapses(P, G, 'w : 1',on_pre = on_pre, method='linear',name ='synapses')
 S.connect(j =4, i= 4)
 S.connect(j =3, i= 3)
 
@@ -225,9 +249,12 @@ m2 = SpikeMonitor(P)
 net = Network(collect())
 net.run(1*ms)
 net.store('first')
-visualise_connectivity(S)
-add_group_neuron(net,G,2)
 
+add_group_neuron(net,G,2)
+S.connect(i =2, j=6)
+visualise_connectivity(S)
+
+add_neuron_mon(net,m1,G,6)
 
 # G.equations._equations['I'] = "I = (g-h)*30 : 1"
 # G.equations._equations.pop('I')
@@ -247,3 +274,28 @@ add_group_neuron(net,G,2)
 # legend()
 #
 # show()
+
+
+#-----------Common used while debugging in Ipython---------------
+# net.get_states()
+# G.get_states()
+#
+# net._full_state()
+# G._full_state()
+#
+# net.restore('agn')
+# state = net._stored_state['agn']['synapses']
+#
+# ds=S._dpendencies
+# dm=m1._dependencies
+#
+# S.add_dependency(G)
+# m1.add_dependency(G)
+#
+# G.variables['N'].get_value()
+# obj = net.objects
+
+
+
+
+
