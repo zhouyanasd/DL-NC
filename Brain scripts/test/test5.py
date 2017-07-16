@@ -21,6 +21,16 @@ def visualise_connectivity(S):
     xlabel('Source neuron index')
     ylabel('Target neuron index')
 
+def find_synapse(synapse_group, source, target):
+    s_p = np.vstack((synapse_group._synaptic_pre, synapse_group._synaptic_post)).T
+    s = np.hstack((np.array([source]), np.array([target])))
+
+    try:
+        index = np.where((s_p == s).all(1))[0][0]
+        return index
+    except IndexError:
+        print('No synapse_path %s here.' % s)
+
 
 def add_para(module, name, p):
     para = list(module[name])
@@ -40,22 +50,25 @@ def add_neuron_mon(net, mon, neuron_group, index, name = 'amn'):
     N = mon.n_indices
     mon.n_indices += 1
     if mon.source.name == neuron_group.name:
-        mon.variables['_indices'].device.arrays[mon.variables['_indices']] \
-            = np.zeros((N +1),dtype=int32)
-        mon.variables['_indices'].size = N+1
-        add_para(monitor, '_indices', np.array([index]))
+        if index not in mon.variables['_indices'].get_value():
+            mon.variables['_indices'].device.arrays[mon.variables['_indices']] \
+                = np.zeros((N + 1), dtype=int32)
+            mon.variables['_indices'].size = N + 1
+            add_para(monitor, '_indices', np.array([index]))
 
-        t = monitor['N'][0][0]
-        m_c = monitor.copy()
-        m_c.pop('N')
-        m_c.pop('t')
-        m_c.pop('_indices')
-        for c in m_c:
-            mon.variables[c].resize_along_first = False
-            mon.variables[c].resize((t, N + 1))
-            mon.variables[c].device.arrays[mon.variables[c]]._data = mon.variables[c].get_value()
-            mon.variables[c].resize_along_first = True
-            add_para(monitor, c, np.zeros((t, 1)))
+            t = monitor['N'][0][0]
+            m_c = monitor.copy()
+            m_c.pop('N')
+            m_c.pop('t')
+            m_c.pop('_indices')
+            for c in m_c:
+                mon.variables[c].resize_along_first = False
+                mon.variables[c].resize((t, N + 1))
+                mon.variables[c].device.arrays[mon.variables[c]]._data = mon.variables[c].get_value()
+                mon.variables[c].resize_along_first = True
+                add_para(monitor, c, np.zeros((t, 1)))
+        else:
+            print("The %s neuron has been monitored by statemonitor %s"%(index, mon))
     else:
         print(" the statemoinitor %s is not for neurongroup %s ." % (mon.name, neuron_group))
 
@@ -134,21 +147,31 @@ def add_group_neuron(net, neuron_group, num=1, name='agn'):
 
 def delete_group_neuron(net, neuron_group, index, name = 'dgn'):
 
-    def delete_connected_synapses(net):
+    def delete_connected_synapses(net, neuron_group, index):
         for obj in net.objects:
             if isinstance(obj, Synapses):
                 synapse_t = net._stored_state[name][obj.name]
+                if obj.source.name == neuron_group.name:
+                    index_ = where(synapse_t['_synaptic_pre'][0] == index)[0]
+                    for i in index_:
+                        delete_group_synapse(net,obj,index,synapse_t['_synaptic_post'][0][i])
+                elif obj.target.name == neuron_group.name:
+                    index_ = where(synapse_t['_synaptic_post'][0] == index)[0]
+                    for i in index_:
+                        delete_group_synapse(net,obj,synapse_t['_synaptic_pre'][0][i],index)
 
 
-    def delete_connected_mon(net):
-        for obj in net.objects:
-            if isinstance(obj, StateMonitor):
-                mon_t = net._stored_state[name][obj.name]
+
+    # def delete_connected_mon(net):
+    #     for obj in net.objects:
+    #         if isinstance(obj, StateMonitor):
+    #             mon_t = net._stored_state[name][obj.name]
 
 
     net.store(name)
-    state = net._stored_state[name]
-    neuron = state[neuron_group.name]
+    # state = net._stored_state[name]
+    # neuron = state[neuron_group.name]
+    delete_connected_synapses(net, neuron_group, index)
 
     net.restore(name)
 
@@ -215,7 +238,6 @@ def delete_group_synapse(net, synapse_group, source, target, name = 'dgn'):
         for c in s_c:
             delete_para(index,c)
 
-
     except IndexError:
         print('No synapse_path %s here.' %s)
     net.restore(name)
@@ -257,17 +279,17 @@ net.store('first')
 
 add_group_neuron(net,G,2)
 S.connect(i =2, j=6)
-S.w[2] = 0.1
+s_index=find_synapse(S,2,6)
+S.w[s_index] = 0.1
 
 visualise_connectivity(S)
 
-# add_neuron_mon(net,m1,G,6)
+add_neuron_mon(net,m1,G,6)
 
 # G.equations._equations['I'] = "I = (g-h)*30 : 1"
 # G.equations._equations.pop('I')
 # G.equations = G.equations+("I = (g-h)*30 : 1")
-#
-#
+
 net.run(100*ms)
 
 
