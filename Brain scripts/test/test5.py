@@ -27,7 +27,7 @@ def find_synapse(synapse_group, source, target):
 
     try:
         index = np.where((s_p == s).all(1))[0][0]
-        return index
+        return int(index)
     except IndexError:
         print('No synapse_path %s here.' % s)
 
