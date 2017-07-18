@@ -124,8 +124,8 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
-save_para(para,'para_readout_sixteenth')
-print(load_para('para_readout_sixteenth'))
+
+
 
 #----run for test--------
 run(duration_test, report='text')
