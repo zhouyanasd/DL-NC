@@ -46,7 +46,7 @@ g+=w
 
 P = PoissonGroup(10, np.arange(10)*Hz + 50*Hz)
 G = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
-S = Synapses(P, G, 'w = 1 : 1', on_pre = on_pre, method='linear')
+S = Synapses(P, G, 'w : 1', on_pre = on_pre, method='linear')
 S.connect(j =9, i= 9)
 S.connect(j =8, i= 8)
 S.delay = 'j*ms'
@@ -66,10 +66,10 @@ visualise_connectivity(S)
 # G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
 # m_g1=StateMonitor(G,'v',record=9)
 # net.add(m_g1)
-
-G.equations._equations['I'] = "I = (g-h)*30 : 1"
+from brian2.equations.equations import parse_string_equations
+G.equations._equations['I'] = parse_string_equations("I = (g-h)*30 : 1")
 G.equations._equations.pop('I')
-G.equations = G.equations+("I = (g-h)*30 : 1")
+G.equations = G.equations+("I = (g-h)*40 : 1")
 # net.run(100*ms)
 
 
@@ -96,6 +96,7 @@ net.run(100*ms)
 # S1.connect(j='i')
 
 # restore("test4","../Data/test4")
+# G.equations._equations['I'] = "I = (g-h)*30 : 1"
 # run(100*ms)
 
 # profiling_summary(net,show=5)

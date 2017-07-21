@@ -64,7 +64,7 @@ h+=w
 g+=w
 '''
 
-model_STDP='''
+model_STDP= '''
 w : 1
 dapre/dt = -apre/taupre : 1 (clock-driven)
 dapost/dt = -apost/taupost : 1 (clock-driven)
@@ -77,7 +77,7 @@ apre += Apre
 w = clip(w+apost, 0, wmax)
 '''
 
-on_post_STDP='''
+on_post_STDP= '''
 apost += Apost
 w = clip(w+apre, 0, wmax)
 '''
@@ -124,7 +124,6 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
-
 
 
 #----run for test--------
