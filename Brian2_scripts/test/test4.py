@@ -29,7 +29,7 @@ equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
 dg/dt = (-g)/(10*ms) : 1
 dh/dt = (-h)/(9.5*ms) : 1
-I = (g-h)*10 : 1
+I = (g-h)*0 : 1
 '''
 
 equ2 = '''
@@ -67,9 +67,10 @@ visualise_connectivity(S)
 # m_g1=StateMonitor(G,'v',record=9)
 # net.add(m_g1)
 from brian2.equations.equations import parse_string_equations
-G.equations._equations['I'] = parse_string_equations("I = (g-h)*30 : 1")
+G.equations._equations['I'] = parse_string_equations("I = (g-h)*30 : 1")['I']
 G.equations._equations.pop('I')
 G.equations = G.equations+("I = (g-h)*40 : 1")
+G.variables._variables['I'].expr = '(g-h)*40'
 # net.run(100*ms)
 
 
