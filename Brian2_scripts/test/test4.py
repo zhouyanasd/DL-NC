@@ -70,7 +70,8 @@ from brian2.equations.equations import parse_string_equations
 G.equations._equations['I'] = parse_string_equations("I = (g-h)*30 : 1")['I']
 G.equations._equations.pop('I')
 G.equations = G.equations+("I = (g-h)*40 : 1")
-G.variables._variables['I'].expr = '(g-h)*40'
+G.variables._variables['I'].expr = '(g-h)*10'
+M.variables._variables['_source_I'].expr = '(__source_I_neurongroup_g-__source_I_neurongroup_h)*10'
 # net.run(100*ms)
 
 
