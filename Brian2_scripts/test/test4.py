@@ -72,6 +72,8 @@ G.equations._equations.pop('I')
 G.equations = G.equations+("I = (g-h)*40 : 1")
 G.variables._variables['I'].expr = '(g-h)*10'
 M.variables._variables['_source_I'].expr = '(__source_I_neurongroup_g-__source_I_neurongroup_h)*10'
+
+S.pre.code = on_pre
 # net.run(100*ms)
 
 
