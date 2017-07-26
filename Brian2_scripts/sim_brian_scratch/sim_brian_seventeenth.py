@@ -42,7 +42,7 @@ def load_para(name):
     return np.load('../Data/temp/'+str(name)+'.npy')
 
 #-----parameter setting-------
-n = 1
+n = 10
 time_window = 10*ms
 duration = 5000 * ms
 duration_test = 2000*ms
@@ -129,7 +129,7 @@ para = lms_train(p0, Y, Data)
 
 #-----lms_test-----------
 Y_t = lms_test(Data,para)
-err = abs(Y_t-Y)
+err = (abs(Y_t-Y)/max(Y))
 
 #------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
