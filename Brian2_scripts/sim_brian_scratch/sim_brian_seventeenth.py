@@ -42,14 +42,14 @@ def load_para(name):
     return np.load('../Data/temp/'+str(name)+'.npy')
 
 #-----parameter setting-------
-n = 20
+n = 1
 time_window = 10*ms
 duration = 5000 * ms
 duration_test = 2000*ms
 
 taupre = taupost = 2*ms
 wmax = 1
-Apre = 0.2
+Apre = 0.02
 Apost = -Apre*taupre/taupost*1.5
 
 equ = '''
@@ -82,3 +82,84 @@ apost += Apost
 w = clip(w+apre, 0, wmax)
 '''
 
+#-----simulation setting-------
+P = PoissonGroup(1, 50 * Hz)
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
+# G2 = NeuronGroup(round(n/10), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
+S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
+# S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+# S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
+# S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
+
+#-------network topology----------
+S.connect(j='k for k in range(n)')
+# S2.connect()
+# S3.connect()
+# S4.connect(condition='i != j', p=0.1)
+
+S.w = '0.1+j*'+str(1/n)
+# S2.w = '-rand()/2'
+# S3.w = '0.3+j*0.3'
+# S4.w = 'rand()'
+
+#------monitor----------------
+M = []
+for i in range(G._N):
+    locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
+    M.append(locals()['M' + str(i)])
+m_y = PopulationRateMonitor(P)
+
+mon_w = StateMonitor(S, 'w', record=True)
+
+mon_s = SpikeMonitor(P)
+
+#------run for pre-train----------------
+net = Network(collect())
+net.run(duration)
+net.store('first')
+
+#-----test_Data----------
+Data = readout(M)
+Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
+
+#----lms_train------
+p0 = [1]*n
+p0.append(0.1)
+para = lms_train(p0, Y, Data)
+
+#-----lms_test-----------
+Y_t = lms_test(Data,para)
+err = abs(Y_t-Y)
+
+#------vis----------------
+fig0 = plt.figure(figsize=(20, 4))
+plot(mon_s.t/ms, mon_s.i, '.k')
+
+fig1 = plt.figure(figsize=(20, 10))
+subplot(211)
+plot(m_y.t / ms, Y,'-b', label='Y')
+plot(m_y.t / ms, Y_t,'--r', label='Y_t')
+xlabel('Time (ms)')
+ylabel('rate')
+subplot(212)
+plot(m_y.t / ms, err,'-r', label='err')
+xlabel('Time (ms)')
+ylabel('err')
+
+
+fig2 = plt.figure(figsize= (10,8))
+# subplot(311)
+# plot(S.w / wmax, '.k')
+# ylabel('Weight / wmax')
+# xlabel('Synapse index')
+# subplot(312)
+# hist(S.w / wmax, 20)
+# xlabel('Weight / wmax')
+subplot(313)
+plot(mon_w.t/second, mon_w.w.T)
+xlabel('Time (s)')
+ylabel('Weight / gmax')
+tight_layout()
+show()
+
+print(mse(Y_t,Y))
