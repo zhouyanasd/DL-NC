@@ -36,10 +36,10 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 def save_para(para, name):
-    np.save('../Data/'+str(name)+'.npy',para)
+    np.save('../Data/temp/'+str(name)+'.npy',para)
 
 def load_para(name):
-    return np.load('../Data/'+str(name)+'.npy')
+    return np.load('../Data/temp/'+str(name)+'.npy')
 
 #-----parameter setting-------
 n = 20
@@ -84,12 +84,12 @@ w = clip(w+apre, 0, wmax)
 
 #-----simulation setting-------
 P = PoissonGroup(1, 50 * Hz)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
-G2 = NeuronGroup(2, equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms)
-S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
-S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.5 * ms)
-S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
-S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', delay=0.1 * ms)
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/10), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
+S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
+S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
@@ -101,8 +101,6 @@ S.w = '0.1+j*'+str(1/n)
 S2.w = '-rand()/2'
 S3.w = '0.3+j*0.3'
 S4.w = 'rand()'
-# S.w[0] = 1
-# print(S.w[0:3])
 
 #------monitor----------------
 M = []
@@ -113,7 +111,7 @@ m_y = PopulationRateMonitor(P)
 
 mon_w = StateMonitor(S4, 'w', record=True)
 
-#------run for train----------------
+#------run for pre-train----------------
 run(duration)
 
 #----state_readout-----
@@ -125,6 +123,12 @@ p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
 
+#-------change the synapse model--------------
+S4.pre.code = '''
+h+=w
+g+=w
+'''
+S4.post.code = ''
 
 #----run for test--------
 run(duration_test, report='text')
