@@ -32,7 +32,30 @@ def readout(M):
         Data.append(x)
     return Data
 
-def correlation_data(neu =1):
+def correlated_data(neu =1, interval_l=10,interval_s = ms):
+    def tran_correlated(A):
+        trans = []
+        for a in A:
+            for i in range(2):
+                trans.append(0)
+            a_ = bin(a)[2:]
+            while len(a_) < 3:
+                a_ = '0' + a_
+            for i in a_:
+                trans.append(int(i))
+            for i in range(3):
+                trans.append(0)
+        return np.asarray(trans)
+
+    n = int((duration / interval_s) / interval_l)
+    # label = np.random.randint(1, 3, n)
+    # seq = tran_bin(label)
+    # times = where(seq == 1)[0] * interval_s
+    # indices = zeros(int(len(times)))
+    # P = SpikeGeneratorGroup(neu, indices, times)
+    # return P, label
+
+def uncorrelated_data(neu =1):
     pass
 
 def mse(y_test, y):
