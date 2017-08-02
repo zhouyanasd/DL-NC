@@ -48,7 +48,7 @@ duration = 5000 * ms
 duration_test = 2000*ms
 
 taupre = taupost = 15*ms
-wmax = 0.5
+wmax = 1
 Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
 
@@ -56,7 +56,7 @@ equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
 dg/dt = (-g)/(10*ms) : 1
 dh/dt = (-h)/(9.5*ms) : 1
-I = (g-h)*20 : 1
+I = (g-h)*10 : 1
 '''
 
 on_pre = '''
@@ -102,7 +102,7 @@ S4.connect(condition='i != j', p=0.2)
 S.w = '0.1+j*'+str(1/n)
 S2.w = '-rand()/2'
 S3.w = '0.3+j*0.2'
-S4.w = 'rand()/2'
+S4.w = 'rand()'
 
 #------monitor----------------
 M = []
@@ -118,9 +118,37 @@ mon_s = SpikeMonitor(P)
 
 #------run for pre-train----------------
 net = Network(collect())
+print("w4-be:",S4.w)
 net.store('first')
-net.run(duration)
+net.run(6000*ms)
 
+#------plot the weight----------------
+fig2 = plt.figure(figsize= (10,8))
+subplot(211)
+plot(mon_w.t/second, mon_w.w.T)
+xlabel('Time (s)')
+ylabel('Weight / gmax')
+subplot(212)
+plot(mon_w2.t/second, mon_w2.w.T)
+xlabel('Time (s)')
+ylabel('Weight / gmax')
+tight_layout()
+
+#-------change the synapse model----------
+S4.pre.code = '''
+h+=w
+g+=w
+'''
+S4.post.code = ''
+#-------save the weight----------
+import copy
+w4 = copy.copy(S4.w)
+print("w4-af:",w4)
+net.store('second')
+net.restore('first')
+S4.w = w4
+net.run(duration)
+print("w4:",S4.w)
 #-----test_Data----------
 Data = readout(M)
 Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
@@ -130,16 +158,9 @@ p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
 
-#-------change the synapse model--------------
-S4.pre.code = '''
-h+=w
-g+=w
-'''
-S4.post.code = ''
-
 #----run for test--------
 net.run(duration_test, report='text')
-
+print("w4:",S4.w)
 #-----test_Data----------
 Data = readout(M)
 Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
@@ -161,6 +182,7 @@ print(mse(Y_test,Y_test_t))
 
 # fig0 = plt.figure(figsize=(20, 4))
 # plot(mon_s.t/ms, mon_s.i, '.k')
+# ylim(-0.5,1.5)
 
 fig1 = plt.figure(figsize=(20, 10))
 subplot(311)
@@ -180,16 +202,5 @@ plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
 xlabel('Time (ms)')
 ylabel('rate')
 legend()
-
-fig2 = plt.figure(figsize= (10,8))
-subplot(211)
-plot(mon_w.t/second, mon_w.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
-subplot(212)
-plot(mon_w2.t/second, mon_w2.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
-tight_layout()
 
 show()
