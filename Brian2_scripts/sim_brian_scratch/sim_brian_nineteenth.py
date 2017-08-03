@@ -23,65 +23,121 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-def readout(M):
-    print(M[0])
+def readout(M,Z):
     n = len(M)
     Data=[]
-    for i in range(n):
-        x = M[i].smooth_rate(window='gaussian', width=time_window)/ Hz
-        Data.append(x)
-    return Data
-
-def correlated_data(spike_n, neu = 2, interval_l=20,interval_s = 2* ms):
-    def tran_correlated(A):
-        trans = []
-        for a in A:
-            trans = np.append(trans,[0]*a)
-            trans = np.append(trans, [1]*spike_n)
-            if a+spike_n<=interval_l:
-                trans = np.append(trans, [0]*(interval_l-a-spike_n))
-        return np.asarray(trans)
-
-    def tran_uncorrelated():
-        trans = np.array([])
-        for a in range(n):
-            import random
-            s = random.sample(range(interval_l), spike_n)
-            trans = np.append(trans, np.asarray(s)+(a*interval_l))
-        return np.asarray(trans)
-
-    n = int(((duration+duration_test) / interval_s) / interval_l)
-    if spike_n >int(interval_l/2):
-        print('too much spike')
-    else:
-        start = np.random.randint(0, interval_l - spike_n, n)
-        seq = tran_correlated(start)
-        times_a = where(seq == 1)[0]
-        indices_a = zeros(int(len(times_a)))
-
-        times_b = tran_uncorrelated()
-        indices_b = zeros(int(len(times_a))) +1
-
-        indices = np.concatenate((indices_a, indices_b), axis=0)
-        times = np.concatenate((times_a, times_b), axis=0) * interval_s
-
-        P = SpikeGeneratorGroup(neu, indices, times)
-        return P
+    for i in M:
+        Data.append(i)
+    p0 = [1]*n
+    p0.append(0.1)
+    para = lms_train(p0, Z, Data)
+    return Data,para
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def save_para(para, name):
-    np.save('../Data/temp/'+str(name)+'.npy',para)
 
-def load_para(name):
-    return np.load('../Data/temp/'+str(name)+'.npy')
+def Tri_function(duration):
+    rng = np.random
+    TIME_SCALE = defaultclock.dt
+    in_number = int(duration/TIME_SCALE)
+
+    def sin_fun(l, c, t):
+        return (np.sin(c * t * TIME_SCALE/us) + 1) / 2
+
+    def tent_map(l, c, t):
+        temp = l
+        if (temp < 0.5 and temp > 0):
+            temp = (c / 101+1) * temp
+            return temp
+        elif (temp >= 0.5 and temp < 1):
+            temp = (c / 101+1) * (1 - temp)
+            return temp
+        else:
+            return 0.5
+
+    def constant(l, c, t):
+        return c / 100
+
+    def chose_fun():
+        c = rng.randint(0, 3)
+        if c == 0:
+            return sin_fun, c
+        elif c == 1:
+            return tent_map, c
+        elif c == 2:
+            return constant, c
+
+    def change_fun(rate):
+        fun = rng.randint(1, 101)
+        if fun > 100 * rate:
+            return False
+        else:
+            return True
+
+    data = []
+    cla = []
+    cons = rng.randint(1, 101)
+    fun, c = chose_fun()
+
+    for t in range(in_number):
+        if change_fun(0.7) and t % 50 ==0:
+            cons = rng.randint(1, 101)
+            fun, c = chose_fun()
+            try:
+                data_t= fun(data[t - 1], cons, t)
+                data.append(data_t)
+                cla.append(c)
+            except IndexError:
+                data_t = fun(rng.randint(1, 101)/100, cons, t)
+                data.append(data_t)
+                cla.append(c)
+        else:
+            try:
+                data_t = fun(data[t - 1], cons, t)
+                data.append(data_t)
+                cla.append(c)
+            except IndexError:
+                data_t= fun(rng.randint(1, 101)/100, cons, t)
+                data.append(data_t)
+                cla.append(c)
+    cla = np.asarray(cla)
+    data = np.asarray(data)
+    return data, cla
+
+def label_to_obj(label,obj):
+    temp = []
+    for a in label:
+        if a == obj:
+            temp.append(1)
+        else:
+            temp.append(0)
+    return np.asarray(temp)
+
+def classification(thea, data):
+    def normalization_min_max(arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr))/(np.max(arr)- np.min(arr))
+            arr_n[i] = x
+        return arr_n
+    data_n = normalization_min_max(data)
+    data_class = []
+    for a in data_n:
+        if a >=thea:
+            b = 1
+        else:
+            b = 0
+        data_class.append(b)
+    return np.asarray(data_class),data_n
 
 #-----parameter setting-------
-n = 10
-time_window = 10*ms
-duration = 500 * ms
-duration_test = 200*ms
+n = 20
+time_window = 5*ms
+duration = 200 * ms
+interval_l = 8
+interval_s = ms
+threshold = 0.5
 
 taupre = taupost = 15*ms
 wmax = 1
@@ -237,3 +293,7 @@ ylabel('Weight / gmax')
 tight_layout()
 
 show()
+
+
+
+

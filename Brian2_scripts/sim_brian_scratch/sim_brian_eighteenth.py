@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 import scipy as sp
 
 start_scope()
-np.random.seed(100)
+np.random.seed(13)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -41,8 +41,9 @@ def save_para(para, name):
 def load_para(name):
     return np.load('../Data/temp/'+str(name)+'.npy')
 
-#-----parameter setting-------
-n = 10
+###############################################
+#-----parameter and model setting-------
+n = 20
 time_window = 10*ms
 duration = 5000 * ms
 duration_test = 2000*ms
@@ -97,10 +98,10 @@ S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, meth
 S.connect(j='k for k in range(n)')
 S2.connect()
 S3.connect()
-S4.connect(condition='i != j', p=0.2)
+S4.connect(condition='i != j', p=0.15)
 
 S.w = '0.1+j*'+str(1/n)
-S2.w = '-rand()/2'
+S2.w = '-rand()'
 S3.w = '0.3+j*0.2'
 S4.w = 'rand()'
 
@@ -110,15 +111,13 @@ for i in range(G._N):
     locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
     M.append(locals()['M' + str(i)])
 m_y = PopulationRateMonitor(P)
-
 mon_w = StateMonitor(S, 'w', record=True)
 mon_w2 = StateMonitor(S4, 'w', record=True)
-
 mon_s = SpikeMonitor(P)
 
+###############################################
 #------run for pre-train----------------
 net = Network(collect())
-print("w4-be:",S4.w)
 net.store('first')
 net.run(6000*ms)
 
@@ -140,27 +139,24 @@ h+=w
 g+=w
 '''
 S4.post.code = ''
+
 #-------save the weight----------
-import copy
-w4 = copy.copy(S4.w)
-print("w4-af:",w4)
 net.store('second')
 net.restore('first')
-S4.w = w4
+S4.w = net._stored_state['second']['synapses_3']['w'][0]
 net.run(duration)
-print("w4:",S4.w)
-#-----test_Data----------
-Data = readout(M)
-Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 
 #----lms_train------
+Data = readout(M)
+Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
 
+#####################################
 #----run for test--------
 net.run(duration_test, report='text')
-print("w4:",S4.w)
+
 #-----test_Data----------
 Data = readout(M)
 Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
@@ -177,7 +173,7 @@ Y_test_t = Y_t[t0:t1]
 err_test = err[t0:t1]
 t_test = m_y.t[t0:t1]
 
-#------vis----------------
+#------vis of results----------------
 print(mse(Y_test,Y_test_t))
 
 # fig0 = plt.figure(figsize=(20, 4))
@@ -202,5 +198,4 @@ plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
 xlabel('Time (ms)')
 ylabel('rate')
 legend()
-
 show()
