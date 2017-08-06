@@ -35,11 +35,27 @@ def readout(M):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def save_para(para, name):
-    np.save('../Data/temp/'+str(name)+'.npy',para)
-
-def load_para(name):
-    return np.load('../Data/temp/'+str(name)+'.npy')
+def binary_classification(neu =1, interval_l=5,interval_s = ms):
+    def tran_bin(A):
+        trans = []
+        for a in A:
+            for i in range(2):
+                trans.append(0)
+            a_ = bin(a)[2:]
+            while len(a_) <3:
+                a_ = '0'+a_
+            for i in a_:
+                trans.append(int(i))
+            for i in range(3):
+                trans.append(0)
+        return np.asarray(trans)
+    n = int((duration/interval_s)/interval_l)
+    label = np.random.randint(1,3,n)
+    seq = tran_bin(label)
+    times = where(seq ==1)[0]*interval_s
+    indices = zeros(int(len(times)))
+    P = SpikeGeneratorGroup(neu, indices, times)
+    return P , label
 
 ###############################################
 #-----parameter and model setting-------
@@ -84,7 +100,7 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P = PoissonGroup(1, 50 * Hz)
+P, label = binary_classification()
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
 G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
