@@ -27,7 +27,7 @@ def readout(M,Z):
     n = len(M)
     Data=[]
     for i in M:
-        Data.append(i)
+        Data.append(i[1:])
     p0 = [1]*n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
@@ -36,74 +36,27 @@ def readout(M,Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-
-def Tri_function(duration):
-    rng = np.random
-    TIME_SCALE = defaultclock.dt
-    in_number = int(duration/TIME_SCALE)
-
-    def sin_fun(l, c, t):
-        return (np.sin(c * t * TIME_SCALE/us) + 1) / 2
-
-    def tent_map(l, c, t):
-        temp = l
-        if (temp < 0.5 and temp > 0):
-            temp = (c / 101+1) * temp
-            return temp
-        elif (temp >= 0.5 and temp < 1):
-            temp = (c / 101+1) * (1 - temp)
-            return temp
-        else:
-            return 0.5
-
-    def constant(l, c, t):
-        return c / 100
-
-    def chose_fun():
-        c = rng.randint(0, 3)
-        if c == 0:
-            return sin_fun, c
-        elif c == 1:
-            return tent_map, c
-        elif c == 2:
-            return constant, c
-
-    def change_fun(rate):
-        fun = rng.randint(1, 101)
-        if fun > 100 * rate:
-            return False
-        else:
-            return True
-
-    data = []
-    cla = []
-    cons = rng.randint(1, 101)
-    fun, c = chose_fun()
-
-    for t in range(in_number):
-        if change_fun(0.7) and t % 50 ==0:
-            cons = rng.randint(1, 101)
-            fun, c = chose_fun()
-            try:
-                data_t= fun(data[t - 1], cons, t)
-                data.append(data_t)
-                cla.append(c)
-            except IndexError:
-                data_t = fun(rng.randint(1, 101)/100, cons, t)
-                data.append(data_t)
-                cla.append(c)
-        else:
-            try:
-                data_t = fun(data[t - 1], cons, t)
-                data.append(data_t)
-                cla.append(c)
-            except IndexError:
-                data_t= fun(rng.randint(1, 101)/100, cons, t)
-                data.append(data_t)
-                cla.append(c)
-    cla = np.asarray(cla)
-    data = np.asarray(data)
-    return data, cla
+def binary_classification(duration,start=1, end =7, neu =1, interval_l=5,interval_s = ms):
+    def tran_bin(A):
+        trans = []
+        for a in A:
+            for i in range(2):
+                trans.append(0)
+            a_ = bin(a)[2:]
+            while len(a_) <3:
+                a_ = '0'+a_
+            for i in a_:
+                trans.append(int(i))
+            for i in range(3):
+                trans.append(0)
+        return np.asarray(trans)
+    n = int((duration/interval_s)/interval_l)
+    label = np.random.randint(start,end,n)
+    seq = tran_bin(label)
+    times = where(seq ==1)[0]*interval_s
+    indices = zeros(int(len(times)))
+    P = SpikeGeneratorGroup(neu, indices, times)
+    return P , label
 
 def label_to_obj(label,obj):
     temp = []
@@ -131,24 +84,32 @@ def classification(thea, data):
         data_class.append(b)
     return np.asarray(data_class),data_n
 
-#-----parameter setting-------
+###############################################
+#-----parameter and model setting-------
 n = 20
-time_window = 5*ms
-duration = 200 * ms
+duration = 500 * ms
+duration_test = 200*ms
 interval_l = 8
 interval_s = ms
-threshold = 0.5
+threshold = 0.65
+obj = 2
 
-taupre = taupost = 15*ms
+taupre = taupost = 2.5*ms
 wmax = 1
 Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
-dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
-dg/dt = (-g)/(10*ms) : 1
-dh/dt = (-h)/(9.5*ms) : 1
-I = (g-h)*20 : 1
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
+I = (g-h)*10 : 1
+'''
+
+equ_1 = '''
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
+I = (g-h)*30 : 1
 '''
 
 on_pre = '''
@@ -174,69 +135,81 @@ apost += Apost
 w = clip(w+apre, 0, wmax)
 '''
 
-#-----simulation setting-------P = correlated_data(4)
-P = correlated_data(3)
-
+#-----simulation setting-------
+P, label = binary_classification(duration)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/10), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
-S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
-# S = Synapses(P, G,'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
-S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
+G_readout = NeuronGroup(n,equ_1,method='linear')
+
+# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
+S = Synapses(P, G,'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
 S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
+
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+# S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+
 S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
+S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 S2.connect()
 S3.connect()
-S4.connect(condition='i != j', p=0.2)
+S4.connect(condition='i != j', p=0.15)
 
 S.w = '0.1+j*'+str(1/n)
-S2.w = '-rand()/2'
+S2.w = '-rand()'
 S3.w = '0.3+j*0.2'
-S4.w = 'rand()/2'
+S4.w = 'rand()'
 
 #------monitor----------------
-M = []
-for i in range(G._N):
-    locals()['M' + str(i)] = PopulationRateMonitor(G[(i):(i + 1)])
-    M.append(locals()['M' + str(i)])
-m_y = PopulationRateMonitor(P)
+m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
+m_w = StateMonitor(S, 'w', record=True)
+m_w2 = StateMonitor(S4, 'w', record=True)
+m_s = SpikeMonitor(P)
 
-mon_w = StateMonitor(S, 'w', record=True)
-mon_w2 = StateMonitor(S4, 'w', record=True)
-
-mon_s = SpikeMonitor(P)
-
+###############################################
 #------run for pre-train----------------
 net = Network(collect())
 net.store('first')
 net.run(duration)
 
-#-----test_Data----------
-Data = readout(M)
-Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
+#------plot the weight----------------
+fig2 = plt.figure(figsize= (10,8))
+subplot(211)
+plot(m_w.t/second, m_w.w.T)
+xlabel('Time (s)')
+ylabel('Weight / gmax')
+subplot(212)
+plot(m_w2.t/second, m_w2.w.T)
+xlabel('Time (s)')
+ylabel('Weight / gmax')
+tight_layout()
 
-#----lms_train------
-p0 = [1]*n
-p0.append(0.1)
-para = lms_train(p0, Y, Data)
-
-#-------change the synapse model--------------
-S.pre.code = '''
-h+=w
-g+=w
-'''
-S.post.code = ''
-
+#-------change the synapse model----------
 S4.pre.code = '''
 h+=w
 g+=w
 '''
 S4.post.code = ''
 
+#-------save the weight----------
+net.store('second')
+net.restore('first')
+S4.w = net._stored_state['second']['synapses_3']['w'][0]
+net.store('third')
+net.run(duration)
+
+#----lms_train------
+obj1 = label_to_obj(label,obj)
+m1.record_single_timestep()
+Data,para = readout(m1.I,obj1)
+
+#####################################
 #----run for test--------
+net.restore('third')
 net.run(duration_test, report='text')
 
 #-----test_Data----------
@@ -255,12 +228,12 @@ Y_test_t = Y_t[t0:t1]
 err_test = err[t0:t1]
 t_test = m_y.t[t0:t1]
 
-#------vis----------------
+#------vis of results----------------
 print(mse(Y_test,Y_test_t))
 
-fig0 = plt.figure(figsize=(20, 4))
-plot(mon_s.t/ms, mon_s.i, '.k')
-ylim(-0.5,1.5)
+# fig0 = plt.figure(figsize=(20, 4))
+# plot(mon_s.t/ms, mon_s.i, '.k')
+# ylim(-0.5,1.5)
 
 fig1 = plt.figure(figsize=(20, 10))
 subplot(311)
@@ -280,20 +253,4 @@ plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
 xlabel('Time (ms)')
 ylabel('rate')
 legend()
-
-fig2 = plt.figure(figsize= (10,8))
-subplot(211)
-plot(mon_w.t/second, mon_w.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
-subplot(212)
-plot(mon_w2.t/second, mon_w2.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
-tight_layout()
-
 show()
-
-
-
-
