@@ -27,7 +27,7 @@ def binary_classification(duration,start=1, end =7, neu =1, interval_l=5,interva
     return P , label
 
 #-----parameter and model setting-------
-n = 20
+n = 4
 duration = 500 * ms
 interval_l = 8
 interval_s = ms
@@ -82,26 +82,27 @@ G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='l
 # G_readout = NeuronGroup(n,equ_1,method='linear')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
-S = Synapses(P, G,'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
-S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
+S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
+# S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
-# S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_4')
 
 S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
-# S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_4')
+# S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_5')
 # S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
-S.connect(p=0.6)
+S.connect()
 S2.connect()
-S3.connect()
-S4.connect(condition='i != j', p=0.15)
+# S3.connect()
+S4.connect()
+S5.connect()
 
-S.w = '0.1+j*'+str(1/n)
+S.w = 'rand()'
 S2.w = '-rand()'
-S3.w = '0.3+j*0.2'
+# S3.w = '0.3+j*0.2'
 S4.w = 'rand()'
 
 #------monitor----------------
@@ -126,3 +127,4 @@ plot(m_w2.t/second, m_w2.w.T)
 xlabel('Time (s)')
 ylabel('Weight / gmax')
 tight_layout()
+show()
