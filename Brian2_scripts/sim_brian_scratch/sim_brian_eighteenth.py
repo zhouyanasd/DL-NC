@@ -28,13 +28,13 @@ def binary_classification(duration,start=1, end =7, neu =1, interval_l=5,interva
 
 #-----parameter and model setting-------
 n = 4
-duration = 500 * ms
+duration = 1000 * ms
 interval_l = 8
 interval_s = ms
 threshold = 0.65
 obj = 2
 
-taupre = taupost = 2.5*ms
+taupre = taupost = 2*ms
 wmax = 1
 Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
@@ -43,13 +43,13 @@ equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*10 : 1
+I = (g-h)*40 : 1
 '''
 
 equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*30 : 1
+I = (g-h)*20 : 1
 '''
 
 on_pre = '''
@@ -76,9 +76,9 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 2, end=3)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
+P, label = binary_classification(duration, start= 6, end=7)
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup_1')
 # G_readout = NeuronGroup(n,equ_1,method='linear')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
@@ -94,19 +94,21 @@ S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, meth
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
-S.connect()
+S.connect(p = 0.5)
 S2.connect()
 # S3.connect()
-S4.connect()
+S4.connect(p = 0.7)
 S5.connect()
 
 S.w = 'rand()'
 S2.w = '-rand()'
 # S3.w = '0.3+j*0.2'
 S4.w = 'rand()'
+S5.w = 'rand()'
 
 #------monitor----------------
 # m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
+m_g = StateMonitor(G,['v','I'],record=True)
 m_w = StateMonitor(S, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 # m_s = SpikeMonitor(P)
@@ -117,7 +119,15 @@ net.store('first')
 net.run(duration)
 
 #------plot the weight----------------
-fig2 = plt.figure(figsize= (10,8))
+fig1 = plt.figure(figsize= (20,8))
+subplot(211)
+plot(m_g.t/ms,m_g.I.T)
+ylabel('I')
+subplot(212)
+plot(m_g.t/ms,m_g.v.T)
+ylabel('v')
+
+fig2 = plt.figure(figsize= (20,8))
 subplot(211)
 plot(m_w.t/second, m_w.w.T)
 xlabel('Time (s)')
