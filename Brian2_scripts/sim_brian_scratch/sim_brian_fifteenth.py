@@ -163,7 +163,7 @@ S3 = Synapses(Input, G2, model, method='linear')
 S4 = Synapses(G, G, 'w : 1', on_pre=on_pre, method='linear', delay=0.1 * ms)
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
-# -------network S2.connect()topology----------
+# -------network topology----------
 S.connect()
 S2.connect()
 S3.connect()

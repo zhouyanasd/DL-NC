@@ -16,7 +16,10 @@ def lms_train(p0,Zi,Data):
     Para = leastsq(error,p0,args=(Zi,Data))
     return Para[0]
 
-def lms_test(Data, p):
+def lms_test(M, p):
+    Data = []
+    for i in M:
+        Data.append(i[1:])
     l = len(p)
     f = p[l - 1]
     for i in range(len(Data)):
@@ -36,7 +39,7 @@ def readout(M,Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(duration,start=1, end =7, neu =1, interval_l=5,interval_s = ms):
+def binary_classification(duration,start=1, end =7, neu =1, interval_l=8,interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
@@ -87,11 +90,11 @@ def classification(thea, data):
 ###############################################
 #-----parameter and model setting-------
 n = 20
-duration = 500 * ms
-duration_test = 200*ms
+duration = 800 * ms
+duration_test = 400*ms
 interval_l = 8
 interval_s = ms
-threshold = 0.65
+threshold = 0.1
 obj = 2
 
 taupre = taupost = 2.5*ms
@@ -103,13 +106,13 @@ equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*10 : 1
+I = (g-h)*20 : 1
 '''
 
 equ_1 = '''
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*30 : 1
+I = (g-h)*20 : 1
 '''
 
 on_pre = '''
@@ -136,39 +139,42 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=0 * ms, name = 'neurongroup_1')
+P, label = binary_classification(duration + duration_test, interval_l=interval_l,interval_s = interval_s)
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=1 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.60', reset='v = 0', method='linear', refractory=1 * ms, name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1,method='linear')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
 S = Synapses(P, G,'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
-S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
+# S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
-# S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_4')
 
 S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
-S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
-S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+# S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
+S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 S2.connect()
-S3.connect()
-S4.connect(condition='i != j', p=0.15)
+S4.connect(condition='i != j', p=0.1)
+S5.connect(p=0.5)
+S_readout.connect(j='i')
 
-S.w = '0.1+j*'+str(1/n)
+S.w = 'rand()'
 S2.w = '-rand()'
-S3.w = '0.3+j*0.2'
 S4.w = 'rand()'
+S5.w = '0.25'
 
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
 m_w = StateMonitor(S, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
+m_g = StateMonitor(G, (['I','v']), record = True)
+m_g2 = StateMonitor(G2, (['I','v']), record = True)
 
 ###############################################
 #------run for pre-train----------------
@@ -203,54 +209,47 @@ net.store('third')
 net.run(duration)
 
 #----lms_train------
-obj1 = label_to_obj(label,obj)
+t0 = int(duration/ (interval_l*interval_s))
+t1 = int((duration+duration_test) / (interval_l*interval_s))
+
+obj1 = label_to_obj(label[:t0],obj)
 m1.record_single_timestep()
 Data,para = readout(m1.I,obj1)
 
 #####################################
 #----run for test--------
-net.restore('third')
 net.run(duration_test, report='text')
 
-#-----test_Data----------
-Data = readout(M)
-Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
-
 #-----lms_test-----------
-Y_t = lms_test(Data,para)
-err = (abs(Y_t-Y)/max(Y))
+obj_t = label_to_obj(label,obj)
+label_t = lms_test(m1.I, para)
+label_t_class, data_n = classification(threshold, label_t)
 
-t0 = int(duration/defaultclock.dt)
-t1 = int((duration+duration_test) / defaultclock.dt)
+#------vis of results----
+fig1 = plt.figure(figsize=(20, 8))
+subplot(211)
+plt.scatter(m1.t[1:] / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
+plt.scatter(m1.t[1:] / ms, obj_t, s=3, color="blue", marker='*', alpha=0.4)
+plt.plot(m1.t[1:] / ms, data_n, color="green")
+axhline(threshold, ls='--', c='r', lw=1)
+axvline(duration/ms, ls='--', c='green', lw=3)
+subplot(212)
+plot(m_s.t/ms, m_s.i, '.k')
+ylim(-0.5,0.5)
 
-Y_test = Y[t0:t1]
-Y_test_t = Y_t[t0:t1]
-err_test = err[t0:t1]
-t_test = m_y.t[t0:t1]
-
-#------vis of results----------------
-print(mse(Y_test,Y_test_t))
-
-# fig0 = plt.figure(figsize=(20, 4))
-# plot(mon_s.t/ms, mon_s.i, '.k')
-# ylim(-0.5,1.5)
-
-fig1 = plt.figure(figsize=(20, 10))
-subplot(311)
-plot(m_y.t / ms, Y,'-b', label='Y')
-plot(m_y.t / ms, Y_t,'--r', label='Y_t')
-xlabel('Time (ms)')
-ylabel('rate')
+fig3 = plt.figure(figsize=(20,8))
+subplot(211)
+plt.plot(m_g.t / ms, m_g.v.T,label='v')
 legend()
-subplot(312)
-plot(m_y.t / ms, err,'-r', label='err')
-xlabel('Time (ms)')
-ylabel('err')
+subplot(212)
+plt.plot(m_g.t / ms, m_g.I.T,label='I')
 legend()
-subplot(313)
-plot(t_test / ms, Y_test,'-b', label='Y_test')
-plot(t_test / ms, Y_test_t,'-r', label='Y_test_t')
-xlabel('Time (ms)')
-ylabel('rate')
+
+fig4 = plt.figure(figsize=(20,8))
+subplot(211)
+plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
+legend()
+subplot(212)
+plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
 legend()
 show()
