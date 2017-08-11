@@ -4,7 +4,7 @@ start_scope()
 np.random.seed(100)
 
 #------define function------------
-def binary_classification(duration,start=1, end =7, neu =1, interval_l=5,interval_s = ms):
+def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:

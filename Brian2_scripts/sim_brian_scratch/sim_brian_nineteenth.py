@@ -201,14 +201,14 @@ g+=w
 '''
 S4.post.code = ''
 
-#-------save the weight----------
+#------run for lms_train-------
 net.store('second')
 net.restore('first')
 S4.w = net._stored_state['second']['synapses_3']['w'][0]
 net.store('third')
 net.run(duration)
 
-#----lms_train------
+#------lms_train---------------
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
 
