@@ -164,9 +164,9 @@ S5.connect(p=0.5)
 S_readout.connect(j='i')
 
 S.w = 'rand()'
-S2.w = '-rand()'
+S2.w = '-0.25'
 S4.w = 'rand()'
-S5.w = '0.25'
+S5.w = 'rand()'
 
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
@@ -230,7 +230,7 @@ fig1 = plt.figure(figsize=(20, 8))
 subplot(211)
 plt.scatter(m1.t[1:] / ms, label_t_class, s=2, color="red", marker='o', alpha=0.6)
 plt.scatter(m1.t[1:] / ms, obj_t, s=3, color="blue", marker='*', alpha=0.4)
-plt.plot(m1.t[1:] / ms, data_n, color="green")
+plt.scatter(m1.t[1:] / ms, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 axvline(duration/ms, ls='--', c='green', lw=3)
 subplot(212)
