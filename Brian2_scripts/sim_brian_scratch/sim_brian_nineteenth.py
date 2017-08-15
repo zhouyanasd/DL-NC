@@ -163,7 +163,7 @@ S4.connect(condition='i != j', p=0.1)
 S5.connect(p=0.5)
 S_readout.connect(j='i')
 
-S.w = 'rand()'
+S.w = '0.1+j*'+str(0.9/n)
 S2.w = '-0.25'
 S4.w = 'rand()'
 S5.w = 'rand()'
@@ -192,7 +192,6 @@ subplot(212)
 plot(m_w2.t/second, m_w2.w.T)
 xlabel('Time (s)')
 ylabel('Weight / gmax')
-tight_layout()
 
 #-------change the synapse model----------
 S4.pre.code = '''
