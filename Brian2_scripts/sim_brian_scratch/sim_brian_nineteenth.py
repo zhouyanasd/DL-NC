@@ -92,6 +92,7 @@ def classification(thea, data):
 n = 20
 duration = 800 * ms
 duration_test = 400*ms
+pre_train_loop = 3
 interval_l = 8
 interval_s = ms
 threshold = 0.1
@@ -177,21 +178,29 @@ m_g = StateMonitor(G, (['I','v']), record = True)
 m_g2 = StateMonitor(G2, (['I','v']), record = True)
 
 ###############################################
-#------run for pre-train----------------
+#------create network-------------
 net = Network(collect())
 net.store('first')
-net.run(duration)
 
-#------plot the weight----------------
-fig2 = plt.figure(figsize= (10,8))
-subplot(211)
-plot(m_w.t/second, m_w.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
-subplot(212)
-plot(m_w2.t/second, m_w2.w.T)
-xlabel('Time (s)')
-ylabel('Weight / gmax')
+# #------run for pre-train----------
+# for loop in range(pre_train_loop):
+#     net.run(duration)
+#
+#     # ------plot the weight----------------
+#     fig2 = plt.figure(figsize=(10, 8))
+#     title('loop: '+str(loop))
+#     subplot(211)
+#     plot(m_w.t / second, m_w.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#     subplot(212)
+#     plot(m_w2.t / second, m_w2.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#
+#     net.store('second')
+#     net.restore('first')
+#     S4.w = net._stored_state['second']['synapses_3']['w'][0]
 
 #-------change the synapse model----------
 S4.pre.code = '''
@@ -201,9 +210,6 @@ g+=w
 S4.post.code = ''
 
 #------run for lms_train-------
-net.store('second')
-net.restore('first')
-S4.w = net._stored_state['second']['synapses_3']['w'][0]
 net.store('third')
 net.run(duration)
 

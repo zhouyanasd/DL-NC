@@ -76,7 +76,7 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 1, end=7)
+P, label = binary_classification(duration, start= 3, end=4)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup')
 G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup_1')
 # G_readout = NeuronGroup(n,equ_1,method='linear')
