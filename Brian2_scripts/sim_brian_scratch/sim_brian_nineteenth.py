@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 import scipy as sp
 
 start_scope()
-np.random.seed(100)
+np.random.seed(101)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -39,18 +39,18 @@ def readout(M,Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(duration,start=1, end =7, neu =1, interval_l=8,interval_s = ms):
+def binary_classification(duration,start=1, end =3, neu =1, interval_l=10,interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
-            for i in range(2):
+            for i in range(3):
                 trans.append(0)
             a_ = bin(a)[2:]
             while len(a_) <3:
                 a_ = '0'+a_
             for i in a_:
                 trans.append(int(i))
-            for i in range(3):
+            for i in range(4):
                 trans.append(0)
         return np.asarray(trans)
     n = int((duration/interval_s)/interval_l)
@@ -89,25 +89,25 @@ def classification(thea, data):
 
 ###############################################
 #-----parameter and model setting-------
-n = 20
-duration = 800 * ms
-duration_test = 400*ms
-pre_train_loop = 3
-interval_l = 8
+n = 8
+duration = 210 * ms
+duration_test = 100*ms
+pre_train_loop = 10
+interval_l = 10
 interval_s = ms
-threshold = 0.1
+threshold = 0.4
 obj = 2
 
-taupre = taupost = 2.5*ms
+taupre = taupost = 2*ms
 wmax = 1
 Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (2*ms) : 1 
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*20 : 1
+I = (g-h)*30 : 1
 '''
 
 equ_1 = '''
@@ -142,7 +142,7 @@ w = clip(w+apre, 0, wmax)
 #-----simulation setting-------
 P, label = binary_classification(duration + duration_test, interval_l=interval_l,interval_s = interval_s)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=1 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.60', reset='v = 0', method='linear', refractory=1 * ms, name = 'neurongroup_1')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=2 * ms, name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1,method='linear')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
@@ -176,31 +176,32 @@ m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
 m_g = StateMonitor(G, (['I','v']), record = True)
 m_g2 = StateMonitor(G2, (['I','v']), record = True)
+m_read = StateMonitor(G_readout, (['I']), record = True)
 
 ###############################################
 #------create network-------------
 net = Network(collect())
 net.store('first')
 
-# #------run for pre-train----------
-# for loop in range(pre_train_loop):
-#     net.run(duration)
-#
-#     # ------plot the weight----------------
-#     fig2 = plt.figure(figsize=(10, 8))
-#     title('loop: '+str(loop))
-#     subplot(211)
-#     plot(m_w.t / second, m_w.w.T)
-#     xlabel('Time (s)')
-#     ylabel('Weight / gmax')
-#     subplot(212)
-#     plot(m_w2.t / second, m_w2.w.T)
-#     xlabel('Time (s)')
-#     ylabel('Weight / gmax')
-#
-#     net.store('second')
-#     net.restore('first')
-#     S4.w = net._stored_state['second']['synapses_3']['w'][0]
+#------run for pre-train----------
+for loop in range(pre_train_loop):
+    net.run(duration)
+
+    # ------plot the weight----------------
+    fig2 = plt.figure(figsize=(10, 8))
+    title('loop: '+str(loop))
+    subplot(211)
+    plot(m_w.t / second, m_w.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+    subplot(212)
+    plot(m_w2.t / second, m_w2.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+
+    net.store('second')
+    net.restore('first')
+    S4.w = net._stored_state['second']['synapses_3']['w'][0]
 
 #-------change the synapse model----------
 S4.pre.code = '''
@@ -250,11 +251,15 @@ subplot(212)
 plt.plot(m_g.t / ms, m_g.I.T,label='I')
 legend()
 
-fig4 = plt.figure(figsize=(20,8))
-subplot(211)
-plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
-legend()
-subplot(212)
-plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
+# fig4 = plt.figure(figsize=(20,8))
+# subplot(211)
+# plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
+# legend()
+# subplot(212)
+# plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
+# legend()
+
+fig5 = plt.figure(figsize=(20,4))
+plt.plot(m_read.t / ms, m_read.I.T,label='I')
 legend()
 show()
