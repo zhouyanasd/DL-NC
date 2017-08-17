@@ -26,9 +26,9 @@ def lms_test(M, p):
         f += p[i] * Data[i]
     return f
 
-def readout(M,Z):
+def readout(M, Z):
     n = len(M)
-    Data=[]
+    Data = []
     for i in M:
         Data.append(i[1:])
     p0 = [1]*n
@@ -39,7 +39,7 @@ def readout(M,Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(duration,start=1, end =3, neu =1, interval_l=10,interval_s = ms):
+def binary_classification(duration,start=1, end =4, neu =1, interval_l=10,interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
@@ -183,25 +183,25 @@ m_read = StateMonitor(G_readout, (['I']), record = True)
 net = Network(collect())
 net.store('first')
 
-#------run for pre-train----------
-for loop in range(pre_train_loop):
-    net.run(duration)
-
-    # ------plot the weight----------------
-    fig2 = plt.figure(figsize=(10, 8))
-    title('loop: '+str(loop))
-    subplot(211)
-    plot(m_w.t / second, m_w.w.T)
-    xlabel('Time (s)')
-    ylabel('Weight / gmax')
-    subplot(212)
-    plot(m_w2.t / second, m_w2.w.T)
-    xlabel('Time (s)')
-    ylabel('Weight / gmax')
-
-    net.store('second')
-    net.restore('first')
-    S4.w = net._stored_state['second']['synapses_3']['w'][0]
+# #------run for pre-train----------
+# for loop in range(pre_train_loop):
+#     net.run(duration)
+#
+#     # ------plot the weight----------------
+#     fig2 = plt.figure(figsize=(10, 8))
+#     title('loop: '+str(loop))
+#     subplot(211)
+#     plot(m_w.t / second, m_w.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#     subplot(212)
+#     plot(m_w2.t / second, m_w2.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#
+#     net.store('second')
+#     net.restore('first')
+#     S4.w = net._stored_state['second']['synapses_3']['w'][0]
 
 #-------change the synapse model----------
 S4.pre.code = '''
