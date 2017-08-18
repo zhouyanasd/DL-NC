@@ -159,12 +159,12 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect()
+S2.connect(p=0.5)
 S4.connect(condition='i != j', p=0.1)
-S5.connect(p=0.5)
+S5.connect()
 S_readout.connect(j='i')
 
-S.w = '0.1+j*'+str(0.9/n)
+S.w = '0.1+j*'+str(0.8/n)
 S2.w = '-0'
 S4.w = 'rand()'
 S5.w = 'rand()'
