@@ -164,10 +164,10 @@ S4.connect(condition='i != j', p=0.1)
 S5.connect()
 S_readout.connect(j='i')
 
-S.w = '0.1+j*'+str(0.8/n)
+S.w = '0.1+j*'+str(0.9/n)
 S2.w = '-0'
-S4.w = 'rand()'
-S5.w = 'rand()'
+S4.w = '0'
+S5.w = '0'
 
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
