@@ -152,7 +152,7 @@ S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
 S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
 
-S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
+S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
 # S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
@@ -176,7 +176,7 @@ m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
 m_g = StateMonitor(G, (['I','v']), record = True)
 m_g2 = StateMonitor(G2, (['I','v']), record = True)
-m_read = StateMonitor(G_readout, (['I']), record = True)
+m_read = StateMonitor(G_readout, ('I'), record = True)
 
 ###############################################
 #------create network-------------
