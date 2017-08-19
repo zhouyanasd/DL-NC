@@ -74,7 +74,7 @@ def classification(thea, data):
     def normalization_min_max(arr):
         arr_n = arr
         for i in range(arr.size):
-            x = float(arr[i] - np.min(arr))/(np.max(arr)- np.min(arr))
+            x = float(arr[i] - np.min(arr))/(np.max(arr) - np.min(arr))
             arr_n[i] = x
         return arr_n
     data_n = normalization_min_max(data)
@@ -145,8 +145,8 @@ G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', re
 G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='linear', refractory=2 * ms, name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='linear')
 
-# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
-S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
+S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
+# S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
@@ -183,25 +183,26 @@ m_read = StateMonitor(G_readout, ('I'), record = True)
 net = Network(collect())
 net.store('first')
 
-# #------run for pre-train----------
-# for loop in range(pre_train_loop):
-#     net.run(duration)
-#
-#     # ------plot the weight----------------
-#     fig2 = plt.figure(figsize=(10, 8))
-#     title('loop: '+str(loop))
-#     subplot(211)
-#     plot(m_w.t / second, m_w.w.T)
-#     xlabel('Time (s)')
-#     ylabel('Weight / gmax')
-#     subplot(212)
-#     plot(m_w2.t / second, m_w2.w.T)
-#     xlabel('Time (s)')
-#     ylabel('Weight / gmax')
-#
-#     net.store('second')
-#     net.restore('first')
-#     S4.w = net._stored_state['second']['synapses_3']['w'][0]
+#------run for pre-train----------
+for loop in range(pre_train_loop):
+    net.run(duration)
+
+    # ------plot the weight----------------
+    fig2 = plt.figure(figsize=(10, 8))
+    title('loop: '+str(loop))
+    subplot(211)
+    plot(m_w.t / second, m_w.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+    subplot(212)
+    plot(m_w2.t / second, m_w2.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+
+    net.store('second')
+    net.restore('first')
+    S4.w = net._stored_state['second']['synapses_3']['w'][0]
+    S.w = net._stored_state['second']['synapses']['w'][0]
 
 #-------change the synapse model----------
 S4.pre.code = '''
@@ -209,6 +210,12 @@ h+=w
 g+=w
 '''
 S4.post.code = ''
+
+S.pre.code = '''
+h+=w
+g+=w
+'''
+S.post.code = ''
 
 #------run for lms_train-------
 net.store('third')
