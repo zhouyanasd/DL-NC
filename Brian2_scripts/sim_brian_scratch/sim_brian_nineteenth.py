@@ -87,10 +87,36 @@ def classification(thea, data):
         data_class.append(b)
     return np.asarray(data_class),data_n
 
+def ROC(y, scores, pos_label=1):
+    def normalization_min_max(arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr))/(np.max(arr) - np.min(arr))
+            arr_n[i] = x
+        return arr_n
+    scores_n = normalization_min_max(scores)
+    from sklearn import metrics
+    fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
+    roc_auc = metrics.auc(fpr, tpr)
+
+    fig = plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic example')
+    plt.legend(loc="lower right")
+    return fig, roc_auc , thresholds
+
+
 ###############################################
 #-----parameter and model setting-------
 n = 8
-duration = 210 * ms
+duration = 200 * ms
 duration_test = 100*ms
 pre_train_loop = 10
 interval_l = 10
@@ -141,12 +167,12 @@ w = clip(w+apre, 0, wmax)
 
 #-----simulation setting-------
 P, label = binary_classification(duration + duration_test, interval_l=interval_l,interval_s = interval_s)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=1 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='linear', refractory=2 * ms, name = 'neurongroup_1')
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=3 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='linear', refractory=2 * ms, name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='linear')
 
-S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
-# S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
+# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
+S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
@@ -159,15 +185,15 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect(p=0.5)
-S4.connect(condition='i != j', p=0.1)
-S5.connect()
+S2.connect(j= 'k for k in range(n) if k!=6')
+S4.connect(i=np.array([6]), j=np.array([1]))
+S5.connect(i=np.array([6]), j=np.array([0]))
 S_readout.connect(j='i')
 
 S.w = '0.1+j*'+str(0.9/n)
-S2.w = '-0'
-S4.w = '0'
-S5.w = '0'
+S2.w = '-rand()'
+S4.w = 'rand()'
+S5.w = 'rand()'
 
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
@@ -183,26 +209,25 @@ m_read = StateMonitor(G_readout, ('I'), record = True)
 net = Network(collect())
 net.store('first')
 
-#------run for pre-train----------
-for loop in range(pre_train_loop):
-    net.run(duration)
-
-    # ------plot the weight----------------
-    fig2 = plt.figure(figsize=(10, 8))
-    title('loop: '+str(loop))
-    subplot(211)
-    plot(m_w.t / second, m_w.w.T)
-    xlabel('Time (s)')
-    ylabel('Weight / gmax')
-    subplot(212)
-    plot(m_w2.t / second, m_w2.w.T)
-    xlabel('Time (s)')
-    ylabel('Weight / gmax')
-
-    net.store('second')
-    net.restore('first')
-    S4.w = net._stored_state['second']['synapses_3']['w'][0]
-    S.w = net._stored_state['second']['synapses']['w'][0]
+# for loop in range(pre_train_loop):
+#     net.run(duration)
+#
+#     # ------plot the weight----------------
+#     fig2 = plt.figure(figsize=(10, 8))
+#     title('loop: '+str(loop))
+#     subplot(211)
+#     plot(m_w.t / second, m_w.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#     subplot(212)
+#     plot(m_w2.t / second, m_w2.w.T)
+#     xlabel('Time (s)')
+#     ylabel('Weight / gmax')
+#
+#     net.store('second')
+#     net.restore('first')
+#     S4.w = net._stored_state['second']['synapses_3']['w'][0]
+#     S.w = net._stored_state['second']['synapses']['w'][0]
 
 #-------change the synapse model----------
 S4.pre.code = '''
@@ -210,12 +235,6 @@ h+=w
 g+=w
 '''
 S4.post.code = ''
-
-S.pre.code = '''
-h+=w
-g+=w
-'''
-S.post.code = ''
 
 #------run for lms_train-------
 net.store('third')
@@ -238,6 +257,9 @@ obj_t = label_to_obj(label,obj)
 label_t = lms_test(m1.I, para)
 label_t_class, data_n = classification(threshold, label_t)
 
+fig_roc, roc_auc , thresholds = ROC(obj_t,data_n)
+print(roc_auc)
+
 #------vis of results----
 fig1 = plt.figure(figsize=(20, 8))
 subplot(211)
@@ -258,13 +280,13 @@ subplot(212)
 plt.plot(m_g.t / ms, m_g.I.T,label='I')
 legend()
 
-# fig4 = plt.figure(figsize=(20,8))
-# subplot(211)
-# plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
-# legend()
-# subplot(212)
-# plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
-# legend()
+fig4 = plt.figure(figsize=(20,8))
+subplot(211)
+plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
+legend()
+subplot(212)
+plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
+legend()
 
 fig5 = plt.figure(figsize=(20,4))
 plt.plot(m_read.t / ms, m_read.I.T,label='I')
