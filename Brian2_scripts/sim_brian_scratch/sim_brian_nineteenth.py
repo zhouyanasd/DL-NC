@@ -2,6 +2,7 @@ from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp
 
+prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(101)
 
