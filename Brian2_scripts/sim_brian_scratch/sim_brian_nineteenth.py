@@ -186,9 +186,9 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect(j= 'k for k in range(n) if k!=6')
-S4.connect(i=np.array([6]), j=np.array([1]))
-S5.connect(i=np.array([6]), j=np.array([0]))
+S2.connect(j= 'k for k in range(n) if k!=5')
+S4.connect(i=np.array([5]), j=np.array([1]))
+S5.connect(i=np.array([5]), j=np.array([0]))
 S_readout.connect(j='i')
 
 S.w = '0.1+j*'+str(0.9/n)

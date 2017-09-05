@@ -4,6 +4,7 @@ import scipy as sp
 from sklearn.preprocessing import MinMaxScaler
 import scipy.io as sio
 
+prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
 
