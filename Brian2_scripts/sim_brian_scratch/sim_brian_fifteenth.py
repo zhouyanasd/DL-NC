@@ -3,10 +3,9 @@ from scipy.optimize import leastsq
 import scipy as sp
 from sklearn.preprocessing import MinMaxScaler
 
+prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
-
-
 
 # ------define function------------
 def lms_train(p0, Zi, Data):
