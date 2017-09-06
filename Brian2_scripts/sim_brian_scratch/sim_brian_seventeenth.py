@@ -1,4 +1,6 @@
 from brian2 import *
+
+prefs.codegen.target = "numpy"
 start_scope()
 
 #------define function------------
