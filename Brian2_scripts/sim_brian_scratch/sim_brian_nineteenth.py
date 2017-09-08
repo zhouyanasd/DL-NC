@@ -40,7 +40,7 @@ def readout(M, Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(duration,start=1, end =4, neu =1, interval_l=10,interval_s = ms):
+def binary_classification(duration, start=1, end =4, neu =1, interval_l=10, interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
@@ -62,7 +62,7 @@ def binary_classification(duration,start=1, end =4, neu =1, interval_l=10,interv
     P = SpikeGeneratorGroup(neu, indices, times)
     return P , label
 
-def label_to_obj(label,obj):
+def label_to_obj(label, obj):
     temp = []
     for a in label:
         if a == obj:
