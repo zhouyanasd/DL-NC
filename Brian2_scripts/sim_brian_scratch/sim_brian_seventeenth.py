@@ -1,3 +1,7 @@
+# ----------------------------------------
+# correlated and uncorrelated input test for STDP competition
+# simulation 6 -- analysis 1
+#-----------------------------------------
 from brian2 import *
 
 prefs.codegen.target = "numpy"

@@ -1,3 +1,7 @@
+#-------------------------------------
+# Passion input rate regression simulation with STDP
+# simulation 6 -- analysis 4
+#-------------------------------------
 from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp

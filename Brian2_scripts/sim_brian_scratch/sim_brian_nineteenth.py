@@ -1,3 +1,9 @@
+#----------------------------------------
+# inhibitory neuron WTA and digit number classification test
+# multiple pre-train STDP
+# simulation 6--analysis 3 and 4
+#----------------------------------------
+
 from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp

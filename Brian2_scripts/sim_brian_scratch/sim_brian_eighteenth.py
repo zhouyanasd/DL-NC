@@ -1,3 +1,7 @@
+#------------------------------------------
+# special structure RC for STDP competition test
+# simulation 6 -- analysis 2
+#------------------------------------------
 from brian2 import *
 
 prefs.codegen.target = "numpy"
