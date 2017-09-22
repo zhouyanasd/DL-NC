@@ -6,8 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import scipy.io as sio
 
 
-def get_WH_data(path = 'E:/Program Files (x86)/JetBrains/workspace/DL-NC/Brian2_scripts'
-                       '/Data/WH/WH_TestDataset.mat'):
+def get_WH_data(path = '../Brian2_scripts/Data/WH/WH_TestDataset.mat'):
     data = sio.loadmat(path)
     input_u = data['dataMeas'][0][0][1].T[0]
     output_y = data['dataMeas'][0][0][2].T[0]
@@ -78,7 +77,7 @@ ax.plot(t,y_data)
 plt.ion()
 plt.show()
 
-for i in range(1000):
+for i in range(2000):
     # training
     err = train(x_data, y_data)
     if i % 50 == 0:
