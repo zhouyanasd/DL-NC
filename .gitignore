@@ -12,3 +12,4 @@ src/storage/__pycache__/
 src/synapse/__pycache__/
 src/vis/__pycache__/
 Brian2_scripts/Data/temp
+.ipynb_checkpoints/
