@@ -6,7 +6,7 @@ from brian2 import *
 
 prefs.codegen.target = "numpy"
 start_scope()
-np.random.seed(100)
+np.random.seed(103)
 
 #------define function------------
 def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, interval_s = ms):
@@ -36,8 +36,6 @@ n = 4
 duration = 1000 * ms
 interval_l = 8
 interval_s = ms
-threshold = 0.65
-obj = 2
 
 taupre = taupost = 2*ms
 wmax = 1
@@ -48,13 +46,7 @@ equ = '''
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*40 : 1
-'''
-
-equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1
-dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*20 : 1
+I = tanh(g-h)*20 : 1
 '''
 
 on_pre = '''
@@ -81,12 +73,10 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 3, end=4)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='linear', refractory=10 * ms, name = 'neurongroup_1')
-# G_readout = NeuronGroup(n,equ_1,method='linear')
+P, label = binary_classification(duration, start= 6, end=7)
+G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup_1')
 
-# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
 S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
@@ -95,28 +85,26 @@ S5 = Synapses(G, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_4
 
 S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
 # S6 = Synapses(G2, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_5')
-# S_readout=Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
-S.connect(p = 0.5)
+S.connect()
 S2.connect()
 # S3.connect()
-S4.connect(p = 0.7)
+S4.connect(p = 0.7,condition='i != j')
 S5.connect()
 
 S.w = 'rand()'
-S2.w = '-rand()'
+S2.w = '-1'
 # S3.w = '0.3+j*0.2'
 S4.w = 'rand()'
-S5.w = 'rand()'
+S5.w = '1'
 
 #------monitor----------------
-# m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
 m_g = StateMonitor(G,['v','I'],record=True)
 m_w = StateMonitor(S, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
-# m_s = SpikeMonitor(P)
+mon_s = SpikeMonitor(P)
 
 #------run for pre-train----------------
 net = Network(collect())
@@ -124,22 +112,32 @@ net.store('first')
 net.run(duration)
 
 #------plot the weight----------------
+fig0 = plt.figure(figsize=(20, 4))
+plot(mon_s.t/ms, mon_s.i, '.k')
+ylim(-0.5,1.5)
+
 fig1 = plt.figure(figsize= (20,8))
 subplot(211)
-plot(m_g.t/ms,m_g.I.T)
-ylabel('I')
+plot(m_g.t/ms,m_g.I.T, label = 'I')
+legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
 subplot(212)
-plot(m_g.t/ms,m_g.v.T)
-ylabel('v')
+plot(m_g.t/ms,m_g.v.T, label = 'v')
+legend(labels = [ ('V_%s'%k) for k in range(n)], loc = 'upper right')
 
 fig2 = plt.figure(figsize= (20,8))
 subplot(211)
-plot(m_w.t/second, m_w.w.T)
+plot(m_w.t/second, m_w.w.T, label = 'w')
 xlabel('Time (s)')
 ylabel('Weight / gmax')
+legend(labels = [('from %s to %s w=%s') %(s[0],s[1],s[2])
+                 for s in np.vstack((S._synaptic_pre, S._synaptic_post, S.w)).T],
+       loc = 'best')
 subplot(212)
 plot(m_w2.t/second, m_w2.w.T)
 xlabel('Time (s)')
 ylabel('Weight / gmax')
+legend(labels = [('from %s to %s w=%s') %(s[0],s[1],s[2])
+                 for s in np.vstack((S4._synaptic_pre, S4._synaptic_post, S4.w)).T],
+       loc = 'best')
 tight_layout()
 show()
