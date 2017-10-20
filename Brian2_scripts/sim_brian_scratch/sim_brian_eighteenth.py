@@ -6,7 +6,7 @@ from brian2 import *
 
 prefs.codegen.target = "numpy"
 start_scope()
-np.random.seed(103)
+np.random.seed(100)
 
 #------define function------------
 def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, interval_s = ms):
@@ -33,7 +33,7 @@ def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, inter
 
 #-----parameter and model setting-------
 n = 4
-duration = 1000 * ms
+duration = 2000 * ms
 interval_l = 8
 interval_s = ms
 
@@ -73,9 +73,9 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 6, end=7)
-G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup_1')
+P, label = binary_classification(duration, start= 1, end=6)
+G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
 
 S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
