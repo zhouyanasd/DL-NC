@@ -49,6 +49,13 @@ dh/dt = (-h)/(1.45*ms) : 1
 I = tanh(g-h)*20 : 1
 '''
 
+equ_i = '''
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1
+dh/dt = (-h)/(1.45*ms) : 1
+I = tanh(g-h)*30 : 1
+'''
+
 on_pre = '''
 h+=w
 g+=w
@@ -75,7 +82,7 @@ w = clip(w+apre, 0, wmax)
 #-----simulation setting-------
 P, label = binary_classification(duration, start= 1, end=6)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
+G2 = NeuronGroup(round(n/4), equ_i, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
 
 S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
