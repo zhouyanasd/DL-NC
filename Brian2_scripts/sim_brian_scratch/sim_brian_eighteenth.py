@@ -31,9 +31,46 @@ def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, inter
     P = SpikeGeneratorGroup(neu, indices, times)
     return P , label
 
+def correlated_data(spike_n, neu = 2, interval_l=20,interval_s = 2* ms):
+    def tran_correlated(A):
+        trans = []
+        for a in A:
+            trans = np.append(trans,[0]*a)
+            trans = np.append(trans, [1]*spike_n)
+            if a+spike_n<=interval_l:
+                trans = np.append(trans, [0]*(interval_l-a-spike_n))
+        return np.asarray(trans)
+
+    def tran_uncorrelated():
+        trans = np.array([])
+        for a in range(n):
+            import random
+            s = random.sample(range(interval_l), spike_n)
+            trans = np.append(trans, np.asarray(s)+(a*interval_l))
+        return np.asarray(trans)
+
+    n = int((duration/ interval_s) / interval_l)
+    if spike_n >int(interval_l/2):
+        print('too much spike')
+    else:
+        start = np.random.randint(0, interval_l - spike_n, n)
+        seq = tran_correlated(start)
+        times_a = where(seq == 1)[0]
+        indices_a = zeros(int(len(times_a)))
+
+        times_b = tran_uncorrelated()
+        indices_b = zeros(int(len(times_a))) +1
+
+        indices = np.concatenate((indices_a, indices_b), axis=0)
+        times = np.concatenate((times_a, times_b), axis=0) * interval_s
+
+        P = SpikeGeneratorGroup(neu, indices, times)
+        return P
+
+
 #-----parameter and model setting-------
 n = 4
-duration = 2000 * ms
+duration = 2200 * ms
 interval_l = 8
 interval_s = ms
 
@@ -80,7 +117,8 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 1, end=6)
+# P = correlated_data(3)
+P, label = binary_classification(duration, start= 1, end=6, neu =1)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
 G2 = NeuronGroup(round(n/4), equ_i, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
 
