@@ -70,7 +70,7 @@ def correlated_data(spike_n, neu = 2, interval_l=20,interval_s = 2* ms):
 
 #-----parameter and model setting-------
 n = 4
-duration = 2200 * ms
+duration = 2000 * ms
 interval_l = 8
 interval_s = ms
 
@@ -118,11 +118,12 @@ w = clip(w+apre, 0, wmax)
 
 #-----simulation setting-------
 # P = correlated_data(3)
-P, label = binary_classification(duration, start= 1, end=6, neu =1)
+P, label = binary_classification(duration, start= 3, end=4, neu =1)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
 G2 = NeuronGroup(round(n/4), equ_i, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
 
-S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
+# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
+S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
 # S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
