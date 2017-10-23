@@ -140,13 +140,13 @@ equ = '''
 dv/dt = (I-v) / (2*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*30 : 1
+I = tanh(g-h)*30 : 1
 '''
 
 equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms) : 1 
 dh/dt = (-h)/(1.45*ms) : 1
-I = (g-h)*20 : 1
+I = tanh(g-h)*20 : 1
 '''
 
 on_pre = '''
@@ -174,9 +174,9 @@ w = clip(w+apre, 0, wmax)
 
 #-----simulation setting-------
 P, label = binary_classification(duration + duration_test, interval_l=interval_l,interval_s = interval_s)
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=3 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='linear', refractory=2 * ms, name = 'neurongroup_1')
-G_readout = NeuronGroup(n,equ_1, method ='linear')
+G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=3 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
+G_readout = NeuronGroup(n,equ_1, method ='euler')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
 S = Synapses(P, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
@@ -282,20 +282,20 @@ ylim(-0.5,0.5)
 fig3 = plt.figure(figsize=(20,8))
 subplot(211)
 plt.plot(m_g.t / ms, m_g.v.T,label='v')
-legend()
+legend(labels = [ ('V_%s'%k) for k in range(n)], loc = 'upper right')
 subplot(212)
 plt.plot(m_g.t / ms, m_g.I.T,label='I')
-legend()
+legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
 
 fig4 = plt.figure(figsize=(20,8))
 subplot(211)
 plt.plot(m_g2.t / ms, m_g2.v.T,label='v')
-legend()
+legend(labels = [ ('V_%s'%k) for k in range(n)], loc = 'upper right')
 subplot(212)
 plt.plot(m_g2.t / ms, m_g2.I.T,label='I')
-legend()
+legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
 
 fig5 = plt.figure(figsize=(20,4))
 plt.plot(m_read.t / ms, m_read.I.T,label='I')
-legend()
+legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
 show()
