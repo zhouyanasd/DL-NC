@@ -137,14 +137,14 @@ Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
-dv/dt = (I-v) / (2*ms) : 1 
+dv/dt = (I-v) / (2*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*30 : 1
 '''
 
 equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1
+dg/dt = (-g)/(1.5*ms) : 1 (unless refractory)
 dh/dt = (-h)/(1.45*ms) : 1
 I = (g-h)*20 : 1
 '''
