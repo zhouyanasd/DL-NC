@@ -1,7 +1,7 @@
 #----------------------------------------
 # inhibitory neuron WTA and digit number classification test
 # multiple pre-train STDP
-# simulation 6--analysis 3 and 4
+# simulation 6--analysis 4
 #----------------------------------------
 
 from brian2 import *
@@ -124,12 +124,12 @@ def ROC(y, scores, pos_label=1):
 #-----parameter and model setting-------
 n = 8
 duration = 200 * ms
-duration_test = 100*ms
+duration_test = 50*ms
 pre_train_loop = 10
 interval_l = 10
 interval_s = ms
 threshold = 0.4
-obj = 2
+obj = 3
 
 taupre = taupost = 2*ms
 wmax = 1
@@ -175,7 +175,7 @@ w = clip(w+apre, 0, wmax)
 #-----simulation setting-------
 P, label = binary_classification(duration + duration_test, interval_l=interval_l,interval_s = interval_s)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=3 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
@@ -245,7 +245,7 @@ S4.post.code = ''
 
 #------run for lms_train-------
 net.store('third')
-net.run(duration)
+net.run(duration, report='text')
 
 #------lms_train---------------
 t0 = int(duration/ (interval_l*interval_s))
@@ -254,6 +254,9 @@ t1 = int((duration+duration_test) / (interval_l*interval_s))
 obj1 = label_to_obj(label[:t0],obj)
 m1.record_single_timestep()
 Data,para = readout(m1.I,obj1)
+print(m1.t)
+print(obj1.shape)
+print(m1.I.shape)
 
 #####################################
 #----run for test--------
@@ -264,8 +267,12 @@ obj_t = label_to_obj(label,obj)
 label_t = lms_test(m1.I, para)
 label_t_class, data_n = classification(threshold, label_t)
 
+print(obj_t.shape)
+
 fig_roc, roc_auc , thresholds = ROC(obj_t,data_n)
 print(roc_auc)
+print(m1.t)
+print(m1.I.shape)
 
 #------vis of results----
 fig1 = plt.figure(figsize=(20, 8))

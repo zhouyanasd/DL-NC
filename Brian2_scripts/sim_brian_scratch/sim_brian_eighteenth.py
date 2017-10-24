@@ -1,6 +1,6 @@
 #------------------------------------------
-# special structure RC for STDP competition test
-# simulation 6 -- analysis 2
+# special structure RC for STDP competition and WTA test
+# simulation 6 -- analysis 2 and 3
 #------------------------------------------
 from brian2 import *
 

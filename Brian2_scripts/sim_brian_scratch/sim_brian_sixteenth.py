@@ -1,6 +1,6 @@
 #-------------------------------------
 # Passion input rate regression simulation with STDP
-# simulation 6 -- analysis 4
+# simulation 6 -- analysis 3 and 4
 #-------------------------------------
 from brian2 import *
 from scipy.optimize import leastsq
@@ -8,7 +8,7 @@ import scipy as sp
 
 prefs.codegen.target = "numpy"
 start_scope()
-np.random.seed(13)
+np.random.seed(102)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -48,10 +48,10 @@ def load_para(name):
 
 ###############################################
 #-----parameter and model setting-------
-n = 20
+n = 10
 time_window = 10*ms
-duration = 5000 * ms
-duration_test = 2000*ms
+duration = 1000 * ms
+duration_test = 200*ms
 
 taupre = taupost = 15*ms
 wmax = 1
@@ -96,8 +96,8 @@ G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.30', reset='v = 0', method='l
 S = Synapses(P, G,'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
 S3 = Synapses(P, G2, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_2')
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses_1')
-S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
-# S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
+# S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear',  name = 'synapses_3')
+S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
@@ -143,7 +143,7 @@ S4.pre.code = '''
 h+=w
 g+=w
 '''
-S4.post.code = ''
+# S4.post.code = ''
 
 #-------save the weight----------
 net.store('second')
@@ -157,6 +157,7 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
+# para = np.array([1]*(n+1))
 
 #####################################
 #----run for test--------
