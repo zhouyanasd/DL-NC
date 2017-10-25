@@ -1,5 +1,7 @@
 from brian2 import *
 
+prefs.codegen.target = "numpy"  #it is faster than use default "cython"
+
 #------define function------------
 def visualise_connectivity(S):
     Ns = len(S.source)

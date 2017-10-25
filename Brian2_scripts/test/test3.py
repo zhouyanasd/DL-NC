@@ -1,5 +1,6 @@
 from brian2 import *
 start_scope()
+prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 
 equ_1 = '''
 I = stimulus(t,i): 1
