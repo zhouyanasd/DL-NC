@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import scipy.io as sio
 
 
-def get_WH_data(path = '../Brian2_scripts/Data/WH/WH_TestDataset.mat'):
+def get_WH_data(path = '../../Data/WH/WH_TestDataset.mat'):
     data = sio.loadmat(path)
     input_u = data['dataMeas'][0][0][1].T[0]
     output_y = data['dataMeas'][0][0][2].T[0]

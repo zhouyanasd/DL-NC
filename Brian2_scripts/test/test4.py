@@ -62,7 +62,7 @@ net = Network(collect())
 net.run(100*ms)
 visualise_connectivity(S)
 
-# store("test4","../Data/test4")
+# store("test4","../../Data/test4")
 
 # start_scope()
 # G1 = NeuronGroup(10, equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
@@ -101,7 +101,7 @@ net.run(100*ms)
 # S1 = Synapses(P, G, 'w = 2 : 1',on_pre = on_pre, method='linear', delay = 1*ms)
 # S1.connect(j='i')
 
-# restore("test4","../Data/test4")
+# restore("test4","../../Data/test4")
 # G.equations._equations['I'] = "I = (g-h)*30 : 1"
 # run(100*ms)
 

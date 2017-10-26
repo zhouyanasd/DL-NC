@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # matlab文件名
-matfn = '../Brian2_scripts/Data/WH/WH_TestDataset.mat'
+matfn = '../../Data/WH/WH_TestDataset.mat'
 data = sio.loadmat(matfn)
 
 print(data)

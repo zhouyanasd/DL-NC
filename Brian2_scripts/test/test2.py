@@ -28,12 +28,12 @@ def normalization_min_max(arr):
         arr_n[i] = x
     return arr_n
 
-a = np.loadtxt("../Data/jv/train.txt", delimiter=None)
+a = np.loadtxt("../../Data/jv/train.txt", delimiter=None)
 a_ = MinMaxScaler().fit_transform(a)
 print(a_)
 print(a.shape)
 
-s = open("../Data/jv/train.txt",'r')
+s = open("../../Data/jv/train.txt",'r')
 i = -1
 size_l =[]
 while True:
@@ -47,7 +47,7 @@ while True:
         size_l.append(i)
         continue
 
-data_l=np.loadtxt("../Data/jv/size.txt", delimiter=None).astype(int)[1]
+data_l=np.loadtxt("../../Data/jv/size.txt", delimiter=None).astype(int)[1]
 
 data_l = np.cumsum(data_l)
 data_l_ = np.concatenate(([0],data_l))

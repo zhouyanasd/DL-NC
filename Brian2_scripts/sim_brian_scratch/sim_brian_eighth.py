@@ -35,10 +35,10 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 def save_para(para, name):
-    np.save('../Data/'+str(name)+'.npy',para)
+    np.save('../../Data/'+str(name)+'.npy',para)
 
 def load_para(name):
-    return np.load('../Data/'+str(name)+'.npy')
+    return np.load('../../Data/'+str(name)+'.npy')
 #---loop-----
 
 N = 40

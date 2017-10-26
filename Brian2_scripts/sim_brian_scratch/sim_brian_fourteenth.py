@@ -63,7 +63,7 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def load_Data_JV(path="../Data/jv/train.txt"):
+def load_Data_JV(path="../../Data/jv/train.txt"):
     data = np.loadtxt(path, delimiter=None)
     s = open(path, 'r')
     i = -1
@@ -80,7 +80,7 @@ def load_Data_JV(path="../Data/jv/train.txt"):
     return MinMaxScaler().fit_transform(data), size_d
 
 
-def get_label(obj, t, size_d, path="../Data/jv/size.txt"):
+def get_label(obj, t, size_d, path="../../Data/jv/size.txt"):
     if t == "train":
         data_l = np.loadtxt(path, delimiter=None).astype(int)[1]
     elif t == "test":

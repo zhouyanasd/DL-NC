@@ -41,10 +41,10 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 def save_para(para, name):
-    np.save('../Data/temp/'+str(name)+'.npy',para)
+    np.save('../../Data/temp/'+str(name)+'.npy',para)
 
 def load_para(name):
-    return np.load('../Data/temp/'+str(name)+'.npy')
+    return np.load('../../Data/temp/'+str(name)+'.npy')
 
 ###############################################
 #-----parameter and model setting-------

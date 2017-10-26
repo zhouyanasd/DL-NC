@@ -53,7 +53,7 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def get_WH_data(path = '../Data/WH/WH_TestDataset.mat'):
+def get_WH_data(path = '../../Data/WH/WH_TestDataset.mat'):
     data = sio.loadmat(path)
     input_u = data['dataMeas'][0][0][1].T[0]
     output_y = data['dataMeas'][0][0][2].T[0]
