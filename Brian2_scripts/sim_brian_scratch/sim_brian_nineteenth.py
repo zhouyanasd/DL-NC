@@ -127,11 +127,11 @@ n = 4
 pre_train_duration = 4000*ms
 duration = 500 * ms
 duration_test = 100*ms
-pre_train_loop = 5
+pre_train_loop = 3
 interval_l = 10
 interval_s = ms
 threshold = 0.4
-obj = 3
+obj = 5
 
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
@@ -178,7 +178,7 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=3,end=4,
+P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=5,end=6,
                                                        interval_l=interval_l,interval_s = interval_s)
 P, label = binary_classification(duration + duration_test, start=1,end=7,
                                  interval_l=interval_l,interval_s = interval_s)
@@ -203,7 +203,7 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 S2.connect()
-S4.connect(condition='i != j')
+S4.connect(p = 1,condition='i != j')
 S5.connect()
 S_readout.connect(j='i')
 
@@ -211,7 +211,6 @@ S.w = '0.1+j*'+str(0.9/n)
 S2.w = '-rand()'
 S4.w = 'rand()'
 S5.w = 'rand()'
-
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
 m_w = StateMonitor(S, 'w', record=True)

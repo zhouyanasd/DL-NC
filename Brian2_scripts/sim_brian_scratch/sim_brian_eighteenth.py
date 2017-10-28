@@ -1,26 +1,27 @@
 #------------------------------------------
-# special structure RC for STDP competition and WTA test
-# simulation 6 -- analysis 2 and 3
+# special structure RC for STDP competition test
+# simulation 6 -- analysis 2
 #------------------------------------------
 from brian2 import *
+from brian2tools import *
 
 prefs.codegen.target = "numpy"
 start_scope()
-np.random.seed(100)
+np.random.seed(103)
 
 #------define function------------
 def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
-            for i in range(2):
+            for i in range(3):
                 trans.append(0)
             a_ = bin(a)[2:]
             while len(a_) <3:
                 a_ = '0'+a_
             for i in a_:
                 trans.append(int(i))
-            for i in range(3):
+            for i in range(4):
                 trans.append(0)
         return np.asarray(trans)
     n = int((duration/interval_s)/interval_l)
@@ -31,47 +32,10 @@ def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, inter
     P = SpikeGeneratorGroup(neu, indices, times)
     return P , label
 
-def correlated_data(spike_n, neu = 2, interval_l=20,interval_s = 2* ms):
-    def tran_correlated(A):
-        trans = []
-        for a in A:
-            trans = np.append(trans,[0]*a)
-            trans = np.append(trans, [1]*spike_n)
-            if a+spike_n<=interval_l:
-                trans = np.append(trans, [0]*(interval_l-a-spike_n))
-        return np.asarray(trans)
-
-    def tran_uncorrelated():
-        trans = np.array([])
-        for a in range(n):
-            import random
-            s = random.sample(range(interval_l), spike_n)
-            trans = np.append(trans, np.asarray(s)+(a*interval_l))
-        return np.asarray(trans)
-
-    n = int((duration/ interval_s) / interval_l)
-    if spike_n >int(interval_l/2):
-        print('too much spike')
-    else:
-        start = np.random.randint(0, interval_l - spike_n, n)
-        seq = tran_correlated(start)
-        times_a = where(seq == 1)[0]
-        indices_a = zeros(int(len(times_a)))
-
-        times_b = tran_uncorrelated()
-        indices_b = zeros(int(len(times_a))) +1
-
-        indices = np.concatenate((indices_a, indices_b), axis=0)
-        times = np.concatenate((times_a, times_b), axis=0) * interval_s
-
-        P = SpikeGeneratorGroup(neu, indices, times)
-        return P
-
-
 #-----parameter and model setting-------
 n = 4
-duration = 2000 * ms
-interval_l = 8
+duration = 4000 * ms
+interval_l = 10
 interval_s = ms
 
 taupre = taupost = 2*ms
@@ -84,13 +48,6 @@ dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms) : 1
 I = tanh(g-h)*20 : 1
-'''
-
-equ_i = '''
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms) : 1
-dh/dt = (-h)/(1.45*ms) : 1
-I = tanh(g-h)*30 : 1
 '''
 
 on_pre = '''
@@ -117,10 +74,9 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-# P = correlated_data(3)
-P, label = binary_classification(duration, start= 3, end=4, neu =1)
-G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ_i, threshold='v > 0.1', reset='v = 0', method='euler', refractory=2 * ms, name = 'neurongroup_1')
+P, label = binary_classification(duration, start= 4, end=5)
+G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup_1')
 
 # S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses')
 S = Synapses(P, G, 'w : 1', on_pre=on_pre, method='linear', name = 'synapses')
@@ -134,17 +90,17 @@ S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, meth
 # S4 = Synapses(G, G,'w : 1', on_pre=on_pre, method='linear',  name = 'synapses_3')
 
 #-------network topology----------
-S.connect()
+S.connect(j='k for k in range(n)')
 S2.connect()
 # S3.connect()
-S4.connect(p = 0.7,condition='i != j')
+S4.connect(condition='i != j')
 S5.connect()
 
-S.w = 'rand()'
-S2.w = '-1'
-# S3.w = '0.3+j*0.2'
+S.w = '0.1+j*'+str(0.9/n)
+S2.w = '-rand()'
 S4.w = 'rand()'
-S5.w = '1'
+S5.w = 'rand()'
+# S3.w = '0.3+j*0.2'
 
 #------monitor----------------
 m_g = StateMonitor(G,['v','I'],record=True)
@@ -155,6 +111,7 @@ mon_s = SpikeMonitor(P)
 #------run for pre-train----------------
 net = Network(collect())
 net.store('first')
+print(S4.w)
 net.run(duration)
 
 #------plot the weight----------------
@@ -186,4 +143,7 @@ legend(labels = [('from %s to %s w=%s') %(s[0],s[1],s[2])
                  for s in np.vstack((S4._synaptic_pre, S4._synaptic_post, S4.w)).T],
        loc = 'best')
 tight_layout()
+
+fig6 =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
 show()
