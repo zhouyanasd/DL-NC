@@ -5,6 +5,7 @@
 #----------------------------------------
 
 from brian2 import *
+from brian2tools import *
 from scipy.optimize import leastsq
 import scipy as sp
 
@@ -179,7 +180,7 @@ w = clip(w+apre, 0, wmax)
 #-----simulation setting-------
 P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=3,end=4,
                                                        interval_l=interval_l,interval_s = interval_s)
-P, label = binary_classification(duration + duration_test, start=1,end=4,
+P, label = binary_classification(duration + duration_test, start=1,end=7,
                                  interval_l=interval_l,interval_s = interval_s)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=3 * ms,
                 name = 'neurongroup')
@@ -202,7 +203,7 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 S2.connect()
-S4.connect()
+S4.connect(condition='i != j')
 S5.connect()
 S_readout.connect(j='i')
 
@@ -318,4 +319,7 @@ legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
 fig5 = plt.figure(figsize=(20,4))
 plt.plot(m_read.t / ms, m_read.I.T,label='I')
 legend(labels = [ ('I_%s'%k) for k in range(n)], loc = 'upper right')
+
+fig6 =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
 show()
