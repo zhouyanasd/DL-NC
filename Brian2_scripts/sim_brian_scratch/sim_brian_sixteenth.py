@@ -157,7 +157,7 @@ Y = (m_y.smooth_rate(window='gaussian', width=time_window)/ Hz)
 p0 = [1]*n
 p0.append(0.1)
 para = lms_train(p0, Y, Data)
-# para = np.array([1]*(n+1))
+# para = np.array([1]*(n+1)) # show the output with out LMS
 
 #####################################
 #----run for test--------
