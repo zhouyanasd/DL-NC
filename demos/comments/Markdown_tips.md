@@ -13,3 +13,6 @@
 <font color=#00ffff size=72>color=#00ffff</font>
 
 <font color=gray size=72>color=gray</font>
+
+<b> Markdown 在此处同样适用，如 *加粗* </b>
+
