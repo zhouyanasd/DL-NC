@@ -33,7 +33,7 @@ def binary_classification(duration, start=1, end =7, neu =1, interval_l=5, inter
     return P , label
 
 #-----parameter and model setting-------
-n = 4
+n = 8
 duration = 4000 * ms
 interval_l = 10
 interval_s = ms
@@ -44,9 +44,10 @@ Apre = 0.01
 Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
+r : 1
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms) : 1
-dh/dt = (-h)/(1.45*ms) : 1
+dg/dt = (-g)/(1.5*ms*r) : 1
+dh/dt = (-h)/(1.45*ms*r) : 1
 I = tanh(g-h)*20 : 1
 '''
 
@@ -74,7 +75,7 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P, label = binary_classification(duration, start= 4, end=5)
+P, label = binary_classification(duration, start= 3, end=4)
 G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup')
 G2 = NeuronGroup(round(n/4), equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=10 * ms, name = 'neurongroup_1')
 
@@ -91,16 +92,21 @@ S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post = on_post_STDP, meth
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect()
+S2.connect(p=0.5)
 # S3.connect()
-S4.connect(condition='i != j')
-S5.connect()
+S4.connect(p=0.8,condition='i != j')
+S5.connect(p=0.5)
 
-S.w = '0.1+j*'+str(0.9/n)
+S.w = 'rand()'
 S2.w = '-rand()'
 S4.w = 'rand()'
 S5.w = 'rand()'
 # S3.w = '0.3+j*0.2'
+
+S4.delay = 'j*2*ms'
+
+G.r = 'rand()'
+G2.r = 'rand()'
 
 #------monitor----------------
 m_g = StateMonitor(G,['v','I'],record=True)
