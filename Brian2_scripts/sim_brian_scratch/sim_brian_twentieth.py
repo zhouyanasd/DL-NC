@@ -146,7 +146,7 @@ Apost = -Apre*taupre/taupost*1.2
 equ = '''
 r : 1
 dv/dt = (I-v) / (2*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms) : 1
+dg/dt = (-g)/(1.5*ms*r) : 1
 dh/dt = (-h)/(1.45*ms*r) : 1
 I = tanh(g-h)*20 : 1
 '''
