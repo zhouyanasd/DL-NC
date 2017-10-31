@@ -13,7 +13,7 @@ import scipy as sp
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
-np.random.seed(101)
+np.random.seed(100)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -133,7 +133,7 @@ pre_train_loop = 1
 interval_l = 10
 interval_s = ms
 threshold = 0.4
-obj = 4
+obj = 5
 
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
@@ -148,7 +148,7 @@ r : 1
 dv/dt = (I-v) / (2*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms) : 1
 dh/dt = (-h)/(1.45*ms*r) : 1
-I = tanh(g-h)*30 : 1
+I = tanh(g-h)*20 : 1
 '''
 
 equ_1 = '''
@@ -183,7 +183,7 @@ w = clip(w+apre, 0, wmax)
 #-----simulation setting-------
 P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=obj,end=obj+1,
                                                        interval_l=interval_l,interval_s = interval_s)
-P, label = binary_classification(duration + duration_test, start=1,end=4,
+P, label = binary_classification(duration + duration_test, start=1,end=7,
                                  interval_l=interval_l,interval_s = interval_s)
 G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=3 * ms,
                 name = 'neurongroup')
