@@ -13,7 +13,7 @@ import scipy as sp
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
-np.random.seed(103)
+np.random.seed(102)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -133,8 +133,8 @@ pre_train_loop = 1
 interval_l = 10
 interval_s = ms
 threshold = 0.4
-obj_pre_train =4
-obj = 4
+obj_pre_train =3
+obj = 3
 
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
@@ -186,9 +186,9 @@ P_plasticity, label_plasticity = binary_classification(pre_train_duration, start
                                                        interval_l=interval_l,interval_s = interval_s)
 P, label = binary_classification(duration + duration_test, start=1,end=7,
                                  interval_l=interval_l,interval_s = interval_s)
-G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=5 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=15 * ms,
                 name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=5 * ms,
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=15 * ms,
                  name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
@@ -213,10 +213,10 @@ S2.w = '-rand()'
 S4.w = 'rand()'
 S5.w = 'rand()'
 
-S4.delay = 'j*0.2*ms'
+S4.delay = '0*ms'
 
-G.r = 'rand()'
-G2.r = 'rand()'
+G.r = '1'
+G2.r = '1'
 
 #------monitor----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt = interval_l*interval_s)
