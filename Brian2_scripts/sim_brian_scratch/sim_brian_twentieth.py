@@ -13,7 +13,7 @@ import scipy as sp
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
-np.random.seed(100)
+np.random.seed(103)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -49,7 +49,7 @@ def readout(M, Z):
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
-def binary_classification(duration, start=1, end =4, neu =1, interval_l=10, interval_s = ms):
+def binary_classification(duration, start=1, end =7, neu =1, interval_l=10, interval_s = ms):
     def tran_bin(A):
         trans = []
         for a in A:
@@ -127,13 +127,14 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 #-----parameter and model setting-------
 n = 8
 pre_train_duration = 10000*ms
-duration = 500 * ms
-duration_test = 100*ms
+duration = 1000 * ms
+duration_test = 200*ms
 pre_train_loop = 1
 interval_l = 10
 interval_s = ms
 threshold = 0.4
-obj = 5
+obj_pre_train =4
+obj = 4
 
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
@@ -145,7 +146,7 @@ Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
 r : 1
-dv/dt = (I-v) / (2*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms*r) : 1
 dh/dt = (-h)/(1.45*ms*r) : 1
 I = tanh(g-h)*20 : 1
@@ -181,13 +182,13 @@ w = clip(w+apre, 0, wmax)
 '''
 
 #-----simulation setting-------
-P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=obj,end=obj+1,
+P_plasticity, label_plasticity = binary_classification(pre_train_duration, start=obj_pre_train,end=obj_pre_train+1,
                                                        interval_l=interval_l,interval_s = interval_s)
 P, label = binary_classification(duration + duration_test, start=1,end=7,
                                  interval_l=interval_l,interval_s = interval_s)
-G = NeuronGroup(n, equ, threshold='v > 0.15', reset='v = 0', method='euler', refractory=3 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=5 * ms,
                 name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.15', reset='v = 0', method='euler', refractory=2 * ms,
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=5 * ms,
                  name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
