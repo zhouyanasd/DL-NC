@@ -103,7 +103,7 @@ S4.w = 'rand()'
 S5.w = 'rand()'
 # S3.w = '0.3+j*0.2'
 
-S4.delay = 'j*2*ms'
+S4.delay = 'j*0.2*ms'
 
 G.r = 'rand()'
 G2.r = 'rand()'
