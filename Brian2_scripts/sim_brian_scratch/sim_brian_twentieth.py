@@ -53,7 +53,7 @@ def binary_classification(duration, start=1, end =7, neu =1, interval_l=10, inte
     def tran_bin(A):
         trans = []
         for a in A:
-            for i in range(3):
+            for i in range(13):
                 trans.append(0)
             a_ = bin(a)[2:]
             while len(a_) <3:
@@ -129,12 +129,12 @@ n = 8
 pre_train_duration = 10000*ms
 duration = 1000 * ms
 duration_test = 200*ms
-pre_train_loop = 1
-interval_l = 10
+pre_train_loop = 0
+interval_l = 20
 interval_s = ms
 threshold = 0.4
-obj_pre_train =3
-obj = 3
+obj_pre_train =2
+obj = 1
 
 t0 = int(duration/ (interval_l*interval_s))
 t1 = int((duration+duration_test) / (interval_l*interval_s))
@@ -296,6 +296,8 @@ fig_roc_train, roc_auc_train , thresholds_train = ROC(obj_t[:t0],data_n[:t0],'RO
 print('ROC of train is %s'%roc_auc_train)
 fig_roc_test, roc_auc_test , thresholds_test = ROC(obj_t[t0:],data_n[t0:],'ROC for test')
 print('ROC of test is %s'%roc_auc_test)
+
+print(obj_t)
 
 #####################################
 #------vis of results----
