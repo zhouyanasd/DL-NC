@@ -54,7 +54,7 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def get_HYSYS_data(path='./Data/HYSYS/shoulian.mat'):
+def get_HYSYS_data(path='../../Data/HYSYS/shoulian.mat'):
     data = sio.loadmat(path)
     input_u = data['xxadu'].T[1:]
     output_y = data['xxadu'].T[0]
