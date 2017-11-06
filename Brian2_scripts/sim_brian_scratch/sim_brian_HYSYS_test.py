@@ -154,8 +154,8 @@ g+=w
 stimulus = TimedArray(u, dt=defaultclock.dt)
 
 Input = NeuronGroup(14, equ_in, method='linear')
-G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='linear', refractory=0 * ms)
-G2 = NeuronGroup(2, equ, threshold='v > 0.10', reset='v = 0', method='linear', refractory=0 * ms)
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup((n/4), equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
 G_readout = NeuronGroup(n, equ_1, method='linear')
 
 S = Synapses(Input, G, model, method='linear')
