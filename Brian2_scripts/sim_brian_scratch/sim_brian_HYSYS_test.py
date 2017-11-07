@@ -60,10 +60,10 @@ def get_HYSYS_data(path='../../Data/HYSYS/shoulian.mat'):
     output_y = data['xxadu'].T[0]
     temp = []
     for t in range(input_u.T.shape[0]):
-        for i in range(48):
+        for i in range(100):
             temp.append(np.array([0] * 14))
         temp.append(input_u.T[t])
-        for j in range(1):
+        for j in range(99):
             temp.append(np.array([0] * 14))
     input_u = np.asarray(temp).T
     return MinMaxScaler().fit_transform(input_u).T, \
@@ -118,7 +118,7 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
 
 # -----parameter setting-------
 u, y = get_HYSYS_data()
-n = 10
+n = 4
 duration = len(u) * defaultclock.dt
 
 equ_in = '''
@@ -154,8 +154,8 @@ g+=w
 stimulus = TimedArray(u, dt=defaultclock.dt)
 
 Input = NeuronGroup(14, equ_in, method='linear')
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
-G2 = NeuronGroup((n/4), equ, threshold='v > 0.20', reset='v = 0', method='linear', refractory=0 * ms)
+G = NeuronGroup(n, equ, threshold='v > 0.1', reset='v = 0', method='linear', refractory=0 * ms)
+G2 = NeuronGroup((n/4), equ, threshold='v > 0.1', reset='v = 0', method='linear', refractory=0 * ms)
 G_readout = NeuronGroup(n, equ_1, method='linear')
 
 S = Synapses(Input, G, model, method='linear')
@@ -178,8 +178,8 @@ S4.w = '0'
 
 # ------run----------------
 m1 = StateMonitor(Input, ('I'), record=True)
-m3 = StateMonitor(G_readout, ('I'), record=True, dt=50 * defaultclock.dt)
-m4 = StateMonitor(G, ('I'), record=True)
+m3 = StateMonitor(G_readout, ('I'), record=True, dt=200 * defaultclock.dt)
+m4 = StateMonitor(G, ('v'), record=True)
 
 run(duration)
 
@@ -191,8 +191,8 @@ print(para)
 y_t = lms_test(Data, para)
 print(mse(y_t, y))
 
-fig_roc_train, roc_auc_train, thresholds_train = ROC(y, y_t, 'ROC for train')
-print('ROC of train is %s' % roc_auc_train)
+# fig_roc_train, roc_auc_train, thresholds_train = ROC(y, y_t, 'ROC for train')
+# print('ROC of train is %s' % roc_auc_train)
 
 # ------vis----------------
 fig0 = plt.figure(figsize=(20, 4))
@@ -203,7 +203,7 @@ plt.scatter(m3.t[1:] / ms, y, s=2, color="red", marker='o', alpha=0.6)
 plt.scatter(m3.t[1:] / ms, y_t, color="green")
 
 fig2 = plt.figure(figsize=(20, 8))
-brian_plot(m1)
+brian_plot(m3)
 
 fig3 = plt.figure(figsize=(20, 8))
 brian_plot(m4)

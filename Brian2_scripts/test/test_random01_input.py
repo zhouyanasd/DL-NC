@@ -1,34 +1,33 @@
 from brian2 import *
 
-def binary_classification(duration, start=1, end =7, neu =1, interval_l=10, interval_s = ms):
-    def tran_bin(A):
+def patterns_classification(duration, patterns, neu =1, interval_l=10, interval_s = ms):
+    def tran_patterns(A, patterns):
         trans = []
         for a in A:
-            for i in range(13):
+            for i in range(int(interval_l/2)):
                 trans.append(0)
-            a_ = bin(a)[2:]
-            while len(a_) <3:
-                a_ = '0'+a_
+            a_ =patterns[a]
             for i in a_:
                 trans.append(int(i))
-            for i in range(4):
+            for i in range(int(interval_l/2)):
                 trans.append(0)
         return np.asarray(trans)
-    def tran_bin_hard(A, Patterns):
-        trans = []
-        for a in A:
-            for i in range(13):
-                trans.append(0)
-            a_ =Patterns[a]
-            for i in a_:
-                trans.append(int(i))
-            for i in range(4):
-                trans.append(0)
-        return np.asarray(trans)
-    n = int((duration/interval_s)/interval_l)
-    label = np.random.randint(start,end,n)
-    seq = tran_bin(label)
+    interval = interval_l + patterns.shape[1]
+    if (duration/interval_s) % interval != 0:
+        raise ("duration and interval+len(patterns) must be exacted division")
+    n = int((duration/interval_s)/interval)
+    label = np.random.randint(0,int(patterns.shape[0]),n)
+    seq = tran_patterns(label,patterns)
     times = where(seq ==1)[0]*interval_s
     indices = zeros(int(len(times)))
-    P = SpikeGeneratorGroup(neu, indices, times)
-    return P , label
+    return times, seq
+    # P = SpikeGeneratorGroup(neu, indices, times)
+    # return P , label
+
+patterns = np.array([[1,1,1,1,1,0,0,0,0,0],
+                     [1,0,1,1,0,0,1,0,1,0],
+                     [1,0,1,1,0,1,0,0,0,1]])
+
+t,s = patterns_classification(100*ms, patterns, interval_l=10)
+
+print(s)
