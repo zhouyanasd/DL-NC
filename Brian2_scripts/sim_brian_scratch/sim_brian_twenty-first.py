@@ -1,5 +1,5 @@
 #----------------------------------------
-# inhibitory neuron WTA and digit number classification test
+# inhibitory neuron WTA and different spike patterns classification test
 # multiple pre-train STDP and the distribution is different for different patterns
 # different neuron parameters
 # with synapse delay
@@ -53,12 +53,12 @@ def patterns_classification(duration, patterns, neu =1, interval_l=10, interval_
     def tran_patterns(A, patterns):
         trans = []
         for a in A:
-            for i in range(int(interval_l/2)):
+            for i in range(int(interval_l/10*8)):
                 trans.append(0)
             a_ =patterns[a]
             for i in a_:
                 trans.append(int(i))
-            for i in range(int(interval_l/2)):
+            for i in range(int(interval_l/10*2)):
                 trans.append(0)
         return np.asarray(trans)
     interval = interval_l + patterns.shape[1]
@@ -126,17 +126,17 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 
 ###############################################
 #-----parameter and model setting-------
-obj = 0
+obj = 2
 patterns = np.array([[1,1,1,1,1,0,0,0,0,0],
                      [1,0,1,1,0,0,1,0,1,0],
                      [1,0,1,1,0,1,0,0,0,1]])
 patterns_pre = patterns[obj][newaxis,:]
 n = 8
-pre_train_duration = 9000*ms
-duration = 1200 * ms
-duration_test = 300*ms
+pre_train_duration = 10000*ms
+duration = 10000 * ms
+duration_test = 2000*ms
 pre_train_loop = 0
-interval_l = 20
+interval_l = 40
 interval_s = ms
 threshold = 0.4
 
