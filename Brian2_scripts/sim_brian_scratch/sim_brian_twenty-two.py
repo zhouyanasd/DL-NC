@@ -130,7 +130,7 @@ def decode(input, interval, duration):
     for i in range(n):
         sum = np.sum(input[:, i*interval:(i+1)*interval], axis=1)
         temp.append(sum)
-    return MinMaxScaler().fit_transform(np.asarray(temp)).T
+    return MinMaxScaler().fit_transform(np.asarray(temp).T)
 
 
 ###############################################
