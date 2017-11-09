@@ -10,6 +10,7 @@ from brian2 import *
 from brian2tools import *
 from scipy.optimize import leastsq
 import scipy as sp
+from sklearn.preprocessing import MinMaxScaler
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
@@ -29,7 +30,7 @@ def lms_train(p0,Zi,Data):
 def lms_test(M, p):
     Data = []
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     l = len(p)
     f = p[l - 1]
     for i in range(len(Data)):
@@ -40,7 +41,7 @@ def readout(M, Z):
     n = len(M)
     Data = []
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     p0 = [1]*n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
@@ -123,6 +124,14 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
     plt.legend(loc="lower right")
     return fig, roc_auc , thresholds
 
+def decode(input, interval, duration):
+    temp = []
+    n = int(duration/interval)
+    for i in range(n):
+        sum = np.sum(input[:, i*interval:(i+1)*interval], axis=1)
+        temp.append(sum)
+    return MinMaxScaler().fit_transform(np.asarray(temp)).T
+
 
 ###############################################
 #-----parameter and model setting-------
@@ -139,6 +148,7 @@ duration_test = 1000*ms
 pre_train_loop = 0
 interval_l = 40
 interval_s = ms
+interval = interval_l+patterns.shape[1]
 threshold = 0.4
 
 
@@ -213,7 +223,7 @@ S4.connect(p=1,condition='i != j')
 S5.connect(p=0.5)
 S_readout.connect(j='i')
 
-S.w = '0.75'  #还是调整输入层和隐藏层内部的权重的比例
+S.w = '0.75'
 S2.w = '-1'
 S4.w = 'rand()'
 S5.w = '1'
@@ -221,7 +231,6 @@ S5.w = '1'
 S4.delay = '0*ms'
 
 #------monitor----------------
-m1 = StateMonitor(G_readout, ('I'), record=True, dt = ((interval_l+patterns.shape[1])*interval_s))
 m_w = StateMonitor(S, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
@@ -280,8 +289,8 @@ net.run(duration, report='text')
 
 #------lms_train---------------
 y = label_to_obj(label[:t0],obj)
-m1.record_single_timestep()
-Data,para = readout(m1.I,y)
+states = decode(m_read.I,interval,duration/interval_s)
+Data,para = readout(states,y)
 
 #####################################
 #----run for test--------
@@ -290,8 +299,8 @@ net.run(duration+duration_test, report='text')
 
 #-----lms_test-----------
 obj_t = label_to_obj(label,obj)
-m1.record_single_timestep()
-y_t = lms_test(m1.I, para)
+states = decode(m_read.I,interval,(duration+duration_test)/interval_s)
+y_t = lms_test(states, para)
 
 y_t_class, data_n = classification(threshold, y_t)
 fig_roc_train, roc_auc_train , thresholds_train = ROC(obj_t[:t0],data_n[:t0],'ROC for train')
@@ -301,15 +310,13 @@ print('ROC of test is %s'%roc_auc_test)
 
 print('obj_t: ', obj_t)
 
-# print('m1_I: ',m1.I)
-
 #####################################
 #------vis of results----
 fig1 = plt.figure(figsize=(20, 8))
 subplot(211)
-plt.scatter(m1.t[1:] / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
-plt.scatter(m1.t[1:] / ms, obj_t, s=3, color="blue", marker='*', alpha=0.4)
-plt.scatter(m1.t[1:] / ms, data_n, color="green")
+plt.scatter(np.arange((duration+duration_test)/interval/interval_s)*interval, y_t_class, s=2, color="red", marker='o', alpha=0.6)
+plt.scatter(np.arange((duration+duration_test)/interval/interval_s)*interval, obj_t, s=3, color="blue", marker='*', alpha=0.4)
+plt.scatter(np.arange((duration+duration_test)/interval/interval_s)*interval, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 axvline(duration/ms, ls='--', c='green', lw=3)
 subplot(212)
