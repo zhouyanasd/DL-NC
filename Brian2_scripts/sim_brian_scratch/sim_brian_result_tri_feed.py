@@ -1,3 +1,7 @@
+#----------------------------------------
+# Results for Tri-function in Feedforword without STDP
+#----------------------------------------
+
 from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp

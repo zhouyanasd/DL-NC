@@ -1,9 +1,5 @@
 #----------------------------------------
-# inhibitory neuron WTA and different spike patterns classification test
-# multiple pre-train STDP and the distribution is different for different patterns
-# different neuron parameters
-# with synapse delay
-# simulation 6--analysis 4
+# Results for Tri-function in LSM with/without STDP
 #----------------------------------------
 
 from brian2 import *
@@ -275,68 +271,71 @@ fig0 =plt.figure(figsize=(4,4))
 brian_plot(S4.w)
 print('S4.w = %s'%S4.w)
 ###############################################
+for epochs in range(3):
+    obj = epochs
+    net.restore('first')
 #------pre_train------------------
-for loop in range(pre_train_loop):
-    data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
-    stimulus.values = data_pre
-    net.run(pre_train_duration)
+    for loop in range(pre_train_loop):
+        data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
+        stimulus.values = data_pre
+        net.run(pre_train_duration)
 
     # ------plot the weight----------------
-    fig2 = plt.figure(figsize=(10, 4))
-    title('loop: '+str(loop))
-    subplot(111)
-    plot(m_w2.t / second, m_w2.w.T)
-    xlabel('Time (s)')
-    ylabel('Weight / gmax')
+        fig2 = plt.figure(figsize=(10, 4))
+        title('loop: '+str(loop))
+        subplot(111)
+        plot(m_w2.t / second, m_w2.w.T)
+        xlabel('Time (s)')
+        ylabel('Weight / gmax')
 
-    net.store('second')
-    net.restore('first')
-    S4.w = net._stored_state['second']['synapses_3']['w'][0]
+        net.store('second')
+        net.restore('first')
+        S4.w = net._stored_state['second']['synapses_3']['w'][0]
 
-#-------change the synapse model----------
-stimulus.values = data
-S4.pre.code = '''
-h+=w
-g+=w
-'''
-S4.post.code = ''
+    #-------change the synapse model----------
+    stimulus.values = data
+    S4.pre.code = '''
+    h+=w
+    g+=w
+    '''
+    S4.post.code = ''
 
-###############################################
-#------run for lms_train-------
-net.store('third')
-net.run(duration)
+    ###############################################
+    #------run for lms_train-------
+    net.store('third')
+    net.run(duration)
 
-#------lms_train---------------
-y = label_to_obj(label[:t0],obj)
-Data,para = readout(m_read.I,y)
+    #------lms_train---------------
+    y = label_to_obj(label[:t0],obj)
+    Data,para = readout(m_read.I,y)
 
-#####################################
-#----run for test--------
-net.restore('third')
-net.run(duration+duration_test)
+    #####################################
+    #----run for test--------
+    net.restore('third')
+    net.run(duration+duration_test)
 
-#-----lms_test-----------
-y = label_to_obj(label,obj)
-y_t = lms_test(m_read.I, para)
+    #-----lms_test-----------
+    y = label_to_obj(label,obj)
+    y_t = lms_test(m_read.I, para)
 
-y_t_class, data_n = classification(threshold, y_t)
-fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
-print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
-fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
-print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
+    y_t_class, data_n = classification(threshold, y_t)
+    fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
+    print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
+    fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
+    print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
 
 
 
-#####################################
-#------vis of results----
-fig1 = plt.figure(figsize=(20, 8))
-subplot(111)
-plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
-plt.scatter(m_read.t / ms, y, s=3, color="blue", marker='*', alpha=0.4)
-plt.scatter(m_read.t / ms, data_n, s=2, color="green")
-axhline(threshold, ls='--', c='r', lw=1)
-plt.title('Classification Condition of threshold = %s'%threshold)
-
-fig6 =plt.figure(figsize=(4,4))
-brian_plot(S4.w)
-show()
+    #####################################
+    #------vis of results----
+    # fig1 = plt.figure(figsize=(20, 8))
+    # subplot(111)
+    # plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
+    # plt.scatter(m_read.t / ms, y, s=3, color="blue", marker='*', alpha=0.4)
+    # plt.scatter(m_read.t / ms, data_n, s=2, color="green")
+    # axhline(threshold, ls='--', c='r', lw=1)
+    # plt.title('Classification Condition of threshold = %s'%threshold)
+    #
+    # fig6 =plt.figure(figsize=(4,4))
+    # brian_plot(S4.w)
+    show()
