@@ -6,6 +6,7 @@ from brian2 import *
 from brian2tools import *
 from scipy.optimize import leastsq
 import scipy as sp
+import pandas as pd
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
@@ -152,190 +153,218 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
     fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
     roc_auc = metrics.auc(fpr, tpr)
 
-    fig = plt.figure()
-    lw = 2
-    plt.plot(fpr, tpr, color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title(fig_title)
-    plt.legend(loc="lower right")
-    return fig, roc_auc , thresholds
+    # fig = plt.figure()
+    # lw = 2
+    # plt.plot(fpr, tpr, color='darkorange',
+    #          lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    # plt.xlim([0.0, 1.0])
+    # plt.ylim([0.0, 1.05])
+    # plt.xlabel('False Positive Rate')
+    # plt.ylabel('True Positive Rate')
+    # plt.title(fig_title)
+    # plt.legend(loc="lower right")
+    # return fig, roc_auc , thresholds
+    return roc_auc , thresholds
 
 ###############################################
-#-----parameter and model setting-------
-obj = 2
-n = 4
-pre_train_duration = 1000*ms
-duration = 1000 * ms
-duration_test = 1000*ms
-pre_train_loop = 0
-interval_s = defaultclock.dt
-threshold = 0.3
-
-t0 = int(duration/ interval_s)
-t1 = int((duration+duration_test) / interval_s)
-
-taupre = taupost = 2*ms
-wmax = 1
-Apre = 0.005
-Apost = -Apre*taupre/taupost*1.2
-
-equ = '''
-r : 1
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms*r) : 1
-dh/dt = (-h)/(1.45*ms*r) : 1
-I = tanh(g-h)*40 +I_0: 1
-I_0 = stimulus(t)*w_g:1
-w_g : 1
-'''
-
-equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1 
-dh/dt = (-h)/(1.45*ms) : 1
-I = tanh(g-h)*20 : 1
-'''
-
-on_pre = '''
-h+=w
-g+=w
-'''
-
-model_STDP= '''
-w : 1
-dapre/dt = -apre/taupre : 1 (clock-driven)
-dapost/dt = -apost/taupost : 1 (clock-driven)
-'''
-
-on_pre_STDP = '''
-h+=w
-g+=w
-apre += Apre
-w = clip(w+apost, 0, wmax)
-'''
-
-on_post_STDP= '''
-apost += Apost
-w = clip(w+apre, 0, wmax)
-'''
-
-#-----simulation setting-------
-data , label = Tri_function(duration+duration_test)
-stimulus = TimedArray(data,dt=defaultclock.dt)
-
-G = NeuronGroup(n, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
-                name = 'neurongroup')
-G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
-                 name = 'neurongroup_1')
-G_readout = NeuronGroup(n,equ_1, method ='euler')
+loop = 5
+sta_data_tri = []
+sta_data_test = []
+for l in range(loop):
+    np.random.seed(l)
 
 
-S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
-S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
+    #-----parameter and model setting-------
+    obj = 2
+    n = 4
+    pre_train_duration = 1000*ms
+    duration = 1000 * ms
+    duration_test = 1000*ms
+    pre_train_loop = 0
+    interval_s = defaultclock.dt
+    threshold = 0.3
 
-S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
-S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+    t0 = int(duration/ interval_s)
+    t1 = int((duration+duration_test) / interval_s)
 
-#-------network topology----------
-S2.connect(p=1)
-S4.connect(p=1,condition='i != j')
-S5.connect(p=1)
-S_readout.connect(j='i')
+    taupre = taupost = 2*ms
+    wmax = 1
+    Apre = 0.005
+    Apost = -Apre*taupre/taupost*1.2
 
-G.w_g = '0.2+i*'+str(0.8/n)
-G2.w_g = '0'
+    equ = '''
+    r : 1
+    dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+    dg/dt = (-g)/(1.5*ms*r) : 1
+    dh/dt = (-h)/(1.45*ms*r) : 1
+    I = tanh(g-h)*40 +I_0: 1
+    I_0 = stimulus(t)*w_g:1
+    w_g : 1
+    '''
 
-S2.w = '-rand()'
-S4.w = 'rand()*0.7'
-S5.w = 'rand()'
+    equ_1 = '''
+    dg/dt = (-g)/(1.5*ms) : 1 
+    dh/dt = (-h)/(1.45*ms) : 1
+    I = tanh(g-h)*20 : 1
+    '''
 
-S4.delay = '0*ms'
-
-G.r = '1'
-G2.r = '1'
-
-#------monitor----------------
-m_w2 = StateMonitor(S4, 'w', record=True)
-m_g = StateMonitor(G, (['I','v']), record = True)
-m_g2 = StateMonitor(G2, (['I','v']), record = True)
-m_read = StateMonitor(G_readout, ('I'), record = True)
-
-#------create network-------------
-net = Network(collect())
-net.store('first')
-fig0 =plt.figure(figsize=(4,4))
-brian_plot(S4.w)
-print('S4.w = %s'%S4.w)
-###############################################
-for epochs in range(3):
-    obj = epochs
-    net.restore('first')
-#------pre_train------------------
-    for loop in range(pre_train_loop):
-        data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
-        stimulus.values = data_pre
-        net.run(pre_train_duration)
-
-    # ------plot the weight----------------
-        fig2 = plt.figure(figsize=(10, 4))
-        title('loop: '+str(loop))
-        subplot(111)
-        plot(m_w2.t / second, m_w2.w.T)
-        xlabel('Time (s)')
-        ylabel('Weight / gmax')
-
-        net.store('second')
-        net.restore('first')
-        S4.w = net._stored_state['second']['synapses_3']['w'][0]
-
-    #-------change the synapse model----------
-    stimulus.values = data
-    S4.pre.code = '''
+    on_pre = '''
     h+=w
     g+=w
     '''
-    S4.post.code = ''
 
+    model_STDP= '''
+    w : 1
+    dapre/dt = -apre/taupre : 1 (clock-driven)
+    dapost/dt = -apost/taupost : 1 (clock-driven)
+    '''
+
+    on_pre_STDP = '''
+    h+=w
+    g+=w
+    apre += Apre
+    w = clip(w+apost, 0, wmax)
+    '''
+
+    on_post_STDP= '''
+    apost += Apost
+    w = clip(w+apre, 0, wmax)
+    '''
+
+    #-----simulation setting-------
+    data , label = Tri_function(duration+duration_test)
+    stimulus = TimedArray(data,dt=defaultclock.dt)
+
+    G = NeuronGroup(n, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+                    name = 'neurongroup')
+    G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+                     name = 'neurongroup_1')
+    G_readout = NeuronGroup(n,equ_1, method ='euler')
+
+
+    S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
+    S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
+
+    S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
+    S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+
+    #-------network topology----------
+    S2.connect(p=1)
+    S4.connect(p=1,condition='i != j')
+    S5.connect(p=1)
+    S_readout.connect(j='i')
+
+    G.w_g = '0.2+i*'+str(0.8/n)
+    G2.w_g = '0'
+
+    S2.w = '-rand()'
+    S4.w = 'rand()*0.7'
+    S5.w = 'rand()'
+
+    S4.delay = '0*ms'
+
+    G.r = '1'
+    G2.r = '1'
+
+    #------monitor----------------
+    m_w2 = StateMonitor(S4, 'w', record=True)
+    m_g = StateMonitor(G, (['I','v']), record = True)
+    m_g2 = StateMonitor(G2, (['I','v']), record = True)
+    m_read = StateMonitor(G_readout, ('I'), record = True)
+
+    #------create network-------------
+    net = Network(collect())
+    net.store('first')
+    auc_test = []
+    auc_train = []
+    fig0 =plt.figure(figsize=(4,4))
+    brian_plot(S4.w)
+    print('S4.w = %s'%S4.w)
     ###############################################
-    #------run for lms_train-------
-    net.store('third')
-    net.run(duration)
+    for epochs in range(3):
+        obj = epochs
+        net.restore('first')
+    #------pre_train------------------
+        for loop in range(pre_train_loop):
+            data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
+            stimulus.values = data_pre
+            net.run(pre_train_duration)
 
-    #------lms_train---------------
-    y = label_to_obj(label[:t0],obj)
-    Data,para = readout(m_read.I,y)
+        # ------plot the weight----------------
+            fig2 = plt.figure(figsize=(10, 4))
+            title('loop: '+str(loop))
+            subplot(111)
+            plot(m_w2.t / second, m_w2.w.T)
+            xlabel('Time (s)')
+            ylabel('Weight / gmax')
 
-    #####################################
-    #----run for test--------
-    net.restore('third')
-    net.run(duration+duration_test)
+            net.store('second')
+            net.restore('first')
+            S4.w = net._stored_state['second']['synapses_3']['w'][0]
 
-    #-----lms_test-----------
-    y = label_to_obj(label,obj)
-    y_t = lms_test(m_read.I, para)
+        #-------change the synapse model----------
+        stimulus.values = data
+        S4.pre.code = '''
+        h+=w
+        g+=w
+        '''
+        S4.post.code = ''
 
-    y_t_class, data_n = classification(threshold, y_t)
-    fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
-    print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
-    fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
-    print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
+        ###############################################
+        #------run for lms_train-------
+        net.store('third')
+        net.run(duration)
+
+        #------lms_train---------------
+        y = label_to_obj(label[:t0],obj)
+        Data,para = readout(m_read.I,y)
+
+        #####################################
+        #----run for test--------
+        net.restore('third')
+        net.run(duration+duration_test)
+
+        #-----lms_test-----------
+        y = label_to_obj(label,obj)
+        y_t = lms_test(m_read.I, para)
+
+        y_t_class, data_n = classification(threshold, y_t)
+        # fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
+        roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
+        print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
+        # fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
+        roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
+        print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
+
+        auc_train.append(roc_auc_train)
+        auc_test.append(roc_auc_test)
+    sta_data_tri.append(auc_train)
+    sta_data_test.append(auc_test)
 
 
+        #####################################
+        #------vis of results----
+        # fig1 = plt.figure(figsize=(20, 8))
+        # subplot(111)
+        # plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
+        # plt.scatter(m_read.t / ms, y, s=3, color="blue", marker='*', alpha=0.4)
+        # plt.scatter(m_read.t / ms, data_n, s=2, color="green")
+        # axhline(threshold, ls='--', c='r', lw=1)
+        # plt.title('Classification Condition of threshold = %s'%threshold)
+        #
+        # fig6 =plt.figure(figsize=(4,4))
+        # brian_plot(S4.w)
 
-    #####################################
-    #------vis of results----
-    # fig1 = plt.figure(figsize=(20, 8))
-    # subplot(111)
-    # plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
-    # plt.scatter(m_read.t / ms, y, s=3, color="blue", marker='*', alpha=0.4)
-    # plt.scatter(m_read.t / ms, data_n, s=2, color="green")
-    # axhline(threshold, ls='--', c='r', lw=1)
-    # plt.title('Classification Condition of threshold = %s'%threshold)
-    #
-    # fig6 =plt.figure(figsize=(4,4))
-    # brian_plot(S4.w)
-    show()
+fig_tri = plt.figure(figsize=(4, 4))
+df = pd.DataFrame(np.asarray(sta_data_tri),
+columns=['0', '1', '3'])
+df.boxplot()
+plt.title('Classification Condition of train')
+
+fig_test = plt.figure(figsize=(4, 4))
+df = pd.DataFrame(np.asarray(sta_data_test),
+columns=['0', '1', '3'])
+df.boxplot()
+plt.title('Classification Condition of test')
+show()
