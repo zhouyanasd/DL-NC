@@ -125,7 +125,7 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 
 ###############################################
 #-----parameter and model setting-------
-obj = 2
+obj = 1
 patterns = np.array([[1,1,1,1,1,0,0,0,0,0],
                      [1,1,0,1,1,0,0,1,0,1],
                      [1,0,1,1,0,0,1,0,1,0],
@@ -134,7 +134,7 @@ patterns_pre = patterns[obj][newaxis,:]
 n = 4
 pre_train_duration = 1000*ms
 duration = 1000 * ms
-duration_test = 200*ms
+duration_test = 1000*ms
 pre_train_loop = 0
 interval_l = 40
 interval_s = ms
@@ -191,35 +191,44 @@ P_plasticity, label_plasticity = patterns_classification(pre_train_duration, pat
                                                        interval_l=interval_l,interval_s = interval_s)
 P, label = patterns_classification(duration + duration_test, patterns,
                                  interval_l=interval_l,interval_s = interval_s)
+
 G = NeuronGroup(n, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
                 name = 'neurongroup')
-# G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
-#                 name = 'neurongroup')
-G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+                name = 'neurongroup')
+G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
-# S = Synapses(P, G, model_STDP, on_pre=on_pre_STDP, on_post= on_post_STDP, method='linear', name = 'synapses')
 S = Synapses(P_plasticity, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
-# S5 = Synapses(G, G2, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses_4')
-S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
+
+S3 = Synapses(P_plasticity, G_lateral_inh, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_2')
+
+S6 = Synapses(G_lateral_inh,G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_5')
+
+S5 = Synapses(G, G2, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses_4')
 
 S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
+
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
 S2.connect(p=0.5)
+S3.connect()
 S4.connect(p=0.8,condition='i != j')
 S5.connect(p=0.5)
+S6.connect()
 S_readout.connect(j='i')
 
-S.w = 'rand()*0.2+0.8'
-S2.w = '-rand()'
+S.w = 'rand()'
+S2.w = '-1'
+S3.w = 'rand()'
 S4.w = 'rand()'
 S5.w = 'rand()'
+S6.w = 'rand()'
 
 S4.delay = '0*ms'
 
@@ -268,7 +277,6 @@ for loop in range(pre_train_loop):
 net.remove(P_plasticity)
 S.source = P
 S.pre.source = P
-S._dependencies.remove(P_plasticity.id)
 S.add_dependency(P)
 S.connect(j='k for k in range(n)')
 
