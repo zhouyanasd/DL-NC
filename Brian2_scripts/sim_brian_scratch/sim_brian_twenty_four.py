@@ -28,7 +28,7 @@ def lms_train(p0,Zi,Data):
 def lms_test(M, p):
     Data = []
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     l = len(p)
     f = p[l - 1]
     for i in range(len(Data)):
@@ -39,7 +39,7 @@ def readout(M, Z):
     n = len(M)
     Data = []
     for i in M:
-        Data.append(i[1:])
+        Data.append(i)
     p0 = [1]*n
     p0.append(0.1)
     para = lms_train(p0, Z, Data)
@@ -151,7 +151,7 @@ Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
 r : 1
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (3*ms*r) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms*r) : 1
 dh/dt = (-h)/(1.45*ms*r) : 1
 I = tanh(g-h)*20 : 1
@@ -186,18 +186,21 @@ apost += Apost
 w = clip(w+apre, 0, wmax)
 '''
 
-#-----simulation setting-------
+#-----neurons and synapses setting-------
 P_plasticity, label_plasticity = patterns_classification(pre_train_duration, patterns_pre,
                                                        interval_l=interval_l,interval_s = interval_s)
 P, label = patterns_classification(duration + duration_test, patterns,
                                  interval_l=interval_l,interval_s = interval_s)
 
-G = NeuronGroup(n, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                 name = 'neurongroup')
-G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
-                name = 'neurongroup')
+
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                name = 'neurongroup_la_inh')
+
 G2 = NeuronGroup(round(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name = 'neurongroup_1')
+
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
 S = Synapses(P_plasticity, G,'w : 1', on_pre = on_pre, method='linear', name = 'synapses')
@@ -206,37 +209,39 @@ S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses
 
 S3 = Synapses(P_plasticity, G_lateral_inh, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_2')
 
-S6 = Synapses(G_lateral_inh,G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_5')
+S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
 
 S5 = Synapses(G, G2, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method='linear', name = 'synapses_4')
 
-S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
+S6 = Synapses(G_lateral_inh,G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_5')
 
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect(p=0.5)
+S2.connect(p=1)
 S3.connect()
-S4.connect(p=0.8,condition='i != j')
-S5.connect(p=0.5)
+S4.connect(p=1,condition='i != j')
+S5.connect(p=1)
 S6.connect()
 S_readout.connect(j='i')
 
 S.w = 'rand()'
 S2.w = '-1'
-S3.w = 'rand()'
+S3.w = '1'
 S4.w = 'rand()'
 S5.w = 'rand()'
-S6.w = 'rand()'
+S6.w = '-rand()'
 
 S4.delay = '0*ms'
 
 G.r = '1'
 G2.r = '1'
+G_lateral_inh.r = '1'
 
-#------monitor----------------
-m1 = StateMonitor(G_readout, ('I'), record=True, dt = ((interval_l+patterns.shape[1])*interval_s))
+#------monitors setting----------------
+m1 = StateMonitor(G_readout, ('I'), record=True, when= 'end',
+                  dt = ((interval_l+patterns.shape[1])*interval_s))
 m_w = StateMonitor(S, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
@@ -251,7 +256,8 @@ fig00 =plt.figure(figsize=(4,4))
 brian_plot(S.w)
 fig0 =plt.figure(figsize=(4,4))
 brian_plot(S4.w)
-print('S4.w = %s'%S4.w)
+
+
 ###############################################
 #------pre_train------------------
 for loop in range(pre_train_loop):
@@ -272,13 +278,19 @@ for loop in range(pre_train_loop):
     net.store('second')
     net.restore('first')
     S4.w = net._stored_state['second']['synapses_3']['w'][0]
-    S.w = net._stored_state['second']['synapses']['w'][0]
+    S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
+#-------change the input source----------
 net.remove(P_plasticity)
 S.source = P
 S.pre.source = P
+S._dependencies.remove(P_plasticity.id)
 S.add_dependency(P)
-S.connect(j='k for k in range(n)')
+
+S3.source = P
+S3.pre.source = P
+S3._dependencies.remove(P_plasticity.id)
+S3.add_dependency(P)
 
 #-------change the synapse model----------
 S4.pre.code = '''
@@ -287,6 +299,12 @@ g+=w
 '''
 S4.post.code = ''
 
+S5.pre.code = '''
+h+=w
+g+=w
+'''
+S5.post.code = ''
+
 ###############################################
 #------run for lms_train-------
 net.store('third')
@@ -294,7 +312,6 @@ net.run(duration, report='text')
 
 #------lms_train---------------
 y = label_to_obj(label[:t0],obj)
-m1.record_single_timestep()
 Data,para = readout(m1.I,y)
 
 #####################################
@@ -304,9 +321,10 @@ net.run(duration+duration_test, report='text')
 
 #-----lms_test-----------
 obj_t = label_to_obj(label,obj)
-m1.record_single_timestep()
 y_t = lms_test(m1.I, para)
 
+#####################################
+#------calculate results----
 y_t_class, data_n = classification(threshold, y_t)
 fig_roc_train, roc_auc_train , thresholds_train = ROC(obj_t[:t0],data_n[:t0],'ROC for train')
 print('ROC of train is %s'%roc_auc_train)
@@ -315,13 +333,12 @@ print('ROC of test is %s'%roc_auc_test)
 
 print(obj_t)
 
-#####################################
 #------vis of results----
 fig1 = plt.figure(figsize=(20, 8))
 subplot(211)
-plt.scatter(m1.t[1:] / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
-plt.scatter(m1.t[1:] / ms, obj_t, s=3, color="blue", marker='*', alpha=0.4)
-plt.scatter(m1.t[1:] / ms, data_n, color="green")
+plt.scatter(m1.t/ ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
+plt.scatter(m1.t / ms, obj_t, s=3, color="blue", marker='*', alpha=0.4)
+plt.scatter(m1.t / ms, data_n, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 axvline(duration/ms, ls='--', c='green', lw=3)
 subplot(212)
