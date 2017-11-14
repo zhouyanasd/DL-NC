@@ -268,7 +268,7 @@ G_lateral_inh.r = '1'
 
 # ------monitors setting----------------
 m1 = StateMonitor(G_readout, ('I'), record=True, dt=ms)
-m_w = StateMonitor(S, 'w', record=True)
+m_w = StateMonitor(S5, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
