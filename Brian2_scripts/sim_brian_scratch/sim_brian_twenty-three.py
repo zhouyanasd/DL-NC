@@ -169,11 +169,11 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 
 ###############################################
 #-----parameter and model setting-------
-obj = 0
+obj = 2
 n = 20
 pre_train_duration = 50*ms
 duration = 50 * ms
-duration_test = 50*ms
+duration_test = 50 *ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.3
@@ -229,31 +229,42 @@ w = clip(w+apre, 0, wmax)
 data , label = Tri_function(duration+duration_test)
 stimulus = TimedArray(data,dt=defaultclock.dt)
 
-G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1* ms,
                 name = 'neurongroup')
-G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=1 * ms,
+
+G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
                  name = 'neurongroup_1')
+
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                            name='neurongroup_la_inh')
+
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
-
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
+
 S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
 
 S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
+
+S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_5')
+
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S2.connect(p=1)
-S4.connect(p=0.5,condition='i != j')
+S4.connect(p=0.1,condition='i != j')
 S5.connect(p=1)
+S6.connect()
 S_readout.connect(j='i')
 
 G.w_g = 'rand()'
-G2.w_g = 'rand()'
+G2.w_g = '0'
+G_lateral_inh.w_g = 'rand()'
 
-S2.w = '-0'
+S2.w = '-rand()'
 S4.w = 'rand()'
 S5.w = 'rand()'
+S6.w = '-rand()'
 
 S4.delay = '0*ms'
 
