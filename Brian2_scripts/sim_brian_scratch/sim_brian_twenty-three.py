@@ -170,11 +170,11 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 ###############################################
 #-----parameter and model setting-------
 obj = 0
-n = 4
-pre_train_duration = 500*ms
-duration = 500 * ms
-duration_test = 500*ms
-pre_train_loop = 5
+n = 20
+pre_train_duration = 50*ms
+duration = 50 * ms
+duration_test = 50*ms
+pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.3
 
@@ -188,9 +188,9 @@ Apost = -Apre*taupre/taupost*1.2
 
 equ = '''
 r : 1
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(1.5*ms*r) : 1
-dh/dt = (-h)/(1.45*ms*r) : 1
+dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(0.15*ms*r) : 1
+dh/dt = (-h)/(0.145*ms*r) : 1
 I = tanh(g-h)*40 +I_0: 1
 I_0 = stimulus(t)*w_g:1
 w_g : 1
@@ -229,9 +229,9 @@ w = clip(w+apre, 0, wmax)
 data , label = Tri_function(duration+duration_test)
 stimulus = TimedArray(data,dt=defaultclock.dt)
 
-G = NeuronGroup(n, equ, threshold='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.10', reset='v = 0', method='euler', refractory=1 * ms,
                 name = 'neurongroup')
-G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.10', reset='v = 0', method='euler', refractory=1 * ms,
                  name = 'neurongroup_1')
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
@@ -244,14 +244,14 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S2.connect(p=1)
-S4.connect(p=1,condition='i != j')
+S4.connect(p=0.5,condition='i != j')
 S5.connect(p=1)
 S_readout.connect(j='i')
 
-G.w_g = '0.8+0.2*rand()'
-G2.w_g = '0'
+G.w_g = 'rand()'
+G2.w_g = 'rand()'
 
-S2.w = '-rand()'
+S2.w = '-0'
 S4.w = 'rand()'
 S5.w = 'rand()'
 
@@ -269,8 +269,8 @@ m_read = StateMonitor(G_readout, ('I'), record = True)
 #------create network-------------
 net = Network(collect())
 net.store('first')
-fig0 =plt.figure(figsize=(4,4))
-brian_plot(S4.w)
+# fig0 =plt.figure(figsize=(4,4))
+# brian_plot(S4.w)
 print('S4.w = %s'%S4.w)
 ###############################################
 #------pre_train------------------
@@ -326,7 +326,10 @@ print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
 
 
 #####################################
-#------vis of results----
+#------vis of
+fig0 = plt.figure(figsize=(20, 4))
+plot(data, 'r')
+
 fig1 = plt.figure(figsize=(20, 8))
 subplot(111)
 plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
@@ -335,7 +338,27 @@ plt.scatter(m_read.t / ms, data_n, s=2, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 plt.title('Classification Condition of threshold = %s'%threshold)
 
-fig6 =plt.figure(figsize=(4,4))
-brian_plot(S4.w)
+fig3 = plt.figure(figsize=(20, 8))
+subplot(211)
+plt.plot(m_g.t / ms, m_g.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(212)
+plt.plot(m_g.t / ms, m_g.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+
+fig4 = plt.figure(figsize=(20, 8))
+subplot(211)
+plt.plot(m_g2.t / ms, m_g2.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(212)
+plt.plot(m_g2.t / ms, m_g2.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+
+fig5 = plt.figure(figsize=(20, 4))
+plt.plot(m_read.t / ms, m_read.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+
+# fig6 =plt.figure(figsize=(4,4))
+# brian_plot(S4.w)
 show()
 
