@@ -11,7 +11,7 @@ import scipy as sp
 
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 start_scope()
-np.random.seed(102)
+np.random.seed(103)
 
 #------define function------------
 def lms_train(p0,Zi,Data):
@@ -170,7 +170,7 @@ def ROC(y, scores, fig_title = 'ROC', pos_label=1):
 ###############################################
 #-----parameter and model setting-------
 obj = 2
-n = 20
+n = 100
 pre_train_duration = 50*ms
 duration = 50 * ms
 duration_test = 50 *ms
@@ -196,9 +196,16 @@ I_0 = stimulus(t)*w_g:1
 w_g : 1
 '''
 
+equ_h = '''
+r : 1
+dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
+I = stimulus(t)*w_g:1
+w_g : 1
+'''
+
 equ_1 = '''
-dg/dt = (-g)/(1.5*ms) : 1 
-dh/dt = (-h)/(1.45*ms) : 1
+dg/dt = (-g)/(0.9*ms) : 1 
+dh/dt = (-h)/(0.87*ms) : 1
 I = tanh(g-h)*20 : 1
 '''
 
@@ -232,17 +239,17 @@ stimulus = TimedArray(data,dt=defaultclock.dt)
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1* ms,
                 name = 'neurongroup')
 
-G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.30', reset='v = 0', method='euler', refractory=1 * ms,
+G2 = NeuronGroup(int(n/4), equ, threshold ='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name = 'neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                             name='neurongroup_la_inh')
 
 G_readout = NeuronGroup(n,equ_1, method ='euler')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_1')
 
-S5 = Synapses(G, G2, 'w : 1', on_pre = on_pre, method='linear', name = 'synapses_4')
+S5 = Synapses(G, G2, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_4')
 
 S4 = Synapses(G, G, model_STDP, on_pre = on_pre_STDP, on_post = on_post_STDP, method = 'linear',  name = 'synapses_3')
 
@@ -252,7 +259,7 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 #-------network topology----------
 S2.connect(p=1)
-S4.connect(p=0.1,condition='i != j')
+S4.connect(p=0.5, condition='i != j')
 S5.connect(p=1)
 S6.connect()
 S_readout.connect(j='i')
@@ -304,11 +311,18 @@ for loop in range(pre_train_loop):
 
 #-------change the synapse model----------
 stimulus.values = data
+
 S4.pre.code = '''
 h+=w
 g+=w
 '''
 S4.post.code = ''
+
+S5.pre.code = '''
+h+=w
+g+=w
+'''
+S5.post.code = ''
 
 ###############################################
 #------run for lms_train-------
