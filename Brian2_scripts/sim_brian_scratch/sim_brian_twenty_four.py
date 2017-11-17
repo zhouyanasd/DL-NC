@@ -246,10 +246,10 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect(p=1)
+S2.connect(p=0.5)
 S3.connect()
-S4.connect(p=1, condition='i != j')
-S5.connect(p=1)
+S4.connect(p=(2/n), condition='i != j')
+S5.connect(p=(4/n))
 S6.connect()
 S_readout.connect(j='i')
 
@@ -274,6 +274,7 @@ m_s = SpikeMonitor(P)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
 m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('v'), record=True)
 
 # ------create network-------------
 net = Network(collect())
@@ -354,9 +355,9 @@ y_t = lms_test(states, para)
 # ------calculate results----
 y_t_class, data_n = classification(threshold, y_t)
 fig_roc_train, roc_auc_train, thresholds_train = ROC(obj_t[:t0], data_n[:t0], 'ROC for train')
-print('ROC of train is %s' % roc_auc_train)
+print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
 fig_roc_test, roc_auc_test, thresholds_test = ROC(obj_t[t0:], data_n[t0:], 'ROC for test')
-print('ROC of test is %s' % roc_auc_test)
+print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
 
 print(obj_t)
 
@@ -381,12 +382,15 @@ plt.plot(m_g.t / ms, m_g.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
 fig4 = plt.figure(figsize=(20, 8))
-subplot(211)
+subplot(311)
 plt.plot(m_g2.t / ms, m_g2.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
-subplot(212)
+subplot(312)
 plt.plot(m_g2.t / ms, m_g2.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+subplot(313)
+plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
+legend(labels=[('v_%s' % k) for k in range(n)], loc='upper right')
 
 fig5 = plt.figure(figsize=(20, 4))
 plt.plot(m_read.t / ms, m_read.I.T, label='I')

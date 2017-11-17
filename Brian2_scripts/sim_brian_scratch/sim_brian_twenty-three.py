@@ -180,8 +180,8 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
 
 ###############################################
 # -----parameter and model setting-------
-obj = 2
-n = 100
+obj = 1
+n = 20
 pre_train_duration = 50 * ms
 duration = 50 * ms
 duration_test = 50 * ms
@@ -270,15 +270,15 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
-S2.connect(p=1)
-S4.connect(p=0.5, condition='i != j')
-S5.connect(p=1)
+S2.connect(p=0.5)
+S4.connect(p=(2/n), condition='i != j')
+S5.connect(p=(4/n))
 S6.connect()
 S_readout.connect(j='i')
 
 G.w_g = 'rand()'
 G2.w_g = '0'
-G_lateral_inh.w_g = 'rand()'
+G_lateral_inh.w_g = '0.5'
 
 S2.w = '-rand()'
 S4.w = 'rand()'
@@ -291,17 +291,19 @@ G.r = '1'
 G2.r = '1'
 
 # ------monitor----------------
+m_w = StateMonitor(S5, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
 m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('v'), record=True)
 
 # ------create network-------------
 net = Network(collect())
 net.store('first')
-# fig0 =plt.figure(figsize=(4,4))
-# brian_plot(S4.w)
-print('S4.w = %s' % S4.w)
+fig_init_w =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
+# print('S4.w = %s' % S4.w)
 ###############################################
 # ------pre_train------------------
 stimulus.values = data_pre
@@ -309,9 +311,13 @@ for loop in range(pre_train_loop):
     net.run(pre_train_duration)
 
     # ------plot the weight----------------
-    fig2 = plt.figure(figsize=(10, 4))
+    fig2 = plt.figure(figsize=(10, 8))
     title('loop: ' + str(loop))
-    subplot(111)
+    subplot(211)
+    plot(m_w.t / second, m_w.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+    subplot(212)
     plot(m_w2.t / second, m_w2.w.T)
     xlabel('Time (s)')
     ylabel('Weight / gmax')
@@ -319,6 +325,7 @@ for loop in range(pre_train_loop):
     net.store('second')
     net.restore('first')
     S4.w = net._stored_state['second']['synapses_3']['w'][0]
+    S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
 # -------change the synapse model----------
 stimulus.values = data
@@ -357,7 +364,7 @@ y_t_class, data_n = classification(threshold, y_t)
 fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
 print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
 fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
-print('ROC of test is %sfor classification of %s' % (roc_auc_test, obj))
+print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
 
 #####################################
 # ------vis of
@@ -384,17 +391,20 @@ plt.plot(m_g.t / ms, m_g.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
 fig4 = plt.figure(figsize=(20, 8))
-subplot(211)
+subplot(311)
 plt.plot(m_g2.t / ms, m_g2.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
-subplot(212)
+subplot(312)
 plt.plot(m_g2.t / ms, m_g2.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+subplot(313)
+plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 
 fig5 = plt.figure(figsize=(20, 4))
 plt.plot(m_read.t / ms, m_read.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
-# fig6 =plt.figure(figsize=(4,4))
-# brian_plot(S4.w)
+fig6 =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
 show()
