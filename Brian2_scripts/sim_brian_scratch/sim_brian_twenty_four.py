@@ -246,10 +246,10 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
 S.connect(j='k for k in range(n)')
-S2.connect(p=0.5)
+S2.connect(p=1)
 S3.connect()
-S4.connect(p=(2/n), condition='i != j')
-S5.connect(p=(4/n))
+S4.connect(p=1, condition='i != j')
+S5.connect(p=1)
 S6.connect()
 S_readout.connect(j='i')
 
