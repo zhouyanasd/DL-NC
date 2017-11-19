@@ -9,8 +9,6 @@ import scipy as sp
 import pandas as pd
 
 prefs.codegen.target = "numpy"  # it is faster than use default "cython"
-start_scope()
-np.random.seed(103)
 
 
 # ------define function------------
@@ -171,6 +169,7 @@ sta_data_tri = []
 sta_data_test = []
 for l in range(loop):
     np.random.seed(l)
+    start_scope()
 
     # -----parameter and model setting-------
     obj = 1

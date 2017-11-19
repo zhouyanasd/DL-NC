@@ -10,9 +10,6 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 
 prefs.codegen.target = "numpy"  # it is faster than use default "cython"
-start_scope()
-np.random.seed(102)
-
 
 # ------define function------------
 def lms_train(p0, Zi, Data):
@@ -154,6 +151,7 @@ sta_data_tri = []
 sta_data_test = []
 for l in range(loop):
     np.random.seed(l)
+    start_scope()
 
     # -----parameter and model setting-------
     obj = 1
@@ -165,7 +163,7 @@ for l in range(loop):
     pre_train_duration = 1000 * ms
     duration = 1000 * ms
     duration_test = 1000 * ms
-    pre_train_loop = 0
+    pre_train_loop = 1
     interval_l = 40
     interval_s = ms
     threshold = 0.4
@@ -304,10 +302,11 @@ for l in range(loop):
         S3._dependencies.remove(P.id)
         S3.add_dependency(P_plasticity)
 
+        net.store('first_1')
         for loop in range(pre_train_loop):
             net.run(pre_train_duration)
             net.store('second')
-            net.restore('first')
+            net.restore('first_1')
             S4.w = net._stored_state['second']['synapses_3']['w'][0]
             S5.w = net._stored_state['second']['synapses_4']['w'][0]
 

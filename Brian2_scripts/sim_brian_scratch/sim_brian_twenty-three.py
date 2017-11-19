@@ -367,7 +367,7 @@ fig_roc_test, roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for 
 print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
 
 #####################################
-# ------vis of
+# ------vis of results----
 fig0 = plt.figure(figsize=(20, 4))
 subplot(211)
 plot(data_pre, 'r')
