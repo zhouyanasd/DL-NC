@@ -184,7 +184,7 @@ dh/dt = (-h)/(1.45*ms*r) : 1
 I = tanh(g-h)*20 : 1
 '''
 
-equ_1 = '''
+equ_read = '''
 dg/dt = (-g)/(1.5*ms) : 1 
 dh/dt = (-h)/(1.45*ms) : 1
 I = tanh(g-h)*20 : 1
@@ -228,7 +228,7 @@ G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method=
 G2 = NeuronGroup(round(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name='neurongroup_1')
 
-G_readout = NeuronGroup(n, equ_1, method='euler')
+G_readout = NeuronGroup(n, equ_read, method='euler')
 
 S = Synapses(P_plasticity, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses')
 
