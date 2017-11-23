@@ -261,6 +261,7 @@ S5.w = 'rand()'
 S6.w = '-rand()'
 
 S4.delay = '0*ms'
+S.delay = '0*ms'
 
 G.r = '1'
 G2.r = '1'
