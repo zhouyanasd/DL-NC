@@ -172,7 +172,8 @@ t0 = int(duration / ((interval_l + patterns.shape[1]) * interval_s))
 t1 = int((duration + duration_test) / ((interval_l + patterns.shape[1]) * interval_s))
 
 taupre = taupost = 2 * ms
-wmax = 1
+wmax = 0.7
+wmin = 0.3
 Apre = 0.01
 Apost = -Apre * taupre / taupost * 1.2
 
@@ -205,12 +206,12 @@ on_pre_STDP = '''
 h+=w
 g+=w
 apre += Apre
-w = clip(w+apost, 0, wmax)
+w = clip(w+apost, wmin, wmax)
 '''
 
 on_post_STDP = '''
 apost += Apost
-w = clip(w+apre, 0, wmax)
+w = clip(w+apre, wmin, wmax)
 '''
 
 # -----neurons and synapses setting-------
@@ -253,15 +254,15 @@ S5.connect(p=1)
 S6.connect()
 S_readout.connect(j='i')
 
-S.w = 'rand()'
+S.w = '0.7+j*'+str(0.3/n)
 S2.w = '-1'
 S3.w = '1'
 S4.w = 'rand()'
 S5.w = 'rand()'
 S6.w = '-rand()'
 
-S4.delay = '0*ms'
-S.delay = '0*ms'
+S4.delay = '3*ms'
+S.delay = '3*ms'
 
 G.r = '1'
 G2.r = '1'
@@ -288,7 +289,7 @@ brian_plot(S4.w)
 ###############################################
 # ------pre_train------------------
 for loop in range(pre_train_loop):
-    net.run(pre_train_duration)
+    net.run(pre_train_duration, report= 'text')
 
     # ------plot the weight----------------
     fig2 = plt.figure(figsize=(10, 8))
