@@ -303,13 +303,14 @@ def simulate_LSM(seed):
         print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
         auc_train.append(roc_auc_train)
         auc_test.append(roc_auc_test)
-    return auc_train,auc_test
+    return [auc_train, auc_test]
 
 
 if __name__ == '__main__':
-    tries = 2
+    tries = 3
     p = Pool(tries)
-    sta_data_tri, sta_data_test =  p.map(simulate_LSM, np.arange(tries))
+    result = p.map(simulate_LSM, np.arange(tries))
+    sta_data_tri, sta_data_test = [x[0] for x in result], [x[1] for x in result]
     print(sta_data_test,sta_data_tri)
 
     # ------vis of results----
