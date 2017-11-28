@@ -194,6 +194,7 @@ t1 = int((duration + duration_test) / interval_s)
 
 taupre = taupost = 2 * ms
 wmax = 1
+wmin = 0
 Apre = 0.005
 Apost = -Apre * taupre / taupost * 1.2
 
@@ -209,12 +210,12 @@ w_g : 1
 
 equ_h = '''
 r : 1
-dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (0.1*ms) : 1 (unless refractory)
 I = stimulus(t)*w_g:1
 w_g : 1
 '''
 
-equ_1 = '''
+equ_read = '''
 dg/dt = (-g)/(0.9*ms) : 1 
 dh/dt = (-h)/(0.87*ms) : 1
 I = tanh(g-h)*20 : 1
@@ -235,12 +236,12 @@ on_pre_STDP = '''
 h+=w
 g+=w
 apre += Apre
-w = clip(w+apost, 0, wmax)
+w = clip(w+apost, wmin, wmax)
 '''
 
 on_post_STDP = '''
 apost += Apost
-w = clip(w+apre, 0, wmax)
+w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
@@ -257,7 +258,7 @@ G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='e
 G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                             name='neurongroup_la_inh')
 
-G_readout = NeuronGroup(n, equ_1, method='euler')
+G_readout = NeuronGroup(n, equ_read, method='euler')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_1')
 
@@ -285,7 +286,7 @@ S4.w = 'rand()'
 S5.w = 'rand()'
 S6.w = '-rand()'
 
-S4.delay = '0*ms'
+S4.delay = '0.3*ms'
 
 G.r = '1'
 G2.r = '1'
