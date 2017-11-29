@@ -156,6 +156,12 @@ obj = 1
 patterns = np.array([[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
                      [1, 1, 0, 1, 1, 0, 0, 1, 0, 1],
                      [1, 0, 1, 1, 0, 0, 1, 0, 1, 0],
+                     [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+                     [0, 0, 1, 1, 0, 0, 1, 0, 1, 0],
+                     [0, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+                     [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+                     [0, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+                     [1, 1, 0, 0, 1, 0, 1, 1, 1, 0],
                      [1, 0, 1, 1, 0, 1, 0, 0, 0, 1]])
 patterns_pre = patterns[obj][newaxis, :]
 n = 4
@@ -246,12 +252,12 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
-S.connect(j='k for k in range(n)')
+S.connect(j='k for k in range(int(n*1))')
 S2.connect(p=1)
 S3.connect()
 S4.connect(p=1, condition='i != j')
 S5.connect(p=1)
-S6.connect()
+S6.connect(j='k for k in range(int(n*1))')
 S_readout.connect(j='i')
 
 S.w = '0.7+j*'+str(0.3/n)
