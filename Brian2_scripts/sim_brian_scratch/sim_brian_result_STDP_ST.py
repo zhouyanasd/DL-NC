@@ -238,6 +238,16 @@ def simulate_LSM(seed):
     for epochs in range(4):
         obj = epochs
         net.restore('first')
+        S5.pre.code = S4.pre.code = '''
+        h+=w
+        g+=w
+        apre += Apre
+        w = clip(w+apost, wmin, wmax)
+        '''
+        S5.post.code = S4.post.code ='''
+        apost += Apost
+        w = clip(w+apre, wmin, wmax)
+        '''
         patterns_pre = patterns[obj][newaxis, :]
         P_plasticity, label_plasticity = patterns_classification(pre_train_duration, patterns_pre,
                                                                  interval_l=interval_l, interval_s=interval_s)
@@ -268,16 +278,11 @@ def simulate_LSM(seed):
         S3._dependencies.remove(P_plasticity.id)
         S3.add_dependency(P)
         # -------change the synapse model----------
-        S4.pre.code = '''
+        S5.pre.code = S4.pre.code = '''
         h+=w
         g+=w
         '''
-        S4.post.code = ''
-        S5.pre.code = '''
-        h+=w
-        g+=w
-        '''
-        S5.post.code = ''
+        S5.post.code = S4.post.code = ''
         ###############################################
         # ------run for lms_train-------
         net.store('third')

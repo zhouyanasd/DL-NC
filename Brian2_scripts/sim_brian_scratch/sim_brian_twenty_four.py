@@ -327,17 +327,11 @@ S3._dependencies.remove(P_plasticity.id)
 S3.add_dependency(P)
 
 # -------change the synapse model----------
-S4.pre.code = '''
+S5.pre.code = S4.pre.code = '''
 h+=w
 g+=w
 '''
-S4.post.code = ''
-
-S5.pre.code = '''
-h+=w
-g+=w
-'''
-S5.post.code = ''
+S5.post.code = S4.post.code = ''
 
 ###############################################
 # ------run for lms_train-------
