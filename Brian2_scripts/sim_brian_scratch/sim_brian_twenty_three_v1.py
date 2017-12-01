@@ -223,7 +223,6 @@ h+=w
 g+=w
 '''
 
-
 model_input = '''
 w : 1
 I_0_post = w * I_pre : 1 (summed)
