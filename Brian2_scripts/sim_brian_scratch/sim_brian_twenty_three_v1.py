@@ -1,6 +1,7 @@
 # ----------------------------------------
 # LSM for Tri-funcion test
 # multiple pre-train STDP and the distribution is different for different patterns
+# add Input layer as input
 # simulation 6--analysis 4
 # ----------------------------------------
 
@@ -193,26 +194,22 @@ t0 = int(duration / interval_s)
 t1 = int((duration + duration_test) / interval_s)
 
 taupre = taupost = 2 * ms
-wmax = 1
-wmin = 0
+wmax = 0.8
+wmin = 0.2
 Apre = 0.005
 Apost = -Apre * taupre / taupost * 1.2
 
+equ_in = '''
+I = stimulus(t) : 1
+'''
+
 equ = '''
 r : 1
+I_0 : 1 
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms*r) : 1
 dh/dt = (-h)/(0.145*ms*r) : 1
 I = tanh(g-h)*40 +I_0: 1
-I_0 = stimulus(t)*w_g:1
-w_g : 1
-'''
-
-equ_h = '''
-r : 1
-dv/dt = (I-v) / (0.1*ms) : 1 (unless refractory)
-I = stimulus(t)*w_g:1
-w_g : 1
 '''
 
 equ_read = '''
@@ -224,6 +221,12 @@ I = tanh(g-h)*20 : 1
 on_pre = '''
 h+=w
 g+=w
+'''
+
+
+model_input = '''
+w : 1
+I_0_post = w * I_pre : 1 
 '''
 
 model_STDP = '''
@@ -249,18 +252,24 @@ data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
 data, label = Tri_function(duration + duration_test)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
+Input = NeuronGroup(len(data.T), equ_in, method='linear')
+
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                 name='neurongroup')
 
 G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name='neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                             name='neurongroup_la_inh')
 
 G_readout = NeuronGroup(n, equ_read, method='euler')
 
+S = Synapses(Input, G, model_input, method='linear')
+
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_1')
+
+S3 = Synapses(Input, G_lateral_inh, model_input, method='linear')
 
 S5 = Synapses(G, G2, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_4')
 
@@ -271,26 +280,27 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
-S2.connect(p=1)
-S4.connect(p=1, condition='i != j')
-S5.connect(p=1)
-S6.connect()
+S.connect(j='k for k in range(int(n*1))')
+S2.connect(p=0.2)
+S3.connect()
+S4.connect(p=0.1, condition='i != j')
+S5.connect(p=0.2)
+S6.connect(j='k for k in range(int(n*1))')
 S_readout.connect(j='i')
 
-G.w_g = '0'
-G[0:int(n*1)].w_g = '0.6+i*'+str(0.4/(n*1))
-G2.w_g = '0'
-G_lateral_inh.w_g = '1'
+S.w = '0.4+j*'+str(0.4/n)
+S2.w = '-0.4'
+S3.w = '0.5'
+S4.w = '0'
+S5.w = '0'
+S6.w = '-0.2-rand()*0.8'
 
-S2.w = '-1'
-S4.w = 'rand()'
-S5.w = 'rand()'
-S6.w = '-rand()'
-
+S.delay = '0.3*ms'
 S4.delay = '0.3*ms'
 
 G.r = '1'
 G2.r = '1'
+G_lateral_inh.r = '1'
 
 # ------monitor----------------
 m_w = StateMonitor(S5, 'w', record=True)
@@ -298,7 +308,7 @@ m_w2 = StateMonitor(S4, 'w', record=True)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
 m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
-m_inh = StateMonitor(G_lateral_inh, ('v'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('I','v'), record=True)
 
 # ------create network-------------
 net = Network(collect())
@@ -405,6 +415,7 @@ legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 subplot(414)
 plt.plot(m_inh.t / ms, m_inh.I.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+
 
 fig5 = plt.figure(figsize=(20, 4))
 plt.plot(m_read.t / ms, m_read.I.T, label='I')
