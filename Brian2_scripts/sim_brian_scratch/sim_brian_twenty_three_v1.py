@@ -1,7 +1,7 @@
 # ----------------------------------------
 # LSM for Tri-funcion test
 # multiple pre-train STDP and the distribution is different for different patterns
-# add Input layer as input
+# add Input layer as input and the encoding is pass data directly
 # simulation 6--analysis 4
 # ----------------------------------------
 
@@ -251,7 +251,7 @@ data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
 data, label = Tri_function(duration + duration_test)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
-Input = NeuronGroup(len(data.T), equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
+Input = NeuronGroup(1, equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                 name='neurongroup')
@@ -290,7 +290,7 @@ S_readout.connect(j='i')
 
 S.w = '0.4+j*'+str(0.4/n)
 S2.w = '-0.4'
-S3.w = '0.5'
+S3.w = '0.3'
 S4.w = '0'
 S5.w = '0'
 S6.w = '-0.2-rand()*0.8'
