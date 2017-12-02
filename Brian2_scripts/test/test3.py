@@ -30,7 +30,7 @@ print(Data)
 stimulus = TimedArray(Data,dt=1*ms)
 print(stimulus(2*ms,2))
 
-Input = NeuronGroup(4, equ_1,events={'input_sin':'t<2*ms'})
+Input = NeuronGroup(4, equ_1, events={'input_sin':'t<2*ms'})
 G = NeuronGroup(2, equ_2)
 S = Synapses(Input, G, model, on_pre= on_pre, on_event={'pre':'input_sin'})
 
@@ -42,7 +42,7 @@ M = StateMonitor(G, ('I','d_n','d_t'), record=True)
 run(2*ms)
 
 print(M.I[:])
-print(S.I_pre[:])
+# print(S.I_pre[:])
 print(S.I_post[:])
 print(M.d_n)
 print(M.d_t)

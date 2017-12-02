@@ -218,20 +218,20 @@ dh/dt = (-h)/(0.87*ms) : 1
 I = tanh(g-h)*20 : 1
 '''
 
-on_pre = '''
-h+=w
-g+=w
-'''
-
-model_input = '''
-w : 1
-I_0_post = w * I_pre : 1 (summed)
-'''
-
 model_STDP = '''
 w : 1
 dapre/dt = -apre/taupre : 1 (clock-driven)
 dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+on_pre_input = '''
+I_0 = 0 
+I_0 += w * I_pre
+'''
+
+on_pre = '''
+h+=w
+g+=w
 '''
 
 on_pre_STDP = '''
@@ -251,7 +251,7 @@ data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
 data, label = Tri_function(duration + duration_test)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
-Input = NeuronGroup(len(data.T), equ_in, method='linear')
+Input = NeuronGroup(len(data.T), equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                 name='neurongroup')
@@ -262,13 +262,14 @@ G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='e
 G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                             name='neurongroup_la_inh')
 
-G_readout = NeuronGroup(n, equ_read, method='euler')
+G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
 
-S = Synapses(Input, G, model_input, method='linear')
+S = Synapses(Input, G, 'w : 1', on_pre = on_pre_input ,method='linear', on_event={'pre':'input'}, name='synapses')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_1')
 
-S3 = Synapses(Input, G_lateral_inh, model_input, method='linear')
+S3 = Synapses(Input, G_lateral_inh, 'w : 1', on_pre = on_pre_input ,method='linear', on_event={'pre':'input'},
+              name='synapses_2')
 
 S5 = Synapses(G, G2, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_4')
 
