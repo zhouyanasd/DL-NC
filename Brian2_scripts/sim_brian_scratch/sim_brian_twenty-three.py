@@ -192,7 +192,7 @@ threshold = 0.5
 t0 = int(duration / interval_s)
 t1 = int((duration + duration_test) / interval_s)
 
-taupre = taupost = 2 * ms
+taupre = taupost = 0.2 * ms
 wmax = 1
 wmin = 0
 Apre = 0.005
@@ -210,7 +210,7 @@ w_g : 1
 
 equ_h = '''
 r : 1
-dv/dt = (I-v) / (0.1*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 I = stimulus(t)*w_g:1
 w_g : 1
 '''
@@ -249,13 +249,13 @@ data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
 data, label = Tri_function(duration + duration_test)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                 name='neurongroup')
 
-G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                  name='neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                             name='neurongroup_la_inh')
 
 G_readout = NeuronGroup(n, equ_read, method='euler')
@@ -298,7 +298,7 @@ m_w2 = StateMonitor(S4, 'w', record=True)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
 m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
-m_inh = StateMonitor(G_lateral_inh, ('v'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('I', 'v'), record=True)
 
 # ------create network-------------
 net = Network(collect())
