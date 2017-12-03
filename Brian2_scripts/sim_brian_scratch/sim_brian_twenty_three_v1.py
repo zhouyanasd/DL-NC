@@ -193,7 +193,7 @@ threshold = 0.5
 t0 = int(duration / interval_s)
 t1 = int((duration + duration_test) / interval_s)
 
-taupre = taupost = 2 * ms
+taupre = taupost = 0.2 * ms
 wmax = 0.8
 wmin = 0.2
 Apre = 0.005
@@ -253,13 +253,13 @@ stimulus = TimedArray(data, dt=defaultclock.dt)
 
 Input = NeuronGroup(1, equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
 
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                 name='neurongroup')
 
-G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                  name='neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                             name='neurongroup_la_inh')
 
 G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')

@@ -36,13 +36,14 @@ S = Synapses(Input, G, model, on_pre= on_pre, on_event={'pre':'input_sin'})
 
 S.connect()
 S.w = '1'
+# S.delay = 'rand()*ms'
 
 M = StateMonitor(G, ('I','d_n','d_t'), record=True)
 
 run(2*ms)
 
 print(M.I[:])
-# print(S.I_pre[:])
+print(S.I_pre[:])
 print(S.I_post[:])
 print(M.d_n)
 print(M.d_t)
