@@ -281,19 +281,19 @@ S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
 S.connect(j='k for k in range(int(n*1))')
-S2.connect(p=0.2)
+S2.connect(p=1)
 S3.connect()
-S4.connect(p=0.1, condition='i != j')
-S5.connect(p=0.2)
+S4.connect(p=1, condition='i != j')
+S5.connect(p=1)
 S6.connect(j='k for k in range(int(n*1))')
 S_readout.connect(j='i')
 
-S.w = '0.4+j*'+str(0.4/n)
-S2.w = '-0.4'
-S3.w = '0.3'
-S4.w = '0'
-S5.w = '0'
-S6.w = '-0.2-rand()*0.8'
+S.w = '0.6+j*'+str(0.4/n)
+S2.w = '-1'
+S3.w = '1'
+S4.w = 'rand()'
+S5.w = 'rand()'
+S6.w = '-rand()'
 
 S.delay = '0.3*ms'
 S4.delay = '0.3*ms'
