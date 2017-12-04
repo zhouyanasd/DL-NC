@@ -193,10 +193,10 @@ threshold = 0.5
 t0 = int(duration / interval_s)
 t1 = int((duration + duration_test) / interval_s)
 
-taupre = taupost = 0.2 * ms
-wmax = 0.8
-wmin = 0.2
-Apre = 0.005
+taupre = taupost = 0.5 * ms
+wmax = 0.5
+wmin = 0.1
+Apre = 0.001
 Apost = -Apre * taupre / taupost * 1.2
 
 equ_in = '''
