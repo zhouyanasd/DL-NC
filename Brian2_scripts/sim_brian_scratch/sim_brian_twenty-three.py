@@ -50,7 +50,7 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def Tri_function(duration, obj=0):
+def Tri_function(duration, obj=-1):
     rng = np.random
     TIME_SCALE = defaultclock.dt
     in_number = int(duration / TIME_SCALE)
@@ -73,7 +73,7 @@ def Tri_function(duration, obj=0):
         return c / 100
 
     def chose_fun():
-        if obj == 0:
+        if obj == -1:
             c = rng.randint(0, 3)
         else:
             c = obj
@@ -97,7 +97,7 @@ def Tri_function(duration, obj=0):
     fun, c = chose_fun()
 
     for t in range(in_number):
-        if change_fun(0.7) and t % 50 == 0:
+        if change_fun(0.7) and t % 100 == 0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
             try:
@@ -182,9 +182,9 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 50 * ms
-duration = 50 * ms
-duration_test = 50 * ms
+pre_train_duration = 200 * ms
+duration = 200 * ms
+duration_test = 200 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5

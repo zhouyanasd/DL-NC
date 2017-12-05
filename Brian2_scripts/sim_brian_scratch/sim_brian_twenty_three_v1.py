@@ -51,7 +51,7 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def Tri_function(duration, obj=0):
+def Tri_function(duration, obj=-1):
     rng = np.random
     TIME_SCALE = defaultclock.dt
     in_number = int(duration / TIME_SCALE)
@@ -74,7 +74,7 @@ def Tri_function(duration, obj=0):
         return c / 100
 
     def chose_fun():
-        if obj == 0:
+        if obj == -1:
             c = rng.randint(0, 3)
         else:
             c = obj
@@ -98,7 +98,7 @@ def Tri_function(duration, obj=0):
     fun, c = chose_fun()
 
     for t in range(in_number):
-        if change_fun(0.7) and t % 50 == 0:
+        if change_fun(0.7) and t % 100 == 0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
             try:
@@ -183,9 +183,9 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 50 * ms
-duration = 50 * ms
-duration_test = 50 * ms
+pre_train_duration = 200 * ms
+duration = 200 * ms
+duration_test = 200 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5
@@ -196,7 +196,7 @@ t1 = int((duration + duration_test) / interval_s)
 taupre = taupost = 0.5 * ms
 wmax = 0.5
 wmin = 0.1
-Apre = 0.001
+Apre = 0.003
 Apost = -Apre * taupre / taupost * 1.2
 
 equ_in = '''
@@ -209,12 +209,12 @@ I_0 : 1
 dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(0.15*ms*r) : 1
 dh/dt = (-h)/(0.145*ms*r) : 1
-I = tanh(g-h)*40 +I_0: 1
+I = tanh(g-h)*20 +I_0: 1
 '''
 
 equ_read = '''
-dg/dt = (-g)/(0.9*ms) : 1 
-dh/dt = (-h)/(0.87*ms) : 1
+dg/dt = (-g)/(0.6*ms) : 1 
+dh/dt = (-h)/(0.58*ms) : 1
 I = tanh(g-h)*20 : 1
 '''
 
