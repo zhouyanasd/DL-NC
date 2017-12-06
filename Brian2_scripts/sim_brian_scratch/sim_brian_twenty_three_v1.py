@@ -342,17 +342,12 @@ for loop in range(pre_train_loop):
 # -------change the synapse model----------
 stimulus.values = data
 
-S4.pre.code = '''
+S5.pre.code = S4.pre.code = '''
 h+=w
 g+=w
 '''
-S4.post.code = ''
+S5.post.code = S4.post.code = ''
 
-S5.pre.code = '''
-h+=w
-g+=w
-'''
-S5.post.code = ''
 
 ###############################################
 # ------run for lms_train-------

@@ -238,16 +238,8 @@ def simulate_LSM(seed):
     for epochs in range(4):
         obj = epochs
         net.restore('first')
-        S5.pre.code = S4.pre.code = '''
-        h+=w
-        g+=w
-        apre += Apre
-        w = clip(w+apost, wmin, wmax)
-        '''
-        S5.post.code = S4.post.code ='''
-        apost += Apost
-        w = clip(w+apre, wmin, wmax)
-        '''
+        S5.pre.code = S4.pre.code = on_pre_STDP
+        S5.post.code = S4.post.code = on_post_STDP
         patterns_pre = patterns[obj][newaxis, :]
         P_plasticity, label_plasticity = patterns_classification(pre_train_duration, patterns_pre,
                                                                  interval_l=interval_l, interval_s=interval_s)
