@@ -224,8 +224,10 @@ w = clip(w+apre, wmin, wmax)
 # -----neurons and synapses setting-------
 P_plasticity, label_plasticity = patterns_classification(pre_train_duration, patterns_pre,
                                                          interval_l=interval_l, interval_s=interval_s)
-P_plasticity_interference, label_plasticity_interference = patterns_classification(pre_train_duration, patterns_pre,
-                                                         interval_l=interval_l, interval_s=interval_s)
+P_plasticity_interference, label_plasticity_interference = patterns_classification(pre_train_duration,
+                                                                                   patterns_pre_interference,
+                                                                                   interval_l=interval_l,
+                                                                                   interval_s=interval_s)
 P, label = patterns_classification(duration + duration_test, patterns,
                                    interval_l=interval_l, interval_s=interval_s)
 
