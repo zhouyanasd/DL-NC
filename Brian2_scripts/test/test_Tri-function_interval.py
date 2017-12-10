@@ -49,9 +49,6 @@ def Tri_function(duration, obj=-1):
     fun, c = chose_fun()
 
     for t in range(in_number):
-        if t % pattern_duration <= pattern_interval/2:
-            data.append(0)
-            continue
         if t % pattern_duration == 0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
@@ -64,14 +61,19 @@ def Tri_function(duration, obj=-1):
                 data.append(data_t)
                 cla.append(c)
         else:
-            try:
-                data_t = fun(data[t - 1], cons, t)
-                data.append(data_t)
-                cla.append(c)
-            except IndexError:
-                data_t = fun(rng.randint(1, 101) / 100, cons, t)
-                data.append(data_t)
-                cla.append(c)
+            if t % pattern_duration <= pattern_interval / 2:
+                data.append(0)
+            elif t % pattern_duration > pattern_interval / 2 and t % pattern_duration <= pattern_duration - pattern_interval / 2:
+                try:
+                    data_t = fun(data[t - 1], cons, t)
+                    data.append(data_t)
+                    cla.append(c)
+                except IndexError:
+                    data_t = fun(rng.randint(1, 101) / 100, cons, t)
+                    data.append(data_t)
+                    cla.append(c)
+            elif pattern_duration >= pattern_duration - pattern_interval / 2:
+                data.append(0)
     cla = np.asarray(cla)
     data = np.asarray(data)
     return data, cla
