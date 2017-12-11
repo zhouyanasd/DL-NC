@@ -275,7 +275,7 @@ G2.r = '1'
 G_lateral_inh.r = '1'
 
 # ------monitors setting----------------
-m1 = StateMonitor(G_readout, ('I'), record=True, dt=ms)
+m_state = StateMonitor(G_readout, ('I'), record=True, dt=ms)
 m_w = StateMonitor(S5, 'w', record=True)
 m_w2 = StateMonitor(S4, 'w', record=True)
 m_s = SpikeMonitor(P)
@@ -340,7 +340,7 @@ net.run(duration, report='text')
 
 # ------lms_train---------------
 y = label_to_obj(label[:t0], obj)
-states, _t_m = get_states(m1.I, int(interval_l + patterns.shape[1]), duration / interval_s, sample)
+states, _t_m = get_states(m_state.I, int(interval_l + patterns.shape[1]), duration / interval_s, sample)
 Data, para = readout(states, y)
 
 #####################################
@@ -350,7 +350,7 @@ net.run(duration + duration_test, report='text')
 
 # -----lms_test-----------
 obj_t = label_to_obj(label, obj)
-states, t_m = get_states(m1.I, int(interval_l + patterns.shape[1]), (duration + duration_test) / interval_s, sample)
+states, t_m = get_states(m_state.I, int(interval_l + patterns.shape[1]), (duration + duration_test) / interval_s, sample)
 y_t = lms_test(states, para)
 
 #####################################

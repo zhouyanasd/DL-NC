@@ -1,11 +1,11 @@
 from brian2 import *
 
-def Tri_function(duration, obj=-1):
+def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1):
     rng = np.random
     TIME_SCALE = defaultclock.dt
     in_number = int(duration / TIME_SCALE)
-    pattern_duration = 100
-    pattern_interval = 30
+    data = []
+    cla = []
 
     def sin_fun(l, c, t):
         return (np.sin(c * t * TIME_SCALE / us) + 1) / 2
@@ -43,40 +43,24 @@ def Tri_function(duration, obj=-1):
         else:
             return True
 
-    data = []
-    cla = []
-    cons = rng.randint(1, 101)
-    fun, c = chose_fun()
-
+    #---------------------------------
     for t in range(in_number):
-        if t % pattern_duration == 0:
+        t_temp = t % pattern_duration
+        if t_temp == 0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
-            try:
-                data_t = fun(data[t - 1], cons, t)
-                data.append(data_t)
-                cla.append(c)
-            except IndexError:
-                data_t = fun(rng.randint(1, 101) / 100, cons, t)
-                data.append(data_t)
-                cla.append(c)
-        else:
-            if t % pattern_duration <= pattern_interval / 2:
-                data.append(0)
-            elif t % pattern_duration > pattern_interval / 2 and t % pattern_duration <= pattern_duration - pattern_interval / 2:
-                try:
-                    data_t = fun(data[t - 1], cons, t)
-                    data.append(data_t)
-                    cla.append(c)
-                except IndexError:
-                    data_t = fun(rng.randint(1, 101) / 100, cons, t)
-                    data.append(data_t)
-                    cla.append(c)
-            elif pattern_duration >= pattern_duration - pattern_interval / 2:
-                data.append(0)
-    cla = np.asarray(cla)
-    data = np.asarray(data)
-    return data, cla
+            cla.append(c)
+
+        if t_temp < pattern_interval / 2:
+            data.append(0)
+        elif t_temp >= pattern_interval / 2 and t_temp < pattern_duration - pattern_interval / 2:
+            data_t = fun(data[t - 1], cons, t)
+            data.append(data_t)
+        elif t_temp >= pattern_duration - pattern_interval / 2:
+            data.append(0)
+        else :
+            data.append(0)
+    return np.asarray(data), np.asarray(cla)
 
 if __name__ == '__main__':
     data, label = Tri_function(100*ms)
