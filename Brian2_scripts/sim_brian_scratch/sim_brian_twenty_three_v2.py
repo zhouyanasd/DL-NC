@@ -1,8 +1,8 @@
 # ----------------------------------------
 # LSM for Tri-funcion test
 # multiple pre-train STDP and the distribution is different for different patterns
-# add Input layer as input and the encoding is transformed into spike trains
-# simulation 6--analysis 4
+# add Input layer as input and add interval between Tri-function input patterns
+# simulation 7--analysis 3
 # ----------------------------------------
 
 from brian2 import *
@@ -74,7 +74,7 @@ def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1
             return 0.5
 
     def constant(l, c, t):
-        return c / 100
+        return c / 200 + 0.5
 
     def chose_fun():
         if obj == -1:
@@ -102,12 +102,14 @@ def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1
             fun, c = chose_fun()
             cla.append(c)
 
-        if t_temp < pattern_interval / 2:
-            data.append(0)
-        elif t_temp >= pattern_interval / 2 and t_temp < pattern_duration - pattern_interval / 2:
-            data_t = fun(data[t - 1], cons, t)
-            data.append(data_t)
-        elif t_temp >= pattern_duration - pattern_interval / 2:
+        if t_temp < pattern_duration - pattern_interval:
+            try:
+                data_t = fun(data[t - 1], cons, t)
+                data.append(data_t)
+            except IndexError:
+                data_t = fun(rng.randint(1, 101) / 100, cons, t)
+                data.append(data_t)
+        elif t_temp >= pattern_duration - pattern_interval:
             data.append(0)
         else :
             data.append(0)
@@ -185,23 +187,23 @@ def get_states(input, interval, duration, sample=5):
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 1000 * ms
-duration = 1000 * ms
-duration_test = 1000 * ms
+pre_train_duration = 500 * ms
+duration = 500 * ms
+duration_test = 500 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5
-pattern_duration = 100
-pattern_interval = 50
+pattern_duration = 200
+pattern_interval = 150
 sample = 10
 
 
 t0 = int(duration / (pattern_duration*interval_s))
 t1 = int((duration + duration_test) / (pattern_duration*interval_s))
 
-taupre = taupost = 0.5 * ms
-wmax = 0.5
-wmin = 0.1
+taupre = taupost = 1 * ms
+wmax = 0.7
+wmin = 0.3
 Apre = 0.003
 Apost = -Apre * taupre / taupost * 1.2
 
@@ -212,15 +214,15 @@ I = stimulus(t) : 1
 equ = '''
 r : 1
 I_0 : 1 
-dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(0.15*ms*r) : 1
-dh/dt = (-h)/(0.145*ms*r) : 1
+dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
+dg/dt = (-g)/(0.75*ms*r) : 1
+dh/dt = (-h)/(0.725*ms*r) : 1
 I = tanh(g-h)*20 +I_0: 1
 '''
 
 equ_read = '''
-dg/dt = (-g)/(0.6*ms) : 1 
-dh/dt = (-h)/(0.58*ms) : 1
+dg/dt = (-g)/(0.75*ms) : 1 
+dh/dt = (-h)/(0.725*ms) : 1
 I = tanh(g-h)*20 : 1
 '''
 
@@ -253,19 +255,21 @@ w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
-data_pre, label_pre = Tri_function(pre_train_duration, pattern_duration = 100, pattern_interval = 50, obj=obj)
-data, label = Tri_function(duration + duration_test, pattern_duration = 100, pattern_interval = 50)
+data_pre, label_pre = Tri_function(pre_train_duration, pattern_duration = pattern_duration,
+                                   pattern_interval = pattern_interval, obj=obj)
+data, label = Tri_function(duration + duration_test, pattern_duration = pattern_duration,
+                           pattern_interval = pattern_interval)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
 Input = NeuronGroup(1, equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
 
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.5 * ms,
                 name='neurongroup')
 
-G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.5* ms,
                  name='neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.5 * ms,
                             name='neurongroup_la_inh')
 
 G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
@@ -301,8 +305,8 @@ S4.w = 'rand()'
 S5.w = 'rand()'
 S6.w = '-rand()'
 
-S.delay = '0.3*ms'
-S4.delay = '0.3*ms'
+S.delay = '1.5*ms'
+S4.delay = '1.5*ms'
 
 G.r = '1'
 G2.r = '1'
@@ -416,7 +420,7 @@ subplot(413)
 plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 subplot(414)
-plt.plot(m_inh.t / ms, m_inh.I.T, label='v')
+plt.plot(m_inh.t / ms, m_inh.I.T, label='I')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 
 

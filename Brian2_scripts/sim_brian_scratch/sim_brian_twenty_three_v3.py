@@ -1,6 +1,7 @@
 # ----------------------------------------
 # LSM for Tri-funcion test
 # multiple pre-train STDP and the distribution is different for different patterns
+# add Input layer as input and the encoding is transformed into spike trains
 # simulation 7--analysis 3
 # ----------------------------------------
 
@@ -8,6 +9,7 @@ from brian2 import *
 from brian2tools import *
 from scipy.optimize import leastsq
 import scipy as sp
+from sklearn.preprocessing import MinMaxScaler
 
 prefs.codegen.target = "numpy"  # it is faster than use default "cython"
 start_scope()
@@ -50,10 +52,12 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def Tri_function(duration, obj=-1):
+def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1):
     rng = np.random
     TIME_SCALE = defaultclock.dt
     in_number = int(duration / TIME_SCALE)
+    data = []
+    cla = []
 
     def sin_fun(l, c, t):
         return (np.sin(c * t * TIME_SCALE / us) + 1) / 2
@@ -70,7 +74,7 @@ def Tri_function(duration, obj=-1):
             return 0.5
 
     def constant(l, c, t):
-        return c / 100
+        return c / 200 + 0.5
 
     def chose_fun():
         if obj == -1:
@@ -91,35 +95,25 @@ def Tri_function(duration, obj=-1):
         else:
             return True
 
-    data = []
-    cla = []
-    cons = rng.randint(1, 101)
-    fun, c = chose_fun()
-
     for t in range(in_number):
-        if change_fun(0.7) and t % 100 == 0:
+        t_temp = t % pattern_duration
+        if t_temp == 0:
             cons = rng.randint(1, 101)
             fun, c = chose_fun()
+            cla.append(c)
+
+        if t_temp < pattern_duration - pattern_interval:
             try:
                 data_t = fun(data[t - 1], cons, t)
                 data.append(data_t)
-                cla.append(c)
             except IndexError:
                 data_t = fun(rng.randint(1, 101) / 100, cons, t)
                 data.append(data_t)
-                cla.append(c)
-        else:
-            try:
-                data_t = fun(data[t - 1], cons, t)
-                data.append(data_t)
-                cla.append(c)
-            except IndexError:
-                data_t = fun(rng.randint(1, 101) / 100, cons, t)
-                data.append(data_t)
-                cla.append(c)
-    cla = np.asarray(cla)
-    data = np.asarray(data)
-    return data, cla
+        elif t_temp >= pattern_duration - pattern_interval:
+            data.append(0)
+        else :
+            data.append(0)
+    return np.asarray(data), np.asarray(cla)
 
 
 def label_to_obj(label, obj):
@@ -178,58 +172,69 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
     return fig, roc_auc, thresholds
 
 
+def get_states(input, interval, duration, sample=5):
+    n = int(duration / interval)
+    t = np.arange(n) * interval
+    step = int(interval / sample)
+    temp = []
+    for i in range(n):
+        sum = np.sum(input[:, i * interval:(i + 1) * interval:step], axis=1)
+        temp.append(sum)
+    return MinMaxScaler().fit_transform(np.asarray(temp).T), t
+
+
 ###############################################
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 200 * ms
-duration = 200 * ms
-duration_test = 200 * ms
+pre_train_duration = 500 * ms
+duration = 500 * ms
+duration_test = 500 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5
+pattern_duration = 200
+pattern_interval = 150
+sample = 10
 
-t0 = int(duration / interval_s)
-t1 = int((duration + duration_test) / interval_s)
 
-taupre = taupost = 0.2 * ms
-wmax = 1
-wmin = 0
-Apre = 0.005
+t0 = int(duration / (pattern_duration*interval_s))
+t1 = int((duration + duration_test) / (pattern_duration*interval_s))
+
+taupre = taupost = 2 * ms
+wmax = 0.7
+wmin = 0.3
+Apre = 0.003
 Apost = -Apre * taupre / taupost * 1.2
+
+equ_in = '''
+dv/dt = (I-v) / (0.6*ms) : 1 (unless refractory)
+I = stimulus(t): 1
+'''
 
 equ = '''
 r : 1
-dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(0.15*ms*r) : 1
-dh/dt = (-h)/(0.145*ms*r) : 1
-I = tanh(g-h)*40 +I_0: 1
-I_0 = stimulus(t)*w_g:1
-w_g : 1
-'''
-
-equ_h = '''
-r : 1
-dv/dt = (I-v) / (0.3*ms) : 1 (unless refractory)
-I = stimulus(t)*w_g:1
-w_g : 1
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms*r) : 1
+dh/dt = (-h)/(1.45*ms*r) : 1
+I = tanh(g-h)*20: 1
 '''
 
 equ_read = '''
-dg/dt = (-g)/(0.9*ms) : 1 
-dh/dt = (-h)/(0.87*ms) : 1
+dg/dt = (-g)/(1.5*ms) : 1 
+dh/dt = (-h)/(1.45*ms) : 1
 I = tanh(g-h)*20 : 1
-'''
-
-on_pre = '''
-h+=w
-g+=w
 '''
 
 model_STDP = '''
 w : 1
 dapre/dt = -apre/taupre : 1 (clock-driven)
 dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+on_pre = '''
+h+=w
+g+=w
 '''
 
 on_pre_STDP = '''
@@ -245,22 +250,31 @@ w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
-data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
-data, label = Tri_function(duration + duration_test)
+data_pre, label_pre = Tri_function(pre_train_duration, pattern_duration = pattern_duration,
+                                   pattern_interval = pattern_interval, obj=obj)
+data, label = Tri_function(duration + duration_test, pattern_duration = pattern_duration,
+                           pattern_interval = pattern_interval)
 stimulus = TimedArray(data, dt=defaultclock.dt)
 
-G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+Input = NeuronGroup(1, equ_in, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+                    name = 'neurongroup_input')
+
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                 name='neurongroup')
 
-G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                  name='neurongroup_1')
 
-G_lateral_inh = NeuronGroup(1, equ_h, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                             name='neurongroup_la_inh')
 
-G_readout = NeuronGroup(n, equ_read, method='euler')
+G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
+
+S = Synapses(Input, G, 'w : 1', on_pre = on_pre ,method='linear', name='synapses')
 
 S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_1')
+
+S3 = Synapses(Input, G_lateral_inh, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_2')
 
 S5 = Synapses(G, G2, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_4')
 
@@ -271,26 +285,27 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
+S.connect(j='k for k in range(int(n*1))')
 S2.connect(p=1)
+S3.connect()
 S4.connect(p=1, condition='i != j')
 S5.connect(p=1)
-S6.connect()
+S6.connect(j='k for k in range(int(n*1))')
 S_readout.connect(j='i')
 
-G.w_g = '0'
-G[0:int(n*1)].w_g = '0.6+i*'+str(0.4/(n*1))
-G2.w_g = '0'
-G_lateral_inh.w_g = '1'
-
+S.w = '0.6+j*'+str(0.4/n)
 S2.w = '-1'
+S3.w = '1'
 S4.w = 'rand()'
 S5.w = 'rand()'
 S6.w = '-rand()'
 
-S4.delay = '0.3*ms'
+S.delay = '3*ms'
+S4.delay = '3*ms'
 
 G.r = '1'
 G2.r = '1'
+G_lateral_inh.r = '1'
 
 # ------monitor----------------
 m_w = StateMonitor(S5, 'w', record=True)
@@ -298,7 +313,9 @@ m_w2 = StateMonitor(S4, 'w', record=True)
 m_g = StateMonitor(G, (['I', 'v']), record=True)
 m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
-m_inh = StateMonitor(G_lateral_inh, ('I', 'v'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('I','v'), record=True)
+m_in = StateMonitor(Input, ('I','v'), record=True)
+
 
 # ------create network-------------
 net = Network(collect())
@@ -332,17 +349,12 @@ for loop in range(pre_train_loop):
 # -------change the synapse model----------
 stimulus.values = data
 
-S4.pre.code = '''
+S5.pre.code = S4.pre.code = '''
 h+=w
 g+=w
 '''
-S4.post.code = ''
+S5.post.code = S4.post.code = ''
 
-S5.pre.code = '''
-h+=w
-g+=w
-'''
-S5.post.code = ''
 
 ###############################################
 # ------run for lms_train-------
@@ -351,7 +363,8 @@ net.run(duration)
 
 # ------lms_train---------------
 y = label_to_obj(label[:t0], obj)
-Data, para = readout(m_read.I, y)
+states, _t_m = get_states(m_read.I, pattern_duration, duration / interval_s, sample)
+Data, para = readout(states, y)
 
 #####################################
 # ----run for test--------
@@ -360,7 +373,8 @@ net.run(duration + duration_test)
 
 # -----lms_test-----------
 y = label_to_obj(label, obj)
-y_t = lms_test(m_read.I, para)
+states, t_m = get_states(m_read.I, pattern_duration, (duration + duration_test) / interval_s, sample)
+y_t = lms_test(states, para)
 
 y_t_class, data_n = classification(threshold, y_t)
 fig_roc_train, roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
@@ -378,18 +392,24 @@ plot(data, 'r')
 
 fig1 = plt.figure(figsize=(20, 8))
 subplot(111)
-plt.scatter(m_read.t / ms, y_t_class, s=2, color="red", marker='o', alpha=0.6)
-plt.scatter(m_read.t / ms, y, s=3, color="blue", marker='*', alpha=0.4)
-plt.scatter(m_read.t / ms, data_n, s=2, color="green")
+plt.scatter(t_m, y_t_class, s=2, color="red", marker='o', alpha=0.6)
+plt.scatter(t_m, y, s=3, color="blue", marker='*', alpha=0.4)
+plt.scatter(t_m, data_n, s=2, color="green")
 axhline(threshold, ls='--', c='r', lw=1)
 plt.title('Classification Condition of threshold = %s' % threshold)
 
 fig3 = plt.figure(figsize=(20, 8))
-subplot(211)
+subplot(411)
 plt.plot(m_g.t / ms, m_g.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
-subplot(212)
+subplot(412)
 plt.plot(m_g.t / ms, m_g.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+subplot(413)
+plt.plot(m_in.t / ms, m_in.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(414)
+plt.plot(m_in.t / ms, m_in.I.T, label='I')
 legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
 fig4 = plt.figure(figsize=(20, 8))
@@ -403,8 +423,9 @@ subplot(413)
 plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 subplot(414)
-plt.plot(m_inh.t / ms, m_inh.I.T, label='v')
+plt.plot(m_inh.t / ms, m_inh.I.T, label='I')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+
 
 fig5 = plt.figure(figsize=(20, 4))
 plt.plot(m_read.t / ms, m_read.I.T, label='I')

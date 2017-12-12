@@ -2,7 +2,7 @@
 # LSM for Tri-funcion test
 # multiple pre-train STDP and the distribution is different for different patterns
 # add Input layer as input and the encoding is pass data directly
-# simulation 6--analysis 4
+# simulation 7--analysis 3
 # ----------------------------------------
 
 from brian2 import *

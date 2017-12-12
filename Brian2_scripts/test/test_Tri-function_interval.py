@@ -51,14 +51,16 @@ def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1
             fun, c = chose_fun()
             cla.append(c)
 
-        if t_temp < pattern_interval / 2:
+        if t_temp < pattern_duration - pattern_interval:
+            try:
+                data_t = fun(data[t - 1], cons, t)
+                data.append(data_t)
+            except IndexError:
+                data_t = fun(rng.randint(1, 101) / 100, cons, t)
+                data.append(data_t)
+        elif t_temp >= pattern_duration - pattern_interval:
             data.append(0)
-        elif t_temp >= pattern_interval / 2 and t_temp < pattern_duration - pattern_interval / 2:
-            data_t = fun(data[t - 1], cons, t)
-            data.append(data_t)
-        elif t_temp >= pattern_duration - pattern_interval / 2:
-            data.append(0)
-        else :
+        else:
             data.append(0)
     return np.asarray(data), np.asarray(cla)
 
