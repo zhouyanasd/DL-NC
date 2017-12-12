@@ -74,7 +74,7 @@ def Tri_function(duration, pattern_duration = 100, pattern_interval = 50, obj=-1
             return 0.5
 
     def constant(l, c, t):
-        return c / 200 + 0.5
+        return c / 100
 
     def chose_fun():
         if obj == -1:
@@ -187,13 +187,13 @@ def get_states(input, interval, duration, sample=5):
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 500 * ms
-duration = 500 * ms
-duration_test = 500 * ms
+pre_train_duration = 1000 * ms
+duration = 1000 * ms
+duration_test = 1000 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5
-pattern_duration = 200
+pattern_duration = 250
 pattern_interval = 150
 sample = 10
 
@@ -208,8 +208,8 @@ Apre = 0.003
 Apost = -Apre * taupre / taupost * 1.2
 
 equ_in = '''
-dv/dt = (I-v) / (0.6*ms) : 1 (unless refractory)
-I = stimulus(t): 1
+dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
+I = stimulus(t)*0.7: 1
 '''
 
 equ = '''
