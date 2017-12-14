@@ -351,8 +351,6 @@ def simulate_LSM(seed):
         y_t = lms_test(states, para)
 
         y_t_class, data_n = classification(threshold, y_t)
-        print(y[:t0], data_n[:t0])
-        print(len(y[:t0]),len(data_n[:t0]))
         roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0])
         print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
         roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:])
