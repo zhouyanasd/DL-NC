@@ -236,7 +236,8 @@ def simulate_LSM(seed):
 
     # -----simulation setting-------
     data, label = Tri_function(duration + duration_test)
-    stimulus = TimedArray(data, dt=defaultclock.dt)
+
+    Time_array = TimedArray(data, dt=defaultclock.dt)
 
     Input = NeuronGroup(1, equ_in, method='linear', events={'input':'True'}, name = 'neurongroup_input')
 
@@ -305,7 +306,8 @@ def simulate_LSM(seed):
         S5.pre.code = S4.pre.code = on_pre_STDP
         S5.post.code = S4.post.code = on_post_STDP
         data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
-        stimulus.values = data_pre
+        Time_array_pre = TimedArray(data_pre, dt=defaultclock.dt)
+        stimulus = Time_array_pre
 
         for loop in range(pre_train_loop):
             net.run(pre_train_duration)
@@ -315,7 +317,7 @@ def simulate_LSM(seed):
             S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
         # -------change the synapse model----------
-        stimulus.values = data
+        stimulus = Time_array
 
         S5.pre.code = S4.pre.code = '''
             h+=w

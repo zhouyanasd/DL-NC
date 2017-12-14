@@ -328,7 +328,6 @@ brian_plot(S4.w)
 # print('S4.w = %s' % S4.w)
 ###############################################
 # ------pre_train------------------
-# stimulus.values = data_pre
 stimulus = Time_array_pre
 for loop in range(pre_train_loop):
     net.run(pre_train_duration)

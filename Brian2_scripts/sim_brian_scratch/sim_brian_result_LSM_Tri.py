@@ -237,8 +237,12 @@ for l in range(loop):
 
     # -----simulation setting-------
     data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
+
     data, label = Tri_function(duration + duration_test)
-    stimulus = TimedArray(data, dt=defaultclock.dt)
+
+    Time_array = TimedArray(data, dt=defaultclock.dt)
+
+    Time_array_pre = TimedArray(data_pre, dt=defaultclock.dt)
 
     G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                     name='neurongroup')
@@ -302,7 +306,7 @@ for l in range(loop):
         obj = epochs
         net.restore('first')
 
-        stimulus.values = data_pre
+        stimulus = Time_array_pre
         for loop in range(pre_train_loop):
             net.run(pre_train_duration)
 
@@ -324,7 +328,7 @@ for l in range(loop):
             S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
         # -------change the synapse model----------
-        stimulus.values = data
+        stimulus = Time_array
 
         S4.pre.code = '''
         h+=w

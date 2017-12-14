@@ -247,7 +247,10 @@ w = clip(w+apre, wmin, wmax)
 # -----simulation setting-------
 data_pre, label_pre = Tri_function(pre_train_duration, obj=obj)
 data, label = Tri_function(duration + duration_test)
-stimulus = TimedArray(data, dt=defaultclock.dt)
+
+Time_array = TimedArray(data, dt=defaultclock.dt)
+
+Time_array_pre = TimedArray(data_pre, dt=defaultclock.dt)
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=0.1 * ms,
                 name='neurongroup')
@@ -308,7 +311,7 @@ brian_plot(S4.w)
 # print('S4.w = %s' % S4.w)
 ###############################################
 # ------pre_train------------------
-stimulus.values = data_pre
+stimulus = Time_array_pre
 for loop in range(pre_train_loop):
     net.run(pre_train_duration)
 
@@ -330,7 +333,8 @@ for loop in range(pre_train_loop):
     S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
 # -------change the synapse model----------
-stimulus.values = data
+del stimulus
+stimulus = Time_array
 
 S4.pre.code = '''
 h+=w
