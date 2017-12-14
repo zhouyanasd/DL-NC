@@ -10,6 +10,7 @@ import scipy as sp
 import pandas as pd
 from multiprocessing import Queue,Pool
 from sklearn.preprocessing import MinMaxScaler
+from sklearn import metrics
 
 prefs.codegen.target = "numpy"  # it is faster than use default "cython"
 
@@ -152,7 +153,6 @@ def ROC(y, scores, pos_label=1):
         return arr_n
 
     scores_n = normalization_min_max(scores)
-    from sklearn import metrics
     fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
     roc_auc = metrics.auc(fpr, tpr)
     return roc_auc, thresholds
@@ -175,9 +175,9 @@ def simulate_LSM(seed):
 
     # -----parameter and model setting-------
     n = 20
-    pre_train_duration = 1000 * ms
-    duration = 1000 * ms
-    duration_test = 1000 * ms
+    pre_train_duration = 3000 * ms
+    duration = 3000 * ms
+    duration_test = 3000 * ms
     pre_train_loop = 0
     interval_s = defaultclock.dt
     threshold = 0.5
@@ -353,9 +353,9 @@ def simulate_LSM(seed):
         y_t_class, data_n = classification(threshold, y_t)
         print(y[:t0], data_n[:t0])
         print(len(y[:t0]),len(data_n[:t0]))
-        roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0], 'ROC for train of %s' % obj)
+        roc_auc_train, thresholds_train = ROC(y[:t0], data_n[:t0])
         print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
-        roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:], 'ROC for test of %s' % obj)
+        roc_auc_test, thresholds_test = ROC(y[t0:], data_n[t0:])
         print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
         auc_train.append(roc_auc_train)
         auc_test.append(roc_auc_test)
