@@ -175,14 +175,14 @@ def simulate_LSM(seed):
 
     # -----parameter and model setting-------
     n = 20
-    pre_train_duration = 3000 * ms
-    duration = 3000 * ms
-    duration_test = 3000 * ms
+    pre_train_duration = 5000 * ms
+    duration = 5000 * ms
+    duration_test = 5000 * ms
     pre_train_loop = 0
     interval_s = defaultclock.dt
     threshold = 0.5
-    pattern_duration = 250
-    pattern_interval = 150
+    pattern_duration = 500
+    pattern_interval = 400
     sample = 10
 
     t0 = int(duration / (pattern_duration * interval_s))
@@ -281,11 +281,11 @@ def simulate_LSM(seed):
     S_readout.connect(j='i')
 
     S.w = '0.6+j*'+str(0.4/n)
-    S2.w = '-0.5'
-    S3.w = '0.95'
-    S4.w = '0.2+rand()*0.4'
-    S5.w = '0.2+rand()*0.4'
-    S6.w = '-0.4-rand()*0.6'
+    S2.w = '1'
+    S3.w = '1'
+    S4.w = 'rand()'
+    S5.w = 'rand()'
+    S6.w = '-rand()'
 
     S.delay = '3*ms'
     S4.delay = '3*ms'

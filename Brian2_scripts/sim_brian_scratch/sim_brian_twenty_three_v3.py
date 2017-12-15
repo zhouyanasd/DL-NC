@@ -187,14 +187,14 @@ def get_states(input, interval, duration, sample=5):
 # -----parameter and model setting-------
 obj = 1
 n = 20
-pre_train_duration = 1000 * ms
-duration = 1000 * ms
-duration_test = 1000 * ms
+pre_train_duration = 1500 * ms
+duration = 1500 * ms
+duration_test = 1500 * ms
 pre_train_loop = 0
 interval_s = defaultclock.dt
 threshold = 0.5
-pattern_duration = 250
-pattern_interval = 150
+pattern_duration = 500
+pattern_interval = 400
 sample = 10
 
 
