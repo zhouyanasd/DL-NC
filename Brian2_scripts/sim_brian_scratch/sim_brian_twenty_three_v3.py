@@ -428,7 +428,7 @@ plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
 legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
 subplot(414)
 plt.plot(m_inh.t / ms, m_inh.I.T, label='I')
-legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
 
 fig5 = plt.figure(figsize=(20, 4))
