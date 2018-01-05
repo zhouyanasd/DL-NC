@@ -3,7 +3,6 @@
 # add inhibitory STDP and interference detection
 # inhibitory neuron WTA and different spike patterns classification test
 # multiple pre-train STDP and the distribution is different for different patterns
-# simulation 6--analysis 4
 # ----------------------------------------
 
 from brian2 import *

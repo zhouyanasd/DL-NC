@@ -2,7 +2,7 @@
 # new structure of LSM with inhibitory neuron STDP
 # inhibitory neuron WTA and different spike patterns classification test
 # multiple pre-train STDP and the distribution is different for different patterns
-# simulation 2--analysis 2
+# simulation 7--analysis 2
 # ----------------------------------------
 
 from brian2 import *
