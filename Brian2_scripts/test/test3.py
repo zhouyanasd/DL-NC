@@ -3,6 +3,7 @@ start_scope()
 prefs.codegen.target = "numpy"  #it is faster than use default "cython"
 
 equ_1 = '''
+dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
 I = stimulus(t,i): 1
 '''
 
@@ -30,7 +31,7 @@ print(Data)
 stimulus = TimedArray(Data,dt=1*ms)
 print(stimulus(2*ms,2))
 
-Input = NeuronGroup(4, equ_1, events={'input_sin':'t<2*ms'})
+Input = NeuronGroup(4, equ_1, events={'input_sin':'t<2*ms'},method='euler',refractory=1 * ms)
 G = NeuronGroup(2, equ_2)
 S = Synapses(Input, G, model, on_pre= on_pre, on_event={'pre':'input_sin'})
 
@@ -39,6 +40,7 @@ S.w = '1'
 # S.delay = 'rand()*ms'
 
 M = StateMonitor(G, ('I','d_n','d_t'), record=True)
+M_input = StateMonitor(Input, ('v'), record=True)
 
 run(2*ms)
 
@@ -47,6 +49,7 @@ print(S.I_pre[:])
 print(S.I_post[:])
 print(M.d_n)
 print(M.d_t)
+print('M_input: %s'%M_input.v[:])
 
 for name, var in G.variables.items():
     print('%r : %s' % (name, var))
