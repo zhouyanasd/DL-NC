@@ -24,10 +24,16 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def load_Data_JV(path="../../Data/jv/train.txt"):
-    data = np.loadtxt(path, delimiter=None)
+def load_Data_JV(t, path_value="../../Data/jv/train.txt", path_label="../../Data/jv/size.txt"):
+    if t == "train":
+        label = np.loadtxt(path_label, delimiter=None).astype(int)[1]
+    elif t == "test":
+        label = np.loadtxt(path_label, delimiter=None).astype(int)[0]
+    else:
+        raise TypeError("t must be 'train' or 'test'")
+    data = np.loadtxt(path_value, delimiter=None)
     data = MinMaxScaler().fit_transform(data)
-    s = open(path, 'r')
+    s = open(path_value, 'r')
     i = -1
     size_d = []
     while True:
@@ -39,34 +45,19 @@ def load_Data_JV(path="../../Data/jv/train.txt"):
             i -= 1
             size_d.append(i)
             continue
-    size_d_ = np.asarray(size_d) + 1
-    size_d_ = np.concatenate(([0], size_d_))
-    data_list = [data[size_d[i]:size_d[i + 1]] for i in range(len(size_d_) - 1)]
-    data_list = pd.Series(data_list)
-    return data_list, size_d
+    size_d = np.asarray(size_d) + 1
+    size_d = np.concatenate(([0], size_d))
+    data_list = [data[size_d[i]:size_d[i + 1]] for i in range(len(size_d) - 1)]
+    label_list = []
+    j = 0
+    for n in label:
+        label_list.extend([j] * n)
+        j += 1
+    data_frame = pd.DataFrame({'value': pd.Series(data_list), 'label': pd.Series(label_list)})
+    return data_frame
 
+#----------------------------------
 
-def get_label(obj, t, size_d, path="../../Data/jv/size.txt"):
-    if t == "train":
-        data_l = np.loadtxt(path, delimiter=None).astype(int)[1]
-    elif t == "test":
-        data_l = np.loadtxt(path, delimiter=None).astype(int)[0]
-    else:
-        raise TypeError("t must be 'train' or 'test'")
+data = load_Data_JV('test',path_value="../../Data/jv/test.txt")
 
-    label = []
-    for i in size_d:
-        label.append([])
-    # data_l = np.cumsum(data_l)
-    # data_l_ = np.concatenate(([0], data_l))
-    # size_d_ = np.asarray(size_d) + 1
-    # size_d_ = np.concatenate(([0], size_d_))
-    # label = []
-    # for i in range(len(data_l_) - 1):
-    #     for j in range(data_l_[i], data_l_[i + 1]):
-    #         for l in range(size_d_[j], size_d_[j + 1]):
-    #             if i == obj:
-    #                 label.append(1)
-    #             else:
-    #                 label.append(0)
-    return np.asarray(label)
+print(data)

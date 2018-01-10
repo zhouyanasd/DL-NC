@@ -7,6 +7,7 @@
 from brian2 import *
 from scipy.optimize import leastsq
 import scipy as sp
+import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 prefs.codegen.target = "numpy"
@@ -70,9 +71,16 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
-def load_Data_JV(path="../../Data/jv/train.txt"):
-    data = np.loadtxt(path, delimiter=None)
-    s = open(path, 'r')
+def load_Data_JV(t, path_value="../../Data/jv/train.txt", path_label="../../Data/jv/size.txt"):
+    if t == "train":
+        label = np.loadtxt(path_label, delimiter=None).astype(int)[1]
+    elif t == "test":
+        label = np.loadtxt(path_label, delimiter=None).astype(int)[0]
+    else:
+        raise TypeError("t must be 'train' or 'test'")
+    data = np.loadtxt(path_value, delimiter=None)
+    data = MinMaxScaler().fit_transform(data)
+    s = open(path_value, 'r')
     i = -1
     size_d = []
     while True:
@@ -84,26 +92,119 @@ def load_Data_JV(path="../../Data/jv/train.txt"):
             i -= 1
             size_d.append(i)
             continue
-    return MinMaxScaler().fit_transform(data), size_d
+    size_d = np.asarray(size_d) + 1
+    size_d = np.concatenate(([0], size_d))
+    data_list = [data[size_d[i]:size_d[i + 1]] for i in range(len(size_d) - 1)]
+    label_list = []
+    j = 0
+    for n in label:
+        label_list.extend([j] * n)
+        j += 1
+    data_frame = pd.DataFrame({'value': pd.Series(data_list), 'label': pd.Series(label_list)})
+    return data_frame
 
+def get_series_data(data_frame, pattern_interval, is_order = True):
+    pass
 
-def get_label(obj, t, size_d, path="../../Data/jv/size.txt"):
-    if t == "train":
-        data_l = np.loadtxt(path, delimiter=None).astype(int)[1]
-    elif t == "test":
-        data_l = np.loadtxt(path, delimiter=None).astype(int)[0]
-    else:
-        raise TypeError("t must be 'train' or 'test'")
-    data_l = np.cumsum(data_l)
-    data_l_ = np.concatenate(([0], data_l))
-    size_d_ = np.asarray(size_d) + 1
-    size_d_ = np.concatenate(([0], size_d_))
-    label = []
-    for i in range(len(data_l_) - 1):
-        for j in range(data_l_[i], data_l_[i + 1]):
-            for l in range(size_d_[j], size_d_[j + 1]):
-                if i == obj:
-                    label.append(1)
-                else:
-                    label.append(0)
-    return asarray(label)
+# -----parameter setting-------
+data_train = load_Data_JV(t='train',path_value="../../Data/jv/train.txt")
+data_test = load_Data_JV(t='test',path_value="../../Data/jv/test.txt")
+
+pattern_interval = 400
+data_train_s = get_series_data(data_train,pattern_interval)
+data_test_s = get_series_data(data_test,pattern_interval)
+
+duration_train = len(data_train) * defaultclock.dt
+duration_test = len(data_test)*defaultclock.dt
+
+obj = 1
+n = 20
+
+threshold = 0.5
+
+equ_in = '''
+dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
+I = stimulus(t,i) : 1
+'''
+
+equ = '''
+r : 1
+dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
+dg/dt = (-g)/(1.5*ms*r) : 1
+dh/dt = (-h)/(1.45*ms*r) : 1
+I = tanh(g-h)*20: 1
+'''
+
+equ_read = '''
+dg/dt = (-g)/(1.5*ms) : 1 
+dh/dt = (-h)/(1.45*ms) : 1
+I = tanh(g-h)*20 : 1
+'''
+
+model_STDP = '''
+w : 1
+wmax : 1
+wmin : 1
+Apre : 1
+Apost = -Apre * taupre / taupost * 1.2 : 1
+taupre : second
+taupost : second
+dapre/dt = -apre/taupre : 1 (clock-driven)
+dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+on_pre = '''
+h+=w
+g+=w
+'''
+
+on_pre_STDP = '''
+h+=w
+g+=w
+apre += Apre
+w = clip(w+apost, wmin, wmax)
+'''
+
+on_post_STDP = '''
+apost += Apost
+w = clip(w+apre, wmin, wmax)
+'''
+
+# -----simulation setting-------
+data_pre, label_pre = Tri_function(pre_train_duration, pattern_duration = pattern_duration,
+                                   pattern_interval = pattern_interval, obj=obj)
+data, label = Tri_function(duration + duration_test, pattern_duration = pattern_duration,
+                           pattern_interval = pattern_interval)
+Time_array = TimedArray(data, dt=defaultclock.dt)
+
+Time_array_pre = TimedArray(data_pre, dt=defaultclock.dt)
+
+Input = NeuronGroup(1, equ_in, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                    name = 'neurongroup_input')
+
+G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                name='neurongroup')
+
+G2 = NeuronGroup(int(n / 4), equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                 name='neurongroup_1')
+
+G_lateral_inh = NeuronGroup(1, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+                            name='neurongroup_la_inh')
+
+G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
+
+S = Synapses(Input, G, 'w : 1', on_pre = on_pre ,method='linear', name='synapses')
+
+S2 = Synapses(G2, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_1')
+
+S3 = Synapses(Input, G_lateral_inh, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_2')
+
+S5 = Synapses(G, G2, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_4')
+
+S4 = Synapses(G, G, model_STDP, on_pre=on_pre_STDP, on_post=on_post_STDP, method='linear', name='synapses_3')
+
+S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='synapses_5')
+
+S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+
+# -------network topology----------
