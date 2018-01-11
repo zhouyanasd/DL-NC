@@ -109,13 +109,14 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
     return fig, roc_auc, thresholds
 
 
-def get_states(input, interval, duration, sample=5):
+def get_states(input, interval, duration, sample):
     n = int(duration / interval)
-    t = np.arange(n) * interval
-    step = int(interval / sample)
+    t = np.arange(n) * interval / defaultclock.dt
+    step = int(interval / sample / defaultclock.dt)
+    interval_ = int(interval / defaultclock.dt)
     temp = []
     for i in range(n):
-        sum = np.sum(input[:, i * interval:(i + 1) * interval:step], axis=1)
+        sum = np.sum(input[:, i * interval_: (i + 1) * interval_: step], axis=1)
         temp.append(sum)
     return MinMaxScaler().fit_transform(np.asarray(temp).T), t
 
@@ -185,8 +186,8 @@ pre_train_loop = 0
 threshold = 0.5
 sample = 10
 
-data_train = load_Data_JV(t='train',path_value="../../Data/jv/train.txt")
-data_test = load_Data_JV(t='test',path_value="../../Data/jv/test.txt")
+data_train = load_Data_JV(t='train', path_value="../../Data/jv/train.txt")
+data_test = load_Data_JV(t='test', path_value="../../Data/jv/test.txt")
 
 data_train_s , label_train = get_series_data(data_train,duration)
 data_test_s , label_test = get_series_data(data_test,duration)
@@ -367,7 +368,7 @@ net.run(duration_train)
 
 # ------lms_train---------------
 y_train = label_to_obj(label_train, obj)
-states, _t_m = get_states(m_read.I, duration, duration_train, sample)
+states, _t_m = get_states(m_read.I, duration*Dt , duration_train, sample)
 Data, para = readout(states, y_train)
 y_train_ = lms_test(states, para)
 y_train_ = normalization_min_max(y_train_)
@@ -382,7 +383,7 @@ net.run(duration_test)
 
 # -----lms_test-----------
 y_test = label_to_obj(label_test, obj)
-states, t_m = get_states(m_read.I, duration, duration_test, sample)
+states, t_m = get_states(m_read.I, duration*Dt , duration_test, sample)
 y_test_ = lms_test(states, para)
 y_test_ = normalization_min_max(y_test_)
 
