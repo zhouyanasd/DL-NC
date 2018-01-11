@@ -48,18 +48,6 @@ def readout(M, Z):
     return Data, para
 
 
-def classification(thea, data):
-    data_n = normalization_min_max(data)
-    data_class = []
-    for a in data_n:
-        if a >= thea:
-            b = 1
-        else:
-            b = 0
-        data_class.append(b)
-    return np.asarray(data_class), data_n
-
-
 def normalization_min_max(arr):
     arr_n = arr
     for i in range(arr.size):
@@ -80,6 +68,56 @@ def label_to_obj(label, obj):
         else:
             temp.append(0)
     return np.asarray(temp)
+
+
+def classification(thea, data):
+    data_n = normalization_min_max(data)
+    data_class = []
+    for a in data_n:
+        if a >= thea:
+            b = 1
+        else:
+            b = 0
+        data_class.append(b)
+    return np.asarray(data_class), data_n
+
+
+def ROC(y, scores, fig_title='ROC', pos_label=1):
+    def normalization_min_max(arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
+            arr_n[i] = x
+        return arr_n
+
+    scores_n = normalization_min_max(scores)
+    from sklearn import metrics
+    fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
+    roc_auc = metrics.auc(fpr, tpr)
+
+    fig = plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(fig_title)
+    plt.legend(loc="lower right")
+    return fig, roc_auc, thresholds
+
+
+def get_states(input, interval, duration, sample=5):
+    n = int(duration / interval)
+    t = np.arange(n) * interval
+    step = int(interval / sample)
+    temp = []
+    for i in range(n):
+        sum = np.sum(input[:, i * interval:(i + 1) * interval:step], axis=1)
+        temp.append(sum)
+    return MinMaxScaler().fit_transform(np.asarray(temp).T), t
 
 
 def load_Data_JV(t, path_value="../../Data/jv/train.txt", path_label="../../Data/jv/size.txt"):
@@ -139,23 +177,24 @@ def get_series_data(data_frame, duration, is_order = True, *args, **kwargs):
 
 
 # -----parameter setting-------
+obj = 1
+duration = 100
+Dt = defaultclock.dt*2
+n = 20
+pre_train_loop = 0
+threshold = 0.5
+sample = 10
+
 data_train = load_Data_JV(t='train',path_value="../../Data/jv/train.txt")
 data_test = load_Data_JV(t='test',path_value="../../Data/jv/test.txt")
 
-obj = 1
-duration = 100
-dt = defaultclock.dt*2
 data_train_s , label_train = get_series_data(data_train,duration)
 data_test_s , label_test = get_series_data(data_test,duration)
 data_pre_s , label_pre = get_series_data(data_train,duration, False, obj=[obj])
 
-duration_train = len(data_train_s) * dt
-duration_test = len(data_test_s) * dt
-duration_pre = len(data_pre_s) * dt
-
-n = 20
-pre_train_loop = 0
-threshold = 0.5
+duration_train = len(data_train_s) * Dt
+duration_test = len(data_test_s) * Dt
+duration_pre = len(data_pre_s) * Dt
 
 equ_in = '''
 dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
@@ -206,11 +245,11 @@ w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
-Time_array_train = TimedArray(data_train_s, dt=dt)
+Time_array_train = TimedArray(data_train_s, dt=Dt)
 
-Time_array_test = TimedArray(data_test_s, dt=dt)
+Time_array_test = TimedArray(data_test_s, dt=Dt)
 
-Time_array_pre = TimedArray(data_pre_s, dt=dt)
+Time_array_pre = TimedArray(data_pre_s, dt=Dt)
 
 Input = NeuronGroup(12, equ_in, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                     name = 'neurongroup_input')
@@ -312,9 +351,6 @@ for loop in range(pre_train_loop):
     S5.w = net._stored_state['second']['synapses_4']['w'][0]
 
 # -------change the synapse model----------
-del stimulus
-stimulus = Time_array_train
-
 S5.pre.code = S4.pre.code = '''
 h+=w
 g+=w
@@ -324,5 +360,81 @@ S5.post.code = S4.post.code = ''
 
 ###############################################
 # ------run for lms_train-------
+del stimulus
+stimulus = Time_array_train
 net.store('third')
-net.run(duration)
+net.run(duration_train)
+
+# ------lms_train---------------
+y_train = label_to_obj(label_train, obj)
+states, _t_m = get_states(m_read.I, duration, duration_train, sample)
+Data, para = readout(states, y_train)
+y_train_ = lms_test(states, para)
+y_train_ = normalization_min_max(y_train_)
+
+
+#####################################
+# ----run for test--------
+del stimulus
+stimulus = Time_array_test
+net.restore('third')
+net.run(duration_test)
+
+# -----lms_test-----------
+y_test = label_to_obj(label_test, obj)
+states, t_m = get_states(m_read.I, duration, duration_test, sample)
+y_test_ = lms_test(states, para)
+y_test_ = normalization_min_max(y_test_)
+
+fig_roc_train, roc_auc_train, thresholds_train = ROC(y_train, y_train_, 'ROC for train of %s' % obj)
+print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
+fig_roc_test, roc_auc_test, thresholds_test = ROC(y_test, y_test_, 'ROC for test of %s' % obj)
+print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
+
+
+#####################################
+# ------vis of results----
+fig0 = plt.figure(figsize=(20, 6))
+subplot(311)
+plot(data_pre_s, 'r')
+subplot(312)
+plot(data_train_s, 'r')
+subplot(313)
+plot(data_test_s, 'r')
+
+fig3 = plt.figure(figsize=(20, 8))
+subplot(411)
+plt.plot(m_g.t / ms, m_g.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(412)
+plt.plot(m_g.t / ms, m_g.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+subplot(413)
+plt.plot(m_in.t / ms, m_in.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(414)
+plt.plot(m_in.t / ms, m_in.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+
+fig4 = plt.figure(figsize=(20, 8))
+subplot(411)
+plt.plot(m_g2.t / ms, m_g2.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(412)
+plt.plot(m_g2.t / ms, m_g2.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+subplot(413)
+plt.plot(m_inh.t / ms, m_inh.v.T, label='v')
+legend(labels=[('V_%s' % k) for k in range(n)], loc='upper right')
+subplot(414)
+plt.plot(m_inh.t / ms, m_inh.I.T, label='I')
+legend(labels=[('_%s' % k) for k in range(n)], loc='upper right')
+
+
+fig5 = plt.figure(figsize=(20, 4))
+plt.plot(m_read.t / ms, m_read.I.T, label='I')
+legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
+
+fig6 =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
+show()
