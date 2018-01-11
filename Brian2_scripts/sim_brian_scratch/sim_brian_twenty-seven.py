@@ -281,28 +281,28 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
-S.connect(j='k for k in range(int(n*0.1))')
+S.connect(j='k for k in range(int(n))')
 S2.connect(p=0.2)
 S3.connect()
 S4.connect(p=0.1,condition='i != j')
 S5.connect(p=0.2)
-S6.connect(j='k for k in range(int(n*0.1))')
+S6.connect(j='k for k in range(int(n))')
 S_readout.connect(j='i')
 
-S4.wmax = '0.5+rand()*0.5'
-S5.wmax = '0.5+rand()*0.5'
-S4.wmin = 'rand()*0.5'
-S5.wmin = 'rand()*0.5'
+S4.wmax = '0'
+S5.wmax = '0'
+S4.wmin = '0'
+S5.wmin = '0'
 S4.Apre = S5.Apre = '0.01'
 S4.taupre = S4.taupost ='1*ms+rand()*4*ms'
 S5.taupre = S5.taupost ='1*ms+rand()*4*ms'
 
-S.w = '1.4+j*'+str(0.6/(n*0.1))
+S.w = '0.4+j*'+str(0.6/(n))
 S2.w = '-0.2'
 S3.w = '0.8'
 S4.w = 'wmin+rand()*(wmax-wmin)'
 S5.w = 'wmin+rand()*(wmax-wmin)'
-S6.w = [-0.01, -1.4]
+S6.w = 'rand()'
 
 S.delay = '3*ms'
 S4.delay = '3*ms'
