@@ -5,6 +5,7 @@
 # ----------------------------------------
 
 from brian2 import *
+from brian2tools import *
 from scipy.optimize import leastsq
 import scipy as sp
 import pandas as pd
@@ -71,6 +72,16 @@ def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
 
 
+def label_to_obj(label, obj):
+    temp = []
+    for a in label:
+        if a == obj:
+            temp.append(1)
+        else:
+            temp.append(0)
+    return np.asarray(temp)
+
+
 def load_Data_JV(t, path_value="../../Data/jv/train.txt", path_label="../../Data/jv/size.txt"):
     if t == "train":
         label = np.loadtxt(path_label, delimiter=None).astype(int)[1]
@@ -103,23 +114,47 @@ def load_Data_JV(t, path_value="../../Data/jv/train.txt", path_label="../../Data
     data_frame = pd.DataFrame({'value': pd.Series(data_list), 'label': pd.Series(label_list)})
     return data_frame
 
-def get_series_data(data_frame, pattern_interval, is_order = True):
-    pass
+
+def get_series_data(data_frame, duration, is_order = True, *args, **kwargs):
+    try:
+        obj = kwargs['obj']
+    except KeyError:
+        obj = np.arange(9)
+    if not is_order:
+        data_frame_obj = data_frame[data_frame['label'].isin(obj)].sample(frac=1).reset_index(drop=True)
+    else:
+        data_frame_obj = data_frame[data_frame['label'].isin(obj)]
+    data_frame_s = []
+    for value in data_frame_obj['value']:
+        for data in value:
+            data_frame_s.append(list(data))
+        interval = duration - value.shape[0]
+        if interval >30 :
+            data_frame_s.extend([[0]*12]*interval)
+        else:
+            raise Exception('duration is too short')
+    data_frame_s = np.asarray(data_frame_s)
+    label = data_frame_obj['label']
+    return data_frame_s, label
+
 
 # -----parameter setting-------
 data_train = load_Data_JV(t='train',path_value="../../Data/jv/train.txt")
 data_test = load_Data_JV(t='test',path_value="../../Data/jv/test.txt")
 
-pattern_interval = 400
-data_train_s = get_series_data(data_train,pattern_interval)
-data_test_s = get_series_data(data_test,pattern_interval)
-
-duration_train = len(data_train) * defaultclock.dt
-duration_test = len(data_test)*defaultclock.dt
-
 obj = 1
-n = 20
+duration = 100
+dt = defaultclock.dt*2
+data_train_s , label_train = get_series_data(data_train,duration)
+data_test_s , label_test = get_series_data(data_test,duration)
+data_pre_s , label_pre = get_series_data(data_train,duration, False, obj=[obj])
 
+duration_train = len(data_train_s) * dt
+duration_test = len(data_test_s) * dt
+duration_pre = len(data_pre_s) * dt
+
+n = 20
+pre_train_loop = 0
 threshold = 0.5
 
 equ_in = '''
@@ -171,15 +206,13 @@ w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
-data_pre, label_pre = Tri_function(pre_train_duration, pattern_duration = pattern_duration,
-                                   pattern_interval = pattern_interval, obj=obj)
-data, label = Tri_function(duration + duration_test, pattern_duration = pattern_duration,
-                           pattern_interval = pattern_interval)
-Time_array = TimedArray(data, dt=defaultclock.dt)
+Time_array_train = TimedArray(data_train_s, dt=dt)
 
-Time_array_pre = TimedArray(data_pre, dt=defaultclock.dt)
+Time_array_test = TimedArray(data_test_s, dt=dt)
 
-Input = NeuronGroup(1, equ_in, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
+Time_array_pre = TimedArray(data_pre_s, dt=dt)
+
+Input = NeuronGroup(12, equ_in, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
                     name = 'neurongroup_input')
 
 G = NeuronGroup(n, equ, threshold='v > 0.20', reset='v = 0', method='euler', refractory=1 * ms,
@@ -208,3 +241,88 @@ S6 = Synapses(G_lateral_inh, G, 'w : 1', on_pre=on_pre, method='linear', name='s
 S_readout = Synapses(G, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
 
 # -------network topology----------
+S.connect(j='k for k in range(int(n*0.1))')
+S2.connect(p=0.2)
+S3.connect()
+S4.connect(p=0.1,condition='i != j')
+S5.connect(p=0.2)
+S6.connect(j='k for k in range(int(n*0.1))')
+S_readout.connect(j='i')
+
+S4.wmax = '0.5+rand()*0.5'
+S5.wmax = '0.5+rand()*0.5'
+S4.wmin = 'rand()*0.5'
+S5.wmin = 'rand()*0.5'
+S4.Apre = S5.Apre = '0.01'
+S4.taupre = S4.taupost ='1*ms+rand()*4*ms'
+S5.taupre = S5.taupost ='1*ms+rand()*4*ms'
+
+S.w = '1.4+j*'+str(0.6/(n*0.1))
+S2.w = '-0.2'
+S3.w = '0.8'
+S4.w = 'wmin+rand()*(wmax-wmin)'
+S5.w = 'wmin+rand()*(wmax-wmin)'
+S6.w = [-0.01, -1.4]
+
+S.delay = '3*ms'
+S4.delay = '3*ms'
+
+G.r = '1'
+G2.r = '1'
+G_lateral_inh.r = '1'
+
+# ------monitor----------------
+m_w = StateMonitor(S5, 'w', record=True)
+m_w2 = StateMonitor(S4, 'w', record=True)
+m_g = StateMonitor(G, (['I', 'v']), record=True)
+m_g2 = StateMonitor(G2, (['I', 'v']), record=True)
+m_read = StateMonitor(G_readout, ('I'), record=True)
+m_inh = StateMonitor(G_lateral_inh, ('I','v'), record=True)
+m_in = StateMonitor(Input, ('I','v'), record=True)
+
+
+# ------create network-------------
+net = Network(collect())
+net.store('first')
+fig_init_w =plt.figure(figsize=(4,4))
+brian_plot(S4.w)
+
+
+###############################################
+# ------pre_train------------------
+stimulus = Time_array_pre
+for loop in range(pre_train_loop):
+    net.run(duration_pre)
+
+    # ------plot the weight----------------
+    fig2 = plt.figure(figsize=(10, 8))
+    title('loop: ' + str(loop))
+    subplot(211)
+    plot(m_w.t / second, m_w.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+    subplot(212)
+    plot(m_w2.t / second, m_w2.w.T)
+    xlabel('Time (s)')
+    ylabel('Weight / gmax')
+
+    net.store('second')
+    net.restore('first')
+    S4.w = net._stored_state['second']['synapses_3']['w'][0]
+    S5.w = net._stored_state['second']['synapses_4']['w'][0]
+
+# -------change the synapse model----------
+del stimulus
+stimulus = Time_array_train
+
+S5.pre.code = S4.pre.code = '''
+h+=w
+g+=w
+'''
+S5.post.code = S4.post.code = ''
+
+
+###############################################
+# ------run for lms_train-------
+net.store('third')
+net.run(duration)
