@@ -207,13 +207,13 @@ r : 1
 dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
 dg/dt = (-g)/(1.5*ms*r) : 1
 dh/dt = (-h)/(1.45*ms*r) : 1
-I = tanh(g-h)*20: 1
+I = tanh(g-h)*5: 1
 '''
 
 equ_read = '''
 dg/dt = (-g)/(1.5*ms) : 1 
 dh/dt = (-h)/(1.45*ms) : 1
-I = tanh(g-h)*20 : 1
+I = tanh(g-h)*5 : 1
 '''
 
 model_STDP = '''
@@ -289,15 +289,15 @@ S5.connect(p=0.2)
 S6.connect(j='k for k in range(int(n))')
 S_readout.connect(j='i')
 
-S4.wmax = '0'
-S5.wmax = '0'
-S4.wmin = '0'
-S5.wmin = '0'
+S4.wmax = '0.0'
+S5.wmax = '0.0'
+S4.wmin = '0.0'
+S5.wmin = '0.0'
 S4.Apre = S5.Apre = '0.01'
-S4.taupre = S4.taupost ='1*ms+rand()*4*ms'
-S5.taupre = S5.taupost ='1*ms+rand()*4*ms'
+S4.taupre = S4.taupost ='2*ms+rand()*0*ms'
+S5.taupre = S5.taupost ='2*ms+rand()*0*ms'
 
-S.w = '0.4+j*'+str(0.6/(n))
+S.w = '0.2+j*'+str(0.6/(n))
 S2.w = '-0.2'
 S3.w = '0.8'
 S4.w = 'wmin+rand()*(wmax-wmin)'
