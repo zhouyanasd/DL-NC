@@ -289,20 +289,20 @@ S5.connect(p=0.2)
 S6.connect(j='k for k in range(int(n))')
 S_readout.connect(j='i')
 
-S4.wmax = '0.0'
-S5.wmax = '0.0'
-S4.wmin = '0.0'
-S5.wmin = '0.0'
+S4.wmax = '0.5+rand()*0.4'
+S5.wmax = '0.5+rand()*0.4'
+S4.wmin = '0.2+rand()*0.2'
+S5.wmin = '0.2+rand()*0.2'
 S4.Apre = S5.Apre = '0.01'
-S4.taupre = S4.taupost ='2*ms+rand()*0*ms'
-S5.taupre = S5.taupost ='2*ms+rand()*0*ms'
+S4.taupre = S4.taupost ='1*ms+rand()*4*ms'
+S5.taupre = S5.taupost ='1*ms+rand()*4*ms'
 
 S.w = '0.2+j*'+str(0.6/(n))
 S2.w = '-0.2'
 S3.w = '0.8'
 S4.w = 'wmin+rand()*(wmax-wmin)'
 S5.w = 'wmin+rand()*(wmax-wmin)'
-S6.w = 'rand()'
+S6.w = '-rand()'
 
 S.delay = '3*ms'
 S4.delay = '3*ms'
