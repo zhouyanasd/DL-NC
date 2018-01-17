@@ -179,7 +179,7 @@ def get_series_data(data_frame, duration, is_order = True, *args, **kwargs):
 
 # -----parameter setting-------
 obj = 1
-duration = 100
+duration = 200
 Dt = defaultclock.dt*2
 n = 20
 pre_train_loop = 0
