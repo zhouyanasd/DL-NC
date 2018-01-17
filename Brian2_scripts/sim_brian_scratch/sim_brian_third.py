@@ -1,5 +1,6 @@
 from brian2 import *
 start_scope()
+prefs.codegen.target = "numpy"
 
 equ = '''
 dv/dt = (I-v) / (20*ms) : 1 (unless refractory)
