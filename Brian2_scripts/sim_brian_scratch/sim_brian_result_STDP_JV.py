@@ -350,31 +350,29 @@ def simulate_LSM(seed):
         y_test_ = lms_test(states, para)
         y_test_ = normalization_min_max(y_test_)
 
-        roc_auc_train, thresholds_train = ROC(y_train, y_train_, 'ROC for train of %s' % obj)
+        roc_auc_train, thresholds_train = ROC(y_train, y_train_)
         print('ROC of train is %s for classification of %s' % (roc_auc_train, obj))
-        roc_auc_test, thresholds_test = ROC(y_test, y_test_, 'ROC for test of %s' % obj)
+        roc_auc_test, thresholds_test = ROC(y_test, y_test_)
         print('ROC of test is %s for classification of %s' % (roc_auc_test, obj))
         auc_train.append(roc_auc_train)
         auc_test.append(roc_auc_test)
     return [auc_train, auc_test]
 
 if __name__ == '__main__':
-    tries = 10
+    tries = 2
     p = Pool(tries)
     result = p.map(simulate_LSM, np.arange(tries))
     sta_data_tri, sta_data_test = [x[0] for x in result], [x[1] for x in result]
     print(sta_data_test,sta_data_tri)
 
     # ------vis of results----
-    fig_tri = plt.figure(figsize=(4, 4))
-    df = pd.DataFrame(np.asarray(sta_data_tri),
-                      columns=['0', '1', '2'])
+    fig_tri = plt.figure(figsize=(10, 4))
+    df = pd.DataFrame(np.asarray(sta_data_tri))
     df.boxplot()
     plt.title('Classification Condition of train')
 
-    fig_test = plt.figure(figsize=(4, 4))
-    df = pd.DataFrame(np.asarray(sta_data_test),
-                      columns=['0', '1', '2'])
+    fig_test = plt.figure(figsize=(10, 4))
+    df = pd.DataFrame(np.asarray(sta_data_test))
     df.boxplot()
     plt.title('Classification Condition of test')
     show()

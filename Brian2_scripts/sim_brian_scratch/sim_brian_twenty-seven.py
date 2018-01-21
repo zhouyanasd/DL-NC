@@ -297,7 +297,7 @@ S4.Apre = S5.Apre = '0.01'
 S4.taupre = S4.taupost ='1*ms+rand()*4*ms'
 S5.taupre = S5.taupost ='1*ms+rand()*4*ms'
 
-S.w = '0.2+j*'+str(0.6/(n))
+S.w = 'rand()'
 S2.w = '-0.2'
 S3.w = '0.8'
 S4.w = 'wmin+rand()*(wmax-wmin)'
