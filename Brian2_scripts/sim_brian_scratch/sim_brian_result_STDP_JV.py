@@ -304,7 +304,7 @@ def simulate_LSM(seed):
     auc_train = []
     ###############################################
     # ------pre_train------------------
-    for epochs in range(12):
+    for epochs in range(9):
         obj = epochs
         net.restore('first')
         data_pre_s, label_pre = get_series_data(data_train, duration, False, obj=[obj])
