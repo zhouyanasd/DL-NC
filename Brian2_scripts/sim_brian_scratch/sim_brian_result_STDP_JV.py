@@ -369,12 +369,14 @@ if __name__ == '__main__':
 
     # ------vis of results----
     fig_tri = plt.figure(figsize=(10, 4))
-    df = pd.DataFrame(np.asarray(sta_data_tri))
-    df.boxplot()
+    df_train = pd.DataFrame(np.asarray(sta_data_tri))
+    print(df_train.mean())
+    df_train.boxplot()
     plt.title('Classification Condition of train')
 
     fig_test = plt.figure(figsize=(10, 4))
-    df = pd.DataFrame(np.asarray(sta_data_test))
-    df.boxplot()
+    df_test = pd.DataFrame(np.asarray(sta_data_test))
+    print(df_test.mean())
+    df_test.boxplot()
     plt.title('Classification Condition of test')
     show()
