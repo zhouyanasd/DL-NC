@@ -12,6 +12,8 @@ from multiprocessing import Queue,Pool
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import metrics
 
+prefs.codegen.target = "numpy"  # it is faster than use default "cython"
+
 # ------define function------------
 def lms_train(p0, Zi, Data):
     def error(p, y, args):
