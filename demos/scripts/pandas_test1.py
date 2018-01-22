@@ -74,3 +74,27 @@ stats(d1)
 df = pd.DataFrame(np.array([d1,d2,d3]).T,columns=['x1','x2','x3'])
 df.head()
 df.apply(stats)
+
+
+from pandas import Series,DataFrame
+a=[['刘玄德','男','语文',98.],['刘玄德','男','体育',60.],['关云长','男','数学',60.],['关云长','男','语文',100.]]
+af=DataFrame(a,columns=['name','sex','course','score'])
+af.set_index(['name','sex','course'],inplace=True)
+t1=af.unstack(level=2)
+t2=t1.mean(axis=1,skipna=True)
+t1['平均分']=t2
+t1.fillna(0)
+
+
+import numpy as np
+import pandas as pd
+df = pd.DataFrame(np.random.randint(0, 100, 100), columns=['score'])
+# 以所在区间作为标签。如 x=5，返回：'[0-10]'
+def make_label(x, step=10):
+    m = x // step
+    return '[{}-{}]'.format(m * step, (m + 1) * step)
+# df['level'] = df['score'].map(make_label)
+df['level'] = df['score'].map(lambda x: make_label(x, step=10))  # 改变区间长度为15
+res = df.groupby('level').size()
+print(df.head())
+print(res)
