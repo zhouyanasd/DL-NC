@@ -11,6 +11,7 @@ import pandas as pd
 from multiprocessing import Queue,Pool
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import metrics
+import seaborn as sns
 
 prefs.codegen.target = "numpy"  # it is faster than use default "cython"
 
@@ -306,6 +307,8 @@ def simulate_LSM(seed, pre_train_loop):
     for epochs in range(9):
         obj = epochs
         net.restore('first')
+        S5.pre.code = S4.pre.code = on_pre_STDP
+        S5.post.code = S4.post.code = on_post_STDP
         data_pre_s, label_pre = get_series_data(data_train, duration, False, obj=[obj])
         duration_pre = len(data_pre_s) * Dt
         Time_array_pre = TimedArray(data_pre_s, dt=Dt)
@@ -384,7 +387,7 @@ if __name__ == '__main__':
     df_test.to_csv('../../Data_result/JV_STDP_statistic/test_with_STDP_v1231.csv', index=False)
 
 
-    # ------vis of results----
+    # ------results data ----
     data_train_without = pd.read_csv("../../Data_result/JV_STDP_statistic/train_without_STDP_v1231.csv")
     data_test_without = pd.read_csv("../../Data_result/JV_STDP_statistic/test_without_STDP_v1231.csv")
     data_train_with = pd.read_csv("../../Data_result/JV_STDP_statistic/train_with_STDP_v1231.csv")
@@ -420,8 +423,8 @@ if __name__ == '__main__':
                                                ignore_index=True)
             obj += 1
 
-    import seaborn as sns
 
+    # ------vis of results----
     fig = plt.figure(figsize=(16, 4))
     ax1 = subplot(121)
     sns.set(style="ticks")
