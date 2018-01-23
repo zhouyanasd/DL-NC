@@ -385,10 +385,10 @@ if __name__ == '__main__':
 
 
     # ------vis of results----
-    data_train_without = pd.read_csv("../Data_result/JV_STDP_statistic/train_without_STDP_v1231.csv")
-    data_test_without = pd.read_csv("../Data_result/JV_STDP_statistic/test_without_STDP_v1231.csv")
-    data_train_with = pd.read_csv("../Data_result/JV_STDP_statistic/train_with_STDP_v1231.csv")
-    data_test_with = pd.read_csv("../Data_result/JV_STDP_statistic/test_with_STDP_v1231.csv")
+    data_train_without = pd.read_csv("../../Data_result/JV_STDP_statistic/train_without_STDP_v1231.csv")
+    data_test_without = pd.read_csv("../../Data_result/JV_STDP_statistic/test_without_STDP_v1231.csv")
+    data_train_with = pd.read_csv("../../Data_result/JV_STDP_statistic/train_with_STDP_v1231.csv")
+    data_test_with = pd.read_csv("../../Data_result/JV_STDP_statistic/test_with_STDP_v1231.csv")
 
     results_train = pd.DataFrame(columns=['value', 'obj', 'type'])
     for tries in data_train_without.iterrows():
