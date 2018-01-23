@@ -360,11 +360,11 @@ def simulate_LSM(seed, pre_train_loop):
     return [auc_train, auc_test]
 
 def LSM_without_STDP(seed):
-    result = p.map(simulate_LSM, np.arange(tries), pretrain_loop = 5)
+    result = simulate_LSM(seed, pre_train_loop = 5)
     return result
 
 def LSM_with_STDP(seed):
-    result = p.map(simulate_LSM, np.arange(tries), pretrain_loop = 0)
+    result = simulate_LSM(seed, pre_train_loop = 0)
     return result
 
 
