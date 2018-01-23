@@ -163,7 +163,7 @@ def get_series_data(data_frame, duration, is_order = True, *args, **kwargs):
     return data_frame_s, label
 
 ###############################################
-def simulate_LSM(seed):
+def simulate_LSM(seed, pre_train_loop):
     start_scope()
     np.random.seed(seed)
 
@@ -171,7 +171,6 @@ def simulate_LSM(seed):
     duration = 200
     Dt = defaultclock.dt * 2
     n = 20
-    pre_train_loop = 0
     sample = 10
 
     data_train = load_Data_JV(t='train', path_value="../../Data/jv/train.txt")
@@ -360,23 +359,74 @@ def simulate_LSM(seed):
         auc_test.append(roc_auc_test)
     return [auc_train, auc_test]
 
+def LSM_without_STDP(seed):
+    result = p.map(simulate_LSM, np.arange(tries), pretrain_loop = 5)
+    return result
+
+def LSM_with_STDP(seed):
+    result = p.map(simulate_LSM, np.arange(tries), pretrain_loop = 0)
+    return result
+
+
 if __name__ == '__main__':
     tries = 2
     p = Pool(tries)
-    result = p.map(simulate_LSM, np.arange(tries))
+    result = p.map(LSM_without_STDP, np.arange(tries))
     sta_data_tri, sta_data_test = [x[0] for x in result], [x[1] for x in result]
-    print(sta_data_test,sta_data_tri)
+    df_train, df_test = pd.DataFrame(np.asarray(sta_data_tri)), pd.DataFrame(np.asarray(sta_data_test))
+    df_train.to_csv('../../Data_result/JV_STDP_statistic/train_without_STDP_v1231.csv',index = False)
+    df_test.to_csv('../../Data_result/JV_STDP_statistic/test_without_STDP_v1231.csv',index = False)
+
+    result = p.map(LSM_with_STDP, np.arange(tries))
+    sta_data_tri, sta_data_test = [x[0] for x in result], [x[1] for x in result]
+    df_train, df_test = pd.DataFrame(np.asarray(sta_data_tri)), pd.DataFrame(np.asarray(sta_data_test))
+    df_train.to_csv('../../Data_result/JV_STDP_statistic/train_with_STDP_v1231.csv', index=False)
+    df_test.to_csv('../../Data_result/JV_STDP_statistic/test_with_STDP_v1231.csv', index=False)
+
 
     # ------vis of results----
-    fig_tri = plt.figure(figsize=(10, 4))
-    df_train = pd.DataFrame(np.asarray(sta_data_tri))
-    print(df_train.mean())
-    df_train.boxplot()
-    plt.title('Classification Condition of train')
+    data_train_without = pd.read_csv("../Data_result/JV_STDP_statistic/train_without_STDP_v1231.csv")
+    data_test_without = pd.read_csv("../Data_result/JV_STDP_statistic/test_without_STDP_v1231.csv")
+    data_train_with = pd.read_csv("../Data_result/JV_STDP_statistic/train_with_STDP_v1231.csv")
+    data_test_with = pd.read_csv("../Data_result/JV_STDP_statistic/test_with_STDP_v1231.csv")
 
-    fig_test = plt.figure(figsize=(10, 4))
-    df_test = pd.DataFrame(np.asarray(sta_data_test))
-    print(df_test.mean())
-    df_test.boxplot()
-    plt.title('Classification Condition of test')
-    show()
+    results_train = pd.DataFrame(columns=['value', 'obj', 'type'])
+    for tries in data_train_without.iterrows():
+        obj = 0
+        for value in tries[1]:
+            results_train = results_train.append({'value': value, 'obj': obj, 'type': 'train_without_STDP'},
+                                                 ignore_index=True)
+            obj += 1
+
+    for tries in data_train_with.iterrows():
+        obj = 0
+        for value in tries[1]:
+            results_train = results_train.append({'value': value, 'obj': obj, 'type': 'train_with_STDP'},
+                                                 ignore_index=True)
+            obj += 1
+
+    results_test = pd.DataFrame(columns=['value', 'obj', 'type'])
+    for tries in data_test_without.iterrows():
+        obj = 0
+        for value in tries[1]:
+            results_test = results_test.append({'value': value, 'obj': obj, 'type': 'test_without_STDP'},
+                                               ignore_index=True)
+            obj += 1
+
+    for tries in data_test_with.iterrows():
+        obj = 0
+        for value in tries[1]:
+            results_test = results_test.append({'value': value, 'obj': obj, 'type': 'test_with_STDP'},
+                                               ignore_index=True)
+            obj += 1
+
+    import seaborn as sns
+
+    fig = plt.figure(figsize=(16, 4))
+    ax1 = subplot(121)
+    sns.set(style="ticks")
+    sns.boxplot(x="obj", y="value", hue="type", data=results_train, palette="PRGn")
+    ax2 = subplot(122, sharey=ax1)
+    sns.set(style="ticks")
+    sns.boxplot(x="obj", y="value", hue="type", data=results_test, palette="PRGn")
+    plt.show()

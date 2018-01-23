@@ -98,3 +98,21 @@ df['level'] = df['score'].map(lambda x: make_label(x, step=10))  # 改变区间�
 res = df.groupby('level').size()
 print(df.head())
 print(res)
+
+
+# 遍历
+
+for index,row in df.iterrows():
+    for a in row:
+        print (a)
+    print (index) #获取行的索引
+    print (row.a) #根据列名获取字段
+    print (row[0])#根据列的序号（从0开始）获取字段
+
+
+import pandas as pd
+dict=[[1,2,3,4,5,6],[2,3,4,5,6,7],[3,4,5,6,7,8],[4,5,6,7,8,9],[5,6,7,8,9,10]]
+data=pd.DataFrame(dict)
+print(data)
+for indexs in data.index:
+    print(data.loc[indexs].values[0:-1])
