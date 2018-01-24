@@ -177,8 +177,8 @@ def simulate_LSM(seed, pre_train_loop):
     data_train = load_Data_JV(t='train', path_value="../../Data/jv/train.txt")
     data_test = load_Data_JV(t='test', path_value="../../Data/jv/test.txt")
 
-    data_train_s, label_train = get_series_data(data_train, duration)
-    data_test_s, label_test = get_series_data(data_test, duration)
+    data_train_s, label_train = get_series_data(data_train, duration, False)
+    data_test_s, label_test = get_series_data(data_test, duration, False)
 
     duration_train = len(data_train_s) * Dt
     duration_test = len(data_test_s) * Dt
