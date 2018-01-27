@@ -185,9 +185,9 @@ data_pre_train_s, label_pre_train = get_series_data(df_pre_train, duration, Fals
 data_train_s, label_train = get_series_data(df_train, duration, False)
 data_test_s, label_test = get_series_data(df_test, duration, False)
 
-duration_train = len(data_pre_train_s) * Dt
-duration_test = len(data_train_s) * Dt
-duration_pre = len(data_test_s) * Dt
+duration_pre_train = len(data_pre_train_s) * Dt
+duration_train = len(data_train_s) * Dt
+duration_test = len(data_test_s) * Dt
 
 equ_in = '''
 dv/dt = (I-v) / (1.5*ms) : 1 (unless refractory)
@@ -238,7 +238,7 @@ w = clip(w+apre, wmin, wmax)
 '''
 
 # -----simulation setting-------
-Time_array_pre = TimedArray(data_pre_train_s, dt=Dt)
+Time_array_pre_train = TimedArray(data_pre_train_s, dt=Dt)
 
 Time_array_train = TimedArray(data_train_s, dt=Dt)
 
@@ -322,9 +322,9 @@ brian_plot(S4.w)
 
 ###############################################
 # ------pre_train------------------
-stimulus = Time_array_pre
+stimulus = Time_array_pre_train
 for loop in range(pre_train_loop):
-    net.run(duration_pre)
+    net.run(duration_pre_train)
 
     # ------plot the weight----------------
     fig2 = plt.figure(figsize=(10, 8))
