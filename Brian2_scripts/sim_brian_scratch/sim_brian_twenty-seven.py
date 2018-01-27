@@ -183,7 +183,6 @@ duration = 200
 Dt = defaultclock.dt*2
 n = 20
 pre_train_loop = 0
-threshold = 0.5
 sample = 10
 
 data_train = load_Data_JV(t='train', path_value="../../Data/jv/train.txt")
