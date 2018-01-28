@@ -159,7 +159,7 @@ def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
         else:
             raise Exception('duration is too short')
     data_frame_s = np.asarray(data_frame_s)
-    label = data_frame_obj['label']
+    label = data_frame_obj['label'][:n]
     return data_frame_s, label
 
 
@@ -174,14 +174,12 @@ n = 20
 pre_train_loop = 0
 sample = 10
 
-df_pre_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
-                               '../../Data/MNIST_data/train-labels.idx1-ubyte')
 df_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
                                '../../Data/MNIST_data/train-labels.idx1-ubyte')
 df_test = load_Data_MNIST(10000, '../../Data/MNIST_data/t10k-images.idx3-ubyte',
                                '../../Data/MNIST_data/t10k-labels.idx1-ubyte')
 
-data_pre_train_s, label_pre_train = get_series_data(N_pre_train, df_pre_train, duration, False, obj=[obj])
+data_pre_train_s, label_pre_train = get_series_data(N_pre_train, df_train, duration, False, obj=[obj])
 data_train_s, label_train = get_series_data(N_train, df_train, duration, False)
 data_test_s, label_test = get_series_data(N_test, df_test, duration, False)
 
