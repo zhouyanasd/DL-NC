@@ -140,7 +140,7 @@ def load_Data_MNIST(n, path_value, path_label):
     return df
 
 
-def get_series_data(data_frame, duration, is_order=True, *args, **kwargs):
+def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
     try:
         obj = kwargs['obj']
     except KeyError:
@@ -150,7 +150,7 @@ def get_series_data(data_frame, duration, is_order=True, *args, **kwargs):
     else:
         data_frame_obj = data_frame[data_frame['label'].isin(obj)]
     data_frame_s = []
-    for value in data_frame_obj['value']:
+    for value in data_frame_obj['value'][:n]:
         for data in value:
             data_frame_s.append(list(data))
         interval = duration - value.shape[0]
@@ -174,16 +174,16 @@ n = 20
 pre_train_loop = 0
 sample = 10
 
-df_pre_train = load_Data_MNIST(N_pre_train, '../../Data/MNIST_data/train-images.idx3-ubyte',
+df_pre_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
                                '../../Data/MNIST_data/train-labels.idx1-ubyte')
-df_train = load_Data_MNIST(N_train, '../../Data/MNIST_data/train-images.idx3-ubyte',
+df_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
                                '../../Data/MNIST_data/train-labels.idx1-ubyte')
-df_test = load_Data_MNIST(N_test, '../../Data/MNIST_data/t10k-images.idx3-ubyte',
+df_test = load_Data_MNIST(10000, '../../Data/MNIST_data/t10k-images.idx3-ubyte',
                                '../../Data/MNIST_data/t10k-labels.idx1-ubyte')
 
-data_pre_train_s, label_pre_train = get_series_data(df_pre_train, duration, False, obj=[obj])
-data_train_s, label_train = get_series_data(df_train, duration, False)
-data_test_s, label_test = get_series_data(df_test, duration, False)
+data_pre_train_s, label_pre_train = get_series_data(N_pre_train, df_pre_train, duration, False, obj=[obj])
+data_train_s, label_train = get_series_data(N_train, df_train, duration, False)
+data_test_s, label_test = get_series_data(N_test, df_test, duration, False)
 
 duration_pre_train = len(data_pre_train_s) * Dt
 duration_train = len(data_train_s) * Dt
@@ -324,7 +324,7 @@ brian_plot(S4.w)
 # ------pre_train------------------
 stimulus = Time_array_pre_train
 for loop in range(pre_train_loop):
-    net.run(duration_pre_train)
+    net.run(duration_pre_train, report='text')
 
     # ------plot the weight----------------
     fig2 = plt.figure(figsize=(10, 8))
@@ -356,7 +356,7 @@ S5.post.code = S4.post.code = ''
 del stimulus
 stimulus = Time_array_train
 net.store('third')
-net.run(duration_train)
+net.run(duration_train, report='text')
 
 # ------lms_train---------------
 y_train = label_to_obj(label_train, obj)
@@ -371,7 +371,7 @@ y_train_ = normalization_min_max(y_train_)
 del stimulus
 stimulus = Time_array_test
 net.restore('third')
-net.run(duration_test)
+net.run(duration_test, report='text')
 
 # -----lms_test-----------
 y_test = label_to_obj(label_test, obj)
