@@ -1,5 +1,6 @@
 # ----------------------------------------
 # LSM with STDP for MNIST test
+# add neurons to readout layer for multi-classification
 # ----------------------------------------
 
 from brian2 import *
