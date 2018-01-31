@@ -1,6 +1,6 @@
 # ----------------------------------------
 # LSM with STDP for MNIST test
-# add neurons to readout layer for multi-classification(one-to-many)
+# add neurons to readout layer for multi-classification(one-versus-the-rest)
 # ----------------------------------------
 
 from brian2 import *
@@ -362,6 +362,7 @@ net.store('third')
 net.run(duration_train, report='text')
 
 # ------lms_train---------------
+# 循环来分别求LMS
 y_train = label_to_obj(label_train, obj)
 states, _t_m = get_states(m_read.I, duration*Dt , duration_train, sample)
 Data, para = readout(states, y_train)
