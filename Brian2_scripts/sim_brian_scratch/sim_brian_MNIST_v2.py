@@ -59,6 +59,20 @@ def label_to_obj(label, obj):
     return np.asarray(temp)
 
 
+def one_versus_the_rest(label, *args, **kwargs):
+    obj = []
+    for i in args:
+        temp = label_to_obj(label, i)
+        obj.append(temp)
+    try:
+         for i in kwargs['selected']:
+            temp = label_to_obj(label, i)
+            obj.append(temp)
+    except KeyError:
+        pass
+    return np.asarray(obj)
+
+
 def classification(thea, data):
     data_n = normalization_min_max(data)
     data_class = []
