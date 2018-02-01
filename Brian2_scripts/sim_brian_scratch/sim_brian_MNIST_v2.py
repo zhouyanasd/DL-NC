@@ -18,17 +18,11 @@ np.random.seed(100)
 
 
 # ------define function------------
-def lms_train(p0, Zi, Data):
-    def error(p, y, args):
-        l = len(p)
-        f = p[l - 1]
-        for i in range(len(args)):
-            f += p[i] * args[i]
-        return f - y
-
-    Para = leastsq(error, p0, args=(Zi, Data))
-    return Para[0]
-
+def optimal(A, b):
+    B = A.T.dot(b)
+    AA = np.linalg.inv(A.T.dot(A))
+    P = AA.dot(B)
+    return P
 
 def lms_test(Data, p):
     l = len(p)
@@ -37,17 +31,11 @@ def lms_test(Data, p):
         f += p[i] * Data[i]
     return f
 
-
-def readout(M, Z):
-    n = len(M)
-    Data = []
-    for i in M:
-        Data.append(i)
-    p0 = [1] * n
-    p0.append(0.1)
-    para = lms_train(p0, Z, Data)
-    return Data, para
-
+def readout(M, Y):
+    one = np.ones((M.shape[1], 1)) #bis
+    X = np.hstack((M.T, one))
+    para = optimal(X, Y)
+    return para
 
 def normalization_min_max(arr):
     arr_n = arr
@@ -171,8 +159,8 @@ def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
 # -----parameter setting-------
 obj = 1
 duration = 100
-N_train = 1000
-N_test = 1000
+N_train = 100
+N_test = 100
 N_pre_train =1000
 Dt = defaultclock.dt*2
 n = 20
@@ -362,10 +350,10 @@ net.store('third')
 net.run(duration_train, report='text')
 
 # ------lms_train---------------
-# 循环来分别求LMS
+
 y_train = label_to_obj(label_train, obj)
 states, _t_m = get_states(m_read.I, duration*Dt , duration_train, sample)
-Data, para = readout(states, y_train)
+para = readout(states, y_train)
 y_train_ = lms_test(states, para)
 y_train_ = normalization_min_max(y_train_)
 
@@ -435,7 +423,3 @@ legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 fig6 =plt.figure(figsize=(4,4))
 brian_plot(S4.w)
 show()
-
-
-
-
