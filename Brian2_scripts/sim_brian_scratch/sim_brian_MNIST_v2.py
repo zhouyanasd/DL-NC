@@ -79,10 +79,15 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
             arr_n[i] = x
         return arr_n
 
+    def get_optimal_threshold(fpr, tpr, thresholds):
+        r = list(tpr - fpr)
+        return thresholds[r.index(max(r))]
+
     scores_n = normalization_min_max(scores)
     from sklearn import metrics
     fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
     roc_auc = metrics.auc(fpr, tpr)
+    optimal_threshold = get_optimal_threshold(fpr, tpr, thresholds)
 
     fig = plt.figure()
     lw = 2
@@ -95,7 +100,7 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
     plt.ylabel('True Positive Rate')
     plt.title(fig_title)
     plt.legend(loc="lower right")
-    return fig, roc_auc, thresholds
+    return fig, roc_auc, optimal_threshold
 
 
 def get_states(input, interval, duration, sample):
