@@ -24,13 +24,6 @@ def optimal(A, b):
     P = AA.dot(B)
     return P
 
-# def lms_test(Data, p):
-#     l = len(p)
-#     f = p[l - 1]
-#     for i in range(len(Data)):
-#         f += p[i] * Data[i]
-#     return f
-
 
 def lms_test(Data, p):
     one = np.ones((Data.shape[1], 1)) #bis
