@@ -56,29 +56,29 @@ Para=leastsq(error,p0,args=(Zi,Data)) #把error函数中除了p以外的参数�
 k1,k2,b=Para[0]
 print(Para)
 print("k1=",k1,"k2=",k2,'\n',"b=",b)
-# print(logistic(k1*Xi+k2*Yi+b))
+print(logistic(k1*Xi+k2*Yi+b))
 
-# # ###绘图，看拟合效果###
-#
-# from mpl_toolkits.mplot3d import Axes3D
-# import matplotlib.pyplot as plt
-# from matplotlib import cm
-# import numpy as np
-#
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-#
-# ax.scatter(Xi, Yi, Zi,color="red",label="Sample Point",linewidth=3)
-#
-# xs = np.linspace(0, 10, 20)
-# ys = np.linspace(0, 10, 20)
-# X, Y = np.meshgrid(xs, ys)
-# Z = logistic(k1*X+k2*Y+b)
-#
-# ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
-#
-# ax.set_xlabel('X Label')
-# ax.set_ylabel('Y Label')
-# ax.set_zlabel('Z Label')
-#
-# plt.show()
+# ###绘图，看拟合效果###
+
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+import numpy as np
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.scatter(Xi, Yi, Zi,color="red",label="Sample Point",linewidth=3)
+
+xs = np.linspace(0, 10, 20)
+ys = np.linspace(0, 10, 20)
+X, Y = np.meshgrid(xs, ys)
+Z = logistic(k1*X+k2*Y+b)
+
+ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
+
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+
+plt.show()

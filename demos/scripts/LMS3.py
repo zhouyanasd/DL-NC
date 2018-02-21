@@ -47,11 +47,12 @@ def optimal(A, b):
 
 
 
-Xi=np.array([8.19,2.72,6.39,8.71,4.7,9.66,8.78,7.25,2.69,2.65,7.23,2.35,2.26,6.98,2.65])
-Yi=np.array([7.01,2.78,6.47,6.71,4.1,8.23,4.05,6.36,3.25,3.58,9.36,3.35,4.24,6.21,2.41])
+Xi=np.array([8.19,2.72,6.39,8.71,0.7,9.66,8.78,2.25,2.69,2.65,7.23,2.35,2.26,6.98,2.65])
+Yi=np.array([7.01,8.78,6.47,6.71,6.1,8.23,4.05,6.36,3.25,3.58,9.36,3.35,4.24,6.21,9.41])
 
-Zi=np.array([[1,0,1,1,0,1,1,1,0,0,1,0,0,1,0],
-             [1,0,1,1,0,1,1,1,0,0,1,0,0,1,0]])
+Zi=np.array([[1,0,1,1,0,1,1,0,0,0,1,0,0,1,0],
+             [0,0,0,0,0,0,0,0,1,1,0,1,1,0,0],
+             [0,1,0,0,1,0,0,1,0,0,0,0,0,0,1]])
 
 one = np.ones((len(Xi), 1))  # len(x)得到数据量 bis
 Xi = Xi.reshape(Xi.shape[0], 1)
@@ -72,13 +73,26 @@ ax.scatter(Xi, Yi, A.dot(P).T[1],color="blue",label="Sample Point",linewidth=1)
 xs = np.linspace(0, 10, 20)
 ys = np.linspace(0, 10, 20)
 X, Y = np.meshgrid(xs, ys)
-Z = P[0][0]*X+P[1][0]*Y+P[2][0]
+Z0 = P[0][0]*X+P[1][0]*Y+P[2][0]
+Z1 = P[0][1]*X+P[1][1]*Y+P[2][1]
+Z2 = P[0][2]*X+P[1][2]*Y+P[2][2]
 
-ax.plot_surface(X,Y,Z,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
+ax.plot_surface(X,Y,Z0,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
+ax.plot_surface(X,Y,Z1,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
+ax.plot_surface(X,Y,Z2,cmap=cm.coolwarm,alpha = 0.5,rstride=1,cstride= 1,linewidth = 0.1)
 
 ax.set_xlabel('X Label')
 ax.set_ylabel('Y Label')
 ax.set_zlabel('Z Label')
+
+fig2 = plt.figure()
+Z = np.array([0,2,0,0,2,0,0,2,1,1,0,1,1,0,2])
+
+plt.scatter(Xi, Yi, c=Z, cmap=plt.cm.Paired)
+plt.contour(X, Y, Z0, [0.5], colors = 'black', linewidth = 0.5)
+plt.contour(X, Y, Z1, [0.5], colors = 'black', linewidth = 0.5)
+plt.contour(X, Y, Z2, [0.5], colors = 'black', linewidth = 0.5)
+plt.show()
 
 plt.show()
 
