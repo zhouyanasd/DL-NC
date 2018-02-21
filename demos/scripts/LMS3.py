@@ -94,9 +94,6 @@ plt.contour(X, Y, Z1, [0.5], colors = 'black', linewidth = 0.5)
 plt.contour(X, Y, Z2, [0.5], colors = 'black', linewidth = 0.5)
 plt.show()
 
-plt.show()
-
-
 
 #-------------------------------------------------------------------------
 # import numpy as np
