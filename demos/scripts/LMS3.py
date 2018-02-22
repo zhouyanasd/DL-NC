@@ -2,13 +2,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.metrics import accuracy_score
 
 def optimal(A, b):
     B = A.T.dot(b)
     AA = np.linalg.inv(A.T.dot(A))  # 求A.T.dot(A)的逆
     P = AA.dot(B)
-    print(P)
+    print('weight: ', P)
     return P
+
+def predict(results):
+    labels = []
+    for result in results:
+        labels.append(np.argmax(result))
+    return labels
+
+def label_to_obj(label, obj):
+    temp = []
+    for a in label:
+        if a == obj:
+            temp.append(1)
+        else:
+            temp.append(0)
+    return np.asarray(temp)
+
+def one_versus_the_rest(label, *args, **kwargs):
+    obj = []
+    for i in args:
+        temp = label_to_obj(label, i)
+        obj.append(temp)
+    try:
+         for i in kwargs['selected']:
+            temp = label_to_obj(label, i)
+            obj.append(temp)
+    except KeyError:
+        pass
+    return np.asarray(obj)
 
 # # x的个数决定了样本量
 # x = np.arange(-1, 1, 0.02)
@@ -50,25 +79,27 @@ def optimal(A, b):
 Xi=np.array([8.19,2.72,6.39,8.71,0.7,9.66,8.78,2.25,2.69,2.65,7.23,2.35,2.26,6.98,2.65])
 Yi=np.array([7.01,8.78,6.47,6.71,6.1,8.23,4.05,6.36,3.25,3.58,9.36,3.35,4.24,6.21,9.41])
 
-Zi=np.array([[1,0,1,1,0,1,1,0,0,0,1,0,0,1,0],
-             [0,0,0,0,0,0,0,0,1,1,0,1,1,0,0],
-             [0,1,0,0,1,0,0,1,0,0,0,0,0,0,1]])
+label = np.array([0,2,0,0,2,0,0,2,1,1,0,1,1,0,2])
+Zi = one_versus_the_rest(label, selected=np.arange(3))
 
 one = np.ones((len(Xi), 1))  # len(x)得到数据量 bis
 Xi = Xi.reshape(Xi.shape[0], 1)
 Yi = Yi.reshape(Yi.shape[0], 1)
 A = np.hstack((Xi, Yi, one))  # 两个100x1列向量合并成100x2,(100, 1) (100,1 ) (100, 2)
-# C = Zi.reshape(Zi.shape[0], 1)
 
 P = optimal(A, Zi.T)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+label_predict = predict(A.dot(P))
+score = accuracy_score(label, label_predict)
+print("The accruacy socre is " + str(score))
+
+#------------------------------------------------
+fig1 = plt.figure()
+ax = fig1.add_subplot(111, projection='3d')
 
 ax.scatter(Xi, Yi, Zi[0],color="red",label="Sample Point",linewidth=3)
-ax.scatter(Xi, Yi, Zi[1],color="red",label="Sample Point",linewidth=3)
-ax.scatter(Xi, Yi, A.dot(P).T[0],color="blue",label="Sample Point",linewidth=1)
-ax.scatter(Xi, Yi, A.dot(P).T[1],color="blue",label="Sample Point",linewidth=1)
+ax.scatter(Xi, Yi, Zi[1],color="blue",label="Sample Point",linewidth=3)
+ax.scatter(Xi, Yi, Zi[2],color="green",label="Sample Point",linewidth=3)
 
 xs = np.linspace(0, 10, 20)
 ys = np.linspace(0, 10, 20)
