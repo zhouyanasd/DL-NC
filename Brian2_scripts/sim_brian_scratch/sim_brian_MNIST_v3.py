@@ -1,12 +1,11 @@
 # ----------------------------------------
 # LSM with STDP for MNIST test
 # add neurons to readout layer for multi-classification(one-versus-the-rest)
-# using LMS
+# using softmax(logistic regression)
 # ----------------------------------------
 
 from brian2 import *
 from brian2tools import *
-from scipy.optimize import leastsq
 import scipy as sp
 import struct
 import matplotlib.pyplot as plt
@@ -20,23 +19,28 @@ np.random.seed(100)
 
 
 # ------define function------------
-def optimal(A, b):
-    B = A.T.dot(b)
-    AA = np.linalg.inv(A.T.dot(A))
-    P = AA.dot(B)
-    return P
+def softmax(z):
+    return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
 
+def train(X, Y, P):
+    a = 0.0001
+    max_iteration = 10000
+    time = 0
+    while time < max_iteration:
+        time += 1
+        P = P + X.T.dot(Y - softmax(X.dot(P))) * a
+    return P
 
 def lms_test(Data, p):
     one = np.ones((Data.shape[1], 1)) #bis
     X = np.hstack((Data.T, one))
     return X.dot(p)
 
-
 def readout(M, Y):
-    one = np.ones((M.shape[1], 1)) #bis
+    one = np.ones((M.shape[1], 1))
     X = np.hstack((M.T, one))
-    para = optimal(X, Y.T)
+    P = np.random.rand(X.shape[1],Y.T.shape[1])
+    para = train(X, Y.T, P)
     return para
 
 def normalization_min_max(arr):
@@ -82,7 +86,7 @@ def trans_max_to_label(results):
     return labels
 
 
-def classification(thea, data): # transform the output into class label
+def classification(thea, data):
     data_n = normalization_min_max(data)
     data_class = []
     for a in data_n:
@@ -94,7 +98,7 @@ def classification(thea, data): # transform the output into class label
     return np.asarray(data_class), data_n
 
 
-def ROC(y, scores, pos_label=1):
+def ROC(y, scores, fig_title='ROC', pos_label=1):
     def normalization_min_max(arr):
         arr_n = arr
         for i in range(arr.size):
@@ -111,7 +115,19 @@ def ROC(y, scores, pos_label=1):
     fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
     roc_auc = metrics.auc(fpr, tpr)
     optimal_threshold = get_optimal_threshold(fpr, tpr, thresholds)
-    return roc_auc, optimal_threshold
+
+    fig = plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(fig_title)
+    plt.legend(loc="lower right")
+    return fig, roc_auc, optimal_threshold
 
 
 def get_states(input, interval, duration, sample):
@@ -176,17 +192,17 @@ obj = 1
 duration = 100
 N_train = 100
 N_test = 100
-N_pre_train =1000
+N_pre_train =100
 Dt = defaultclock.dt*2
 n = 20
 pre_train_loop = 0
 sample = 10
 I_gain = 5
 
-df_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
-                               '../../Data/MNIST_data/train-labels.idx1-ubyte')
-df_test = load_Data_MNIST(10000, '../../Data/MNIST_data/t10k-images.idx3-ubyte',
-                               '../../Data/MNIST_data/t10k-labels.idx1-ubyte')
+df_train = load_Data_MNIST(60000, '../Data/MNIST_data/train-images.idx3-ubyte',
+                               '../Data/MNIST_data/train-labels.idx1-ubyte')
+df_test = load_Data_MNIST(10000, '../Data/MNIST_data/t10k-images.idx3-ubyte',
+                               '../Data/MNIST_data/t10k-labels.idx1-ubyte')
 
 data_pre_train_s, label_pre_train = get_series_data(N_pre_train, df_train, duration, False, obj=[obj])
 data_train_s, label_train = get_series_data(N_train, df_train, duration, False)
@@ -212,7 +228,7 @@ I = tanh(g-h)*I_gain: 1
 equ_read = '''
 dg/dt = (-g)/(1.5*ms) : 1 
 dh/dt = (-h)/(1.45*ms) : 1
-I = tanh(g-h)*I_gain : 1
+I = tanh(g-h)*I_gain: 1
 '''
 
 model_STDP = '''
@@ -368,7 +384,7 @@ net.run(duration_train, report='text')
 # ------lms_train---------------
 Y_train = one_versus_the_rest(label_train, selected=np.arange(10))
 states = get_states(m_read.I, duration*Dt , duration_train, sample)
-P = readout(states, Y)
+P = readout(states, Y_train)
 Y_train_ = lms_test(states,P)
 label_train_ = trans_max_to_label(Y_train_)
 score_train = accuracy_score(label_train, label_train_)
