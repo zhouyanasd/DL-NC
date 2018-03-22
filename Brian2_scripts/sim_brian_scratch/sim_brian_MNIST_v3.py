@@ -98,7 +98,7 @@ def classification(thea, data):
     return np.asarray(data_class), data_n
 
 
-def ROC(y, scores, fig_title='ROC', pos_label=1):
+def ROC(y, scores, pos_label=1):
     def normalization_min_max(arr):
         arr_n = arr
         for i in range(arr.size):
@@ -115,19 +115,7 @@ def ROC(y, scores, fig_title='ROC', pos_label=1):
     fpr, tpr, thresholds = metrics.roc_curve(y, scores_n, pos_label=pos_label)
     roc_auc = metrics.auc(fpr, tpr)
     optimal_threshold = get_optimal_threshold(fpr, tpr, thresholds)
-
-    fig = plt.figure()
-    lw = 2
-    plt.plot(fpr, tpr, color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title(fig_title)
-    plt.legend(loc="lower right")
-    return fig, roc_auc, optimal_threshold
+    return roc_auc, optimal_threshold
 
 
 def get_states(input, interval, duration, sample):
