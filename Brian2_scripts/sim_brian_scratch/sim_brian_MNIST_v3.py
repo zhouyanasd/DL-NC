@@ -187,10 +187,10 @@ pre_train_loop = 0
 sample = 10
 I_gain = 5
 
-df_train = load_Data_MNIST(60000, '../Data/MNIST_data/train-images.idx3-ubyte',
-                               '../Data/MNIST_data/train-labels.idx1-ubyte')
-df_test = load_Data_MNIST(10000, '../Data/MNIST_data/t10k-images.idx3-ubyte',
-                               '../Data/MNIST_data/t10k-labels.idx1-ubyte')
+df_train = load_Data_MNIST(60000, '../../Data/MNIST_data/train-images.idx3-ubyte',
+                               '../../Data/MNIST_data/train-labels.idx1-ubyte')
+df_test = load_Data_MNIST(10000, '../../Data/MNIST_data/t10k-images.idx3-ubyte',
+                               '../../Data/MNIST_data/t10k-labels.idx1-ubyte')
 
 data_pre_train_s, label_pre_train = get_series_data(N_pre_train, df_train, duration, False, obj=[obj])
 data_train_s, label_train = get_series_data(N_train, df_train, duration, False)
