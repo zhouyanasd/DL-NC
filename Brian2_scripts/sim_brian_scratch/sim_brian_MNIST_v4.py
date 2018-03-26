@@ -446,3 +446,5 @@ legend(labels=[('I_%s' % k) for k in range(n)], loc='upper right')
 
 fig6 =plt.figure(figsize=(4,4))
 brian_plot(S4.w)
+
+show()

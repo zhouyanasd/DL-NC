@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
+import pickle
+
 
 prefs.codegen.target = "numpy"
 start_scope()
@@ -174,6 +176,20 @@ def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
     label = data_frame_obj['label'][:n]
     return data_frame_s, label
 
+
+def result_save(path, *arg, **kwarg):
+    fw = open(path, 'wb')
+    pickle.dump(kwarg, fw)
+    fw.close()
+
+
+def result_pick(path):
+    fr = open(path, 'rb')
+    data = pickle.load(fr)
+    fr.close()
+    return data
+
+
 # -----parameter setting-------
 duration = 100
 N_train = 100
@@ -234,10 +250,10 @@ Input = NeuronGroup(784, equ_in, threshold='I > 0', reset='I = 0', method='linea
                     name = 'neurongroup_input')
 
 G_ex = NeuronGroup(n, equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=0.3 * ms,
-                name='neurongroup')
+                name='neurongroup_ex')
 
 G_in = NeuronGroup(int(n/4), equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=0.2 * ms,
-                name='neurongroup')
+                name='neurongroup_in')
 
 G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
 
@@ -277,29 +293,77 @@ S_IE.w = 'i_IE*randn()+i_IE'
 S_EI.w = 'i_EI*randn()+i_EI'
 S_II.w = 'i_II*randn()+i_II'
 
-S_EE.delay = 1.5
-S_EI.delay = 0.8
-S_IE.delay = 0.8
-S_II.delay = 0.8
+S_EE.delay = '0.15*ms'
+S_EI.delay = '0.08*ms'
+S_IE.delay = '0.08*ms'
+S_II.delay = '0.08*ms'
 
 # ------monitor----------------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
 m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, ('I'), record=True)
-m_in = StateMonitor(Input, ('I'), record=True)
+m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
 net = Network(collect())
-net.store('first')
-fig_init_w =plt.figure(figsize=(4,16))
-subplot(411)
-brian_plot(S_EE.w)
+
+###############################################
+# ------run for lms_train-------
+stimulus = Time_array_train
+net.store('third')
+net.run(duration_train, report='text')
+
+# ------lms_train---------------
+Y_train = one_versus_the_rest(label_train, selected=np.arange(10))
+states = get_states(m_read.I, duration*Dt , duration_train, sample)
+P = readout(states, Y_train)
+Y_train_ = lms_test(states,P)
+label_train_ = trans_max_to_label(Y_train_)
+score_train = accuracy_score(label_train, label_train_)
+
+#####################################
+# ----run for test--------
+del stimulus
+stimulus = Time_array_test
+net.restore('third')
+net.run(duration_test, report='text')
+
+# -----lms_test-----------
+Y_test = one_versus_the_rest(label_test, selected=np.arange(10))
+states = get_states(m_read.I, duration*Dt , duration_test, sample)
+Y_test_ = lms_test(states,P)
+label_test_ = trans_max_to_label(Y_test_)
+score_test = accuracy_score(label_test, label_test_)
+
+#####################################
+#----------show results-----------
+print('Train score: ',score_train)
+print('Test score: ',score_test)
+
+#####################################
+#-----------save monitor data-------
+monitor_data = {'t':m_g_ex.t/ms,
+                'm_g_ex.I':m_g_ex.I,
+                'm_g_ex.v':m_g_ex.v,
+                'm_g_in.I': m_g_in.I,
+                'm_g_in.v': m_g_in.v,
+                'm_read.I':m_read.I,
+                'm_input.I':m_input.I}
+result_save('../../Data_result/MNIST_monitor_data/monitor_temp.pkl', **monitor_data)
+
+
+#####################################
+# ------vis of results----
+fig_init_w =plt.figure(figsize=(16,16))
 subplot(421)
+brian_plot(S_EE.w)
+subplot(422)
 brian_plot(S_EI.w)
-subplot(431)
+subplot(423)
 brian_plot(S_IE.w)
-subplot(441)
+subplot(424)
 brian_plot(S_II.w)
+show()
 
 
 
