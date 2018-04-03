@@ -109,7 +109,7 @@ def get_states(input, interval, duration, sample):
     interval_ = int(interval / defaultclock.dt)
     temp = []
     for i in range(n):
-        sum = np.sum(input[:, i * interval_: (i + 1) * interval_: step], axis=1)
+        sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
         temp.append(sum)
     return MinMaxScaler().fit_transform(np.asarray(temp).T)
 
@@ -141,8 +141,8 @@ def encoding_latency_MNIST(analog_data, n, duration, min = 0, max = np.pi, *args
     def encoding_cos(x, n, A):
         encoding = []
         for i in range(int(n)):
-            trans_cos = np.round(A*(np.cos(x+np.pi*np.random.rand())+1)).clip(0,2*A-1)
-            coding = [([0] * trans_cos.shape[1]) for i in range(2*A*trans_cos.shape[0])]
+            trans_cos = np.round(0.5*A*(np.cos(x+np.pi*(i/n))+1)).clip(0,A-1)
+            coding = [([0] * trans_cos.shape[1]) for i in range(A*trans_cos.shape[0])]
             index_0 = 0
             for p in trans_cos:
                 index_1 = 0
@@ -166,11 +166,11 @@ def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
     else:
         data_frame_obj = data_frame[data_frame['label'].isin(obj)]
     data_frame_s = []
-    for value in encoding_latency_MNIST(data_frame_obj['value'][:n], 3, 5):
+    for value in encoding_latency_MNIST(data_frame_obj['value'][:n], kwargs['coding_n'], int(0.1*duration)):
         for data in value:
             data_frame_s.append(list(data))
         interval = duration - value.shape[0]
-        if interval > 30:
+        if interval > 0.3*duration:
             data_frame_s.extend([[0] * 784] * interval)
         else:
             raise Exception('duration is too short')
@@ -222,21 +222,56 @@ def animation(t, v, interval, duration, a_step=10, a_interval=100, a_duration = 
     return play, slider, fig
 
 
+def allocate(G, X, Y, Z):
+    V = np.zeros((X,Y,Z), [('x',float),('y',float),('z',float)])
+    V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0,X-1,X),np.linspace(0,X-1,X),np.linspace(0,Z-1,Z))
+    V = V.reshape(X*Y*Z)
+    np.random.shuffle(V)
+    n = 0
+    for g in G:
+        for i in range(g.N):
+            g.x[i], g.y[i], g.z[i]= V[n][0], V[n][1], V[n][2]
+            n +=1
+    return G
+
+
+def w_norm2(n_post, Synapsis):
+    for i in range(n_post):
+        a = S_inE.w[np.where(S_inE._synaptic_post == i)[0]]
+        S_inE.w[np.where(S_inE._synaptic_post == i)[0]] = a/np.linalg.norm(a)
+
+
 # -----parameter setting-------
-duration = 100
+duration = 1000
 N_train = 100
 N_test = 100
 Dt = defaultclock.dt
-pre_train_loop = 0
 sample = 2
+pre_train_loop = 0
 
 n = 108
-i_EE = 30
-i_EI = 60
-i_IE = -19
-i_II = -19
-i_inE = 18
-i_inI = 9
+R = 2
+A_EE = 30
+A_EI = 60
+A_IE = -19
+A_II = -19
+A_inE = 18
+A_inI = 9
+
+U_EE = 0.5
+U_EI = 0.05
+U_IE = 0.25
+U_II = 0.32
+
+D_EE = 1.1
+D_EI = 0.125
+D_IE = 0.7
+D_II = 0.144
+
+F_EE = 0.05
+F_EI = 1.2
+F_IE = 0.02
+F_II = 0.06
 
 
 df_train = load_Data_MNIST(60000, '../../../Data/MNIST_data/train-images.idx3-ubyte',
@@ -244,8 +279,8 @@ df_train = load_Data_MNIST(60000, '../../../Data/MNIST_data/train-images.idx3-ub
 df_test = load_Data_MNIST(10000, '../../../Data/MNIST_data/t10k-images.idx3-ubyte',
                                '../../../Data/MNIST_data/t10k-labels.idx1-ubyte')
 
-data_train_s, label_train = get_series_data(N_train, df_train, duration, False)
-data_test_s, label_test = get_series_data(N_test, df_test, duration, False)
+data_train_s, label_train = get_series_data(N_train, df_train, duration, False, coding_n = 3)
+data_test_s, label_test = get_series_data(N_test, df_test, duration, False, coding_n = 3)
 
 duration_train = len(data_train_s) * Dt
 duration_test = len(data_test_s) * Dt
@@ -255,85 +290,141 @@ I = stimulus(t,i) : 1
 '''
 
 equ = '''
-dv/dt = (I-v) / (3*ms) : 1 (unless refractory)
-dg/dt = (-g)/(0.3*ms) : 1
-dh/dt = (-h)/(0.25*ms) : 1
-I = (g-h)+13.5: 1
+dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+dg/dt = (-g)/(3*ms) : 1
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h)+13.5: 1
+x : 1
+y : 1
+z : 1
 '''
 
 equ_read = '''
-dg/dt = (-g)/(0.3*ms) : 1 
-dh/dt = (-h)/(0.25*ms) : 1
-I = (g-h): 1
+dv/dt = (I-v) / (30*ms) : 1
+dg/dt = (-g)/(3*ms) : 1 
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h): 1
 '''
 
-on_pre = '''
-h+=w
+on_pre_ex = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+g+=w*r*u
+'''
+
+on_pre_inh = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+h+=w*r*u
+'''
+
+on_pre_read = '''
 g+=w
 '''
 
+dynamic_synapse = '''
+du/dt = (-u)/(F*second) : 1 (event-driven)
+dr/dt = (-r)/(D*second) : 1 (event-driven)
+w : 1
+U : 1
+F : 1
+D : 1
+'''
 
 # -----simulation setting-------
 Time_array_train = TimedArray(data_train_s, dt=Dt)
 
 Time_array_test = TimedArray(data_test_s, dt=Dt)
 
-Input = NeuronGroup(784, equ_in, threshold='I > 0', reset='I = 0', method='linear', refractory=0 * ms,
+Input = NeuronGroup(784, equ_in, threshold='I > 0', reset='I = 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n, equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=0.3 * ms,
+G_ex = NeuronGroup(n, equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
                 name='neurongroup_ex')
 
-G_in = NeuronGroup(int(n/4), equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=0.2 * ms,
+G_inh = NeuronGroup(int(n/4), equ, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name='neurongroup_in')
 
-G_readout = NeuronGroup(n, equ_read, method='euler', name='neurongroup_read')
+G_readout = NeuronGroup(int(n*5/4), equ_read, method='euler', name='neurongroup_read')
 
-S_inE = Synapses(Input, G_ex, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_inE')
+S_inE = Synapses(Input, G_ex, dynamic_synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
 
-S_inI = Synapses(Input, G_in, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_inI')
+S_inI = Synapses(Input, G_inh, dynamic_synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
-S_EE = Synapses(G_ex, G_ex, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_EE')
+S_EE = Synapses(G_ex, G_ex, dynamic_synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
 
-S_EI = Synapses(G_ex, G_in, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_EI')
+S_EI = Synapses(G_ex, G_inh, dynamic_synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
 
-S_IE = Synapses(G_in, G_ex, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_IE')
+S_IE = Synapses(G_inh, G_ex, dynamic_synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
 
-S_II = Synapses(G_in, G_in, 'w : 1', on_pre = on_pre ,method='linear', name='synapses_I')
+S_II = Synapses(G_inh, G_inh, dynamic_synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
 
-S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
 
-S_I_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre, method='linear')
+S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
 
 # -------network topology----------
-S_inE.connect(p = 0.3)
-S_inI.connect(p = 0.3)
-S_EE.connect(p = 0.2)
-S_EI.connect(p = 0.2)
-S_IE.connect(p = 0.2)
-S_II.connect(p = 0.2)
-S_I_readout.connect(j='i')
-S_E_readout.connect(j='i')
-
 G_ex.v = '13.5+1.5*rand()'
-G_in.v = '13.5+1.5*rand()'
+G_inh.v = '13.5+1.5*rand()'
+[G_ex,G_in] = allocate([G_ex,G_inh],3,3,15)
+G_ex.run_regularly('''v = 13.5+1.5*rand()
+                    g = 0
+                    h = 0
+                    I = 13.5''',dt=duration*Dt)
+G_inh.run_regularly('''v = 13.5+1.5*rand()
+                    g = 0
+                    h = 0
+                    I = 13.5''',dt=duration*Dt)
 
-S_inE.w = 'i_inE*randn()+i_inE'
-S_inI.w = 'i_inI*randn()+i_inI'
-S_EE.w = 'i_EE*randn()+i_EE'
-S_IE.w = 'i_IE*randn()+i_IE'
-S_EI.w = 'i_EI*randn()+i_EI'
-S_II.w = 'i_II*randn()+i_II'
+S_inE.connect(condition='j<0.3*N_post')
+S_inI.connect(condition='j<0.3*N_post')
+S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_E_readout.connect(j='i')
+S_I_readout.connect(j='i+n')
 
-S_EE.delay = '0.15*ms'
-S_EI.delay = '0.08*ms'
-S_IE.delay = '0.08*ms'
-S_II.delay = '0.08*ms'
+S_inE.w = 'A_inE*randn()+A_inE'
+w_norm2(n, S_inE)
+S_inI.w = 'A_inI*randn()+A_inI'
+w_norm2(int(n/4), S_inI)
+
+S_EE.w = 'A_EE*randn()+A_EE'
+S_IE.w = 'A_IE*randn()+A_IE'
+S_EI.w = 'A_EI*randn()+A_EI'
+S_II.w = 'A_II*randn()+A_II'
+
+S_inE.U = 'U_EE*randn()+U_EE'
+S_inI.U = 'U_EI*randn()+U_EI'
+S_EE.U = 'U_EE*randn()+U_EE'
+S_IE.U = 'U_IE*randn()+U_IE'
+S_EI.U = 'U_EI*randn()+U_EI'
+S_II.U = 'U_II*randn()+U_II'
+
+S_inE.F = 'F_EE*randn()+F_EE'
+S_inI.F = 'F_EI*randn()+F_EI'
+S_EE.F = 'F_EE*randn()+F_EE'
+S_IE.F = 'F_IE*randn()+F_IE'
+S_EI.F = 'F_EI*randn()+F_EI'
+S_II.F = 'F_II*randn()+F_II'
+
+S_inE.D = 'D_EE*randn()+D_EE'
+S_inI.D = 'D_EI*randn()+D_EI'
+S_EE.D = 'D_EE*randn()+D_EE'
+S_IE.D = 'D_IE*randn()+D_IE'
+S_EI.D = 'D_EI*randn()+D_EI'
+S_II.D = 'D_II*randn()+D_II'
+
+S_EE.delay = '1.5*ms'
+S_EI.delay = '0.8*ms'
+S_IE.delay = '0.8*ms'
+S_II.delay = '0.8*ms'
 
 # ------monitor----------------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
 m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
-m_read = StateMonitor(G_readout, ('I'), record=True)
+m_read = StateMonitor(G_readout, ('v'), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
@@ -347,7 +438,7 @@ net.run(duration_train, report='text')
 
 # ------lms_train---------------
 Y_train = one_versus_the_rest(label_train, selected=np.arange(10))
-states = get_states(m_read.I, duration*Dt , duration_train, sample)
+states = get_states(m_read.v, duration*Dt , duration_train, sample)
 P = readout(states, Y_train)
 Y_train_ = lms_test(states,P)
 label_train_ = trans_max_to_label(Y_train_)
@@ -362,7 +453,7 @@ net.run(duration_test, report='text')
 
 # -----lms_test-----------
 Y_test = one_versus_the_rest(label_test, selected=np.arange(10))
-states = get_states(m_read.I, duration*Dt , duration_test, sample)
+states = get_states(m_read.v, duration*Dt , duration_test, sample)
 Y_test_ = lms_test(states,P)
 label_test_ = trans_max_to_label(Y_test_)
 score_test = accuracy_score(label_test, label_test_)
@@ -379,7 +470,7 @@ monitor_data = {'t':m_g_ex.t/ms,
                 'm_g_ex.v':m_g_ex.v,
                 'm_g_in.I': m_g_in.I,
                 'm_g_in.v': m_g_in.v,
-                'm_read.I':m_read.I,
+                'm_read.v':m_read.v,
                 'm_input.I':m_input.I}
 result_save('monitor_temp.pkl', **monitor_data)
 
@@ -399,12 +490,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result_pick('monitor_temp.pkl')
-play, slider, fig = animation(monitor['t'], monitor['m_read.I'], 50, N_test*duration)
+play, slider, fig = animation(monitor['t'], monitor['m_read.v'], 50, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
-
-
-
-
-
-
-
