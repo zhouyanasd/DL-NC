@@ -237,8 +237,8 @@ def allocate(G, X, Y, Z):
 
 def w_norm2(n_post, Synapsis):
     for i in range(n_post):
-        a = S_inE.w[np.where(S_inE._synaptic_post == i)[0]]
-        S_inE.w[np.where(S_inE._synaptic_post == i)[0]] = a/np.linalg.norm(a)
+        a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
+        Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)
 
 
 # -----parameter setting-------
@@ -415,6 +415,20 @@ S_EE.D = 'D_EE*randn()+D_EE'
 S_IE.D = 'D_IE*randn()+D_IE'
 S_EI.D = 'D_EI*randn()+D_EI'
 S_II.D = 'D_II*randn()+D_II'
+
+S_inE.u = '0'
+S_inI.u = '0'
+S_EE.u = '0'
+S_IE.u = '0'
+S_EI.u = '0'
+S_II.u = '0'
+
+S_inE.r = '0'
+S_inI.r = '0'
+S_EE.r = '0'
+S_IE.r = '0'
+S_EI.r = '0'
+S_II.r = '0'
 
 S_EE.delay = '1.5*ms'
 S_EI.delay = '0.8*ms'
