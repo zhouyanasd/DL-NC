@@ -278,6 +278,7 @@ z : 1
 '''
 
 equ_read = '''
+dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
