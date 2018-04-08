@@ -24,30 +24,6 @@ start_scope()
 np.random.seed(100)
 
 # ------define function------------
-def softmax(z):
-    return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
-
-def train(X, Y, P):
-    a = 0.0001
-    max_iteration = 10000
-    time = 0
-    while time < max_iteration:
-        time += 1
-        P = P + X.T.dot(Y - softmax(X.dot(P))) * a
-    return P
-
-def lms_test(Data, p):
-    one = np.ones((Data.shape[1], 1)) #bis
-    X = np.hstack((Data.T, one))
-    return X.dot(p)
-
-def readout(M, Y):
-    one = np.ones((M.shape[1], 1))
-    X = np.hstack((M.T, one))
-    P = np.random.rand(X.shape[1],Y.T.shape[1])
-    para = train(X, Y.T, P)
-    return para
-
 def normalization_min_max(arr):
     arr_n = arr
     for i in range(arr.size):
@@ -58,6 +34,46 @@ def normalization_min_max(arr):
 
 def mse(y_test, y):
     return sp.sqrt(sp.mean((y_test - y) ** 2))
+
+
+def classification(thea, data):
+    data_n = normalization_min_max(data)
+    data_class = []
+    for a in data_n:
+        if a >= thea:
+            b = 1
+        else:
+            b = 0
+        data_class.append(b)
+    return np.asarray(data_class), data_n
+
+
+def softmax(z):
+    return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
+
+
+def train(X, Y, P):
+    a = 0.0001
+    max_iteration = 10000
+    time = 0
+    while time < max_iteration:
+        time += 1
+        P = P + X.T.dot(Y - softmax(X.dot(P))) * a
+    return P
+
+
+def lms_test(Data, p):
+    one = np.ones((Data.shape[1], 1)) #bis
+    X = np.hstack((Data.T, one))
+    return X.dot(p)
+
+
+def readout(M, Y):
+    one = np.ones((M.shape[1], 1))
+    X = np.hstack((M.T, one))
+    P = np.random.rand(X.shape[1],Y.T.shape[1])
+    para = train(X, Y.T, P)
+    return para
 
 
 def label_to_obj(label, obj):
@@ -91,18 +107,6 @@ def trans_max_to_label(results):
     return labels
 
 
-def classification(thea, data):
-    data_n = normalization_min_max(data)
-    data_class = []
-    for a in data_n:
-        if a >= thea:
-            b = 1
-        else:
-            b = 0
-        data_class.append(b)
-    return np.asarray(data_class), data_n
-
-
 def get_states(input, interval, duration, sample):
     n = int(duration / interval)
     step = int(interval / sample / defaultclock.dt)
@@ -112,49 +116,6 @@ def get_states(input, interval, duration, sample):
         sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
         temp.append(sum)
     return MinMaxScaler().fit_transform(np.asarray(temp).T)
-
-
-def result_save(path, *arg, **kwarg):
-    fw = open(path, 'wb')
-    pickle.dump(kwarg, fw)
-    fw.close()
-
-
-def result_pick(path):
-    fr = open(path, 'rb')
-    data = pickle.load(fr)
-    fr.close()
-    return data
-
-
-def animation(t, v, interval, duration, a_step=10, a_interval=100, a_duration = 10):
-
-    xs = LinearScale()
-    ys = LinearScale()
-
-    line = Lines(x=t[:interval], y=v[:,:interval], scales={'x': xs, 'y': ys})
-    xax = Axis(scale=xs, label='x', grid_lines='solid')
-    yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
-
-    fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
-
-    def on_value_change(change):
-        line.x = t[change['new']:interval+change['new']]
-        line.y = v[:,change['new']:interval+change['new']]
-
-    play = widgets.Play(
-        interval=a_interval,
-        value=0,
-        min=0,
-        max=duration,
-        step=a_step,
-        description="Press play",
-        disabled=False
-    )
-    slider = widgets.IntSlider(min=0, max=duration)
-    widgets.jslink((play, 'value'), (slider, 'value'))
-    slider.observe(on_value_change, names='value')
-    return play, slider, fig
 
 
 def allocate(G, X, Y, Z):
@@ -234,6 +195,49 @@ class ST_classification_mass():
         data_frame_s = np.asarray(data_frame_s)
         label = data_frame_obj['label']
         return data_frame_s, list(map(list, zip(*label)))
+
+
+def result_save(path, *arg, **kwarg):
+    fw = open(path, 'wb')
+    pickle.dump(kwarg, fw)
+    fw.close()
+
+
+def result_pick(path):
+    fr = open(path, 'rb')
+    data = pickle.load(fr)
+    fr.close()
+    return data
+
+
+def animation(t, v, interval, duration, a_step=10, a_interval=100, a_duration = 10):
+
+    xs = LinearScale()
+    ys = LinearScale()
+
+    line = Lines(x=t[:interval], y=v[:,:interval], scales={'x': xs, 'y': ys})
+    xax = Axis(scale=xs, label='x', grid_lines='solid')
+    yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
+
+    fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
+
+    def on_value_change(change):
+        line.x = t[change['new']:interval+change['new']]
+        line.y = v[:,change['new']:interval+change['new']]
+
+    play = widgets.Play(
+        interval=a_interval,
+        value=0,
+        min=0,
+        max=duration,
+        step=a_step,
+        description="Press play",
+        disabled=False
+    )
+    slider = widgets.IntSlider(min=0, max=duration)
+    widgets.jslink((play, 'value'), (slider, 'value'))
+    slider.observe(on_value_change, names='value')
+    return play, slider, fig
 
 
 # -----parameter setting-------
