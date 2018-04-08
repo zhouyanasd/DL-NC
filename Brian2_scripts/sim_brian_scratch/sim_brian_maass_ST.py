@@ -114,71 +114,6 @@ def get_states(input, interval, duration, sample):
     return MinMaxScaler().fit_transform(np.asarray(temp).T)
 
 
-def load_Data_MNIST(n, path_value, path_label):
-    with open(path_value, 'rb') as f1:
-        buf1 = f1.read()
-    with open(path_label, 'rb') as f2:
-        buf2 = f2.read()
-
-    image_index = 0
-    image_index += struct.calcsize('>IIII')
-    im = []
-    for i in range(n):
-        temp = struct.unpack_from('>784B', buf1, image_index)
-        im.append(np.reshape(temp, (1, 784)))
-        image_index += struct.calcsize('>784B')
-
-    label_index = 0
-    label_index += struct.calcsize('>II')
-    label = np.asarray(struct.unpack_from('>' + str(n) + 'B', buf2, label_index))
-
-    f = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-    df = pd.DataFrame({'value': pd.Series(im).apply(f), 'label': pd.Series(label)})
-    return df
-
-
-def encoding_latency_MNIST(analog_data, n, duration, min = 0, max = np.pi, *args):
-    def encoding_cos(x, n, A):
-        encoding = []
-        for i in range(int(n)):
-            trans_cos = np.round(0.5*A*(np.cos(x+np.pi*(i/n))+1)).clip(0,A-1)
-            coding = [([0] * trans_cos.shape[1]) for i in range(A*trans_cos.shape[0])]
-            index_0 = 0
-            for p in trans_cos:
-                index_1 = 0
-                for q in p:
-                    coding[int(q)][index_1+A*index_0] = 1
-                    index_1 += 1
-                index_0 += 1
-            encoding.extend(coding)
-        return np.asarray(encoding)
-    f = lambda x: (max-min)*(x - np.min(x)) / (np.max(x) - np.min(x))
-    return analog_data.apply(f).apply(encoding_cos, n = n, A = duration)
-
-
-def get_series_data(n, data_frame, duration, is_order=True, *args, **kwargs):
-    try:
-        obj = kwargs['obj']
-    except KeyError:
-        obj = np.arange(10)
-    if not is_order:
-        data_frame_obj = data_frame[data_frame['label'].isin(obj)].sample(frac=1).reset_index(drop=True)
-    else:
-        data_frame_obj = data_frame[data_frame['label'].isin(obj)]
-    data_frame_s = []
-    for value in encoding_latency_MNIST(data_frame_obj['value'][:n], kwargs['coding_n'], int(0.1*duration)):
-        for data in value:
-            data_frame_s.append(list(data))
-        interval = duration - value.shape[0]
-        if interval > 0.3*duration:
-            data_frame_s.extend([[0] * 784] * interval)
-        else:
-            raise Exception('duration is too short')
-    data_frame_s = np.asarray(data_frame_s)
-    label = data_frame_obj['label'][:n]
-    return data_frame_s, label
-
-
 def result_save(path, *arg, **kwarg):
     fw = open(path, 'wb')
     pickle.dump(kwarg, fw)
@@ -239,6 +174,115 @@ def w_norm2(n_post, Synapsis):
     for i in range(n_post):
         a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
         Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)
+
+
+class ST_classification_mass():
+    def __init__(self, n_p, n, duration, frequency, dt):
+        self.n_p = n_p
+        self.n = n
+        self.duration = duration
+        self.frequency = frequency
+        self.dt = dt
+        self.n_1 = int(ceil(n * duration * frequency))
+        self.n_0 = int(ceil(n * duration / dt)) - self.n_1
+        self.D = int(duration / dt)
+        self.pattern_generation()
+
+    def pattern_generation(self):
+        self.pattern = []
+        for i in range(self.n_p):
+            b = [1] * self.n_1
+            b.extend([0] * self.n_0)
+            c = np.array(b)
+            np.random.shuffle(c)
+            self.pattern.append(c)
+
+    def data_generation(self):
+        value = []
+        label = []
+        for i in range(self.n):
+            select = np.random.choice(self.n_p)
+            fragment = np.random.choice(self.n)
+            value.extend(self.pattern[select][self.D * fragment:self.D * (fragment + 1)])
+            label.append(select)
+            data = {'label': label, 'value': value}
+        return data
+
+    def data_noise_jitter(self, data):
+        pass
+
+    def data_generation_batch(self, number, noise = False):
+        value = []
+        label = []
+        for i in range(number):
+            data = self.data_generation()
+            if noise :
+                self.data_noise_jitter(data)
+            value.append(data['value'])
+            label.append(data['label'])
+            df = pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(label)})
+        return df
+
+    def get_series_data(self, data_frame, is_order=True, *args, **kwargs):
+        if not is_order:
+            data_frame_obj = data_frame.sample(frac=1).reset_index(drop=True)
+        else:
+            data_frame_obj = data_frame
+        data_frame_s = []
+        for value in data_frame_obj['value']:
+            data_frame_s.extend(value)
+        data_frame_s = np.asarray(data_frame_s)
+        label = data_frame_obj['label']
+        return data_frame_s, list(map(list, zip(*label)))
+
+
+# -----parameter setting-------
+duration = 1000
+N_train = 1000
+N_test = 500
+Dt = defaultclock.dt = 1*ms
+sample = 1
+pre_train_loop = 0
+
+n = 108
+R = 2
+A_EE = 30
+A_EI = 60
+A_IE = -19
+A_II = -19
+A_inE = 18
+A_inI = 9
+
+ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
+df_train = ST.data_generation_batch(N_train)
+df_test = ST.data_generation_batch(N_test)
+
+data_train_s, label_train = ST.get_series_data(df_train, False)
+data_test_s, label_test = ST.get_series_data(df_test, False)
+
+duration_train = len(data_train_s) * Dt
+duration_test = len(data_test_s) * Dt
+
+equ_in = '''
+I = stimulus(t,i) : 1
+'''
+
+equ = '''
+dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+dg/dt = (-g)/(3*ms) : 1
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h)+13.5: 1
+x : 1
+y : 1
+z : 1
+'''
+
+equ_read = '''
+dg/dt = (-g)/(3*ms) : 1 
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h): 1
+'''
+
 
 
 
