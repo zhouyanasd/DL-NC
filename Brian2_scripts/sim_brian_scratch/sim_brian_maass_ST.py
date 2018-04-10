@@ -24,117 +24,126 @@ start_scope()
 np.random.seed(100)
 
 # ------define function------------
-def normalization_min_max(arr):
-    arr_n = arr
-    for i in range(arr.size):
-        x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
-        arr_n[i] = x
-    return arr_n
-
-
-def mse(y_test, y):
-    return sp.sqrt(sp.mean((y_test - y) ** 2))
-
-
-def classification(thea, data):
-    data_n = normalization_min_max(data)
-    data_class = []
-    for a in data_n:
-        if a >= thea:
-            b = 1
-        else:
-            b = 0
-        data_class.append(b)
-    return np.asarray(data_class), data_n
-
-
-def softmax(z):
-    return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
-
-
-def train(X, Y, P):
-    a = 0.0001
-    max_iteration = 10000
-    time = 0
-    while time < max_iteration:
-        time += 1
-        P = P + X.T.dot(Y - softmax(X.dot(P))) * a
-    return P
-
-
-def lms_test(Data, p):
-    one = np.ones((Data.shape[1], 1)) #bis
-    X = np.hstack((Data.T, one))
-    return X.dot(p)
-
-
-def readout(M, Y):
-    one = np.ones((M.shape[1], 1))
-    X = np.hstack((M.T, one))
-    P = np.random.rand(X.shape[1],Y.T.shape[1])
-    para = train(X, Y.T, P)
-    return para
-
-
-def label_to_obj(label, obj):
-    temp = []
-    for a in label:
-        if a == obj:
-            temp.append(1)
-        else:
-            temp.append(0)
-    return np.asarray(temp)
-
-
-def one_versus_the_rest(label, *args, **kwargs):
-    obj = []
-    for i in args:
-        temp = label_to_obj(label, i)
-        obj.append(temp)
-    try:
-         for i in kwargs['selected']:
-            temp = label_to_obj(label, i)
-            obj.append(temp)
-    except KeyError:
+class Function():
+    def __init__(self):
         pass
-    return np.asarray(obj)
+
+    def logistic(self, f):
+        return 1/(1+np.exp(-f))
 
 
-def trans_max_to_label(results):
-    labels = []
-    for result in results:
-        labels.append(np.argmax(result))
-    return labels
+    def softmax(self, z):
+        return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
 
 
-def get_states(input, interval, duration, sample):
-    n = int(duration / interval)
-    step = int(interval / sample / defaultclock.dt)
-    interval_ = int(interval / defaultclock.dt)
-    temp = []
-    for i in range(n):
-        sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
-        temp.append(sum)
-    return MinMaxScaler().fit_transform(np.asarray(temp).T)
+class Base():
+    def __init__(self, duration, dt):
+        self.duration = duration
+        self.dt = dt
+        self.interval = duration*dt
+
+    def get_states(self, input, running_time, sample):
+        n = int(running_time / self.interval)
+        step = int(self.interval / sample / defaultclock.dt)
+        interval_ = int(self.interval / defaultclock.dt)
+        temp = []
+        for i in range(n):
+            sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
+            temp.append(sum)
+        return MinMaxScaler().fit_transform(np.asarray(temp).T)
+
+    def normalization_min_max(self, arr):
+        arr_n = arr
+        for i in range(arr.size):
+            x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
+            arr_n[i] = x
+        return arr_n
+
+    def mse(self, y_test, y):
+        return sp.sqrt(sp.mean((y_test - y) ** 2))
+
+    def classification(self, thea, data):
+        data_n = self.normalization_min_max(data)
+        data_class = []
+        for a in data_n:
+            if a >= thea:
+                b = 1
+            else:
+                b = 0
+            data_class.append(b)
+        return np.asarray(data_class), data_n
+
+    def allocate(self, G, X, Y, Z):
+        V = np.zeros((X,Y,Z), [('x',float),('y',float),('z',float)])
+        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0,X-1,X),np.linspace(0,X-1,X),np.linspace(0,Z-1,Z))
+        V = V.reshape(X*Y*Z)
+        np.random.shuffle(V)
+        n = 0
+        for g in G:
+            for i in range(g.N):
+                g.x[i], g.y[i], g.z[i]= V[n][0], V[n][1], V[n][2]
+                n +=1
+        return G
 
 
-def allocate(G, X, Y, Z):
-    V = np.zeros((X,Y,Z), [('x',float),('y',float),('z',float)])
-    V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0,X-1,X),np.linspace(0,X-1,X),np.linspace(0,Z-1,Z))
-    V = V.reshape(X*Y*Z)
-    np.random.shuffle(V)
-    n = 0
-    for g in G:
-        for i in range(g.N):
-            g.x[i], g.y[i], g.z[i]= V[n][0], V[n][1], V[n][2]
-            n +=1
-    return G
+    def w_norm2(self, n_post, Synapsis):
+        for i in range(n_post):
+            a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
+            Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)
 
 
-def w_norm2(n_post, Synapsis):
-    for i in range(n_post):
-        a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
-        Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)
+class Readout():
+    def __init__(self, function):
+        self.function = function
+
+    def train(self, X, Y, P):
+        a = 0.0001
+        max_iteration = 10000
+        time = 0
+        while time < max_iteration:
+            time += 1
+            P = P + X.T.dot(Y - self.function(X.dot(P))) * a
+        return P
+
+    def lms_test(self, Data, p):
+        one = np.ones((Data.shape[1], 1))  # bis
+        X = np.hstack((Data.T, one))
+        return X.dot(p)
+
+    def readout(self, M, Y):
+        one = np.ones((M.shape[1], 1))
+        X = np.hstack((M.T, one))
+        P = np.random.rand(X.shape[1], Y.T.shape[1])
+        para = self.train(X, Y.T, P)
+        return para
+
+    def label_to_obj(self, label, obj):
+        temp = []
+        for a in label:
+            if a == obj:
+                temp.append(1)
+            else:
+                temp.append(0)
+        return np.asarray(temp)
+
+    def one_versus_the_rest(self, label, *args, **kwargs):
+        obj = []
+        for i in args:
+            temp = self.label_to_obj(label, i)
+            obj.append(temp)
+        try:
+            for i in kwargs['selected']:
+                temp = self.label_to_obj(label, i)
+                obj.append(temp)
+        except KeyError:
+            pass
+        return np.asarray(obj)
+
+    def trans_max_to_label(self, results):
+        labels = []
+        for result in results:
+            labels.append(np.argmax(result))
+        return labels
 
 
 class ST_classification_mass():
@@ -197,47 +206,51 @@ class ST_classification_mass():
         return data_frame_s, list(map(list, zip(*label)))
 
 
-def result_save(path, *arg, **kwarg):
-    fw = open(path, 'wb')
-    pickle.dump(kwarg, fw)
-    fw.close()
+class Result():
+    def __init__(self):
+        pass
+
+    def result_save(self, path, *arg, **kwarg):
+        fw = open(path, 'wb')
+        pickle.dump(kwarg, fw)
+        fw.close()
 
 
-def result_pick(path):
-    fr = open(path, 'rb')
-    data = pickle.load(fr)
-    fr.close()
-    return data
+    def result_pick(self, path):
+        fr = open(path, 'rb')
+        data = pickle.load(fr)
+        fr.close()
+        return data
 
 
-def animation(t, v, interval, duration, a_step=10, a_interval=100, a_duration = 10):
+    def animation(self, t, v, interval, duration, a_step=10, a_interval=100, a_duration = 10):
 
-    xs = LinearScale()
-    ys = LinearScale()
+        xs = LinearScale()
+        ys = LinearScale()
 
-    line = Lines(x=t[:interval], y=v[:,:interval], scales={'x': xs, 'y': ys})
-    xax = Axis(scale=xs, label='x', grid_lines='solid')
-    yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
+        line = Lines(x=t[:interval], y=v[:,:interval], scales={'x': xs, 'y': ys})
+        xax = Axis(scale=xs, label='x', grid_lines='solid')
+        yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
 
-    fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
+        fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
 
-    def on_value_change(change):
-        line.x = t[change['new']:interval+change['new']]
-        line.y = v[:,change['new']:interval+change['new']]
+        def on_value_change(change):
+            line.x = t[change['new']:interval+change['new']]
+            line.y = v[:,change['new']:interval+change['new']]
 
-    play = widgets.Play(
-        interval=a_interval,
-        value=0,
-        min=0,
-        max=duration,
-        step=a_step,
-        description="Press play",
-        disabled=False
-    )
-    slider = widgets.IntSlider(min=0, max=duration)
-    widgets.jslink((play, 'value'), (slider, 'value'))
-    slider.observe(on_value_change, names='value')
-    return play, slider, fig
+        play = widgets.Play(
+            interval=a_interval,
+            value=0,
+            min=0,
+            max=duration,
+            step=a_step,
+            description="Press play",
+            disabled=False
+        )
+        slider = widgets.IntSlider(min=0, max=duration)
+        widgets.jslink((play, 'value'), (slider, 'value'))
+        slider.observe(on_value_change, names='value')
+        return play, slider, fig
 
 
 # -----parameter setting-------
@@ -257,7 +270,17 @@ A_II = -19
 A_inE = 18
 A_inI = 9
 
+
+###########################################
+#-------class initialization----------------------
+function = Function()
+base = Base(duration, Dt)
+readout = Readout(function.logistic)
+result = Result()
 ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
+
+
+#-------data initialization----------------------
 df_train = ST.data_generation_batch(N_train)
 df_test = ST.data_generation_batch(N_test)
 
@@ -267,11 +290,13 @@ data_test_s, label_test = ST.get_series_data(df_test, False)
 duration_train = len(data_train_s) * Dt
 duration_test = len(data_test_s) * Dt
 
-equ_in = '''
+
+#------definition of equation-------------
+neuron_in = '''
 I = stimulus(t,i) : 1
 '''
 
-equ = '''
+neuron = '''
 dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
@@ -281,13 +306,50 @@ y : 1
 z : 1
 '''
 
-equ_read = '''
+neuron_read = '''
 dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
 '''
 
+synapse = '''
+w : 1
+'''
 
+synapse_dynamic = '''
+du/dt = (-u)/(F*second) : 1 (event-driven)
+dr/dt = (-r)/(D*second) : 1 (event-driven)
+w : 1
+U : 1
+F : 1
+D : 1
+'''
+
+on_pre_ex = '''
+g+=w
+'''
+
+on_pre_inh = '''
+h+=w
+'''
+
+on_pre_ex_dynamic = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+g+=w*r*u
+'''
+
+on_pre_dynamic = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+h+=w*r*u
+'''
+
+on_pre_read = '''
+g+=w
+'''
+
+# -----simulation setting-------
 
 
