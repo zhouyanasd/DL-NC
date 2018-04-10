@@ -295,6 +295,8 @@ data_test_s, label_test = ST.get_series_data(df_test, False)
 duration_train = len(data_train_s) * Dt
 duration_test = len(data_test_s) * Dt
 
+Time_array_train = TimedArray(data_train_s, dt=Dt)
+Time_array_test = TimedArray(data_test_s, dt=Dt)
 
 #------definition of equation-------------
 neuron_in = '''
@@ -355,11 +357,7 @@ on_pre_read = '''
 g+=w
 '''
 
-# -----simulation setting-------
-Time_array_train = TimedArray(data_train_s, dt=Dt)
-
-Time_array_test = TimedArray(data_test_s, dt=Dt)
-
+# -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', reset='I = 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
@@ -387,8 +385,62 @@ S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method=
 
 S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
 
-# -------network topology----------
+#-------initialization of neuron parameters----------
 G_ex.v = '13.5+1.5*rand()'
 G_inh.v = '13.5+1.5*rand()'
+G_ex.g = '0'
+G_inh.g = '0'
+G_ex.h = '0'
+G_inh.h = '0'
+
 [G_ex,G_in] = Base.allocate([G_ex,G_inh],3,3,15)
 
+G_ex.run_regularly('''v = 13.5+1.5*rand()
+                    g = 0
+                    h = 0
+                    ''',dt=duration*Dt)
+G_inh.run_regularly('''v = 13.5+1.5*rand()
+                    g = 0
+                    h = 0
+                    ''',dt=duration*Dt)
+
+# -------initialization of network topology and synapses parameters----------
+S_inE.connect(condition='j<0.3*N_post')
+S_inI.connect(condition='j<0.3*N_post')
+S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_E_readout.connect(j='i')
+S_I_readout.connect(j='i+n_ex')
+
+S_inE.w = 'A_inE*randn()+A_inE'
+S_inI.w = 'A_inI*randn()+A_inI'
+S_EE.w = 'A_EE*randn()+A_EE'
+S_IE.w = 'A_IE*randn()+A_IE'
+S_EI.w = 'A_EI*randn()+A_EI'
+S_II.w = 'A_II*randn()+A_II'
+
+S_EE.delay = '1.5*ms'
+S_EI.delay = '0.8*ms'
+S_IE.delay = '0.8*ms'
+S_II.delay = '0.8*ms'
+
+# ----------monitors----------------
+m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
+m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
+m_read = StateMonitor(G_readout, [('I', 'v')], record=True)
+m_input = StateMonitor(Input, ('I'), record=True)
+
+# ------create network-------------
+net = Network(collect())
+
+
+###############################################
+# ------run for lms_train-------
+stimulus = Time_array_train
+net.store('third')
+net.run(duration_train, report='text')
+
+# ------lms_train---------------
+states = Base.get_states(m_read.v, duration_train, sample)
