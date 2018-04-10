@@ -357,7 +357,7 @@ S_EI = Synapses(G_ex, G_inh, dynamic_synapse, on_pre = on_pre_ex ,method='euler'
 
 S_IE = Synapses(G_inh, G_ex, dynamic_synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
 
-S_II = Synapses(G_inh, G_inh, dynamic_synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+S_II = Synapses(G_inh, G_inh, dynamic_synapse, on_pre = on_pre_inh ,method='euler', name='synapses_II')
 
 S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
 

@@ -261,8 +261,13 @@ Dt = defaultclock.dt = 1*ms
 sample = 1
 pre_train_loop = 0
 
-n = 108
+n_ex = 108
+n_inh = int(n_ex/4)
+n_input = 1
+n_read = n_ex+n_inh
+
 R = 2
+
 A_EE = 30
 A_EI = 60
 A_IE = -19
@@ -351,5 +356,39 @@ g+=w
 '''
 
 # -----simulation setting-------
+Time_array_train = TimedArray(data_train_s, dt=Dt)
 
+Time_array_test = TimedArray(data_test_s, dt=Dt)
+
+Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', reset='I = 0', method='euler', refractory=0 * ms,
+                    name = 'neurongroup_input')
+
+G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
+                name ='neurongroup_ex')
+
+G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
+                name ='neurongroup_in')
+
+G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
+
+S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+
+S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
+
+S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
+
+S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
+
+S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
+
+S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+
+S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
+
+S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
+
+# -------network topology----------
+G_ex.v = '13.5+1.5*rand()'
+G_inh.v = '13.5+1.5*rand()'
+[G_ex,G_in] = Base.allocate([G_ex,G_inh],3,3,15)
 
