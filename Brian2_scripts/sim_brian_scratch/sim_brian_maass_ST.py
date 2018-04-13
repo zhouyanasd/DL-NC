@@ -96,19 +96,33 @@ class Readout():
     def __init__(self, function):
         self.function = function
 
-    def train(self, X, Y, P):
-        a = 0.0001
-        max_iteration = 10000
+    def cost(self, X, Y, P):
+        left = np.multiply(Y, np.log(self.function(X.dot(P))))
+        right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
+        return -np.sum((left + right), axis=0) / (len(Y))
+
+    def train(self,X, Y, P, rate=0.0001, theta=1e-2):
         time = 0
-        while time < max_iteration:
+        while (self.cost(X, Y, P) > theta).all():
             time += 1
-            P = P + X.T.dot(Y - self.function(X.dot(P))) * a
+            P = P + X.T.dot(Y - self.function(X.dot(P))) * rate
+        print(time, self.cost(X, Y, P))
         return P
+
+    def predict_logistic(self,results):
+        labels = (results > 0.5).astype(int).T
+        return labels
+
+    def prepare_Y(self, label):
+        if np.asarray(label).ndim == 1:
+            return np.asarray([label])
+        else:
+            return np.asarray(label)
 
     def lms_test(self, Data, p):
         one = np.ones((Data.shape[1], 1))  # bis
         X = np.hstack((Data.T, one))
-        return X.dot(p)
+        return self.function(X.dot(p))
 
     def readout(self, M, Y):
         one = np.ones((M.shape[1], 1))
@@ -117,33 +131,8 @@ class Readout():
         para = self.train(X, Y.T, P)
         return para
 
-    def label_to_obj(self, label, obj):
-        temp = []
-        for a in label:
-            if a == obj:
-                temp.append(1)
-            else:
-                temp.append(0)
-        return np.asarray(temp)
-
-    def one_versus_the_rest(self, label, *args, **kwargs):
-        obj = []
-        for i in args:
-            temp = self.label_to_obj(label, i)
-            obj.append(temp)
-        try:
-            for i in kwargs['selected']:
-                temp = self.label_to_obj(label, i)
-                obj.append(temp)
-        except KeyError:
-            pass
-        return np.asarray(obj)
-
-    def trans_max_to_label(self, results):
-        labels = []
-        for result in results:
-            labels.append(np.argmax(result))
-        return labels
+    def calculate_score(self,label, label_predict):
+        return [accuracy_score(i,j) for i,j in zip(label,label_predict)]
 
 
 class ST_classification_mass():
@@ -393,7 +382,7 @@ G_inh.g = '0'
 G_ex.h = '0'
 G_inh.h = '0'
 
-[G_ex,G_in] = Base.allocate([G_ex,G_inh],3,3,15)
+[G_ex,G_in] = base.allocate([G_ex,G_inh],3,3,15)
 
 G_ex.run_regularly('''v = 13.5+1.5*rand()
                     g = 0
@@ -426,7 +415,7 @@ S_EI.delay = '0.8*ms'
 S_IE.delay = '0.8*ms'
 S_II.delay = '0.8*ms'
 
-# ----------monitors----------------
+# --------monitors setting----------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
 m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
 m_read = StateMonitor(G_readout, [('I', 'v')], record=True)
@@ -443,4 +432,60 @@ net.store('third')
 net.run(duration_train, report='text')
 
 # ------lms_train---------------
-states = Base.get_states(m_read.v, duration_train, sample)
+states = base.get_states(m_read.v, duration_train, sample)
+Y_train = readout.prepare_Y(label_train)
+P = readout.readout(states, Y_train)
+Y_train_ = readout.lms_test(states,P)
+label_train_ = readout.predict_logistic(Y_train_)
+score_train = readout.calculate_score(label_train, label_train_)
+
+
+#####################################
+# ----run for test--------
+del stimulus
+stimulus = Time_array_test
+net.restore('third')
+net.run(duration_test, report='text')
+
+# -----lms_test-----------
+states = base.get_states(m_read.v, duration_train, sample)
+Y_test_ = readout.lms_test(states,P)
+label_test_ = readout.predict_logistic(Y_test_)
+score_test = readout.calculate_score(label_test, label_test_)
+
+#####################################
+#----------show results-----------
+print('Train score: ',score_train)
+print('Test score: ',score_test)
+
+
+#####################################
+#-----------save monitor data-------
+monitor_data = {'t': m_g_ex.t/ms,
+                'm_g_ex.I': m_g_ex.I,
+                'm_g_ex.v': m_g_ex.v,
+                'm_g_in.I': m_g_in.I,
+                'm_g_in.v': m_g_in.v,
+                'm_read.I': m_read.I,
+                'm_read.v': m_read.v,
+                'm_input.I': m_input.I}
+result.result_save('monitor_temp.pkl', **monitor_data)
+
+
+#####################################
+# ------vis of results----
+fig_init_w =plt.figure(figsize=(16,16))
+subplot(421)
+brian_plot(S_EE.w)
+subplot(422)
+brian_plot(S_EI.w)
+subplot(423)
+brian_plot(S_IE.w)
+subplot(424)
+brian_plot(S_II.w)
+show()
+
+#-------for animation in Jupyter-----------
+monitor = result.result_pick('monitor_temp.pkl')
+play, slider, fig = result.animation(monitor['t'], monitor['m_read.v'], 50, N_test*duration)
+widgets.VBox([widgets.HBox([play, slider]),fig])
