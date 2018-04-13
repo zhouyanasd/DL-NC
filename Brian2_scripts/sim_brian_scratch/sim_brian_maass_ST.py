@@ -435,10 +435,10 @@ net.store('third')
 net.run(duration_train, report='text')
 
 # ------lms_train---------------
-states = base.get_states(m_read.v, duration_train, sample)
+states_train = base.get_states(m_read.v, duration_train, sample)
 Y_train = readout.prepare_Y(label_train)
-P = readout.readout(states, Y_train)
-Y_train_ = readout.lms_test(states,P)
+P = readout.readout(states_train, Y_train)
+Y_train_ = readout.lms_test(states_train,P)
 label_train_ = readout.predict_logistic(Y_train_)
 score_train = readout.calculate_score(label_train, label_train_)
 
@@ -451,8 +451,8 @@ net.restore('third')
 net.run(duration_test, report='text')
 
 # -----lms_test-----------
-states = base.get_states(m_read.v, duration_test, sample)
-Y_test_ = readout.lms_test(states,P)
+states_test = base.get_states(m_read.v, duration_test, sample)
+Y_test_ = readout.lms_test(states_test,P)
 label_test_ = readout.predict_logistic(Y_test_)
 score_test = readout.calculate_score(label_test, label_test_)
 
