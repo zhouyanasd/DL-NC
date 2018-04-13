@@ -142,9 +142,9 @@ class ST_classification_mass():
         self.duration = duration
         self.frequency = frequency
         self.dt = dt
-        self.n_1 = int(ceil(duration * frequency))
-        self.n_0 = int(ceil(duration / dt)) - self.n_1
-        self.D = int(duration / n / dt)
+        self.n_1 = int(ceil(duration *dt * frequency))
+        self.n_0 = int(ceil(duration)) - self.n_1
+        self.D = int(duration / n)
         self.pattern_generation()
 
     def pattern_generation(self):
@@ -190,7 +190,7 @@ class ST_classification_mass():
         data_frame_s = []
         for value in data_frame_obj['value']:
             data_frame_s.extend(value)
-        data_frame_s = np.asarray(data_frame_s)
+        data_frame_s = np.asarray([data_frame_s]).T
         label = data_frame_obj['label']
         return data_frame_s, list(map(list, zip(*label)))
 
