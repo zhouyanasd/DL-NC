@@ -142,9 +142,9 @@ class ST_classification_mass():
         self.duration = duration
         self.frequency = frequency
         self.dt = dt
-        self.n_1 = int(ceil(n * duration * frequency))
-        self.n_0 = int(ceil(n * duration / dt)) - self.n_1
-        self.D = int(duration / dt)
+        self.n_1 = int(ceil(duration * frequency))
+        self.n_0 = int(ceil(duration / dt)) - self.n_1
+        self.D = int(duration / n / dt)
         self.pattern_generation()
 
     def pattern_generation(self):
