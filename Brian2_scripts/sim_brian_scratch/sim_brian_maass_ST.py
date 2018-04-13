@@ -418,7 +418,7 @@ S_II.delay = '0.8*ms'
 # --------monitors setting----------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
 m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
-m_read = StateMonitor(G_readout, [('I', 'v')], record=True)
+m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
