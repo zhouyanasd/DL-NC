@@ -195,7 +195,7 @@ class ST_classification_mass():
             data_frame_s.extend(value)
         data_frame_s = np.asarray([data_frame_s]).T
         label = data_frame_obj['label']
-        return data_frame_s, list(map(list, zip(*label)))
+        return data_frame_s, np.array(list(map(list, zip(*label))))
 
 
 class Result():
@@ -451,7 +451,7 @@ net.restore('third')
 net.run(duration_test, report='text')
 
 # -----lms_test-----------
-states = base.get_states(m_read.v, duration_train, sample)
+states = base.get_states(m_read.v, duration_test, sample)
 Y_test_ = readout.lms_test(states,P)
 label_test_ = readout.predict_logistic(Y_test_)
 score_test = readout.calculate_score(label_test, label_test_)
