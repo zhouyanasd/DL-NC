@@ -101,12 +101,15 @@ class Readout():
         right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
         return -np.sum((left + right), axis=0) / (len(Y))
 
-    def train(self,X, Y, P, rate=0.0001, theta=1e-2):
+    def train(self,X, Y, P, rate=0.01, theta=1e-8):
         time = 0
-        while (self.cost(X, Y, P) > theta).all():
+        temp_cost = self.cost(X, Y, P)+1
+        while (temp_cost - self.cost(X, Y, P) > theta).all():
             time += 1
+            temp_cost = self.cost(X, Y, P)
             P = P + X.T.dot(Y - self.function(X.dot(P))) * rate
-        print(time, self.cost(X, Y, P))
+            if time %10000 == 0:
+                print(time, temp_cost)
         return P
 
     def predict_logistic(self,results):
@@ -303,7 +306,7 @@ z : 1
 '''
 
 neuron_read = '''
-dv/dt = (I-v) / (30*ms) : 1
+dv/dt = (I-v+1) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
