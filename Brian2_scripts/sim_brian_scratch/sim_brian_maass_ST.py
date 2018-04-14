@@ -101,7 +101,7 @@ class Readout():
     def cost(self, X, Y, P):
         left = np.multiply(Y, np.log(self.function(X.dot(P))))
         right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
-        return -np.sum((left + right), axis=0) / (len(Y))
+        return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
 
     def train(self,X, Y, P, rate=0.01, theta=1e-8):
         time = 0
@@ -309,7 +309,7 @@ z : 1
 '''
 
 neuron_read = '''
-dv/dt = (I-v+1) / (30*ms) : 1
+dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
