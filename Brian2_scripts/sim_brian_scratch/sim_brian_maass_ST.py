@@ -383,10 +383,13 @@ S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method
 #-------initialization of neuron parameters----------
 G_ex.v = '13.5+1.5*rand()'
 G_inh.v = '13.5+1.5*rand()'
+G_readout.v = '0'
 G_ex.g = '0'
 G_inh.g = '0'
+G_readout.g = '0'
 G_ex.h = '0'
 G_inh.h = '0'
+G_readout.h = '0'
 
 [G_ex,G_in] = base.allocate([G_ex,G_inh],3,3,15)
 
@@ -395,6 +398,10 @@ G_ex.run_regularly('''v = 13.5+1.5*rand()
                     h = 0
                     ''',dt=duration*Dt)
 G_inh.run_regularly('''v = 13.5+1.5*rand()
+                    g = 0
+                    h = 0
+                    ''',dt=duration*Dt)
+G_readout.run_regularly('''v = 13.5+1.5*rand()
                     g = 0
                     h = 0
                     ''',dt=duration*Dt)
