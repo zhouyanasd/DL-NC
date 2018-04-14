@@ -17,8 +17,10 @@ from sklearn.metrics import accuracy_score
 import pickle
 from bqplot import *
 import ipywidgets as widgets
+import warnings
 
 
+warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
@@ -104,12 +106,13 @@ class Readout():
     def train(self,X, Y, P, rate=0.01, theta=1e-8):
         time = 0
         temp_cost = self.cost(X, Y, P)+1
-        while (temp_cost - self.cost(X, Y, P) > theta).all():
+        while ((temp_cost - self.cost(X, Y, P) > theta).all() or time <300000) and (time <400000):
             time += 1
             temp_cost = self.cost(X, Y, P)
             P = P + X.T.dot(Y - self.function(X.dot(P))) * rate
             if time %10000 == 0:
                 print(time, temp_cost)
+        print(time, temp_cost)
         return P
 
     def predict_logistic(self,results):
