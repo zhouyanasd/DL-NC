@@ -103,7 +103,7 @@ class Readout():
         right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
         return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
 
-    def train(self,X, Y, P, rate=0.01, theta=1e-8):
+    def train(self,X, Y, P, rate=0.001, theta=1e-8):
         time = 0
         temp_cost = self.cost(X, Y, P)+1
         while ((temp_cost - self.cost(X, Y, P) > theta).all() or time <300000) and (time <400000):
@@ -401,7 +401,7 @@ G_inh.run_regularly('''v = 13.5+1.5*rand()
                     g = 0
                     h = 0
                     ''',dt=duration*Dt)
-G_readout.run_regularly('''v = 13.5+1.5*rand()
+G_readout.run_regularly('''v = 0
                     g = 0
                     h = 0
                     ''',dt=duration*Dt)
