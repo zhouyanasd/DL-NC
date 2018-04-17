@@ -98,47 +98,64 @@ class Readout():
     def __init__(self, function):
         self.function = function
 
-    def cost(self, X, Y, P):
-        left = np.multiply(Y, np.log(self.function(X.dot(P))))
-        right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
-        return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
-
-    def train(self,X, Y, P, rate=0.001, theta=1e-8):
-        time = 0
-        temp_cost = self.cost(X, Y, P)+1
-        while ((temp_cost - self.cost(X, Y, P) > theta).all() or time <300000) and (time <400000):
-            time += 1
-            temp_cost = self.cost(X, Y, P)
-            P = P + X.T.dot(Y - self.function(X.dot(P))) * rate
-            if time %10000 == 0:
-                print(time, temp_cost)
-        print(time, temp_cost)
-        return P
+    def data_init(self, M_train, M_test, label_train, label_test, rate,theta):
+        self.rate = rate
+        self.theta = theta
+        self.iter = 0
+        self.X_train = self.add_bis(M_train)
+        self.X_test = self.add_bis(M_test)
+        self.Y_train = self.prepare_Y(label_train)
+        self.Y_test = self.prepare_Y(label_test)
+        self.P = np.random.rand(self.X_train.shape[1], self.Y_train.shape[1])
+        self.cost_train = 1e+100
+        self.cost_test = 1e+100
 
     def predict_logistic(self,results):
         labels = (results > 0.5).astype(int).T
         return labels
 
-    def prepare_Y(self, label):
-        if np.asarray(label).ndim == 1:
-            return np.asarray([label])
-        else:
-            return np.asarray(label)
-
-    def lms_test(self, Data, p):
-        one = np.ones((Data.shape[1], 1))  # bis
-        X = np.hstack((Data.T, one))
-        return self.function(X.dot(p))
-
-    def readout(self, M, Y):
-        one = np.ones((M.shape[1], 1))
-        X = np.hstack((M.T, one))
-        P = np.random.rand(X.shape[1], Y.T.shape[1])
-        para = self.train(X, Y.T, P)
-        return para
-
     def calculate_score(self,label, label_predict):
         return [accuracy_score(i,j) for i,j in zip(label,label_predict)]
+
+    def add_bis(self,data):
+        one = np.ones((data.shape[1], 1))  # bis
+        X = np.hstack((data.T, one))
+        return X
+
+    def prepare_Y(self, label):
+        if np.asarray(label).ndim == 1:
+            return np.asarray([label]).T
+        else:
+            return np.asarray(label).T
+
+    def cost(self, X, Y, P):
+        left = np.multiply(Y, np.log(self.function(X.dot(P))))
+        right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
+        return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
+
+    def train(self, X, Y, P):
+        P_ = P + X.T.dot(Y - self.function(X.dot(P))) * self.rate
+        return P_
+
+    def test(self, X, p):
+        return self.function(X.dot(p))
+
+    def stop_condition(self):
+        return ((self.cost_train - self.cost(self.X_train, self.Y_train, self.P))> self.theta).any() and \
+               ((self.cost_test - self.cost(self.X_test, self.Y_test, self.P)) > self.theta).any() or self.iter < 100
+
+    def readout(self):
+        self.iter = 0
+        while self.stop_condition():
+            self.iter += 1
+            self.cost_train = self.cost(self.X_train, self.Y_train, self.P)
+            self.cost_test = self.cost(self.X_test, self.Y_test, self.P)
+            self.P = self.train(self.X_train, self.Y_train, self.P)
+            if self.iter %10000 == 0:
+                print(self.iter, self.cost_train, self.cost_test)
+        print(self.iter, self.cost_train, self.cost_test)
+        return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
+
 
 
 class ST_classification_mass():
@@ -248,12 +265,16 @@ class Result():
         return play, slider, fig
 
 
+###################################
 # -----parameter setting-------
 duration = 1000
 N_train = 1000
 N_test = 500
 Dt = defaultclock.dt = 1*ms
+
 sample = 1
+train_rate = 1e-4
+train_theta = 1e-4
 pre_train_loop = 0
 
 n_ex = 108
@@ -443,28 +464,25 @@ net = Network(collect())
 stimulus = Time_array_train
 net.store('third')
 net.run(duration_train, report='text')
-
-# ------lms_train---------------
 states_train = base.get_states(m_read.v, duration_train, sample)
-Y_train = readout.prepare_Y(label_train)
-P = readout.readout(states_train, Y_train)
-Y_train_ = readout.lms_test(states_train,P)
-label_train_ = readout.predict_logistic(Y_train_)
-score_train = readout.calculate_score(label_train, label_train_)
 
-
-#####################################
 # ----run for test--------
 del stimulus
 stimulus = Time_array_test
 net.restore('third')
 net.run(duration_test, report='text')
-
-# -----lms_test-----------
 states_test = base.get_states(m_read.v, duration_test, sample)
-Y_test_ = readout.lms_test(states_test,P)
+
+
+#####################################
+# ------Readout---------------
+readout.data_init(states_train, states_test, label_train, label_test, train_rate, train_theta)
+Y_train_, Y_test_ = readout.readout()
+label_train_ = readout.predict_logistic(Y_train_)
 label_test_ = readout.predict_logistic(Y_test_)
+score_train = readout.calculate_score(label_train, label_train_)
 score_test = readout.calculate_score(label_test, label_test_)
+
 
 #####################################
 #----------show results-----------
