@@ -1,9 +1,8 @@
 # ----------------------------------------
-# LSM without STDP for MNIST test
-# add neurons to readout layer for multi-classification(one-versus-the-rest)
-# using softmax(logistic regression)
-# input layer is changed to 781*1 with encoding method
+# using logistic regression
 # change the LSM structure according to Maass paper
+# ST task in W.Maass paper
+# Add STDP to the ex-synapses
 # ----------------------------------------
 
 from brian2 import *
