@@ -476,12 +476,15 @@ states_test = base.get_states(m_read.v, duration_test, sample)
 
 #####################################
 # ------Readout---------------
-readout.data_init(states_train, states_test, label_train, label_test, train_rate, train_theta)
-Y_train_, Y_test_ = readout.readout()
-label_train_ = readout.predict_logistic(Y_train_)
-label_test_ = readout.predict_logistic(Y_test_)
-score_train = readout.calculate_score(label_train, label_train_)
-score_test = readout.calculate_score(label_test, label_test_)
+score_train = []
+score_test = []
+for i in range(label_train.shape[0]):
+    readout.data_init(states_train, states_test, label_train[i:i+1], label_test[i:i+1], train_rate, train_theta)
+    Y_train_, Y_test_ = readout.readout()
+    label_train_ = readout.predict_logistic(Y_train_)
+    label_test_ = readout.predict_logistic(Y_test_)
+    score_train.extend(readout.calculate_score(label_train,label_train_))
+    score_test.extend(readout.calculate_score(label_test, label_test_))
 
 
 #####################################
