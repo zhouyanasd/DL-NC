@@ -338,16 +338,13 @@ synapse = '''
 w : 1
 '''
 
-synapse_STDP = '''
+synapse_dynamic = '''
+du/dt = (-u)/(F*second) : 1 (event-driven)
+dr/dt = (-r)/(D*second) : 1 (event-driven)
 w : 1
-wmax : 1
-wmin : 1
-Apre : 1
-Apost = -Apre * taupre / taupost * 1.2 : 1
-taupre : second
-taupost : second
-dapre/dt = -apre/taupre : 1 (clock-driven)
-dapost/dt = -apost/taupost : 1 (clock-driven)
+U : 1
+F : 1
+D : 1
 '''
 
 on_pre_ex = '''
@@ -358,15 +355,16 @@ on_pre_inh = '''
 h+=w
 '''
 
-on_pre_ex_STDP = '''
-g+=w
-apre += Apre
-w = clip(w+apost, wmin, wmax)
+on_pre_ex_dynamic = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+g+=w*r*u
 '''
 
-on_post_ex_STDP = '''
-apost += Apost
-w = clip(w+apre, wmin, wmax)
+on_pre_dynamic = '''
+u = (1-U)*u+U
+r = (r*(1-u)-1)+1
+h+=w*r*u
 '''
 
 on_pre_read = '''
