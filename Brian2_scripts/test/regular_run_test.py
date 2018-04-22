@@ -35,7 +35,8 @@ S_e.delay='randn()*3 * ms+3*ms'
 #                     ''', dt=1000 * ms)
 @network_operation(dt=1000*ms)
 def update_active():
-    S_e._pathways[0].queue._restore_from_full_state(None)
+    for pathway in S_e._pathways:
+        pathway.queue._restore_from_full_state(None)
     G.lastspike = '0 * ms'
     G.not_refractory = True
     G.v = '13.5+1.5*rand()'
