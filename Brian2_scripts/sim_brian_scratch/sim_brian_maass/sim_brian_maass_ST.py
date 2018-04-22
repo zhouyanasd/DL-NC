@@ -412,18 +412,6 @@ G_readout.h = '0'
 
 [G_ex,G_in] = base.allocate([G_ex,G_inh],3,3,15)
 
-G_ex.run_regularly('''v = 13.5+1.5*rand()
-                    g = 0
-                    h = 0
-                    ''',dt=duration*Dt)
-G_inh.run_regularly('''v = 13.5+1.5*rand()
-                    g = 0
-                    h = 0
-                    ''',dt=duration*Dt)
-G_readout.run_regularly('''v = 0
-                    g = 0
-                    h = 0
-                    ''',dt=duration*Dt)
 
 # -------initialization of network topology and synapses parameters----------
 S_inE.connect(condition='j<0.3*N_post')
@@ -454,6 +442,34 @@ m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
+@network_operation(dt=duration*Dt)
+def update_active():
+    for pathway in S_inE._pathways:
+        pathway.queue._restore_from_full_state(None)
+    for pathway in S_inI._pathways:
+        pathway.queue._restore_from_full_state(None)
+    for pathway in S_EE._pathways:
+        pathway.queue._restore_from_full_state(None)
+    for pathway in S_IE._pathways:
+        pathway.queue._restore_from_full_state(None)
+    for pathway in S_EI._pathways:
+        pathway.queue._restore_from_full_state(None)
+    for pathway in S_II._pathways:
+        pathway.queue._restore_from_full_state(None)
+    G_ex.lastspike = '0 * ms'
+    G_ex.not_refractory = True
+    G_ex.v = '13.5+1.5*rand()'
+    G_ex.h = '0'
+    G_ex.g = '0'
+    G_inh.lastspike = '0 * ms'
+    G_inh.not_refractory = True
+    G_inh.v = '13.5+1.5*rand()'
+    G_inh.h = '0'
+    G_inh.g = '0'
+    G_readout.v = '0'
+    G_readout.h = '0'
+    G_readout.g = '0'
+
 net = Network(collect())
 
 
