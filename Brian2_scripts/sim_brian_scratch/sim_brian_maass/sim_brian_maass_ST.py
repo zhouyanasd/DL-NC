@@ -497,8 +497,8 @@ for i in range(label_train.shape[0]):
     Y_train_, Y_test_ = readout.readout()
     label_train_ = readout.predict_logistic(Y_train_)
     label_test_ = readout.predict_logistic(Y_test_)
-    score_train.extend(readout.calculate_score(label_train,label_train_))
-    score_test.extend(readout.calculate_score(label_test, label_test_))
+    score_train.extend(readout.calculate_score(label_train[i:i+1],label_train_))
+    score_test.extend(readout.calculate_score(label_test[i:i+1], label_test_))
 
 
 #####################################
