@@ -2,3 +2,6 @@
 Data/temp
 .ipynb_checkpoints/
 demos/notebook/logs/
+/demos/scripts/P.U_MNIST/random/
+/demos/scripts/P.U_MNIST/activity/
+/demos/scripts/P.U_MNIST/weights/
