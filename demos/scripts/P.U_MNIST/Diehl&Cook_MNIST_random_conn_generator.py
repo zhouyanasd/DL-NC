@@ -15,7 +15,7 @@ def randomDelay(minDelay, maxDelay):
         
 def computePopVector(popArray):
     size = len(popArray)
-    complex_unit_roots = np.array([np.exp(1j*(2*np.pi/size)*cur_pos) for cur_pos in xrange(size)])
+    complex_unit_roots = np.array([np.exp(1j*(2*np.pi/size)*cur_pos) for cur_pos in range(size)])
     cur_pos = (np.angle(np.sum(popArray * complex_unit_roots)) % (2*np.pi)) / (2*np.pi)
     return cur_pos
 
@@ -56,7 +56,7 @@ def create_weights():
     pConn['ii'] = 0.1
     
     
-    print 'create random connection matrices'
+    print ('create random connection matrices')
     connNameList = ['XeAe']
     for name in connNameList:
         weightMatrix = np.random.random((nInput, nE)) + 0.01
@@ -64,50 +64,50 @@ def create_weights():
         if pConn['ee_input'] < 1.0:
             weightMatrix, weightList = sparsenMatrix(weightMatrix, pConn['ee_input'])
         else:
-            weightList = [(i, j, weightMatrix[i,j]) for j in xrange(nE) for i in xrange(nInput)]
+            weightList = [(i, j, weightMatrix[i,j]) for j in range(nE) for i in range(nInput)]
         np.save(dataPath+name, weightList)
     
     
     
-    print 'create connection matrices from E->I which are purely random'
+    print ('create connection matrices from E->I which are purely random')
     connNameList = ['XeAi']
     for name in connNameList:
         weightMatrix = np.random.random((nInput, nI))
         weightMatrix *= weight['ei_input']
         weightMatrix, weightList = sparsenMatrix(weightMatrix, pConn['ei_input'])
-        print 'save connection matrix', name
+        print ('save connection matrix', name)
         np.save(dataPath+name, weightList)
         
     
     
-    print 'create connection matrices from E->I which are purely random'
+    print ('create connection matrices from E->I which are purely random')
     connNameList = ['AeAi']
     for name in connNameList:
         if nE == nI:
-            weightList = [(i, i, weight['ei']) for i in xrange(nE)]
+            weightList = [(i, i, weight['ei']) for i in range(nE)]
         else:
             weightMatrix = np.random.random((nE, nI))
             weightMatrix *= weight['ei']
             weightMatrix, weightList = sparsenMatrix(weightMatrix, pConn['ei'])
-        print 'save connection matrix', name
+        print ('save connection matrix', name)
         np.save(dataPath+name, weightList)
         
         
         
-    print 'create connection matrices from I->E which are purely random'
+    print ('create connection matrices from I->E which are purely random')
     connNameList = ['AiAe']
     for name in connNameList:
         if nE == nI:
             weightMatrix = np.ones((nI, nE))
             weightMatrix *= weight['ie']
-            for i in xrange(nI):
+            for i in range(nI):
                 weightMatrix[i,i] = 0
-            weightList = [(i, j, weightMatrix[i,j]) for i in xrange(nI) for j in xrange(nE)]
+            weightList = [(i, j, weightMatrix[i,j]) for i in range(nI) for j in range(nE)]
         else:
             weightMatrix = np.random.random((nI, nE))
             weightMatrix *= weight['ie']
             weightMatrix, weightList = sparsenMatrix(weightMatrix, pConn['ie'])
-        print 'save connection matrix', name
+        print ('save connection matrix', name)
         np.save(dataPath+name, weightList)
     
          
