@@ -118,7 +118,7 @@ while (counter < num_tests):
     start_time = 10000*counter
     test_results = np.zeros((10, end_time-start_time))
     print ('calculate accuracy for sum')
-    for i in xrange(end_time - start_time):
+    for i in range(end_time - start_time):
         test_results[:,i] = get_recognized_number_ranking(assignments, 
                                                           testing_result_monitor[i+start_time,:])
     difference = test_results[0,:] - testing_input_numbers[start_time:end_time]
