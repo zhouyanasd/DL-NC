@@ -24,6 +24,7 @@ prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
 
+
 # ------define function------------
 class Function():
     def __init__(self):
@@ -45,7 +46,7 @@ class Base():
         self.dt = dt
         self.interval = duration*dt
 
-    def get_states(self, input, running_time, sample):
+    def get_states(self, input, running_time, sample, normalize = False):
         n = int(running_time / self.interval)
         step = int(self.interval / sample / defaultclock.dt)
         interval_ = int(self.interval / defaultclock.dt)
@@ -53,7 +54,10 @@ class Base():
         for i in range(n):
             sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
             temp.append(sum)
-        return MinMaxScaler().fit_transform(np.asarray(temp)).T
+        if normalize:
+            return MinMaxScaler().fit_transform(np.asarray(temp)).T
+        else:
+            return np.asarray(temp).T
 
     def normalization_min_max(self, arr):
         arr_n = arr
@@ -231,29 +235,22 @@ class Result():
         pickle.dump(kwarg, fw)
         fw.close()
 
-
     def result_pick(self, path):
         fr = open(path, 'rb')
         data = pickle.load(fr)
         fr.close()
         return data
 
-
     def animation(self, t, v, interval, duration, a_step=10, a_interval=100, a_duration = 10):
-
         xs = LinearScale()
         ys = LinearScale()
-
         line = Lines(x=t[:interval], y=v[:,:interval], scales={'x': xs, 'y': ys})
         xax = Axis(scale=xs, label='x', grid_lines='solid')
         yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
-
         fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
-
         def on_value_change(change):
             line.x = t[change['new']:interval+change['new']]
             line.y = v[:,change['new']:interval+change['new']]
-
         play = widgets.Play(
             interval=a_interval,
             value=0,
@@ -269,8 +266,33 @@ class Result():
         return play, slider, fig
 
 
+# class Simulation():
+#     SIMULATION = ('TRAIN', 'TEST', 'PRE_TRAIN')
+#
+#     def __init__(self):
+#         self.simulate = None
+#         self.network_op = None
+#         self.states_train = []
+#         self.states_test = []
+#         # self.network = None
+#
+#
+#     # def get_states_bench(self, state, sim):
+#     #     pass
+#
+#     def update_func(self):
+#         if self.simulate not in self.SIMULATION :
+#             raise ('The simulation purpose must be %s or %s or %s' % self.SIMULATION)
+#         else:
+#             if self.simulate == 'TRAIN':
+#                 return np.append()
+#         # states = base.get_states(m_read.v, duration * Dt, sample)
+#         #
+#         # net.restore('init')
+
 ###################################
 # -----parameter setting-------
+sim_flag = None
 duration = 1000
 N_train = 1000
 N_test = 500
@@ -308,14 +330,8 @@ ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
 df_train = ST.data_generation_batch(N_train)
 df_test = ST.data_generation_batch(N_test)
 
-data_train_s, label_train = ST.get_series_data(df_train, False)
-data_test_s, label_test = ST.get_series_data(df_test, False)
-
-duration_train = len(data_train_s) * Dt
-duration_test = len(data_test_s) * Dt
-
-Time_array_train = TimedArray(data_train_s, dt=Dt)
-Time_array_test = TimedArray(data_test_s, dt=Dt)
+data_train_s, label_train = ST.get_series_data(df_train, True)
+data_test_s, label_test = ST.get_series_data(df_test, True)
 
 #------definition of equation-------------
 neuron_in = '''
@@ -447,8 +463,13 @@ m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
-@network_operation(dt=duration*Dt)
-def update_active():
+# @network_operation(dt=duration*Dt)
+# def update_active():
+#     states = base.get_states(m_read.v, duration*Dt, sample)
+#     if sim_flag == 'TRAIN':
+#         np.append()
+#     net.restore('init')
+
     # print(G_readout.v[:5])
     # for obj in net.objects:
     #     if isinstance(obj, Synapses) or isinstance(obj, NeuronGroup) or isinstance(obj, SynapticPathway):
@@ -456,21 +477,21 @@ def update_active():
 
 
 net = Network(collect())
-
+net.store('init')
 
 ###############################################
 # ------run for lms_train-------
-stimulus = Time_array_train
-net.store('init')
-net.run(duration_train, report='text')
-states_train = base.get_states(m_read.v, duration_train, sample)
+states_train = []
+for data in data_train_s:
+    stimulus = TimedArray(data, dt=Dt)
+    net.run(duration*Dt, report='text')
+
+# states_train = base.get_states(m_read.v, duration_train, sample)
 
 # ----run for test--------
-del stimulus
-stimulus = Time_array_test
-net.restore('init')
-net.run(duration_test, report='text')
-states_test = base.get_states(m_read.v, duration_test, sample)
+states_test = []
+net.run(N_test*duration*Dt, report='text')
+# states_test = base.get_states(m_read.v, duration_test, sample)
 
 
 #####################################
