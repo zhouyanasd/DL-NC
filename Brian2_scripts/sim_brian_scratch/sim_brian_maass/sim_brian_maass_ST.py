@@ -6,6 +6,7 @@
 
 from brian2 import *
 from brian2tools import *
+from brian2.synapses.synapses import SynapticPathway
 import scipy as sp
 import struct
 import matplotlib.pyplot as plt
@@ -31,9 +32,11 @@ class Function():
     def logistic(self, f):
         return 1/(1+np.exp(-f))
 
-
     def softmax(self, z):
         return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
+
+    def gamma(self, a, size):
+        return sp.stats.gamma.rvs(a, size = size)
 
 
 class Base():
@@ -50,7 +53,7 @@ class Base():
         for i in range(n):
             sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:,::-step], axis=1)
             temp.append(sum)
-        return MinMaxScaler().fit_transform(np.asarray(temp).T)
+        return MinMaxScaler().fit_transform(np.asarray(temp)).T
 
     def normalization_min_max(self, arr):
         arr_n = arr
@@ -203,17 +206,20 @@ class ST_classification_mass():
             df = pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(label)})
         return df
 
-    def get_series_data(self, data_frame, is_order=True, *args, **kwargs):
+    def get_series_data(self, data_frame, is_order=True, is_group=False, *args, **kwargs):
         if not is_order:
             data_frame_obj = data_frame.sample(frac=1).reset_index(drop=True)
         else:
             data_frame_obj = data_frame
         data_frame_s = []
-        for value in data_frame_obj['value']:
-            data_frame_s.extend(value)
-        data_frame_s = np.asarray([data_frame_s]).T
+        if not is_group:
+            for value in data_frame_obj['value']:
+                data_frame_s.extend(np.asarray([value]).T)
+        else:
+            for value in data_frame_obj['value']:
+                data_frame_s.append(np.asarray([value]).T)
         label = data_frame_obj['label']
-        return data_frame_s, np.array(list(map(list, zip(*label))))
+        return np.asarray(data_frame_s), np.array(list(map(list, zip(*label))))
 
 
 class Result():
@@ -284,8 +290,8 @@ R = 2
 
 A_EE = 30
 A_EI = 60
-A_IE = -19
-A_II = -19
+A_IE = 19
+A_II = 19
 A_inE = 18
 A_inI = 9
 
@@ -297,7 +303,6 @@ base = Base(duration, Dt)
 readout = Readout(function.logistic)
 result = Result()
 ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
-
 
 #-------data initialization----------------------
 df_train = ST.data_generation_batch(N_train)
@@ -397,7 +402,7 @@ S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name
 
 S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
 
-S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
+S_I_readout = Synapses(G_inh, G_readout, 'w = -1 : 1', on_pre=on_pre_read, method='euler')
 
 #-------initialization of neuron parameters----------
 G_ex.v = '13.5+1.5*rand()'
@@ -423,12 +428,12 @@ S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**
 S_E_readout.connect(j='i')
 S_I_readout.connect(j='i+n_ex')
 
-S_inE.w = 'A_inE*randn()+A_inE'
-S_inI.w = 'A_inI*randn()+A_inI'
-S_EE.w = 'A_EE*randn()+A_EE'
-S_IE.w = 'A_IE*randn()+A_IE'
-S_EI.w = 'A_EI*randn()+A_EI'
-S_II.w = 'A_II*randn()+A_II'
+S_inE.w = function.gamma(A_inE, S_inE.w.shape)
+S_inI.w = function.gamma(A_inI, S_inI.w.shape)
+S_EE.w = function.gamma(A_EE, S_EE.w.shape)
+S_IE.w = function.gamma(A_IE, S_IE.w.shape)
+S_EI.w = function.gamma(A_EI, S_EI.w.shape)
+S_II.w = function.gamma(A_II, S_II.w.shape)
 
 S_EE.delay = '1.5*ms'
 S_EI.delay = '0.8*ms'
@@ -444,31 +449,11 @@ m_input = StateMonitor(Input, ('I'), record=True)
 # ------create network-------------
 @network_operation(dt=duration*Dt)
 def update_active():
-    for pathway in S_inE._pathways:
-        pathway.queue._restore_from_full_state(None)
-    for pathway in S_inI._pathways:
-        pathway.queue._restore_from_full_state(None)
-    for pathway in S_EE._pathways:
-        pathway.queue._restore_from_full_state(None)
-    for pathway in S_IE._pathways:
-        pathway.queue._restore_from_full_state(None)
-    for pathway in S_EI._pathways:
-        pathway.queue._restore_from_full_state(None)
-    for pathway in S_II._pathways:
-        pathway.queue._restore_from_full_state(None)
-    G_ex.lastspike = '0 * ms'
-    G_ex.not_refractory = True
-    G_ex.v = '13.5+1.5*rand()'
-    G_ex.h = '0'
-    G_ex.g = '0'
-    G_inh.lastspike = '0 * ms'
-    G_inh.not_refractory = True
-    G_inh.v = '13.5+1.5*rand()'
-    G_inh.h = '0'
-    G_inh.g = '0'
-    G_readout.v = '0'
-    G_readout.h = '0'
-    G_readout.g = '0'
+    # print(G_readout.v[:5])
+    # for obj in net.objects:
+    #     if isinstance(obj, Synapses) or isinstance(obj, NeuronGroup) or isinstance(obj, SynapticPathway):
+    #         obj._restore_from_full_state(net._stored_state['init'][obj.name])
+
 
 net = Network(collect())
 
@@ -476,14 +461,14 @@ net = Network(collect())
 ###############################################
 # ------run for lms_train-------
 stimulus = Time_array_train
-net.store('third')
+net.store('init')
 net.run(duration_train, report='text')
 states_train = base.get_states(m_read.v, duration_train, sample)
 
 # ----run for test--------
 del stimulus
 stimulus = Time_array_test
-net.restore('third')
+net.restore('init')
 net.run(duration_test, report='text')
 states_test = base.get_states(m_read.v, duration_test, sample)
 
