@@ -6,7 +6,6 @@
 
 from brian2 import *
 from brian2tools import *
-from brian2.synapses.synapses import SynapticPathway
 import scipy as sp
 import struct
 import matplotlib.pyplot as plt
@@ -17,6 +16,7 @@ import pickle
 from bqplot import *
 import ipywidgets as widgets
 import warnings
+import os
 
 
 warnings.filterwarnings("ignore")
@@ -231,6 +231,8 @@ class Result():
         pass
 
     def result_save(self, path, *arg, **kwarg):
+        if os.path.exists(path):
+            os.remove(path)
         fw = open(path, 'wb')
         pickle.dump(kwarg, fw)
         fw.close()
@@ -266,33 +268,8 @@ class Result():
         return play, slider, fig
 
 
-# class Simulation():
-#     SIMULATION = ('TRAIN', 'TEST', 'PRE_TRAIN')
-#
-#     def __init__(self):
-#         self.simulate = None
-#         self.network_op = None
-#         self.states_train = []
-#         self.states_test = []
-#         # self.network = None
-#
-#
-#     # def get_states_bench(self, state, sim):
-#     #     pass
-#
-#     def update_func(self):
-#         if self.simulate not in self.SIMULATION :
-#             raise ('The simulation purpose must be %s or %s or %s' % self.SIMULATION)
-#         else:
-#             if self.simulate == 'TRAIN':
-#                 return np.append()
-#         # states = base.get_states(m_read.v, duration * Dt, sample)
-#         #
-#         # net.restore('init')
-
 ###################################
 # -----parameter setting-------
-sim_flag = None
 duration = 1000
 N_train = 1000
 N_test = 500
@@ -463,35 +440,56 @@ m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
-# @network_operation(dt=duration*Dt)
-# def update_active():
-#     states = base.get_states(m_read.v, duration*Dt, sample)
-#     if sim_flag == 'TRAIN':
-#         np.append()
-#     net.restore('init')
-
-    # print(G_readout.v[:5])
-    # for obj in net.objects:
-    #     if isinstance(obj, Synapses) or isinstance(obj, NeuronGroup) or isinstance(obj, SynapticPathway):
-    #         obj._restore_from_full_state(net._stored_state['init'][obj.name])
-
-
 net = Network(collect())
 net.store('init')
 
 ###############################################
 # ------run for lms_train-------
 states_train = []
+monitor_record_train = {
+                'm_g_ex.I': [],
+                'm_g_ex.v': [],
+                'm_g_in.I': [],
+                'm_g_in.v': [],
+                'm_read.I': [],
+                'm_read.v': [],
+                'm_input.I': []}
 for data in data_train_s:
     stimulus = TimedArray(data, dt=Dt)
     net.run(duration*Dt, report='text')
-
-# states_train = base.get_states(m_read.v, duration_train, sample)
+    states_train.append(G_readout.v.tolist())
+    net.restore('init')
+    monitor_record_train['m_g_ex.I'].extend(m_g_ex.I.T.tolist())
+    monitor_record_train['m_g_ex.v'].extend(m_g_ex.v.T.tolist())
+    monitor_record_train['m_g_in.I'].extend(m_g_in.I.T.tolist())
+    monitor_record_train['m_g_ex.I'].extend(m_g_in.v.T.tolist())
+    monitor_record_train['m_g_read.I'].extend(m_read.v.T.tolist())
+    monitor_record_train['m_g_read.v'].extend(m_read.v.T.tolist())
+states_train = MinMaxScaler().fit_transform(np.asarray(states_train)).T
 
 # ----run for test--------
+del stimulus
 states_test = []
-net.run(N_test*duration*Dt, report='text')
-# states_test = base.get_states(m_read.v, duration_test, sample)
+monitor_record_test = {
+                'm_g_ex.I': [],
+                'm_g_ex.v': [],
+                'm_g_in.I': [],
+                'm_g_in.v': [],
+                'm_read.I': [],
+                'm_read.v': [],
+                'm_input.I': []}
+for data in data_train_s:
+    stimulus = TimedArray(data, dt=Dt)
+    net.run(duration*Dt, report='text')
+    states_test.append(G_readout.v.tolist())
+    net.restore('init')
+    monitor_record_test['m_g_ex.I'].extend(m_g_ex.I.T.tolist())
+    monitor_record_test['m_g_ex.v'].extend(m_g_ex.v.T.tolist())
+    monitor_record_test['m_g_in.I'].extend(m_g_in.I.T.tolist())
+    monitor_record_test['m_g_ex.I'].extend(m_g_in.v.T.tolist())
+    monitor_record_test['m_g_read.I'].extend(m_read.v.T.tolist())
+    monitor_record_test['m_g_read.v'].extend(m_read.v.T.tolist())
+states_test = MinMaxScaler().fit_transform(np.asarray(states_train)).T
 
 
 #####################################
@@ -515,15 +513,8 @@ print('Test score: ',score_test)
 
 #####################################
 #-----------save monitor data-------
-monitor_data = {'t': m_g_ex.t/ms,
-                'm_g_ex.I': m_g_ex.I,
-                'm_g_ex.v': m_g_ex.v,
-                'm_g_in.I': m_g_in.I,
-                'm_g_in.v': m_g_in.v,
-                'm_read.I': m_read.I,
-                'm_read.v': m_read.v,
-                'm_input.I': m_input.I}
-result.result_save('monitor_temp.pkl', **monitor_data)
+result.result_save('monitor_temp.pkl', **monitor_record_train)
+result.result_save('monitor_temp.pkl', **monitor_record_test)
 
 
 #####################################
