@@ -307,8 +307,8 @@ ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
 df_train = ST.data_generation_batch(N_train)
 df_test = ST.data_generation_batch(N_test)
 
-data_train_s, label_train = ST.get_series_data(df_train, True)
-data_test_s, label_test = ST.get_series_data(df_test, True)
+data_train_s, label_train = ST.get_series_data(df_train, is_group = True)
+data_test_s, label_test = ST.get_series_data(df_test, is_group = True)
 
 #------definition of equation-------------
 neuron_in = '''
@@ -445,51 +445,59 @@ net.store('init')
 
 ###############################################
 # ------run for lms_train-------
-states_train = []
+states_train = pd.DataFrame()
 monitor_record_train = {
-                'm_g_ex.I': [],
-                'm_g_ex.v': [],
-                'm_g_in.I': [],
-                'm_g_in.v': [],
-                'm_read.I': [],
-                'm_read.v': [],
-                'm_input.I': []}
-for data in data_train_s:
+                'm_g_ex.I': pd.DataFrame(),
+                'm_g_ex.v': pd.DataFrame(),
+                'm_g_in.I': pd.DataFrame(),
+                'm_g_in.v': pd.DataFrame(),
+                'm_read.I': pd.DataFrame(),
+                'm_read.v': pd.DataFrame(),
+                'm_input.I': pd.DataFrame()}
+for ser, data in enumerate(data_train_s):
+    if ser % 50 == 0:
+        print('The simulation is running at %s time.' %ser)
     stimulus = TimedArray(data, dt=Dt)
-    net.run(duration*Dt, report='text')
-    states_train.append(G_readout.v.tolist())
+    net.run(duration*Dt)
+    states_train = states_train.append(pd.DataFrame([G_readout.variables['v'].get_value()]))
+    monitor_record_train['m_g_ex.I'] = monitor_record_train['m_g_ex.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_g_ex.v'] = monitor_record_train['m_g_ex.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_g_in.I'] = monitor_record_train['m_g_in.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_g_ex.I'] = monitor_record_train['m_g_in.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_read.I'] = monitor_record_train['m_read.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_read.v'] = monitor_record_train['m_read.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_train['m_input.I'] = monitor_record_train['m_input.I'].append(pd.DataFrame(m_g_ex.I.T))
     net.restore('init')
-    monitor_record_train['m_g_ex.I'].extend(m_g_ex.I.T.tolist())
-    monitor_record_train['m_g_ex.v'].extend(m_g_ex.v.T.tolist())
-    monitor_record_train['m_g_in.I'].extend(m_g_in.I.T.tolist())
-    monitor_record_train['m_g_ex.I'].extend(m_g_in.v.T.tolist())
-    monitor_record_train['m_g_read.I'].extend(m_read.v.T.tolist())
-    monitor_record_train['m_g_read.v'].extend(m_read.v.T.tolist())
 states_train = MinMaxScaler().fit_transform(np.asarray(states_train)).T
+states_train = np.array(states_train)
 
 # ----run for test--------
 del stimulus
-states_test = []
+states_test = pd.DataFrame()
 monitor_record_test = {
-                'm_g_ex.I': [],
-                'm_g_ex.v': [],
-                'm_g_in.I': [],
-                'm_g_in.v': [],
-                'm_read.I': [],
-                'm_read.v': [],
-                'm_input.I': []}
-for data in data_train_s:
+                'm_g_ex.I': pd.DataFrame(),
+                'm_g_ex.v': pd.DataFrame(),
+                'm_g_in.I': pd.DataFrame(),
+                'm_g_in.v': pd.DataFrame(),
+                'm_read.I': pd.DataFrame(),
+                'm_read.v': pd.DataFrame(),
+                'm_input.I': pd.DataFrame()}
+for ser, data in enumerate(data_test_s):
+    if ser % 50 == 0:
+        print('The simulation is running at %s time.' %ser)
     stimulus = TimedArray(data, dt=Dt)
-    net.run(duration*Dt, report='text')
-    states_test.append(G_readout.v.tolist())
+    net.run(duration*Dt)
+    states_test = states_test.append(pd.DataFrame([G_readout.variables['v'].get_value()]))
+    monitor_record_test['m_g_ex.I'] = monitor_record_test['m_g_ex.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_g_ex.v'] = monitor_record_test['m_g_ex.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_g_in.I'] = monitor_record_test['m_g_in.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_g_ex.I'] = monitor_record_test['m_g_in.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_read.I'] = monitor_record_test['m_read.I'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_read.v'] = monitor_record_test['m_read.v'].append(pd.DataFrame(m_g_ex.I.T))
+    monitor_record_test['m_input.I'] = monitor_record_test['m_input.I'].append(pd.DataFrame(m_g_ex.I.T))
     net.restore('init')
-    monitor_record_test['m_g_ex.I'].extend(m_g_ex.I.T.tolist())
-    monitor_record_test['m_g_ex.v'].extend(m_g_ex.v.T.tolist())
-    monitor_record_test['m_g_in.I'].extend(m_g_in.I.T.tolist())
-    monitor_record_test['m_g_ex.I'].extend(m_g_in.v.T.tolist())
-    monitor_record_test['m_g_read.I'].extend(m_read.v.T.tolist())
-    monitor_record_test['m_g_read.v'].extend(m_read.v.T.tolist())
-states_test = MinMaxScaler().fit_transform(np.asarray(states_train)).T
+states_test = MinMaxScaler().fit_transform(np.asarray(states_test)).T
+states_test = np.array(states_test)
 
 
 #####################################
@@ -513,9 +521,13 @@ print('Test score: ',score_test)
 
 #####################################
 #-----------save monitor data-------
-result.result_save('monitor_temp.pkl', **monitor_record_train)
-result.result_save('monitor_temp.pkl', **monitor_record_test)
-
+result.result_save('monitor_train.pkl', **monitor_record_train)
+result.result_save('monitor_test.pkl', **monitor_record_test)
+states_records = {
+    'states_train' : states_train,
+    'states_test' : states_test,
+}
+result.result_save('states_records.pkl', **states_records)
 
 #####################################
 # ------vis of results----
@@ -532,5 +544,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_temp.pkl')
-play, slider, fig = result.animation(monitor['t'], monitor['m_read.v'], 50, N_test*duration)
+play, slider, fig = result.animation(np.arange(len(monitor['m_read.v'])), monitor['m_read.v'], 50, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
