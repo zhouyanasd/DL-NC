@@ -59,6 +59,14 @@ class Base():
         else:
             return np.asarray(temp).T
 
+    def update_states(self, type = 'pandas', *args, **kwargs):
+        for seq, state in enumerate(kwargs):
+            if type == 'pandas':
+                kwargs[state] = kwargs[state].append(pd.DataFrame(args[seq]))
+            elif type == 'numpy':
+                kwargs[state] = self.np_extend(kwargs[state],args[seq],1)
+        return kwargs
+
     def normalization_min_max(self, arr):
         arr_n = arr
         for i in range(arr.size):
@@ -110,8 +118,7 @@ class Base():
         shape.insert(0, -1)
         if a == None:
             a = np.array([]).reshape(tuple(shape))
-            print(shape)
-        return np.append(a, b.reshape(tuple(shape)))
+        return np.append(a, b.reshape(tuple(shape)), axis= 0)
 
 
 class Readout():
@@ -245,11 +252,6 @@ class Result():
     def __init__(self):
         pass
 
-    def update_states(self, *args, **kwargs):
-        for seq, state in enumerate(kwargs):
-            kwargs[state] = kwargs[state].append(pd.DataFrame(args[seq]))
-        return kwargs
-
     def result_save(self, path, *arg, **kwarg):
         if os.path.exists(path):
             os.remove(path)
@@ -288,31 +290,28 @@ class Result():
         return play, slider, fig
 
 
-#--------define network run function-------------------
+# #--------define network run function-------------------
 def run_net(inputs, record = True):
-    states = pd.DataFrame()
+    states = None
     monitor_record= {
-        'm_g_ex.I': pd.DataFrame(),
-        'm_g_ex.v': pd.DataFrame(),
-        'm_g_in.I': pd.DataFrame(),
-        'm_g_in.v': pd.DataFrame(),
-        'm_read.I': pd.DataFrame(),
-        'm_read.v': pd.DataFrame(),
-        'm_input.I': pd.DataFrame()}
+        'm_g_ex.I': None,
+        'm_g_ex.v': None,
+        'm_g_in.I': None,
+        'm_g_in.v': None,
+        'm_read.I': None,
+        'm_read.v': None,
+        'm_input.I': None}
     for ser, data in enumerate(inputs):
         if ser % 50 == 0:
             print('The simulation is running at %s time.' % ser)
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration * Dt)
-        states= states.append(pd.DataFrame(G_readout.variables['v'].get_value().reshape(1,-1)))
+        states = base.np_append(states, G_readout.variables['v'].get_value())
         if record :
-            monitor_record= result.update_states(m_g_ex.I.T, m_g_ex.v.T, m_g_in.I.T, m_g_in.v.T, m_read.I.T,
-                                                m_read.v.T, m_input.I.T, **monitor_record)
+            monitor_record= base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
+                                                m_read.v, m_input.I, **monitor_record)
         net.restore('init')
-    if record :
-        for states in monitor_record :
-            monitor_record[states] = np.array(monitor_record[states])
-    return (MinMaxScaler().fit_transform(np.asarray(states)).T), monitor_record
+    return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
 
 ###################################
