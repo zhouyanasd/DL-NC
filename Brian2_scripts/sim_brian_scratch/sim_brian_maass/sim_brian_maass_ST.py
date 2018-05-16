@@ -25,7 +25,7 @@ start_scope()
 np.random.seed(100)
 
 
-# ------define function------------
+# ------define general function------------
 class Function():
     def __init__(self):
         pass
@@ -97,6 +97,21 @@ class Base():
         for i in range(n_post):
             a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
             Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)
+
+    def np_extend(self, a, b, axis = 0):
+        if a == None:
+            shape = list(b.shape)
+            shape[axis] = 0
+            a = np.array([]).reshape(tuple(shape))
+        return np.append(a, b, axis)
+
+    def np_append(self, a, b):
+        shape = list(b.shape)
+        shape.insert(0, -1)
+        if a == None:
+            a = np.array([]).reshape(tuple(shape))
+            print(shape)
+        return np.append(a, b.reshape(tuple(shape)))
 
 
 class Readout():
@@ -230,6 +245,11 @@ class Result():
     def __init__(self):
         pass
 
+    def update_states(self, *args, **kwargs):
+        for seq, state in enumerate(kwargs):
+            kwargs[state] = kwargs[state].append(pd.DataFrame(args[seq]))
+        return kwargs
+
     def result_save(self, path, *arg, **kwarg):
         if os.path.exists(path):
             os.remove(path)
@@ -268,6 +288,33 @@ class Result():
         return play, slider, fig
 
 
+#--------define network run function-------------------
+def run_net(inputs, record = True):
+    states = pd.DataFrame()
+    monitor_record= {
+        'm_g_ex.I': pd.DataFrame(),
+        'm_g_ex.v': pd.DataFrame(),
+        'm_g_in.I': pd.DataFrame(),
+        'm_g_in.v': pd.DataFrame(),
+        'm_read.I': pd.DataFrame(),
+        'm_read.v': pd.DataFrame(),
+        'm_input.I': pd.DataFrame()}
+    for ser, data in enumerate(inputs):
+        if ser % 50 == 0:
+            print('The simulation is running at %s time.' % ser)
+        stimulus = TimedArray(data, dt=Dt)
+        net.run(duration * Dt)
+        states= states.append(pd.DataFrame(G_readout.variables['v'].get_value().reshape(1,-1)))
+        if record :
+            monitor_record= result.update_states(m_g_ex.I.T, m_g_ex.v.T, m_g_in.I.T, m_g_in.v.T, m_read.I.T,
+                                                m_read.v.T, m_input.I.T, **monitor_record)
+        net.restore('init')
+    if record :
+        for states in monitor_record :
+            monitor_record[states] = np.array(monitor_record[states])
+    return (MinMaxScaler().fit_transform(np.asarray(states)).T), monitor_record
+
+
 ###################################
 # -----parameter setting-------
 duration = 1000
@@ -277,7 +324,7 @@ Dt = defaultclock.dt = 1*ms
 
 sample = 1
 train_rate = 1e-4
-train_theta = 1e-4
+train_theta = 1e-6
 pre_train_loop = 0
 
 n_ex = 108
@@ -444,60 +491,11 @@ net = Network(collect())
 net.store('init')
 
 ###############################################
-# ------run for lms_train-------
-states_train = pd.DataFrame()
-monitor_record_train = {
-                'm_g_ex.I': pd.DataFrame(),
-                'm_g_ex.v': pd.DataFrame(),
-                'm_g_in.I': pd.DataFrame(),
-                'm_g_in.v': pd.DataFrame(),
-                'm_read.I': pd.DataFrame(),
-                'm_read.v': pd.DataFrame(),
-                'm_input.I': pd.DataFrame()}
-for ser, data in enumerate(data_train_s):
-    if ser % 50 == 0:
-        print('The simulation is running at %s time.' %ser)
-    stimulus = TimedArray(data, dt=Dt)
-    net.run(duration*Dt)
-    states_train = states_train.append(pd.DataFrame([G_readout.variables['v'].get_value()]))
-    monitor_record_train['m_g_ex.I'] = monitor_record_train['m_g_ex.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_g_ex.v'] = monitor_record_train['m_g_ex.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_g_in.I'] = monitor_record_train['m_g_in.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_g_ex.I'] = monitor_record_train['m_g_in.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_read.I'] = monitor_record_train['m_read.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_read.v'] = monitor_record_train['m_read.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_train['m_input.I'] = monitor_record_train['m_input.I'].append(pd.DataFrame(m_g_ex.I.T))
-    net.restore('init')
-states_train = MinMaxScaler().fit_transform(np.asarray(states_train)).T
-states_train = np.array(states_train)
+# ------run for train-------
+states_train, monitor_record_train = run_net(data_train_s)
 
 # ----run for test--------
-del stimulus
-states_test = pd.DataFrame()
-monitor_record_test = {
-                'm_g_ex.I': pd.DataFrame(),
-                'm_g_ex.v': pd.DataFrame(),
-                'm_g_in.I': pd.DataFrame(),
-                'm_g_in.v': pd.DataFrame(),
-                'm_read.I': pd.DataFrame(),
-                'm_read.v': pd.DataFrame(),
-                'm_input.I': pd.DataFrame()}
-for ser, data in enumerate(data_test_s):
-    if ser % 50 == 0:
-        print('The simulation is running at %s time.' %ser)
-    stimulus = TimedArray(data, dt=Dt)
-    net.run(duration*Dt)
-    states_test = states_test.append(pd.DataFrame([G_readout.variables['v'].get_value()]))
-    monitor_record_test['m_g_ex.I'] = monitor_record_test['m_g_ex.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_g_ex.v'] = monitor_record_test['m_g_ex.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_g_in.I'] = monitor_record_test['m_g_in.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_g_ex.I'] = monitor_record_test['m_g_in.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_read.I'] = monitor_record_test['m_read.I'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_read.v'] = monitor_record_test['m_read.v'].append(pd.DataFrame(m_g_ex.I.T))
-    monitor_record_test['m_input.I'] = monitor_record_test['m_input.I'].append(pd.DataFrame(m_g_ex.I.T))
-    net.restore('init')
-states_test = MinMaxScaler().fit_transform(np.asarray(states_test)).T
-states_test = np.array(states_test)
+states_test, monitor_record_test = run_net(data_test_s)
 
 
 #####################################
@@ -523,11 +521,7 @@ print('Test score: ',score_test)
 #-----------save monitor data-------
 result.result_save('monitor_train.pkl', **monitor_record_train)
 result.result_save('monitor_test.pkl', **monitor_record_test)
-states_records = {
-    'states_train' : states_train,
-    'states_test' : states_test,
-}
-result.result_save('states_records.pkl', **states_records)
+result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
 
 #####################################
 # ------vis of results----
@@ -543,6 +537,6 @@ brian_plot(S_II.w)
 show()
 
 #-------for animation in Jupyter-----------
-monitor = result.result_pick('monitor_temp.pkl')
-play, slider, fig = result.animation(np.arange(len(monitor['m_read.v'])), monitor['m_read.v'], 50, N_test*duration)
+monitor = result.result_pick('monitor_test.pkl')
+play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[0]), monitor['m_read.v'], 50, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
