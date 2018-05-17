@@ -516,11 +516,6 @@ for i in range(label_train.shape[0]):
     score_train.extend(readout.calculate_score(label_train[i:i+1],label_train_))
     score_test.extend(readout.calculate_score(label_test[i:i+1], label_test_))
 
-# for i in range(label_train.shape[0]):
-#     train, test = readout.readout_sk(states_train, states_test, label_train[i:i + 1], label_test[i:i + 1])
-#     score_train.extend(train)
-#     score_test.extend(test)
-
 
 #####################################
 #----------show results-----------
