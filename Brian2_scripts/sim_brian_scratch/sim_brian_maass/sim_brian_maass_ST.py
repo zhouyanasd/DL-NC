@@ -183,6 +183,13 @@ class Readout():
         print(self.iter, self.cost_train, self.cost_test)
         return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
 
+    def readout_sk(self, X_train, X_test, y_train, y_test):
+        from sklearn.linear_model import LogisticRegression
+        lr = LogisticRegression()
+        lr.fit(X_train.T, y_train.T)
+        y_train_predictions = lr.predict(X_train.T)
+        y_test_predictions = lr.predict(X_test.T)
+        return accuracy_score(y_train_predictions, y_train.T), accuracy_score(y_test_predictions, y_test.T)
 
 
 class ST_classification_mass():
@@ -416,7 +423,7 @@ g+=w
 '''
 
 # -----Neurons and Synapses setting-------
-Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', reset='I = 0', method='euler', refractory=0 * ms,
+Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
 G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
