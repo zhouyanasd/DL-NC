@@ -389,47 +389,22 @@ synapse = '''
 w : 1
 '''
 
-synapse_dynamic = '''
-du/dt = (-u)/(F*second) : 1 (event-driven)
-dr/dt = (-r)/(D*second) : 1 (event-driven)
-w : 1
-U : 1
-F : 1
-D : 1
-'''
-
 on_pre_ex = '''
 g+=w
 '''
 
 on_pre_inh = '''
-h+=w
-'''
-
-on_pre_ex_dynamic = '''
-u = (1-U)*u+U
-r = (r*(1-u)-1)+1
-g+=w*r*u
-'''
-
-on_pre_dynamic = '''
-u = (1-U)*u+U
-r = (r*(1-u)-1)+1
-h+=w*r*u
-'''
-
-on_pre_read = '''
-g+=w
+h-=w
 '''
 
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
+G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2.99 * ms,
                 name ='neurongroup_ex')
 
-G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
+G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=1.99 * ms,
                 name ='neurongroup_in')
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
@@ -446,9 +421,9 @@ S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name=
 
 S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
 
-S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_read, method='euler')
+S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
 
-S_I_readout = Synapses(G_inh, G_readout, 'w = -1 : 1', on_pre=on_pre_read, method='euler')
+S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
 
 #-------initialization of neuron parameters----------
 G_ex.v = '13.5+1.5*rand()'
@@ -544,5 +519,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
-play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[0]), monitor['m_read.v'], 50, N_test*duration)
+play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[0]), monitor['m_read.v'], 100, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
