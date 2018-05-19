@@ -493,8 +493,8 @@ score_train = []
 score_test = []
 for i in range(label_train.shape[0]):
     train, test = readout.readout_sk(states_train, states_test, label_train[i:i + 1], label_test[i:i + 1])
-    score_train.extend(train)
-    score_test.extend(test)
+    score_train.append(train)
+    score_test.append(test)
 
 
 #####################################
@@ -524,5 +524,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
-play, slider, fig = result.animation(np.arange(monitor['t']), monitor['m_read.v'], 100, N_test*duration)
+play, slider, fig = result.animation(monitor['t'], monitor['m_read.v'], 100, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
