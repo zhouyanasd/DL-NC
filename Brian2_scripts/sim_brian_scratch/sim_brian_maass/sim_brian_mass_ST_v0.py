@@ -6,6 +6,7 @@
 
 from brian2 import *
 from brian2tools import *
+from brian2.synapses.synapses import SynapticPathway
 import scipy as sp
 import struct
 import matplotlib.pyplot as plt
@@ -99,7 +100,6 @@ class Base():
                 g.x[i], g.y[i], g.z[i]= V[n][0], V[n][1], V[n][2]
                 n +=1
         return G
-
 
     def w_norm2(self, n_post, Synapsis):
         for i in range(n_post):
@@ -297,30 +297,6 @@ class Result():
         return play, slider, fig
 
 
-# #--------define network run function-------------------
-def run_net(inputs, record = True):
-    states = None
-    monitor_record= {
-        'm_g_ex.I': None,
-        'm_g_ex.v': None,
-        'm_g_in.I': None,
-        'm_g_in.v': None,
-        'm_read.I': None,
-        'm_read.v': None,
-        'm_input.I': None}
-    for ser, data in enumerate(inputs):
-        if ser % 50 == 0:
-            print('The simulation is running at %s time.' % ser)
-        stimulus = TimedArray(data, dt=Dt)
-        net.run(duration * Dt)
-        states = base.np_append(states, G_readout.variables['v'].get_value())
-        if record :
-            monitor_record= base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, **monitor_record)
-        net.restore('init')
-    return (MinMaxScaler().fit_transform(states)).T, monitor_record
-
-
 ###################################
 # -----parameter setting-------
 duration = 1000
@@ -360,8 +336,14 @@ ST = ST_classification_mass(2, 4, duration, 20*Hz, Dt)
 df_train = ST.data_generation_batch(N_train)
 df_test = ST.data_generation_batch(N_test)
 
-data_train_s, label_train = ST.get_series_data(df_train, is_group = True)
-data_test_s, label_test = ST.get_series_data(df_test, is_group = True)
+data_train_s, label_train = ST.get_series_data(df_train, is_order=False, is_group = False)
+data_test_s, label_test = ST.get_series_data(df_test, is_order=False, is_group = False)
+
+duration_train = len(data_train_s) * Dt
+duration_test = len(data_test_s) * Dt
+
+Time_array_train = TimedArray(data_train_s, dt=Dt)
+Time_array_test = TimedArray(data_test_s, dt=Dt)
 
 #------definition of equation-------------
 neuron_in = '''
@@ -468,15 +450,44 @@ m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
 m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
+@network_operation(dt=duration*Dt)
+def update_active():
+    print(G_readout.v[:5])
+    for obj in net.objects:
+        if isinstance(obj, Synapses) or isinstance(obj, NeuronGroup) or isinstance(obj, SynapticPathway):
+            obj._restore_from_full_state(net._stored_state['third'][obj.name])
 net = Network(collect())
 net.store('init')
 
 ###############################################
-# ------run for train-------
-states_train, monitor_record_train = run_net(data_train_s)
+# ------run for lms_train-------
+stimulus = Time_array_train
+net.store('third')
+net.run(duration_train, report='text')
+states_train = base.get_states(m_read.v, duration_train, sample)
+monitor_record_train = {'t': m_g_ex.t/ms,
+                'm_g_ex.I': m_g_ex.I,
+                'm_g_ex.v': m_g_ex.v,
+                'm_g_in.I': m_g_in.I,
+                'm_g_in.v': m_g_in.v,
+                'm_read.I': m_read.I,
+                'm_read.v': m_read.v,
+                'm_input.I': m_input.I}
 
 # ----run for test--------
-states_test, monitor_record_test = run_net(data_test_s)
+del stimulus
+stimulus = Time_array_test
+net.restore('third')
+net.run(duration_test, report='text')
+states_test = base.get_states(m_read.v, duration_test, sample)
+monitor_record_test = {'t': m_g_ex.t/ms,
+                'm_g_ex.I': m_g_ex.I,
+                'm_g_ex.v': m_g_ex.v,
+                'm_g_in.I': m_g_in.I,
+                'm_g_in.v': m_g_in.v,
+                'm_read.I': m_read.I,
+                'm_read.v': m_read.v,
+                'm_input.I': m_input.I}
 
 
 #####################################
@@ -484,12 +495,9 @@ states_test, monitor_record_test = run_net(data_test_s)
 score_train = []
 score_test = []
 for i in range(label_train.shape[0]):
-    readout.data_init(states_train, states_test, label_train[i:i+1], label_test[i:i+1], train_rate, train_theta)
-    Y_train_, Y_test_ = readout.readout()
-    label_train_ = readout.predict_logistic(Y_train_)
-    label_test_ = readout.predict_logistic(Y_test_)
-    score_train.extend(readout.calculate_score(label_train[i:i+1],label_train_))
-    score_test.extend(readout.calculate_score(label_test[i:i+1], label_test_))
+    train, test = readout.readout_sk(states_train, states_test, label_train[i:i + 1], label_test[i:i + 1])
+    score_train.extend(train)
+    score_test.extend(test)
 
 
 #####################################
@@ -519,5 +527,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
-play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[0]), monitor['m_read.v'], 100, N_test*duration)
+play, slider, fig = result.animation(np.arange(monitor['t']), monitor['m_read.v'], 100, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
