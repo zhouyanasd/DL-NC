@@ -452,7 +452,6 @@ m_input = StateMonitor(Input, ('I'), record=True)
 # ------create network-------------
 @network_operation(dt=duration*Dt)
 def update_active():
-    print(G_readout.v[:5])
     for obj in net.objects:
         if isinstance(obj, Synapses) or isinstance(obj, NeuronGroup) or isinstance(obj, SynapticPathway):
             obj._restore_from_full_state(net._stored_state['third'][obj.name])
