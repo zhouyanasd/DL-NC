@@ -374,10 +374,10 @@ dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h)+13.5: 1
+dr/dt = (15-r)/(20*ms) : 1
 x : 1
 y : 1
 z : 1
-dr/dt = (15-r)/(20*ms) : 1
 '''
 
 neuron_read = '''
@@ -385,6 +385,13 @@ dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
+'''
+
+adaptive_threshold = 'v > r'
+
+adaptive_reset = '''
+v = 13.5
+r = r+adr
 '''
 
 synapse = '''
@@ -399,21 +406,14 @@ on_pre_inh = '''
 h-=w
 '''
 
-threshold_reset = 'v > r'
-
-adaptive_reset = '''
-v = 13.5
-r = r+adr
-'''
-
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n_ex, neuron, threshold=threshold_reset, reset=adaptive_reset, method='euler', refractory=2.99 * ms,
+G_ex = NeuronGroup(n_ex, neuron, threshold=adaptive_threshold, reset=adaptive_reset, method='euler', refractory=2.99 * ms,
                 name ='neurongroup_ex')
 
-G_inh = NeuronGroup(n_inh, neuron, threshold=threshold_reset, reset=adaptive_reset, method='euler', refractory=1.99 * ms,
+G_inh = NeuronGroup(n_inh, neuron, threshold=adaptive_threshold, reset=adaptive_reset, method='euler', refractory=1.99 * ms,
                 name ='neurongroup_in')
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
