@@ -305,8 +305,6 @@ N_test = 500
 Dt = defaultclock.dt = 1*ms
 
 sample = 1
-train_rate = 1e-4
-train_theta = 1e-6
 pre_train_loop = 0
 
 n_ex = 108
