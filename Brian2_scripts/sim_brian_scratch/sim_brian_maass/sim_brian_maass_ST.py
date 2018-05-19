@@ -297,7 +297,7 @@ class Result():
         return play, slider, fig
 
 
-# #--------define network run function-------------------
+#--------define network run function-------------------
 def run_net(inputs, record = True):
     states = None
     monitor_record= {
@@ -519,5 +519,5 @@ show()
 
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
-play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[0]), monitor['m_read.v'], 100, N_test*duration)
+play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[1]), monitor['m_read.v'], 100, N_test*duration)
 widgets.VBox([widgets.HBox([play, slider]),fig])
