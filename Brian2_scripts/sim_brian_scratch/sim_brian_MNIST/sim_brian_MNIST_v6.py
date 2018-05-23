@@ -237,8 +237,8 @@ class Result():
 
 
 class MNIST_classification(Base):
-    def __init__(self, shape, dt, duration):
-        super().__init__(dt, duration)
+    def __init__(self, shape, duration, dt):
+        super().__init__(duration, dt)
         self.shape = shape
 
     def load_Data_MNIST(self, n, path_value, path_label, is_norm=True):
@@ -291,17 +291,35 @@ class MNIST_classification(Base):
             encoding.extend(coding)
         return np.asarray(encoding)
 
-    def encoding_latency_MNIST(self, analog_data, coding_n, min=0, max=np.pi):
+    def _encoding_cos_ignore_0(self, x, n, A):
+        encoding = []
+        for i in range(int(n)):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
+            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
+            coding = [([0] * trans_cos.shape[1]) for i in range(A * trans_cos.shape[0])]
+            for index_0, p in enumerate(trans_cos):
+                for index_1, q in enumerate(p):
+                    if int(q) == encoded_zero:
+                        continue
+                    else:
+                        coding[int(q) + A * index_0][index_1] = 1
+            encoding.extend(coding)
+        return np.asarray(encoding)
+
+    def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
+        encoding_data = analog_data
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
-        coding_duration = self.duration/self.shape[0]/coding_n
+        coding_duration = self.duration / self.shape[0] / coding_n
         if (coding_duration - int(coding_duration)) == 0.0:
-            return analog_data.apply(f).apply(self._encoding_cos, n=coding_n, A=int(coding_duration))
+            encoding_data['value'] = analog_data['value'].apply(f).apply(coding_f, n=coding_n,
+                                                                       A=int(coding_duration))
+            return encoding_data
         else:
-            raise ('duration must divide (coding_n*length of data) exactly')
+            raise ValueError('duration must divide (coding_n*length of data) exactly')
 
     def get_series_data(self, data_frame, is_group=False):
         data_frame_s = None
-        for value in data_frame:
+        for value in data_frame['value']:
             if not is_group:
                 for data in value:
                     data_frame_s = self.np_extend(data_frame_s, data, 0)
