@@ -18,7 +18,11 @@ from sklearn.metrics import accuracy_score
 import pickle
 from bqplot import *
 import ipywidgets as widgets
+import warnings
+import os
 
+
+warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
@@ -183,9 +187,9 @@ class Readout():
         print(self.iter, self.cost_train, self.cost_test)
         return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
 
-    def readout_sk(self, X_train, X_test, y_train, y_test):
+    def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
         from sklearn.linear_model import LogisticRegression
-        lr = LogisticRegression()
+        lr = LogisticRegression(**kwargs)
         lr.fit(X_train.T, y_train.T)
         y_train_predictions = lr.predict(X_train.T)
         y_test_predictions = lr.predict(X_test.T)
@@ -233,7 +237,7 @@ class Result():
         slider = widgets.IntSlider(min=0, max=duration)
         widgets.jslink((play, 'value'), (slider, 'value'))
         slider.observe(on_value_change, names='value')
-        return play, slider,
+        return play, slider, fig
 
 
 class MNIST_classification(Base):
@@ -317,13 +321,229 @@ class MNIST_classification(Base):
 
     def get_series_data(self, data_frame, is_group=False):
         data_frame_s = None
-        for value in data_frame['value']:
-            if not is_group:
-                for data in value:
-                    data_frame_s = self.np_extend(data_frame_s, data, 0)
-            else:
-                for data in value:
-                    data_frame_s = self.np_append(data_frame_s, data)
-        data_frame_s = np.asarray(data_frame_s)
+        if not is_group:
+            for value in data_frame['value']:
+                data_frame_s = self.np_extend(data_frame_s, value, 0)
+        else:
+            for value in data_frame['value']:
+                data_frame_s = self.np_append(data_frame_s, value)
         label = data_frame['label']
         return data_frame_s, label
+
+
+#--------define network run function-------------------
+def run_net(inputs, record = True):
+    states = None
+    monitor_record= {
+        'm_g_ex.I': None,
+        'm_g_ex.v': None,
+        'm_g_in.I': None,
+        'm_g_in.v': None,
+        'm_read.I': None,
+        'm_read.v': None,
+        'm_input.I': None}
+    for ser, data in enumerate(inputs):
+        if ser % 50 == 0:
+            print('The simulation is running at %s time.' % ser)
+        stimulus = TimedArray(data, dt=Dt)
+        net.run(duration * Dt)
+        states = base.np_append(states, G_readout.variables['v'].get_value())
+        if record :
+            monitor_record= base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
+                                                m_read.v, m_input.I, **monitor_record)
+        net.restore('init')
+    return (MinMaxScaler().fit_transform(states)).T, monitor_record
+
+
+###################################
+# -----parameter setting-------
+coding_n = 1
+MNIST_shape = (28, 28)
+duration = 10*coding_n*MNIST_shape[0]
+F_train = 0.05
+F_test = 0.05
+Dt = defaultclock.dt = 1*ms
+
+pre_train_loop = 0
+
+n_ex = 108
+n_inh = int(n_ex/4)
+n_input = MNIST_shape[1]
+n_read = n_ex+n_inh
+
+R = 2
+
+A_EE = 30
+A_EI = 60
+A_IE = 19
+A_II = 19
+A_inE = 18
+A_inI = 9
+
+###########################################
+#-------class initialization----------------------
+function = Function()
+base = Base(duration, Dt)
+readout = Readout(function.logistic)
+result = Result()
+MNIST = MNIST_classification(MNIST_shape, duration, Dt)
+
+#-------data initialization----------------------
+MNIST.load_Data_MNIST_all(data_path)
+df_train = MNIST.select_data(F_train, MNIST.train)
+df_test = MNIST.select_data(F_train, MNIST.test)
+
+df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_ignore_0, df_train, coding_n)
+df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_ignore_0, df_test, coding_n)
+
+data_train_s, label_train = MNIST.get_series_data(df_en_train, is_group = True)
+data_test_s, label_test = MNIST.get_series_data(df_en_test, is_group = True)
+
+#------definition of equation-------------
+neuron_in = '''
+I = stimulus(t,i) : 1
+'''
+
+neuron = '''
+dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+dg/dt = (-g)/(3*ms) : 1
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h)+13.5: 1
+x : 1
+y : 1
+z : 1
+'''
+
+neuron_read = '''
+dv/dt = (I-v) / (30*ms) : 1
+dg/dt = (-g)/(3*ms) : 1 
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h): 1
+'''
+
+synapse = '''
+w : 1
+'''
+
+on_pre_ex = '''
+g+=w
+'''
+
+on_pre_inh = '''
+h-=w
+'''
+
+# -----Neurons and Synapses setting-------
+Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
+                    name = 'neurongroup_input')
+
+G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2.99 * ms,
+                name ='neurongroup_ex')
+
+G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=1.99 * ms,
+                name ='neurongroup_in')
+
+G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
+
+S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+
+S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
+
+S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
+
+S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
+
+S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
+
+S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+
+S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
+
+S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
+
+#-------initialization of neuron parameters----------
+G_ex.v = '13.5+1.5*rand()'
+G_inh.v = '13.5+1.5*rand()'
+G_readout.v = '0'
+G_ex.g = '0'
+G_inh.g = '0'
+G_readout.g = '0'
+G_ex.h = '0'
+G_inh.h = '0'
+G_readout.h = '0'
+
+[G_ex,G_in] = base.allocate([G_ex,G_inh],3,3,15)
+
+# -------initialization of network topology and synapses parameters----------
+S_inE.connect(condition='j<0.3*N_post')
+S_inI.connect(condition='j<0.3*N_post')
+S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_E_readout.connect(j='i')
+S_I_readout.connect(j='i+n_ex')
+
+S_inE.w = function.gamma(A_inE, S_inE.w.shape)
+S_inI.w = function.gamma(A_inI, S_inI.w.shape)
+S_EE.w = function.gamma(A_EE, S_EE.w.shape)
+S_IE.w = function.gamma(A_IE, S_IE.w.shape)
+S_EI.w = function.gamma(A_EI, S_EI.w.shape)
+S_II.w = function.gamma(A_II, S_II.w.shape)
+
+S_EE.delay = '1.5*ms'
+S_EI.delay = '0.8*ms'
+S_IE.delay = '0.8*ms'
+S_II.delay = '0.8*ms'
+
+# --------monitors setting----------
+m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
+m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
+m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
+m_input = StateMonitor(Input, ('I'), record=True)
+
+# ------create network-------------
+net = Network(collect())
+net.store('init')
+
+###############################################
+# ------run for train-------
+states_train, monitor_record_train = run_net(data_train_s)
+
+# ----run for test--------
+states_test, monitor_record_test = run_net(data_test_s)
+
+#####################################
+# ------Readout---------------
+score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
+                                             multi_class="multinomial")
+
+#####################################
+#----------show results-----------
+print('Train score: ',score_train)
+print('Test score: ',score_test)
+
+
+#####################################
+#-----------save monitor data-------
+result.result_save('monitor_train.pkl', **monitor_record_train)
+result.result_save('monitor_test.pkl', **monitor_record_test)
+result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
+
+#####################################
+# ------vis of results----
+fig_init_w =plt.figure(figsize=(16,16))
+subplot(421)
+brian_plot(S_EE.w)
+subplot(422)
+brian_plot(S_EI.w)
+subplot(423)
+brian_plot(S_IE.w)
+subplot(424)
+brian_plot(S_II.w)
+show()
+
+#-------for animation in Jupyter-----------
+monitor = result.result_pick('monitor_test.pkl')
+play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[1]), monitor['m_read.v'], duration, 10*duration)
+widgets.VBox([widgets.HBox([play, slider]),fig])
