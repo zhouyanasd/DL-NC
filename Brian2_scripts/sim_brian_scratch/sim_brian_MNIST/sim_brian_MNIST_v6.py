@@ -307,13 +307,11 @@ class MNIST_classification(Base):
         return np.asarray(encoding)
 
     def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
-        encoding_data = analog_data
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
         coding_duration = self.duration / self.shape[0] / coding_n
         if (coding_duration - int(coding_duration)) == 0.0:
-            encoding_data['value'] = analog_data['value'].apply(f).apply(coding_f, n=coding_n,
-                                                                       A=int(coding_duration))
-            return encoding_data
+            value = analog_data['value'].apply(f).apply(coding_f, n=coding_n, A=int(coding_duration))
+            return pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(analog_data['label'])})
         else:
             raise ValueError('duration must divide (coding_n*length of data) exactly')
 
