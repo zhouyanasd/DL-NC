@@ -391,7 +391,7 @@ MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
 df_train = MNIST.select_data(F_train, MNIST.train)
-df_test = MNIST.select_data(F_train, MNIST.test)
+df_test = MNIST.select_data(F_test, MNIST.test)
 
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_ignore_0, df_train, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_ignore_0, df_test, coding_n)
