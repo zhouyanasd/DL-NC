@@ -101,13 +101,13 @@ class Base():
         return G
 
 
-    def w_norm2(self, n_post, Synapsis, scale = 1):
-        for i in range(n_post):
+    def w_norm2(self, Synapsis, scale = 1):
+        for i in range(Synapsis.N_post):
             a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
             Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.linalg.norm(a)*scale
 
-    def w_norm1(self, n_post, Synapsis, scale = 1):
-        for i in range(n_post):
+    def w_norm1(self, Synapsis, scale = 1):
+        for i in range(Synapsis.N_post):
             a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
             Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a/np.sum(a)*scale
 
