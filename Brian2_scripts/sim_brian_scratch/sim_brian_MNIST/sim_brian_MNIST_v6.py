@@ -333,14 +333,17 @@ class MNIST_classification(Base):
                     if int(q) == encoded_zero:
                         continue
                     else:
-                        encoding[int(q)+ A * index_0, index_1 + i * n] = 1
+                        encoding[int(q)+ A * index_0, index_1 * n + i] = 1
         return np.asarray(encoding)
 
     def _encoding_cos_(self, x, n, A):
         if size(list(filter(lambda x: x>1, n))) > 1:
             raise ValueError('only one axis can be choose(>1) when encoding')
         encoding = np.zeros((n[0] * x.shape[0] * A, n[1] * x.shape[1]))
-        N = int(list(filter(lambda x: x>1, n))[0])
+        try:
+            N = int(list(filter(lambda x: x>1, n))[0])
+        except IndexError:
+            N = 1
         for i in range(N):
             trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / N)) + 1)).clip(0, A - 1)
             encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / N)) + 1)).clip(0, A - 1))
@@ -352,7 +355,7 @@ class MNIST_classification(Base):
                         if n[0] > 1 :
                             encoding[int(q) + i * A + N * A * index_0, index_1] = 1
                         elif n[1] > 1:
-                            encoding[int(q)+ A * index_0, index_1 + i * N] = 1
+                            encoding[int(q)+ A * index_0, index_1 * N + i] = 1
                         else :
                             encoding[int(q) + A * index_0, index_1] = 1
         return np.asarray(encoding)
