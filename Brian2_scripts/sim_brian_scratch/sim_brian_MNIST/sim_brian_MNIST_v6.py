@@ -310,9 +310,55 @@ class MNIST_classification(Base):
             encoding.extend(coding)
         return np.asarray(encoding)
 
+    def _encoding_cos_row_ignore_0(self, x, n, A):
+        encoding = np.zeros((x.shape[0] *n * A, x.shape[1]))
+        for i in range(int(n)):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
+            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
+            for index_0, p in enumerate(trans_cos):
+                for index_1, q in enumerate(p):
+                    if int(q) == encoded_zero:
+                        continue
+                    else:
+                        encoding[int(q)+ i * A + n * A * index_0, index_1] = 1
+        return np.asarray(encoding)
+
+    def _encoding_cos_rank_ignore_0(self, x, n, A):
+        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]))
+        for i in range(int(n)):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
+            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
+            for index_0, p in enumerate(trans_cos):
+                for index_1, q in enumerate(p):
+                    if int(q) == encoded_zero:
+                        continue
+                    else:
+                        encoding[int(q)+ A * index_0, index_1 + i * n] = 1
+        return np.asarray(encoding)
+
+    def _encoding_cos_(self, x, n, A):
+        if size(list(filter(lambda x: x>1, n))) > 1:
+            raise ValueError('only one axis can be choose(>1) when encoding')
+        encoding = np.zeros((n[0] * x.shape[0] * A, n[1] * x.shape[1]))
+        for i in range(int(n)):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
+            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
+            for index_0, p in enumerate(trans_cos):
+                for index_1, q in enumerate(p):
+                    if int(q) == encoded_zero:
+                        continue
+                    else:
+                        if n[0] > 1 :
+                            encoding[int(q) + i * A + n * A * index_0, index_1] = 1
+                        elif n[1] > 1:
+                            encoding[int(q)+ A * index_0, index_1 + i * n] = 1
+                        else :
+                            encoding[int(q) + A * index_0, index_1] = 1
+        return np.asarray(encoding)
+
     def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
-        coding_duration = self.duration / self.shape[0] / coding_n
+        coding_duration = self.duration / self.shape[0] / coding_n[0]
         if (coding_duration - int(coding_duration)) == 0.0:
             value = analog_data['value'].apply(f).apply(coding_f, n=coding_n, A=int(coding_duration))
             return pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(analog_data['label'])})
@@ -357,9 +403,11 @@ def run_net(inputs, record = True):
 
 ###################################
 # -----parameter setting-------
-coding_n = 1
+# coding_axis = 1
+coding_n = (1, 1)
 MNIST_shape = (28, 28)
-duration = 10*coding_n*MNIST_shape[0]
+coding_duration = 10
+duration = coding_duration*coding_n[0]*MNIST_shape[0]
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
@@ -368,7 +416,7 @@ pre_train_loop = 0
 
 n_ex = 108
 n_inh = int(n_ex/4)
-n_input = MNIST_shape[1]
+n_input = MNIST_shape[1]*coding_n[1]
 n_read = n_ex+n_inh
 
 R = 2
