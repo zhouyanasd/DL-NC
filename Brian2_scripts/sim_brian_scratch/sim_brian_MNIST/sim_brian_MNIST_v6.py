@@ -340,18 +340,19 @@ class MNIST_classification(Base):
         if size(list(filter(lambda x: x>1, n))) > 1:
             raise ValueError('only one axis can be choose(>1) when encoding')
         encoding = np.zeros((n[0] * x.shape[0] * A, n[1] * x.shape[1]))
-        for i in range(int(n)):
-            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
-            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
+        N = int(list(filter(lambda x: x>1, n))[0])
+        for i in range(N):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / N)) + 1)).clip(0, A - 1)
+            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / N)) + 1)).clip(0, A - 1))
             for index_0, p in enumerate(trans_cos):
                 for index_1, q in enumerate(p):
                     if int(q) == encoded_zero:
                         continue
                     else:
                         if n[0] > 1 :
-                            encoding[int(q) + i * A + n * A * index_0, index_1] = 1
+                            encoding[int(q) + i * A + N * A * index_0, index_1] = 1
                         elif n[1] > 1:
-                            encoding[int(q)+ A * index_0, index_1 + i * n] = 1
+                            encoding[int(q)+ A * index_0, index_1 + i * N] = 1
                         else :
                             encoding[int(q) + A * index_0, index_1] = 1
         return np.asarray(encoding)
