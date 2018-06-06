@@ -292,7 +292,7 @@ class MNIST_classification(Base):
             for index_0, p in enumerate(trans_cos):
                 for index_1, q in enumerate(p):
                     encoding[int(q)+ A * index_0, index_1 * n + i] = 1
-        return np.asarray(encoding)
+        return encoding
 
     def _encoding_cos_rank_ignore_0(self, x, n, A):
         encoding = np.zeros((x.shape[0] * A, n * x.shape[1]))
@@ -305,7 +305,7 @@ class MNIST_classification(Base):
                         continue
                     else:
                         encoding[int(q)+ A * index_0, index_1 * n + i] = 1
-        return np.asarray(encoding)
+        return encoding
 
     def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
