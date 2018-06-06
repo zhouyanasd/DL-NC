@@ -481,7 +481,7 @@ G_ex.h = '0'
 G_inh.h = '0'
 G_readout.h = '0'
 
-[G_ex,G_in] = base.allocate([G_ex,G_inh],3,3,15)
+[G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
 
 # -------initialization of network topology and synapses parameters----------
 S_inE.connect(condition='j<0.3*N_post')
