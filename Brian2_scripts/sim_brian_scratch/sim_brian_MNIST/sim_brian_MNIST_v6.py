@@ -380,6 +380,17 @@ class MNIST_classification(Base):
         label = data_frame['label']
         return data_frame_s, label
 
+    def get_series_data_list(self, data_frame, is_group=False):
+        data_frame_s = []
+        if not is_group:
+            for value in data_frame['value']:
+                data_frame_s.extend(value)
+        else:
+            for value in data_frame['value']:
+                data_frame_s.append(value)
+        label = data_frame['label']
+        return np.asarray(data_frame_s), label
+
 
 #--------define network run function-------------------
 def run_net(inputs, record = True):
