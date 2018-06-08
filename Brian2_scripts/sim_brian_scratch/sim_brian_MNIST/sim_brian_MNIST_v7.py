@@ -340,7 +340,9 @@ class MNIST_classification(Base):
 
 
 #--------define network run function-------------------
-def run_net(inputs, record = True):
+Switch_monitor = True
+
+def run_net(inputs):
     states = None
     monitor_record= {
         'm_g_ex.I': None,
@@ -506,10 +508,11 @@ S_IE.delay = '0.8*ms'
 S_II.delay = '0.8*ms'
 
 # --------monitors setting----------
-m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
-m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
-m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
-m_input = StateMonitor(Input, ('I'), record=True)
+if Switch_monitor :
+    m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
+    m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
+    m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
+    m_input = StateMonitor(Input, ('I'), record=True)
 
 # ------create network-------------
 net = Network(collect())
@@ -535,8 +538,9 @@ print('Test score: ',score_test)
 
 #####################################
 #-----------save monitor data-------
-result.result_save('monitor_train.pkl', **monitor_record_train)
-result.result_save('monitor_test.pkl', **monitor_record_test)
+if Switch_monitor :
+    result.result_save('monitor_train.pkl', **monitor_record_train)
+    result.result_save('monitor_test.pkl', **monitor_record_test)
 result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
 
 #####################################
