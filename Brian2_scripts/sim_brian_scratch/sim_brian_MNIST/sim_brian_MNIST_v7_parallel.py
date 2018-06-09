@@ -346,8 +346,8 @@ coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
 duration = coding_duration*MNIST_shape[0]
-F_train = 0.05
-F_test = 0.05
+F_train = 0.005
+F_test = 0.005
 Dt = defaultclock.dt = 1*ms
 
 pre_train_loop = 0
@@ -502,7 +502,7 @@ def run_net(inputs):
 
 # -------parallel run---------------
 if __name__ == '__main__':
-    core = 4
+    core = 10
     pool = Pool(core)
 
     # ------run for train-------
@@ -512,8 +512,8 @@ if __name__ == '__main__':
     states_test_list = pool.map(run_net,data_test_s.reshape(core,-1,duration,n_input))
 
     # ------Readout---------------
-    states_train = states_train_list.reshape(n_ex + n_inh, -1)
-    states_test = states_test_list.reshape(n_ex + n_inh, -1)
+    states_train = np.asarray(states_train_list).reshape(n_ex + n_inh, -1)
+    states_test = np.asarray(states_test_list).reshape(n_ex + n_inh, -1)
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                              multi_class="multinomial")
 
