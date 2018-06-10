@@ -407,8 +407,8 @@ df_test = MNIST.select_data(F_test, MNIST.test)
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
-data_train_s, label_train = MNIST.get_series_data(df_en_train, is_group = True)
-data_test_s, label_test = MNIST.get_series_data(df_en_test, is_group = True)
+data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
+data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
 #------definition of equation-------------
 neuron_in = '''
