@@ -507,14 +507,14 @@ def run_net(inputs):
         net.run(duration * Dt)
         states = base.np_append(states, G_readout.variables['v'].get_value())
         net.restore('init')
-    return states
+    return (MinMaxScaler().fit_transform(states)).T
 
 def grad_search(parameters):
     tau_ex = parameters['tau_ex']
     R = parameters['R']
     f = parameters['f']
-    states_train, monitor_record_train = run_net(data_train_s)
-    states_test, monitor_record_test = run_net(data_test_s)
+    states_train = run_net(data_train_s)
+    states_test = run_net(data_test_s)
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                                  multi_class="multinomial")
     return (score_train, score_test)
@@ -524,8 +524,8 @@ if __name__ == '__main__':
     core = 10
     pool = Pool(core)
     parameters = np.zeros((1, 1, 10), [('tau_ex', float), ('R', float), ('f', float)])
-    parameters['tau_ex'], parameters['R'], parameters['f'] = np.meshgrid(
-        np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
+    parameters['R'], parameters['tau_ex'], parameters['f'] = np.meshgrid(
+        np.linspace(0.2, 2, 1), np.linspace(30, 300, 1), np.linspace(0.1, 1, 10))
     parameters = parameters.reshape(1*1*10)
 
     # -------parallel run---------------
