@@ -353,8 +353,6 @@ Dt = defaultclock.dt = 1*ms
 
 pre_train_loop = 0
 
-
-###########################################
 #-------class initialization----------------------
 function = Function()
 base = Base(duration, Dt)
@@ -506,9 +504,7 @@ def grad_search(parameters):
     net = Network(collect())
     net.store('init')
 
-
-    ######################################
-    # --------define network run function-------------------
+    # ---- define network run function----
     def run_net(inputs):
         states = None
         for ser, data in enumerate(inputs):
@@ -520,12 +516,18 @@ def grad_search(parameters):
             net.restore('init')
         return (MinMaxScaler().fit_transform(states)).T
 
+    # ------run for train-------
     states_train = run_net(data_train_s)
+
+    # ------run for test-------
     states_test = run_net(data_test_s)
+
+    # ------Readout---------------
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                                  multi_class="multinomial")
     return (score_train, score_test)
 
+##########################################
 # -------prepare parameters---------------
 if __name__ == '__main__':
     core = 10
