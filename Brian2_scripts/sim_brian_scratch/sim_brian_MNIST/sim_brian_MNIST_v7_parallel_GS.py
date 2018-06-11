@@ -342,7 +342,7 @@ class MNIST_classification(Base):
 
 
 ###################################
-# -----parameter setting-------
+# -----data setting-------
 coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
@@ -352,27 +352,6 @@ F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 pre_train_loop = 0
-
-n_ex = 400
-n_inh = int(n_ex/4)
-n_input = MNIST_shape[1]*coding_n
-n_read = n_ex+n_inh
-
-R = 2
-f = 1
-
-A_EE = 30*f
-A_EI = 60*f
-A_IE = 19*f
-A_II = 19*f
-A_inE = 18*f
-A_inI = 9*f
-
-tau_ex = 30
-tau_read= 30
-
-p_inE = 0.1
-p_inI = 0.1
 
 
 ###########################################
@@ -394,125 +373,154 @@ df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
-#------definition of equation-------------
-neuron_in = '''
-I = stimulus(t,i) : 1
-'''
 
-neuron = '''
-dv/dt = (I-v) / (tau_ex*ms) : 1 (unless refractory)
-dg/dt = (-g)/(3*ms) : 1
-dh/dt = (-h)/(6*ms) : 1
-I = (g+h)+13.5: 1
-x : 1
-y : 1
-z : 1
-'''
-
-neuron_read = '''
-dv/dt = (I-v) / (tau_read*ms) : 1
-dg/dt = (-g)/(3*ms) : 1 
-dh/dt = (-h)/(6*ms) : 1
-I = (g+h): 1
-'''
-
-synapse = '''
-w : 1
-'''
-
-on_pre_ex = '''
-g+=w
-'''
-
-on_pre_inh = '''
-h-=w
-'''
-
-# -----Neurons and Synapses setting-------
-Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
-                    name = 'neurongroup_input')
-
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2.99 * ms,
-                name ='neurongroup_ex')
-
-G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=1.99 * ms,
-                name ='neurongroup_in')
-
-G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
-
-S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
-
-S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
-
-S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
-
-S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
-
-S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
-
-S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
-
-S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
-
-S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
-
-#-------initialization of neuron parameters----------
-G_ex.v = '13.5+1.5*rand()'
-G_inh.v = '13.5+1.5*rand()'
-G_readout.v = '0'
-G_ex.g = '0'
-G_inh.g = '0'
-G_readout.g = '0'
-G_ex.h = '0'
-G_inh.h = '0'
-G_readout.h = '0'
-
-[G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
-
-# -------initialization of network topology and synapses parameters----------
-S_inE.connect(condition='j<0.3*N_post', p = p_inE)
-S_inI.connect(condition='j<0.3*N_post', p = p_inI)
-S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_E_readout.connect(j='i')
-S_I_readout.connect(j='i+n_ex')
-
-S_inE.w = function.gamma(A_inE, S_inE.w.shape)
-S_inI.w = function.gamma(A_inI, S_inI.w.shape)
-S_EE.w = function.gamma(A_EE, S_EE.w.shape)
-S_IE.w = function.gamma(A_IE, S_IE.w.shape)
-S_EI.w = function.gamma(A_EI, S_EI.w.shape)
-S_II.w = function.gamma(A_II, S_II.w.shape)
-
-S_EE.delay = '1.5*ms'
-S_EI.delay = '0.8*ms'
-S_IE.delay = '0.8*ms'
-S_II.delay = '0.8*ms'
-
-# ------create network-------------
-net = Network(collect())
-net.store('init')
-
-
-######################################
-# --------define network run function-------------------
-def run_net(inputs):
-    states = None
-    for ser, data in enumerate(inputs):
-        if ser % 50 == 0:
-            print('The simulation is running at %s time.' % ser)
-        stimulus = TimedArray(data, dt=Dt)
-        net.run(duration * Dt)
-        states = base.np_append(states, G_readout.variables['v'].get_value())
-        net.restore('init')
-    return (MinMaxScaler().fit_transform(states)).T
-
+############################################
 def grad_search(parameters):
-    tau_ex = parameters['tau_ex']
+
+    # -----parameter setting-------
+    n_ex = 400
+    n_inh = int(n_ex/4)
+    n_input = MNIST_shape[1]*coding_n
+    n_read = n_ex+n_inh
+
+
     R = parameters['R']
     f = parameters['f']
+
+    A_EE = 30*f
+    A_EI = 60*f
+    A_IE = 19*f
+    A_II = 19*f
+    A_inE = 18*f
+    A_inI = 9*f
+
+    tau_ex = parameters['tau']
+    tau_inh = parameters['tau']
+    tau_read= 30
+
+    p_inE = 0.1
+    p_inI = 0.1
+
+    #------definition of equation-------------
+    neuron_in = '''
+    I = stimulus(t,i) : 1
+    '''
+
+    neuron = '''
+    tau : 1
+    dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
+    dg/dt = (-g)/(3*ms) : 1
+    dh/dt = (-h)/(6*ms) : 1
+    I = (g+h)+13.5: 1
+    x : 1
+    y : 1
+    z : 1
+    '''
+
+    neuron_read = '''
+    tau : 1
+    dv/dt = (I-v) / (tau*ms) : 1
+    dg/dt = (-g)/(3*ms) : 1 
+    dh/dt = (-h)/(6*ms) : 1
+    I = (g+h): 1
+    '''
+
+    synapse = '''
+    w : 1
+    '''
+
+    on_pre_ex = '''
+    g+=w
+    '''
+
+    on_pre_inh = '''
+    h-=w
+    '''
+
+    # -----Neurons and Synapses setting-------
+    Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
+                        name = 'neurongroup_input')
+
+    G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2.99 * ms,
+                    name ='neurongroup_ex')
+
+    G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=1.99 * ms,
+                    name ='neurongroup_in')
+
+    G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
+
+    S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+
+    S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
+
+    S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
+
+    S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
+
+    S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
+
+    S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+
+    S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
+
+    S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
+
+    #-------initialization of neuron parameters----------
+    G_ex.v = '13.5+1.5*rand()'
+    G_inh.v = '13.5+1.5*rand()'
+    G_readout.v = '0'
+    G_ex.g = '0'
+    G_inh.g = '0'
+    G_readout.g = '0'
+    G_ex.h = '0'
+    G_inh.h = '0'
+    G_readout.h = '0'
+    G_ex.tau = tau_ex
+    G_inh.tau = tau_inh
+    G_readout.tau = tau_read
+
+    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+
+    # -------initialization of network topology and synapses parameters----------
+    S_inE.connect(condition='j<0.3*N_post', p = p_inE)
+    S_inI.connect(condition='j<0.3*N_post', p = p_inI)
+    S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_E_readout.connect(j='i')
+    S_I_readout.connect(j='i+n_ex')
+
+    S_inE.w = function.gamma(A_inE, S_inE.w.shape)
+    S_inI.w = function.gamma(A_inI, S_inI.w.shape)
+    S_EE.w = function.gamma(A_EE, S_EE.w.shape)
+    S_IE.w = function.gamma(A_IE, S_IE.w.shape)
+    S_EI.w = function.gamma(A_EI, S_EI.w.shape)
+    S_II.w = function.gamma(A_II, S_II.w.shape)
+
+    S_EE.delay = '1.5*ms'
+    S_EI.delay = '0.8*ms'
+    S_IE.delay = '0.8*ms'
+    S_II.delay = '0.8*ms'
+
+    # ------create network-------------
+    net = Network(collect())
+    net.store('init')
+
+
+    ######################################
+    # --------define network run function-------------------
+    def run_net(inputs):
+        states = None
+        for ser, data in enumerate(inputs):
+            if ser % 50 == 0:
+                print('The simulation is running at %s time.' % ser)
+            stimulus = TimedArray(data, dt=Dt)
+            net.run(duration * Dt)
+            states = base.np_append(states, G_readout.variables['v'].get_value())
+            net.restore('init')
+        return (MinMaxScaler().fit_transform(states)).T
+
     states_train = run_net(data_train_s)
     states_test = run_net(data_test_s)
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
@@ -523,8 +531,8 @@ def grad_search(parameters):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = np.zeros((1, 1, 10), [('tau_ex', float), ('R', float), ('f', float)])
-    parameters['tau_ex'], parameters['R'], parameters['f'] = np.meshgrid(
+    parameters = np.zeros((1, 1, 10), [('tau', float), ('R', float), ('f', float)])
+    parameters['tau'], parameters['R'], parameters['f'] = np.meshgrid(
         np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
     parameters = parameters.reshape(1*1*10)
 
