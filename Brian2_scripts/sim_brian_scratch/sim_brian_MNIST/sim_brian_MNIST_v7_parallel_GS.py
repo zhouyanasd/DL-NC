@@ -524,8 +524,8 @@ if __name__ == '__main__':
     core = 10
     pool = Pool(core)
     parameters = np.zeros((1, 1, 10), [('tau_ex', float), ('R', float), ('f', float)])
-    parameters['R'], parameters['tau_ex'], parameters['f'] = np.meshgrid(
-        np.linspace(0.2, 2, 1), np.linspace(30, 300, 1), np.linspace(0.1, 1, 10))
+    parameters['tau_ex'], parameters['R'], parameters['f'] = np.meshgrid(
+        np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
     parameters = parameters.reshape(1*1*10)
 
     # -------parallel run---------------
