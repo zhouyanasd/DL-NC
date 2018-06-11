@@ -486,8 +486,8 @@ G_readout.h = '0'
 [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
 
 # -------initialization of network topology and synapses parameters----------
-S_inE.connect(condition='j<0.3*N_post')
-S_inI.connect(condition='j<0.3*N_post')
+S_inE.connect(condition='j<0.3*N_post', p = 1)
+S_inI.connect(condition='j<0.3*N_post', p = 1)
 S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
 S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
 S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')

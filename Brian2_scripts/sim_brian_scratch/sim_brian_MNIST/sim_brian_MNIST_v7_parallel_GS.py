@@ -359,13 +359,21 @@ n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
 
 R = 2
+f = 1
 
-A_EE = 30
-A_EI = 60
-A_IE = 19
-A_II = 19
-A_inE = 18
-A_inI = 9
+A_EE = 30*f
+A_EI = 60*f
+A_IE = 19*f
+A_II = 19*f
+A_inE = 18*f
+A_inI = 9*f
+
+tau_ex = 30
+tau_read= 30
+
+p_inE = 0.1
+p_inI = 0.1
+
 
 ###########################################
 #-------class initialization----------------------
@@ -392,7 +400,7 @@ I = stimulus(t,i) : 1
 '''
 
 neuron = '''
-dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (tau_ex*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h)+13.5: 1
@@ -402,7 +410,7 @@ z : 1
 '''
 
 neuron_read = '''
-dv/dt = (I-v) / (30*ms) : 1
+dv/dt = (I-v) / (tau_read*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
@@ -462,8 +470,8 @@ G_readout.h = '0'
 [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
 
 # -------initialization of network topology and synapses parameters----------
-S_inE.connect(condition='j<0.3*N_post')
-S_inI.connect(condition='j<0.3*N_post')
+S_inE.connect(condition='j<0.3*N_post', p = p_inE)
+S_inI.connect(condition='j<0.3*N_post', p = p_inI)
 S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
 S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
 S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
@@ -501,32 +509,29 @@ def run_net(inputs):
         net.restore('init')
     return states
 
-def grad_search(inputs, parameter):
-    return run_net(inputs)
+def grad_search(parameters):
+    tau_ex = parameters['tau_ex']
+    R = parameters['R']
+    f = parameters['f']
+    states_train, monitor_record_train = run_net(data_train_s)
+    states_test, monitor_record_test = run_net(data_test_s)
+    score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
+                                                 multi_class="multinomial")
+    return (score_train, score_test)
 
-# -------parallel run---------------
+# -------prepare parameters---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
+    parameters = np.zeros((1, 1, 10), [('tau_ex', float), ('R', float), ('f', float)])
+    parameters['tau_ex'], parameters['R'], parameters['f'] = np.meshgrid(
+        np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
+    parameters = parameters.reshape(1*1*10)
 
-    # ------run for train-------
-    states_train_list = pool.map(run_net,data_train_s.reshape(core,-1,duration,n_input))
-
-    # ----run for test--------
-    states_test_list = pool.map(run_net,data_test_s.reshape(core,-1,duration,n_input))
-
-    # ------Readout---------------
-    states_train = (MinMaxScaler().fit_transform(np.asarray(states_train_list).reshape(-1, n_ex + n_inh))).T
-    states_test = (MinMaxScaler().fit_transform(np.asarray(states_test_list).reshape(-1, n_ex + n_inh))).T
-    score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
-                                             multi_class="multinomial")
-
-    #----------show results-----------
-    print('Train score: ',score_train)
-    print('Test score: ',score_test)
+    # -------parallel run---------------
+    results_grid = np.asarray(pool.map(grad_search, parameters))
+    print(results_grid)
 
     #-----------save monitor data-------
-    result.result_save('label.pkl',label_train=label_train, label_test=label_test)
-    result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
-    result.result_save('results.pkl', score_train=score_train, score_test=score_test)
+    result.result_save('results_grid.pkl', results_grid=results_grid)
 
