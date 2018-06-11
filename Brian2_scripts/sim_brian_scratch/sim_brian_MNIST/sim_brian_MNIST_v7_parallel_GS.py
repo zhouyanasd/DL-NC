@@ -501,6 +501,9 @@ def run_net(inputs):
         net.restore('init')
     return states
 
+def grad_search(inputs, parameter):
+    return run_net(inputs)
+
 # -------parallel run---------------
 if __name__ == '__main__':
     core = 10
