@@ -498,7 +498,7 @@ def run_net(inputs):
         net.run(duration * Dt)
         states = base.np_append(states, G_readout.variables['v'].get_value())
         net.restore('init')
-    return (MinMaxScaler().fit_transform(states)).T
+    return states
 
 # -------parallel run---------------
 if __name__ == '__main__':
@@ -512,8 +512,8 @@ if __name__ == '__main__':
     states_test_list = pool.map(run_net,data_test_s.reshape(core,-1,duration,n_input))
 
     # ------Readout---------------
-    states_train = np.asarray(states_train_list).reshape(n_ex + n_inh, -1)
-    states_test = np.asarray(states_test_list).reshape(n_ex + n_inh, -1)
+    states_train = (MinMaxScaler().fit_transform(np.asarray(states_train_list).reshape(-1, n_ex + n_inh))).T
+    states_test = (MinMaxScaler().fit_transform(np.asarray(states_test_list).reshape(-1, n_ex + n_inh))).T
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                              multi_class="multinomial")
 
@@ -521,7 +521,8 @@ if __name__ == '__main__':
     print('Train score: ',score_train)
     print('Test score: ',score_test)
 
-
     #-----------save monitor data-------
+    result.result_save('label.pkl',label_train=label_train, label_test=label_test)
     result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
+    result.result_save('results.pkl', score_train=score_train, score_test=score_test)
 
