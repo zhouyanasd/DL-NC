@@ -383,7 +383,6 @@ def grad_search(parameters):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-
     R = parameters['R']
     f = parameters['f']
 
