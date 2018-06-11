@@ -533,7 +533,7 @@ if __name__ == '__main__':
     parameters = np.zeros((1, 1, 10), [('tau', float), ('R', float), ('f', float)])
     parameters['tau'], parameters['R'], parameters['f'] = np.meshgrid(
         np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
-    parameters = parameters.reshape(1*1*10)
+    parameters = parameters.reshape(-1)
 
     # -------parallel run---------------
     results_grid = np.asarray(pool.map(grad_search, parameters))
