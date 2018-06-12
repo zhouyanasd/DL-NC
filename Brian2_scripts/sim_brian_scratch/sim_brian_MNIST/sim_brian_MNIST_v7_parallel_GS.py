@@ -127,6 +127,19 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
+    def parameters_GS(self, *args, **kwargs):
+        #---------------
+        # args = [(min,max),]
+        # kwargs = {'parameter' = number，}
+        #---------------
+        parameters = np.zeros(tuple(kwargs.values()), [(x, float) for x in kwargs.keys()])
+        grids = np.meshgrid(*[np.linspace(min_max[0], min_max[1], scale)
+                              for min_max,scale in zip(args,kwargs.values())], indexing='ij')
+        for index, parameter in enumerate(kwargs.keys()):
+            parameters[parameter] = grids[index]
+        parameters = parameters.reshape(-1)
+        return parameters
+
 
 class Readout():
     def __init__(self, function):
@@ -241,6 +254,14 @@ class Result():
         widgets.jslink((play, 'value'), (slider, 'value'))
         slider.observe(on_value_change, names='value')
         return play, slider, fig
+
+    def get_best_parameter(self, score, parameters):
+        score = np.asarray(score)
+        highest_score_train = np.max(score.T)[0]
+        highest_score_test = np.max(score.T)[1]
+        best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
+        best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
+        return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
 
 
 class MNIST_classification(Base):
@@ -525,22 +546,24 @@ def grad_search(parameters):
     # ------Readout---------------
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                                  multi_class="multinomial")
-    return (score_train, score_test)
+    return [score_train, score_test]
 
 ##########################################
 # -------prepare parameters---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = np.zeros((1, 1, 10), [('tau', float), ('R', float), ('f', float)])
-    parameters['tau'], parameters['R'], parameters['f'] = np.meshgrid(
-        np.linspace(30, 300, 1), np.linspace(0.2, 2, 1), np.linspace(0.1, 1, 10))
-    parameters = parameters.reshape(-1)
+    parameters = base.parameters_GS((30, 300), (0.2, 2), (0.1, 1), tau=10, R=10, f=10)
 
     # -------parallel run---------------
-    results_grid = np.asarray(pool.map(grad_search, parameters))
-    print(results_grid)
+    score = np.asarray(pool.map(grad_search, parameters))
 
-    #-----------save monitor data-------
-    result.result_save('results_grid.pkl', results_grid=results_grid)
+    # --------show the final results-----
+    highest_score_train, highest_score_test, best_parameter_train, best_parameter_test = \
+        result.get_best_parameter(np.asarray(score), parameters)
+
+    # -----------save monitor data-------
+    result.result_save('score_grid_search.pkl', score=score)
+    result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
+                       best_parameter_test=best_parameter_test)
 

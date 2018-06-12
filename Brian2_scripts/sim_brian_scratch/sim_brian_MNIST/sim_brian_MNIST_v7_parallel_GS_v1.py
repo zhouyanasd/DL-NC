@@ -255,6 +255,15 @@ class Result():
         slider.observe(on_value_change, names='value')
         return play, slider, fig
 
+    def get_best_parameter(self, score, parameters):
+        score = np.asarray(score)
+        highest_score_train = np.max(score.T)[0]
+        highest_score_test = np.max(score.T)[1]
+        best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
+        best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
+        return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
+
+
 
 class MNIST_classification(Base):
     def __init__(self, shape, duration, dt):
@@ -522,8 +531,6 @@ for index, parameter in enumerate(parameters):
     def run_net(inputs):
         states = None
         for ser, data in enumerate(inputs):
-            # if ser % 50 == 0:
-            #     print('The simulation is running at %s time.' % ser)
             stimulus = TimedArray(data, dt=Dt)
             net.run(duration * Dt)
             states = base.np_append(states, G_readout.variables['v'].get_value())
@@ -556,12 +563,11 @@ for index, parameter in enumerate(parameters):
 
 
 #####################################
-score = np.asarray(score)
-highest_score_train = np.max(score.T)[0]
-highest_score_test = np.max(score.T)[1]
-best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
-best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
+#--------show the final results-----
+highest_score_train, highest_score_test, best_parameter_train, best_parameter_test = \
+    result.get_best_parameter(np.asarray(score), parameters)
 
 #-----------save monitor data-------
 result.result_save('score_grid_search.pkl',score=score)
-result.result_save('best_parameters.pkl',best_parameter_train=best_parameter_train, best_parameter_test = best_parameter_test)
+result.result_save('best_parameters.pkl',best_parameter_train=best_parameter_train,
+                   best_parameter_test = best_parameter_test)
