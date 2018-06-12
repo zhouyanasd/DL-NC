@@ -363,7 +363,7 @@ class MNIST_classification(Base):
 
 
 ###################################
-# -----data setting-------
+# -----simulation parameter setting-------
 coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
