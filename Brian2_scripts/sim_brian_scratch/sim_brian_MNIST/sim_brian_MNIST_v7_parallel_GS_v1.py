@@ -405,6 +405,9 @@ n_read = n_ex+n_inh
 
 tau_read = 30*ms
 
+p_inE = 0.1
+p_inI = 0.1
+
 #--------parallel setting-----------------
 parameters = base.parameters_GS((30,300) , (0.2,2) , (0.1,1),tau = 10, R = 10, f = 10)
 score = []
@@ -500,8 +503,8 @@ for index, parameter in enumerate(parameters):
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
 
     # -------initialization of network topology and synapses parameters----------
-    S_inE.connect(condition='j<0.3*N_post', p = 1)
-    S_inI.connect(condition='j<0.3*N_post', p = 1)
+    S_inE.connect(condition='j<0.3*N_post', p = p_inE)
+    S_inI.connect(condition='j<0.3*N_post', p = p_inI)
     S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
     S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
     S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
