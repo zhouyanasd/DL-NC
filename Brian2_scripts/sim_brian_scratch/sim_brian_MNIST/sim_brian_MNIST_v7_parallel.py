@@ -525,4 +525,3 @@ if __name__ == '__main__':
     result.result_save('label.pkl',label_train=label_train, label_test=label_test)
     result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
     result.result_save('results.pkl', score_train=score_train, score_test=score_test)
-

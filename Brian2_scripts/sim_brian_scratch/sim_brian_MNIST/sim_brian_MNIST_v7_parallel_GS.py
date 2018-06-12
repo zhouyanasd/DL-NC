@@ -566,4 +566,3 @@ if __name__ == '__main__':
     result.result_save('score_grid_search.pkl', score=score)
     result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
                        best_parameter_test=best_parameter_test)
-
