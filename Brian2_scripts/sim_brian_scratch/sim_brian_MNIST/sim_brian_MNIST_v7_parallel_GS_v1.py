@@ -403,7 +403,7 @@ n_inh = int(n_ex/4)
 n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
 
-tau_read = 30*ms
+tau_read = 30
 
 p_inE = 0.1
 p_inI = 0.1
