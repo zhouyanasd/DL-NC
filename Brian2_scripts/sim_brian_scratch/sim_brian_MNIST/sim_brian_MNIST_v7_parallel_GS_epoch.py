@@ -255,14 +255,6 @@ class Result():
         slider.observe(on_value_change, names='value')
         return play, slider, fig
 
-    def get_best_parameter(self, score, parameters):
-        score = np.asarray(score)
-        highest_score_train = np.max(score.T[0])
-        highest_score_test = np.max(score.T[1])
-        best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
-        best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
-        return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
-
 
 class MNIST_classification(Base):
     def __init__(self, shape, duration, dt):
@@ -561,13 +553,17 @@ for index, parameter in enumerate(parameters):
         print('Test score: ',score_test)
 
         #---------save results------------
-        score.append([score_train, score_test])
+        score.append(np.array([(score_train, score_test, parameter)],
+                    [('score_train',float),('score_test',float),('parameters',object)]))
 
 
 #####################################
 # --------get the final results-----
-highest_score_train, highest_score_test, best_parameter_train, best_parameter_test = \
-    result.get_best_parameter(np.asarray(score), parameters)
+score = np.asarray(score)
+highest_score_train = np.max(score['score_train'])
+highest_score_test = np.max(score['score_test'])
+best_parameter_train = score['parameters'][np.where(score['score_train'] == highest_score_train)[0]]
+best_parameter_test = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
 
 # --------show the final results-----
 print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'

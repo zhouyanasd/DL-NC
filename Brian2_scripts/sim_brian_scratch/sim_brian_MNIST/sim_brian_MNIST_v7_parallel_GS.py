@@ -255,14 +255,6 @@ class Result():
         slider.observe(on_value_change, names='value')
         return play, slider, fig
 
-    def get_best_parameter(self, score, parameters):
-        score = np.asarray(score)
-        highest_score_train = np.max(score.T[0])
-        highest_score_test = np.max(score.T[1])
-        best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
-        best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
-        return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
-
 
 class MNIST_classification(Base):
     def __init__(self, shape, duration, dt):
@@ -394,7 +386,7 @@ data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True
 
 
 ############################################
-def grad_search(parameters):
+def grad_search(parameter):
 
     # -----parameter setting-------
     n_ex = 400
@@ -402,8 +394,8 @@ def grad_search(parameters):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-    R = parameters['R']
-    f = parameters['f']
+    R = parameter['R']
+    f = parameter['f']
 
     A_EE = 30*f
     A_EI = 60*f
@@ -412,8 +404,8 @@ def grad_search(parameters):
     A_inE = 18*f
     A_inI = 9*f
 
-    tau_ex = parameters['tau']
-    tau_inh = parameters['tau']
+    tau_ex = parameter['tau']
+    tau_inh = parameter['tau']
     tau_read= 30
 
     p_inE = 0.1
@@ -548,11 +540,12 @@ def grad_search(parameters):
                                                  multi_class="multinomial")
 
     # ----------show results-----------
-    print('parameters %s' % parameters)
+    print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
 
-    return [score_train, score_test]
+    return np.array([(score_train, score_test, parameter)],
+                    [('score_train',float),('score_test',float),('parameters',object)])
 
 ##########################################
 # -------prepare parameters---------------
@@ -565,8 +558,11 @@ if __name__ == '__main__':
     score = np.asarray(pool.map(grad_search, parameters))
 
     # --------get the final results-----
-    highest_score_train, highest_score_test, best_parameter_train, best_parameter_test = \
-        result.get_best_parameter(np.asarray(score), parameters)
+    score = np.asarray(score)
+    highest_score_train = np.max(score['score_train'])
+    highest_score_test = np.max(score['score_test'])
+    best_parameter_train = score['parameters'][np.where(score['score_train'] == highest_score_train)[0]]
+    best_parameter_test = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
 
     # --------show the final results-----
     print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'
