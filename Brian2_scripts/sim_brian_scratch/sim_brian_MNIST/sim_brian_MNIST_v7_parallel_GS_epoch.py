@@ -566,11 +566,15 @@ for index, parameter in enumerate(parameters):
 
 
 #####################################
-#--------show the final results-----
+# --------get the final results-----
 highest_score_train, highest_score_test, best_parameter_train, best_parameter_test = \
     result.get_best_parameter(np.asarray(score), parameters)
 
-#-----------save monitor data-------
-result.result_save('score_grid_search.pkl',score=score)
-result.result_save('best_parameters.pkl',best_parameter_train=best_parameter_train,
-                   best_parameter_test = best_parameter_test)
+# --------show the final results-----
+print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'
+      % (highest_score_train, highest_score_test, best_parameter_train, best_parameter_test))
+
+# -----------save the final results-------
+result.result_save('score_grid_search.pkl', score=score)
+result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
+                   best_parameter_test=best_parameter_test)
