@@ -401,11 +401,10 @@ p_inI = 0.1
 
 #--------parallel setting-----------------
 parameters = base.parameters_GS((30,300) , (0.2,2) , (0.1,1),tau = 10, R = 10, f = 10)
-score = []
 
 ###########################################
 #-------Grid search------------------------
-for index, parameter in enumerate(parameters):
+def grad_search(parameter):
     #------change parameters------------------
     R = parameter['R']
     f = parameter['f']
@@ -418,12 +417,16 @@ for index, parameter in enumerate(parameters):
     A_inE = 18 * f
     A_inI = 9 * f
 
+    tau_ex = parameter['tau']
+    tau_inh = parameter['tau']
+
     #------definition of equation-------------
     neuron_in = '''
     I = stimulus(t,i) : 1
     '''
 
     neuron = '''
+    tau : 1
     dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
     dg/dt = (-g)/(3*ms) : 1
     dh/dt = (-h)/(6*ms) : 1
@@ -434,7 +437,8 @@ for index, parameter in enumerate(parameters):
     '''
 
     neuron_read = '''
-    dv/dt = (I-v) / (tau_read*ms) : 1
+    tau : 1
+    dv/dt = (I-v) / (tau*ms) : 1
     dg/dt = (-g)/(3*ms) : 1 
     dh/dt = (-h)/(6*ms) : 1
     I = (g+h): 1
@@ -490,6 +494,9 @@ for index, parameter in enumerate(parameters):
     G_ex.h = '0'
     G_inh.h = '0'
     G_readout.h = '0'
+    G_ex.tau = tau_ex
+    G_inh.tau = tau_inh
+    G_readout.tau = tau_read
 
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
 
@@ -548,16 +555,21 @@ for index, parameter in enumerate(parameters):
                                                  multi_class="multinomial")
 
         #----------show results-----------
-        print('score of %s times' %index)
         print('Train score: ',score_train)
         print('Test score: ',score_test)
 
         #---------save results------------
-        score.append(np.array([(score_train, score_test, parameter)],
-                    [('score_train',float),('score_test',float),('parameters',object)]))
+        return np.array([(score_train, score_test, parameter)],
+                    [('score_train',float),('score_test',float),('parameters',object)])
 
 
 #####################################
+score = []
+for index, parameter in enumerate(parameters):
+    print('score of %s times' % index)
+    score.append(grad_search(parameter))
+
+
 # --------get the final results-----
 score = np.asarray(score)
 highest_score_train = np.max(score['score_train'])
