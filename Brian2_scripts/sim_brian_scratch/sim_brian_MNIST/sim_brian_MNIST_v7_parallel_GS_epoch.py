@@ -264,7 +264,6 @@ class Result():
         return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
 
 
-
 class MNIST_classification(Base):
     def __init__(self, shape, duration, dt):
         super().__init__(duration, dt)
@@ -416,9 +415,9 @@ score = []
 #-------Grid search------------------------
 for index, parameter in enumerate(parameters):
     #------change parameters------------------
-    R = parameters['R']
-    f = parameters['f']
-    tau = parameters['tau']
+    R = parameter['R']
+    f = parameter['f']
+    tau = parameter['tau']
 
     A_EE = 30 * f
     A_EI = 60 * f

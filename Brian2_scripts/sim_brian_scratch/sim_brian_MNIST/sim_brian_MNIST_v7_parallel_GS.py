@@ -529,8 +529,6 @@ def grad_search(parameters):
     def run_net(inputs):
         states = None
         for ser, data in enumerate(inputs):
-            if ser % 50 == 0:
-                print('The simulation is running at %s time.' % ser)
             stimulus = TimedArray(data, dt=Dt)
             net.run(duration * Dt)
             states = base.np_append(states, G_readout.variables['v'].get_value())
@@ -546,6 +544,12 @@ def grad_search(parameters):
     # ------Readout---------------
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                                  multi_class="multinomial")
+
+    # ----------show results-----------
+    print('parameters %s' % parameters)
+    print('Train score: ', score_train)
+    print('Test score: ', score_test)
+
     return [score_train, score_test]
 
 ##########################################
