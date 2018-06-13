@@ -529,6 +529,8 @@ def grad_search(parameters):
     def run_net(inputs):
         states = None
         for ser, data in enumerate(inputs):
+            if ser % 100 == 0:
+                print('The simulation is running at %s time.' % ser)
             stimulus = TimedArray(data, dt=Dt)
             net.run(duration * Dt)
             states = base.np_append(states, G_readout.variables['v'].get_value())
