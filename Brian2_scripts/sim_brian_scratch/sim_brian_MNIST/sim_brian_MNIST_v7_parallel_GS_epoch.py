@@ -260,7 +260,7 @@ class Result():
         highest_score_train = np.max(score.T[0])
         highest_score_test = np.max(score.T[1])
         best_parameter_train = parameters[np.where(score == highest_score_train)[0]]
-        best_parameter_test = parameters[np.where(score == highest_score_test)[0]]
+        best_parameter_test = parameters[np.where(score == highest_score_test)[1]]
         return highest_score_train, highest_score_test, best_parameter_train, best_parameter_test
 
 
