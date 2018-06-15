@@ -401,10 +401,13 @@ p_inI = 0.1
 
 #--------parallel setting-----------------
 parameters = base.parameters_GS((30,300) , (0.2,2) , (0.1,1),tau = 10, R = 10, f = 10)
+np_state = np.random.get_state()
 
 ###########################################
 #-------Grid search------------------------
 def grad_search(parameter):
+    np.random.set_state(np_state)
+
     #------change parameters------------------
     R = parameter['R']
     f = parameter['f']

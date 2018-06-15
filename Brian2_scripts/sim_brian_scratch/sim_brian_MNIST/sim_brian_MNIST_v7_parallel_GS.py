@@ -384,9 +384,14 @@ df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
+#-------get numpy random state------------
+np_state = np.random.get_state()
+
 
 ############################################
 def grad_search(parameter):
+    #---- set numpy random state for each parallel run----
+    np.random.set_state(np_state)
 
     # -----parameter setting-------
     n_ex = 400
