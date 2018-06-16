@@ -301,7 +301,7 @@ class MNIST_classification(Base):
         return data_frame_selected
 
     def _encoding_cos_rank(self, x, n, A):
-        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]))
+        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]), dtype='<i1')
         for i in range(int(n)):
             trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
             for index_0, p in enumerate(trans_cos):
@@ -310,7 +310,7 @@ class MNIST_classification(Base):
         return encoding
 
     def _encoding_cos_rank_ignore_0(self, x, n, A):
-        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]))
+        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]), dtype='<i1')
         for i in range(int(n)):
             trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
             encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
