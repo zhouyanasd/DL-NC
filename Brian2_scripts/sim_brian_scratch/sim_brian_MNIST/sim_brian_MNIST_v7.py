@@ -281,8 +281,12 @@ class MNIST_classification(Base):
             selected = kwargs['selected']
         except KeyError:
             selected = np.arange(10)
-        data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(frac=fraction).reset_index(
-            drop=is_order)
+        if is_order:
+            data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(
+                frac=fraction).sort_index().reset_index(drop=True)
+        else:
+            data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(frac=fraction).reset_index(
+                drop=True)
         return data_frame_selected
 
     def _encoding_cos_rank(self, x, n, A):
