@@ -284,7 +284,7 @@ def run_net(inputs):
 # -----parameter setting-------
 coding_n = 10
 dim = 12
-coding_duration = 10
+coding_duration = 3
 F_train = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
@@ -312,7 +312,7 @@ p_inI = 0.1
 # -------class initialization----------------------
 function = Function()
 base = Base()
-readout = Readout(function.logistic)
+readout = Readout()
 result = Result()
 Jv = Jv_classification(coding_duration)
 
