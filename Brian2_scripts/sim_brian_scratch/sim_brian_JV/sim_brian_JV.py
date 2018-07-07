@@ -206,7 +206,7 @@ class Jv_classification():
         try:
             selected = kwargs['selected']
         except KeyError:
-            selected = np.arange(10)
+            selected = np.arange(9)
         if is_order:
             data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(
                 frac=fraction).sort_index().reset_index(drop=True)
