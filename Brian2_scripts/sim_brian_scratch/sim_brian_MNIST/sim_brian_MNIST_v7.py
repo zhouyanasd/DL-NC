@@ -112,7 +112,7 @@ class Base():
             Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a / np.linalg.norm(a)
 
     def np_extend(self, a, b, axis=0):
-        if a == None:
+        if a is None:
             shape = list(b.shape)
             shape[axis] = 0
             a = np.array([]).reshape(tuple(shape))
@@ -121,7 +121,7 @@ class Base():
     def np_append(self, a, b):
         shape = list(b.shape)
         shape.insert(0, -1)
-        if a == None:
+        if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 

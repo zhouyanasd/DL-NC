@@ -92,7 +92,7 @@ class Base():
             Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a / np.linalg.norm(a)
 
     def np_extend(self, a, b, axis=0):
-        if a == None:
+        if a is None:
             shape = list(b.shape)
             shape[axis] = 0
             a = np.array([]).reshape(tuple(shape))
@@ -101,7 +101,7 @@ class Base():
     def np_append(self, a, b):
         shape = list(b.shape)
         shape.insert(0, -1)
-        if a == None:
+        if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
@@ -431,8 +431,8 @@ data_test_s, label_test = KTH.get_series_data_list(df_en_train, is_group=True)
 
 if USE_VALIDATION:
 
-    data_train_s = data_train_s.append(data_validation_s)
-    label_train = label_train.append(label_validation)
+    data_train_s = base.np_extend(data_train_s, data_validation_s)
+    label_train = base.np_extend(label_train, label_validation)
 
 # ------definition of equation-------------
 neuron_in = '''
