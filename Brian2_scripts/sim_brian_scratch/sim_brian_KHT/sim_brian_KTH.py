@@ -20,7 +20,7 @@ class KTH_classification():
             "walking": 5
         }
         self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
-        self.DEV_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
+        self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
         self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
 
     def parse_sequence_file(self, path):
@@ -41,15 +41,15 @@ class KTH_classification():
                 if current_filename[:6] == 'person':
                     if not current_filename in self.frames_idx:
                         self.frames_idx[current_filename] = []
-                        self.frames_idx[current_filename].append([int(idx[0]), int(idx[1])])
+                    self.frames_idx[current_filename].append([int(idx[0]), int(idx[1])])
             else:
                 current_filename = s + "_uncomp.avi"
 
-    def make_dataset(self, data_path, dataset="train"):
+    def load_data_KTH(self, data_path, dataset="train"):
         if dataset == "train":
             ID = self.TRAIN_PEOPLE_ID
-        elif dataset == "dev":
-            ID = self.DEV_PEOPLE_ID
+        elif dataset == "validation":
+            ID = self.VALIDATION_PEOPLE_ID
         else:
             ID = self.TEST_PEOPLE_ID
 
@@ -135,20 +135,20 @@ class KTH_classification():
 
     def load_data_KTH_all(self, data_path):
         self.parse_sequence_file(data_path+'00sequences.txt')
-        self.train = self.make_dataset(data_path, dataset="train")
-        self.validation = self.make_dataset(data_path, dataset="validation")
-        self.test = self.make_dataset(data_path, dataset="test")
+        self.train = self.load_data_KTH(data_path, dataset="train")
+        self.validation = self.load_data_KTH(data_path, dataset="validation")
+        self.test = self.load_data_KTH(data_path, dataset="test")
 
-    def select_data(self, fraction, data_frame, is_order=True, **kwargs):
+    def select_data_KTH(self, fraction, data_frame, is_order=True, **kwargs):
         try:
             selected = kwargs['selected']
         except KeyError:
-            selected = np.arange(len(self.CATEGORIES.keys()))
+            selected = self.CATEGORIES.keys()
         if is_order:
-            data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(
+            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(
                 frac=fraction).sort_index().reset_index(drop=True)
         else:
-            data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(frac=fraction).reset_index(
+            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(frac=fraction).reset_index(
                 drop=True)
         return data_frame_selected
 
@@ -170,3 +170,13 @@ class KTH_classification():
                 data_frame_s.append(value)
         label = data_frame['label']
         return np.asarray(data_frame_s), label
+
+    def dump_data(self, path, dataset):
+        if os.path.exists(path):
+            os.remove(path)
+        with open(path, 'wb') as file:
+            pickle.dump(dataset, file)
+
+    def load_data(self, path):
+        with open(path, 'rb') as file:
+            return pickle.load(file)
