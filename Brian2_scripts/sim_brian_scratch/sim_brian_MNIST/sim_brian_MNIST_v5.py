@@ -430,10 +430,10 @@ S_IE.r = '0'
 S_EI.r = '0'
 S_II.r = '0'
 
-S_EE.delay = '1.5*ms'
-S_EI.delay = '0.8*ms'
-S_IE.delay = '0.8*ms'
-S_II.delay = '0.8*ms'
+S_EE.pre.delay = '1.5*ms'
+S_EI.pre.delay = '0.8*ms'
+S_IE.pre.delay = '0.8*ms'
+S_II.pre.delay = '0.8*ms'
 
 # ------monitor----------------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
