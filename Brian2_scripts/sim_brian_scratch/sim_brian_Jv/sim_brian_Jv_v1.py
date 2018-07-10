@@ -1,8 +1,7 @@
 # ----------------------------------------
 # LSM without STDP for Jv test
-# add neurons to readout layer for multi-classification(one-versus-the-rest)
 # using softmax(logistic regression)
-# input layer is changed to 781*1 with encoding method
+# input layer is encoded by cos method
 # change the LSM structure according to Maass paper
 # new calculate flow as Maass_ST
 # simplify the coding method with only extend the rank
