@@ -500,10 +500,10 @@ h-=w
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2.99 * ms,
+G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
                 name ='neurongroup_ex')
 
-G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=1.99 * ms,
+G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name ='neurongroup_in')
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
@@ -554,10 +554,10 @@ S_IE.w = function.gamma(A_IE, S_IE.w.shape)
 S_EI.w = function.gamma(A_EI, S_EI.w.shape)
 S_II.w = function.gamma(A_II, S_II.w.shape)
 
-S_EE.delay = '1.5*ms'
-S_EI.delay = '0.8*ms'
-S_IE.delay = '0.8*ms'
-S_II.delay = '0.8*ms'
+S_EE.pre.delay = '1.5*ms'
+S_EI.pre.delay = '0.8*ms'
+S_IE.pre.delay = '0.8*ms'
+S_II.pre.delay = '0.8*ms'
 
 # --------monitors setting----------
 m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
