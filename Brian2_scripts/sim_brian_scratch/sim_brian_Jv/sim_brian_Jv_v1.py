@@ -282,7 +282,7 @@ def run_net(inputs):
 # -----parameter setting-------
 coding_n = 10
 dim = 12
-coding_duration = 3
+coding_duration = 10
 F_train = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
