@@ -105,6 +105,19 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
+def parameters_GS(self, *args, **kwargs):
+    # ---------------
+    # args = [(min,max),]
+    # kwargs = {'parameter' = number，}
+    # ---------------
+    parameters = np.zeros(tuple(kwargs.values()), [(x, float) for x in kwargs.keys()])
+    grids = np.meshgrid(*[np.linspace(min_max[0], min_max[1], scale)
+                          for min_max, scale in zip(args, kwargs.values())], indexing='ij')
+    for index, parameter in enumerate(kwargs.keys()):
+        parameters[parameter] = grids[index]
+    parameters = parameters.reshape(-1)
+    return parameters
+
 
 class Readout():
     def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
