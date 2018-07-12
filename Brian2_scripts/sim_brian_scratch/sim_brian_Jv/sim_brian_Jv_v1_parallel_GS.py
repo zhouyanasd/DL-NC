@@ -266,7 +266,7 @@ class Jv_classification():
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 10
+coding_n = 3
 dim = 12
 coding_duration = 10
 F_train = 1
