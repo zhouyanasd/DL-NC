@@ -345,6 +345,7 @@ class MNIST_classification(Base):
 
 #--------define network run function-------------------
 Switch_monitor = True
+Switch_stdp = False
 
 def run_net(inputs):
     states = None
@@ -368,6 +369,25 @@ def run_net(inputs):
         net.restore('init')
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
+def run_pre_train(inputs):
+    diff_weight = None
+    monitor_record= {
+        'm_s_ee.w': None,
+    }
+    weight_initial = S_EE.variables['w'].get_value().copy()
+    for ser, data in enumerate(inputs):
+        if ser % 50 == 0:
+            print('The simulation is running at %s time' % ser)
+        stimulus = TimedArray(data, dt=Dt)
+        net.run(duration*Dt)
+        weight = S_EE.variables['w'].get_value().copy()
+        diff_weight = base.np_append(diff_weight, np.mena(np.abs(weight - weight_initial)))
+        if record:
+            monitor_record = base.update_states('numpy', m_s_ee.w, **monitor_record)
+        net.restore('init')
+        S_EE.w = weight.copy()
+    result.result_save('weight.pkl', {'weight' : weight})
+    return diff_weight, monitor_record
 
 ###################################
 # -----parameter setting-------
@@ -375,11 +395,10 @@ coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
 duration = coding_duration*MNIST_shape[0]
+F_per_train = 0.01
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
-
-pre_train_loop = 0
 
 n_ex = 400
 n_inh = int(n_ex/4)
@@ -408,12 +427,15 @@ MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
+df_per_train = MNIST.select_data(F_per_train, MNIST.train)
 df_train = MNIST.select_data(F_train, MNIST.train)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
+df_en_per_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
+data_per_train_s, label_per_train = MNIST.get_series_data_list(df_en_per_train, is_group = True)
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
@@ -443,6 +465,18 @@ synapse = '''
 w : 1
 '''
 
+synapse_stdp = '''
+w : 1
+w_max : 1
+w_min : 1
+A_pre : 1
+A_post = -A_pre * tau_pre / tau_post * 1.2 : 1
+tau_pre : second
+tau_post : second
+dapre/dt = -apre/tau_pre : 1 (clock-driven)
+dapost/dt = -apost/tau_post : 1 (clock-driven)
+'''
+
 on_pre_ex = '''
 g+=w
 '''
@@ -450,6 +484,20 @@ g+=w
 on_pre_inh = '''
 h-=w
 '''
+
+on_pre_ex_stdp = '''
+g+=w
+apre += A_pre * int(Switch_stdp)
+w = clip(w+apost, wmin, wmax)
+apose = 0
+'''
+
+on_post_ex_STDP = '''
+apost += A_post * int(Switch_stdp)
+w = clip(w+apre, wmin, wmax)
+apre = 0
+'''
+
 
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
@@ -467,7 +515,7 @@ S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name=
 
 S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
-S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
+S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_STDP,method='euler', name='synapses_EE')
 
 S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
 
@@ -520,6 +568,7 @@ if Switch_monitor :
     m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
     m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
     m_input = StateMonitor(Input, ('I'), record=True)
+    m_s_ee = StateMonitor(S_EE, ('w'), record=True)
 
 # ------create network-------------
 net = Network(collect())
