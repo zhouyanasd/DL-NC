@@ -342,11 +342,11 @@ class MNIST_classification(Base):
         label = data_frame['label']
         return np.asarray(data_frame_s), label
 
+#--------define switch --------------------------------
+Switch_monitor = True
+Switch_plasticity = False
 
 #--------define network run function-------------------
-Switch_monitor = True
-Switch_stdp = False
-
 def run_net(inputs):
     states = None
     monitor_record= {
@@ -369,25 +369,32 @@ def run_net(inputs):
         net.restore('init')
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
-def run_pre_train(inputs):
-    diff_weight = None
+def run_net_plasticity(inputs):
     monitor_record= {
-        'm_s_ee.w': None,
-    }
-    weight_initial = S_EE.variables['w'].get_value().copy()
+        'm_g_ex.I': None,
+        'm_g_ex.v': None,
+        'm_g_in.I': None,
+        'm_g_in.v': None,
+        'm_read.I': None,
+        'm_read.v': None,
+        'm_input.I': None,
+        'm_s_ee.w': None}
     for ser, data in enumerate(inputs):
+        weight_initial = S_EE.variables['w'].get_value().copy()
         if ser % 50 == 0:
             print('The simulation is running at %s time' % ser)
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration*Dt)
-        weight = S_EE.variables['w'].get_value().copy()
-        diff_weight = base.np_append(diff_weight, np.mena(np.abs(weight - weight_initial)))
+        weight_trained = S_EE.variables['w'].get_value().copy()
+        weight_changed = base.np_append(weight_changed, np.mena(np.abs(weight_trained - weight_initial)))
         if record:
-            monitor_record = base.update_states('numpy', m_s_ee.w, **monitor_record)
+            monitor_record = base.update_states('numpy', m_s_ee.w, m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
+                                                m_read.v, m_input.I, **monitor_record)
         net.restore('init')
-        S_EE.w = weight.copy()
-    result.result_save('weight.pkl', {'weight' : weight})
-    return diff_weight, monitor_record
+        S_EE.w = weight_trained.copy()
+    result.result_save('weight.pkl', {'weight' : weight_trained})
+    return weight_changed, monitor_record
+
 
 ###################################
 # -----parameter setting-------
@@ -395,7 +402,7 @@ coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
 duration = coding_duration*MNIST_shape[0]
-F_per_train = 0.01
+F_plasticity = 0.05
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
@@ -417,6 +424,7 @@ A_inI = 9
 p_inE = 0.1
 p_inI = 0.1
 
+
 ###########################################
 #-------class initialization----------------------
 function = Function()
@@ -427,15 +435,15 @@ MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
-df_per_train = MNIST.select_data(F_per_train, MNIST.train)
+df_plasticity = MNIST.select_data(F_plasticity, MNIST.train)
 df_train = MNIST.select_data(F_train, MNIST.train)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
-df_en_per_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
+df_en_plasticity = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
-data_per_train_s, label_per_train = MNIST.get_series_data_list(df_en_per_train, is_group = True)
+data_plasticity_s, label_plasticity = MNIST.get_series_data_list(df_en_plasticity, is_group = True)
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
@@ -487,17 +495,16 @@ h-=w
 
 on_pre_ex_stdp = '''
 g+=w
-apre += A_pre * int(Switch_stdp)
+apre += A_pre * int(Switch_plasticity)
 w = clip(w+apost, wmin, wmax)
 apose = 0
 '''
 
 on_post_ex_STDP = '''
-apost += A_post * int(Switch_stdp)
+apost += A_post * int(Switch_plasticity)
 w = clip(w+apre, wmin, wmax)
 apre = 0
 '''
-
 
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
@@ -570,16 +577,23 @@ if Switch_monitor :
     m_input = StateMonitor(Input, ('I'), record=True)
     m_s_ee = StateMonitor(S_EE, ('w'), record=True)
 
+
 # ------create network-------------
 net = Network(collect())
 net.store('init')
 
+
 ###############################################
+# ------run for pre_train-------
+if Switch_plasticity:
+    weight_changed, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
+
 # ------run for train-------
 states_train, monitor_record_train = run_net(data_train_s)
 
 # ----run for test--------
 states_test, monitor_record_test = run_net(data_test_s)
+
 
 #####################################
 # ------Readout---------------
