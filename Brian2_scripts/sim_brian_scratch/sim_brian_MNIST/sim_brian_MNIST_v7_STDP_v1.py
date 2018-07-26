@@ -342,10 +342,6 @@ class MNIST_classification(Base):
         label = data_frame['label']
         return np.asarray(data_frame_s), label
 
-#--------define switch --------------------------------
-Switch_monitor = True
-Switch_plasticity = False
-
 #--------define network run function-------------------
 def run_net(inputs):
     states = None
@@ -397,6 +393,10 @@ def run_net_plasticity(inputs):
 
 
 ###################################
+#--------switch setting--------
+Switch_monitor = True
+Switch_plasticity = False
+
 # -----parameter setting-------
 coding_n = 10
 MNIST_shape = (28, 28)
@@ -411,6 +411,7 @@ n_ex = 400
 n_inh = int(n_ex/4)
 n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
+learning_alpha = 0.01
 
 R = 2
 
@@ -473,18 +474,6 @@ synapse = '''
 w : 1
 '''
 
-synapse_stdp = '''
-w : 1
-w_max : 1
-w_min : 1
-A_pre : 1
-A_post = -A_pre * tau_pre / tau_post * 1.2 : 1
-tau_pre : second
-tau_post : second
-dapre/dt = -apre/tau_pre : 1 (clock-driven)
-dapost/dt = -apost/tau_post : 1 (clock-driven)
-'''
-
 on_pre_ex = '''
 g+=w
 '''
@@ -493,17 +482,29 @@ on_pre_inh = '''
 h-=w
 '''
 
+synapse_stdp = '''
+w : 1
+w_max : 1
+w_min : 1
+tau_ahead : second
+tau_latter : second
+A_ahead : 1
+A_latter = -A_ahead * tau_ahead / tau_latter * 1.2 : 1
+da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
+da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
+'''
+
 on_pre_ex_stdp = '''
 g+=w
-apre += A_pre * int(Switch_plasticity)
-w = clip(w+apost, wmin, wmax)
-apose = 0
+a_ahead += A_ahead * int(Switch_plasticity)
+w = clip(w+a_latter, wmin, wmax)
+a_latter = 0
 '''
 
 on_post_ex_STDP = '''
-apost += A_post * int(Switch_plasticity)
-w = clip(w+apre, wmin, wmax)
-apre = 0
+a_latter += A_latter * int(Switch_plasticity)
+w = clip(w+a_ahead, wmin, wmax)
+a_ahead = 0
 '''
 
 # -----Neurons and Synapses setting-------
@@ -569,6 +570,11 @@ S_EI.pre.delay = '0.8*ms'
 S_IE.pre.delay = '0.8*ms'
 S_II.pre.delay = '0.8*ms'
 
+S_EE.w_max = np.max(S_EE.w)
+S_EE.w_min = np.min(S_EE.w)
+S_EE.A_ahead = learning_alpha
+S_EE.tau_ahead = S_EE.tau_latter = '3*ms'
+
 # --------monitors setting----------
 if Switch_monitor :
     m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
@@ -576,7 +582,6 @@ if Switch_monitor :
     m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
     m_input = StateMonitor(Input, ('I'), record=True)
     m_s_ee = StateMonitor(S_EE, ('w'), record=True)
-
 
 # ------create network-------------
 net = Network(collect())
@@ -589,6 +594,7 @@ if Switch_plasticity:
     weight_changed, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
 
 # ------run for train-------
+Switch_plasticity = False
 states_train, monitor_record_train = run_net(data_train_s)
 
 # ----run for test--------
