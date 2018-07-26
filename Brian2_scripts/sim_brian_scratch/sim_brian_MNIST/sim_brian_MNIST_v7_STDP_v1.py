@@ -366,6 +366,7 @@ def run_net(inputs):
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
 def run_net_plasticity(inputs):
+    weight_changed = None
     monitor_record= {
         'm_g_ex.I': None,
         'm_g_ex.v': None,
@@ -382,7 +383,7 @@ def run_net_plasticity(inputs):
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration*Dt)
         weight_trained = S_EE.variables['w'].get_value().copy()
-        weight_changed = base.np_append(weight_changed, np.mena(np.abs(weight_trained - weight_initial)))
+        weight_changed = base.np_append(weight_changed, np.mean(np.abs(weight_trained - weight_initial)))
         if record:
             monitor_record = base.update_states('numpy', m_s_ee.w, m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, **monitor_record)
@@ -497,13 +498,13 @@ da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
 on_pre_ex_stdp = '''
 g+=w
 a_ahead += A_ahead * int(Switch_plasticity)
-w = clip(w+a_latter, wmin, wmax)
+w = clip(w+a_latter, w_min, w_max)
 a_latter = 0
 '''
 
 on_post_ex_STDP = '''
 a_latter += A_latter * int(Switch_plasticity)
-w = clip(w+a_ahead, wmin, wmax)
+w = clip(w+a_ahead, w_min, w_max)
 a_ahead = 0
 '''
 
@@ -593,8 +594,10 @@ net.store('init')
 if Switch_plasticity:
     weight_changed, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
 
-# ------run for train-------
+#-------close plasticity--------
 Switch_plasticity = False
+
+# ------run for train-------
 states_train, monitor_record_train = run_net(data_train_s)
 
 # ----run for test--------
