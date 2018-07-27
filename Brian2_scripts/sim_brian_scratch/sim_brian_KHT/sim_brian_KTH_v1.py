@@ -334,8 +334,6 @@ class KTH_classification():
 
 
 # --------define network run function-------------------
-Switch_monitor = True
-
 def run_net(inputs):
     states = None
     monitor_record = {
@@ -361,10 +359,12 @@ def run_net(inputs):
 
 
 ###################################
-# -----parameter setting-------
+#--------switch setting--------
+Switch_monitor = True
 LOAD_DATA = True
 USE_VALIDATION = True
 
+# -----parameter setting-------
 origin_size=(120, 160)
 pool_size=(5, 5)
 types='max'
