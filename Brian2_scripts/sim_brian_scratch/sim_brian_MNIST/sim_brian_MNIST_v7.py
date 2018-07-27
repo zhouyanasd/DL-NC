@@ -344,8 +344,6 @@ class MNIST_classification(Base):
 
 
 #--------define network run function-------------------
-Switch_monitor = True
-
 def run_net(inputs):
     states = None
     monitor_record= {
@@ -370,6 +368,9 @@ def run_net(inputs):
 
 
 ###################################
+#--------switch setting--------
+Switch_monitor = True
+
 # -----parameter setting-------
 coding_n = 10
 MNIST_shape = (28, 28)
