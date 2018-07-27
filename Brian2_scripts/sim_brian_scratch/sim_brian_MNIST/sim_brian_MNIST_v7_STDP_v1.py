@@ -385,8 +385,8 @@ def run_net_plasticity(inputs):
         weight_trained = S_EE.variables['w'].get_value().copy()
         weight_changed = base.np_append(weight_changed, np.mean(np.abs(weight_trained - weight_initial)))
         if Switch_monitor:
-            monitor_record = base.update_states('numpy', m_s_ee.w, m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, **monitor_record)
+            monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
+                                                m_read.v, m_input.I, m_s_ee.w, **monitor_record)
         net.restore('init')
         S_EE.w = weight_trained.copy()
     result.result_save('weight.pkl', {'weight' : weight_trained})
