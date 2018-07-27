@@ -353,7 +353,7 @@ def run_net(inputs):
         duration = data.shape[0]
         net.run(duration * Dt)
         states = base.np_append(states, G_readout.variables['v'].get_value())
-        if record:
+        if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, **monitor_record)
         net.restore('init')
