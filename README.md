@@ -6,3 +6,5 @@ Spiking Neuron Network
 Liquid State Machine
 
 Plasticity 
+
+docker : `docker pull scarecrow88/brian2`
