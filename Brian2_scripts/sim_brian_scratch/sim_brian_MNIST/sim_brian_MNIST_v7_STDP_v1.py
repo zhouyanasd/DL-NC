@@ -397,6 +397,7 @@ def run_net_plasticity(inputs):
 #--------switch setting--------
 Switch_monitor = True
 Switch_plasticity = False
+READ_WEIGHT = True
 
 # -----parameter setting-------
 coding_n = 10
@@ -594,13 +595,23 @@ net.store('init')
 if Switch_plasticity:
     weight_changed, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
 
+#------save monitor data and results------
+if Switch_monitor:
+    result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
+    result.result_save('weight_changed.pkl', weight_changed = weight_changed)
+
 #-------close plasticity--------
 Switch_plasticity = False
 
+
+###############################################
 #-------read weight ------------
-if not Switch_plasticity:
-    weight = result.result_pick('weight.pkl')
-    S_EE.w = weight
+if READ_WEIGHT:
+    try:
+        weight = result.result_pick('weight.pkl')
+        S_EE.w = weight
+    except FileNotFoundError:
+        print ('Have not trained by plasticity, initial weight have been used')
 
 # ------run for train-------
 states_train, monitor_record_train = run_net(data_train_s)
@@ -608,24 +619,19 @@ states_train, monitor_record_train = run_net(data_train_s)
 # ----run for test--------
 states_test, monitor_record_test = run_net(data_test_s)
 
-
-#####################################
 # ------Readout---------------
 score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
                                              multi_class="multinomial")
-
-#####################################
 #----------show results-----------
 print('Train score: ',score_train)
 print('Test score: ',score_test)
 
-
-#####################################
-#-----------save monitor data-------
-if Switch_monitor :
+#------save monitor data and results------
+if Switch_monitor:
     result.result_save('monitor_train.pkl', **monitor_record_train)
     result.result_save('monitor_test.pkl', **monitor_record_test)
-result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
+    result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
+
 
 #####################################
 # ------vis of results----
