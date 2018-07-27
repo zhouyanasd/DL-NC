@@ -597,6 +597,11 @@ if Switch_plasticity:
 #-------close plasticity--------
 Switch_plasticity = False
 
+#-------read weight ------------
+if not Switch_plasticity:
+    weight = result.result_pick('weight.pkl')
+    S_EE.w = weight
+
 # ------run for train-------
 states_train, monitor_record_train = run_net(data_train_s)
 
