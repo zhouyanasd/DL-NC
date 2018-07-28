@@ -442,7 +442,7 @@ df_plasticity = MNIST.select_data(F_plasticity, MNIST.train)
 df_train = MNIST.select_data(F_train, MNIST.train)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
-df_en_plasticity = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
+df_en_plasticity = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_plasticity, coding_n)
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
