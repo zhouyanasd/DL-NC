@@ -385,6 +385,7 @@ def run_net(inputs):
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
 def run_net_plasticity(inputs):
+    spectral_radius = None
     weight_changed = None
     monitor_record= {
         'm_g_ex.I': None,
@@ -396,6 +397,7 @@ def run_net_plasticity(inputs):
         'm_input.I': None,
         'm_s_ee.w': None}
     for ser, data in enumerate(inputs):
+        spectral_radius = base.np_append(spectral_radius, base.spectral_radius(S_EE))
         weight_initial = S_EE.variables['w'].get_value().copy()
         if ser % 50 == 0:
             print('The simulation is running at %s time' % ser)
@@ -409,7 +411,7 @@ def run_net_plasticity(inputs):
         net.restore('init')
         S_EE.w = weight_trained.copy()
     result.result_save('weight.pkl', {'weight' : weight_trained})
-    return weight_changed, monitor_record
+    return weight_changed, spectral_radius, monitor_record
 
 
 ###################################
@@ -610,14 +612,15 @@ net.store('init')
 
 
 ###############################################
-# ------run for pre_train-------
+# ------run for plasticity-------
 if Switch_plasticity:
-    weight_changed, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
+    weight_changed, spectral_radius, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
 
 #------save monitor data and results------
 if Switch_monitor:
     result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
     result.result_save('weight_changed.pkl', weight_changed = weight_changed)
+    result.result_save('spectral_radius.pkl', spectral_radius=spectral_radius)
 
 #-------close plasticity--------
 Switch_plasticity = False
