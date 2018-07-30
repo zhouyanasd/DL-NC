@@ -125,6 +125,19 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
+    def connection_matrix(self, sources, targets, values):
+        full_matrix = np.zeros((np.max(targets) - np.min(targets) + 1,
+                                np.max(sources) - np.min(sources) + 1))
+        full_matrix[targets - np.min(targets), sources - np.min(sources)] = values
+        return full_matrix
+
+    def spectral_radius(self, S):
+        sources = S.i[:]
+        targets = S.j[:]
+        values = S.w[:] - np.mean(S.variables['w'].get_value())
+        ma = self.connection_matrix(sources, targets, values)/np.sqrt(ma.shape[0])
+        a, b = np.linalg.eig(ma / 20)
+        return np.max(np.abs(a))
 
 class Readout():
     def __init__(self, function):
