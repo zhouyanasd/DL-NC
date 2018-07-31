@@ -638,7 +638,7 @@ if READ_WEIGHT:
 # ------run for train-------
 states_train, monitor_record_train = run_net(data_train_s)
 
-# ----run for test--------
+# ------run for test--------
 states_test, monitor_record_test = run_net(data_test_s)
 
 # ------Readout---------------
@@ -656,7 +656,7 @@ if Switch_monitor:
 
 
 #####################################
-# ------vis of results----
+# ------vis of results-------
 fig_init_w =plt.figure(figsize=(16,16))
 subplot(421)
 brian_plot(S_EE.w)
