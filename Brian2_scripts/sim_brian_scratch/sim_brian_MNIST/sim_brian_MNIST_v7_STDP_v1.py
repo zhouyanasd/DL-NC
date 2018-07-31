@@ -524,10 +524,22 @@ w = clip(w+a_latter, w_min, w_max)
 a_latter = 0
 '''
 
-on_post_ex_STDP = '''
+on_post_ex_stdp = '''
 a_latter += A_latter * int(Switch_plasticity)
 w = clip(w+a_ahead, w_min, w_max)
 a_ahead = 0
+'''
+
+synapse_bcm = '''
+
+'''
+
+on_pre_ex_bcm = '''
+
+'''
+
+on_post_ex_bcm = '''
+
 '''
 
 # -----Neurons and Synapses setting-------
@@ -546,7 +558,7 @@ S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name=
 
 S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
-S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_STDP,method='euler', name='synapses_EE')
+S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_stdp,method='euler', name='synapses_EE')
 
 S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
 
