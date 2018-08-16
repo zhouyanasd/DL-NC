@@ -492,7 +492,8 @@ I = stimulus(t,i) : 1
 '''
 
 neuron = '''
-rate : Hz
+rate : 1
+spike : 1
 dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
@@ -507,6 +508,17 @@ dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
 I = (g+h): 1
+'''
+
+reset_ex= '''
+v = 0
+spike = 1
+'''
+
+event_ex = '''
+spike_window = get_spike_window(spike_window, spike)
+rate = get_rate(spike_window)
+spike = 0
 '''
 
 synapse = '''
@@ -562,8 +574,8 @@ on_post_ex_bcm = '''
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
-                name ='neurongroup_ex')
+G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset = reset_ex, method='euler', refractory=3 * ms,
+                name ='neurongroup_ex', events={'rate_event':'t>0*ms'})
 
 G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name ='neurongroup_in')
@@ -587,6 +599,12 @@ S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='e
 S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
 
 #-------initialization of neuron parameters----------
+G_ex.run_on_event('rate_event', event_ex)
+G_ex.variables.add_dynamic_array('spike_window', size=(n_ex,rate_window))
+G_ex.rate = 0
+G_ex.spike = 0
+G_ex.spike_window = 0
+
 G_ex.v = '13.5+1.5*rand()'
 G_inh.v = '13.5+1.5*rand()'
 G_readout.v = '0'
