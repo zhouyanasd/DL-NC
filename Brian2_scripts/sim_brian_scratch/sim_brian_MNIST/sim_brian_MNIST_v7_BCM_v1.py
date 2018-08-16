@@ -30,7 +30,20 @@ np.random.seed(100)
 data_path = '../../../Data/MNIST_data/'
 
 
-# ------define general function------------
+#-------define brian2 function------------
+@check_units(spike_window=1,result=1)
+def get_rate(spike_window):
+    return np.sum(spike_window, axis = 1)
+
+@check_units(spike_window=1, spike = 1, result=1)
+def get_spike_window(spike_window, spike):
+    new_window = np.zeros(spike_window.shape)
+    new_window[:,:-1] = spike_window[:,1:]
+    new_window[:,-1] = spike
+    return new_window
+
+
+#-------define general function------------
 class Function():
     def __init__(self):
         pass
@@ -429,6 +442,8 @@ F_plasticity = 0.05
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
+
+rate_window = 5
 
 n_ex = 400
 n_inh = int(n_ex/4)
