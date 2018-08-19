@@ -575,7 +575,7 @@ Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refra
                     name = 'neurongroup_input')
 
 G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset = reset_ex, method='euler', refractory=3 * ms,
-                name ='neurongroup_ex', events={'rate_event':'t>0*ms'})
+                name ='neurongroup_ex', events={'event_rate':'t>0*ms'})
 
 G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name ='neurongroup_in')
@@ -599,7 +599,7 @@ S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='e
 S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
 
 #-------initialization of neuron parameters----------
-G_ex.run_on_event('rate_event', event_ex)
+G_ex.run_on_event('event_rate', event_ex)
 G_ex.variables.add_dynamic_array('spike_window', size=(n_ex,rate_window))
 G_ex.rate = 0
 G_ex.spike = 0
