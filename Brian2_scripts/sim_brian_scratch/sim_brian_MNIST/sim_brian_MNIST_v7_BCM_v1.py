@@ -558,7 +558,7 @@ on_pre_ex_bcm = {
     ''',
     'pathway_rate':'''
      d_w = rate_pre*(rate_post - th_m)*rate_post - learning_rate*w
-     w = clip(w + d_w, w_min, w_max)
+     w = clip(w + d_w * int(Switch_plasticity) , w_min, w_max)
     '''}
 
 # -----Neurons and Synapses setting-------
