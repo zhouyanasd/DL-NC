@@ -530,18 +530,6 @@ w = clip(w+a_ahead, w_min, w_max)
 a_ahead = 0
 '''
 
-synapse_bcm = '''
-
-'''
-
-on_pre_ex_bcm = '''
-
-'''
-
-on_post_ex_bcm = '''
-
-'''
-
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')

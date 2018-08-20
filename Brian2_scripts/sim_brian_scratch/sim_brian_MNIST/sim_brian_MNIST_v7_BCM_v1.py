@@ -33,7 +33,7 @@ data_path = '../../../Data/MNIST_data/'
 #-------define brian2 function------------
 @check_units(spike_window=1,result=1)
 def get_rate(spike_window):
-    return np.sum(spike_window, axis = 1)
+    return np.sum(spike_window, axis = 1)/spike_window.shape[1]
 
 @check_units(spike_window=1, spike = 1, result=1)
 def get_spike_window(spike_window, spike):
@@ -444,6 +444,7 @@ F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 rate_window = 5
+learning_rate = 0.02
 
 n_ex = 400
 n_inh = int(n_ex/4)
@@ -491,9 +492,19 @@ neuron_in = '''
 I = stimulus(t,i) : 1
 '''
 
-neuron = '''
+neuron_ex = '''
 rate : 1
 spike : 1
+dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+dg/dt = (-g)/(3*ms) : 1
+dh/dt = (-h)/(6*ms) : 1
+I = (g+h)+13.5: 1
+x : 1
+y : 1
+z : 1
+'''
+
+neuron_inh = '''
 dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
@@ -525,6 +536,14 @@ synapse = '''
 w : 1
 '''
 
+synapse_bcm = '''
+w : 1
+w_max : 1
+w_min : 1
+tau : 1
+dth_m/dt = (rate_post - th_m)/tau : 1 (clock-driven)
+'''
+
 on_pre_ex = '''
 g+=w
 '''
@@ -533,49 +552,21 @@ on_pre_inh = '''
 h-=w
 '''
 
-synapse_stdp = '''
-w : 1
-w_max : 1
-w_min : 1
-tau_ahead : second
-tau_latter : second
-A_ahead : 1
-A_latter = -A_ahead * tau_ahead / tau_latter * 1.2 : 1
-da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
-da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
-'''
-
-on_pre_ex_stdp = '''
-g+=w
-a_ahead += A_ahead * int(Switch_plasticity)
-w = clip(w+a_latter, w_min, w_max)
-a_latter = 0
-'''
-
-on_post_ex_stdp = '''
-a_latter += A_latter * int(Switch_plasticity)
-w = clip(w+a_ahead, w_min, w_max)
-a_ahead = 0
-'''
-
-synapse_bcm = '''
-
-'''
-
-on_pre_ex_bcm = '''
-
-'''
-
-on_post_ex_bcm = '''
-
-'''
+on_pre_ex_bcm = {
+    'pre': '''
+     g += w
+    ''',
+    'pathway_rate':'''
+     d_w = rate_pre*(rate_post - th_m)*rate_post - learning_rate*w
+     w = clip(w + d_w, w_min, w_max)
+    '''}
 
 # -----Neurons and Synapses setting-------
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
 G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset = reset_ex, method='euler', refractory=3 * ms,
-                name ='neurongroup_ex', events={'event_rate':'t>0*ms'})
+                 events={'event_rate':'True'}, name ='neurongroup_ex')
 
 G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name ='neurongroup_in')
@@ -586,7 +577,8 @@ S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name=
 
 S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
-S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_stdp,method='euler', name='synapses_EE')
+S_EE = Synapses(G_ex, G_ex, synapse_bcm, on_pre = on_pre_ex_bcm, on_event={'pre':'spike', 'pathway_rate': 'event_rate'},
+                method='euler', name='synapses_EE')
 
 S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
 
@@ -641,8 +633,7 @@ S_II.pre.delay = '0.8*ms'
 
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
-S_EE.A_ahead = learning_alpha
-S_EE.tau_ahead = S_EE.tau_latter = '3*ms'
+S_EE.tau = '1.5*ms'
 
 # --------monitors setting----------
 if Switch_monitor :
