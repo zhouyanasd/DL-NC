@@ -565,10 +565,10 @@ on_pre_ex_bcm = {
 Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                     name = 'neurongroup_input')
 
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset = reset_ex, method='euler', refractory=3 * ms,
+G_ex = NeuronGroup(n_ex, neuron_ex, threshold='v > 15', reset = reset_ex, method='euler', refractory=3 * ms,
                  events={'event_rate':'True'}, name ='neurongroup_ex')
 
-G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
+G_inh = NeuronGroup(n_inh, neuron_ex, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
                 name ='neurongroup_in')
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
