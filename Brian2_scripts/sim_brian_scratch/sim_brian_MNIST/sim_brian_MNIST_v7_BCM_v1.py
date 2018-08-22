@@ -443,14 +443,10 @@ F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
-rate_window = 5
-learning_rate = 0.02
-
 n_ex = 400
 n_inh = int(n_ex/4)
 n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
-learning_alpha = 0.01
 
 R = 2
 
@@ -463,6 +459,9 @@ A_inI = 9
 
 p_inE = 0.1
 p_inI = 0.1
+
+rate_window = 5
+learning_rate = 0.02
 
 
 ###########################################

@@ -434,7 +434,6 @@ n_ex = 400
 n_inh = int(n_ex/4)
 n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
-learning_alpha = 0.01
 
 R = 2
 
@@ -447,6 +446,8 @@ A_inI = 9
 
 p_inE = 0.1
 p_inI = 0.1
+
+learning_rate = 0.01
 
 
 ###########################################
@@ -595,7 +596,7 @@ S_II.pre.delay = '0.8*ms'
 
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
-S_EE.A_ahead = learning_alpha
+S_EE.A_ahead = learning_rate
 S_EE.tau_ahead = S_EE.tau_latter = '3*ms'
 
 # --------monitors setting----------
