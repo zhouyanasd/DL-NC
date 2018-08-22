@@ -430,7 +430,7 @@ def run_net_plasticity(inputs):
 ###################################
 #--------switch setting--------
 Switch_monitor = True
-Switch_plasticity = False
+Switch_plasticity = True
 READ_WEIGHT = True
 
 # -----parameter setting-------
@@ -540,7 +540,7 @@ synapse_bcm = '''
 w : 1
 w_max : 1
 w_min : 1
-tau : 1
+tau : second
 dth_m/dt = (rate_post - th_m)/tau : 1 (clock-driven)
 '''
 

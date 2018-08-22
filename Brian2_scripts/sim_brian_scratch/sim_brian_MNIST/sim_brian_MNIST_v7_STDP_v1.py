@@ -417,7 +417,7 @@ def run_net_plasticity(inputs):
 ###################################
 #--------switch setting--------
 Switch_monitor = True
-Switch_plasticity = False
+Switch_plasticity = True
 READ_WEIGHT = True
 
 # -----parameter setting-------
