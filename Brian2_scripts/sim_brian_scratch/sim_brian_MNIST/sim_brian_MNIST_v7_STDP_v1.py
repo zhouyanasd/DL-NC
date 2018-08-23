@@ -125,25 +125,28 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
-    def connection_matrix(self, sources, targets, values):
-        full_matrix = np.zeros((np.max(targets) - np.min(targets) + 1,
-                                np.max(sources) - np.min(sources) + 1))
-        full_matrix[targets - np.min(targets), sources - np.min(sources)] = values
+    def connection_matrix(self, n_pre, n_post, sources, targets, values):
+        full_matrix = np.zeros((n_pre, n_post))
+        full_matrix[targets, sources] = values
         return full_matrix
 
     def spectral_radius(self, S):
         if isinstance(S, Synapses):
+            n_pre = S.N_pre
+            n_post = S.N_post
             sources = S.i[:]
             targets = S.j[:]
             values = S.w[:] - np.mean(S.variables['w'].get_value())
             if sources.shape[0] == targets.shape[0]:
-                ma = self.connection_matrix(sources, targets, values)/np.sqrt(sources.shape[0])
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
+                print(ma.shape)
             else:
                 raise ('Only synapses with the same source and target can calculate spectral radius')
             a, b = np.linalg.eig(ma)
             return np.max(np.abs(a))
         else:
             raise ('The input need to be a object of Synapses')
+
 
 class Readout():
     def __init__(self, function):
