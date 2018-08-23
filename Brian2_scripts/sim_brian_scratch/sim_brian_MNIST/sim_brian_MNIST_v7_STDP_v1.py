@@ -139,7 +139,6 @@ class Base():
             values = S.w[:] - np.mean(S.variables['w'].get_value())
             if sources.shape[0] == targets.shape[0]:
                 ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
-                print(ma.shape)
             else:
                 raise ('Only synapses with the same source and target can calculate spectral radius')
             a, b = np.linalg.eig(ma)
