@@ -464,6 +464,7 @@ p_inI = 0.1
 
 rate_window = 5
 weight_decay = 0.02
+A_bcm = 100
 
 
 ###########################################
@@ -558,7 +559,7 @@ on_pre_ex_bcm = {
      g += w
     ''',
     'pathway_rate':'''
-     d_w = rate_pre*(rate_post - th_m)*rate_post - weight_decay*w
+     d_w = A_bcm*rate_pre*(rate_post - th_m)*rate_post - weight_decay*w
      w = clip(w + d_w * int(Switch_plasticity) , w_min, w_max)
     '''}
 
