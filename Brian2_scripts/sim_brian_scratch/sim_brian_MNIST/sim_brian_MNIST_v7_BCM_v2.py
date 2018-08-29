@@ -85,6 +85,14 @@ class Base():
                 kwargs[state] = self.np_extend(kwargs[state], args[seq], 1)
         return kwargs
 
+    def updata_metrics(self, type='numpy', *args, **kwargs):
+        for seq, state in enumerate(kwargs):
+            if type == 'list':
+                kwargs[state] = kwargs[state].append(args[seq])
+            elif type == 'numpy':
+                kwargs[state] = self.np_append(kwargs[state], args[seq])
+        return kwargs
+
     def normalization_min_max(self, arr):
         arr_n = arr
         for i in range(arr.size):
@@ -399,10 +407,15 @@ def run_net(inputs):
         net.restore('init')
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
-def run_net_plasticity(inputs):
-    spectral_radius = None
-    weight_changed = None
-    weight_changed_mean = None
+def run_net_plasticity(inputs, label):
+    metric_plasticity = {
+        'weight_changed': None,
+        'weight_changed_mean': None,
+        'spectral_radius' : None,
+        'label' : None}
+    # spectral_radius = None
+    # weight_changed = None
+    # weight_changed_mean = None
     monitor_record= {
         'm_g_ex.I': None,
         'm_g_ex.v': None,
@@ -413,18 +426,22 @@ def run_net_plasticity(inputs):
         'm_input.I': None,
         'm_s_ee.w': None}
     for ser, data in enumerate(inputs):
-        spectral_radius = base.np_append(spectral_radius, base.spectral_radius(S_EE))
         weight_initial = S_EE.variables['w'].get_value().copy()
         if ser % 50 == 0:
             print('The simulation is running at %s time' % ser)
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration*Dt)
         weight_trained = S_EE.variables['w'].get_value().copy()
-        weight_changed = base.np_append(weight_trained - weight_initial)
-        weight_changed_mean = base.np_append(weight_changed_mean, np.mean(np.abs(weight_trained - weight_initial)))
+
+        # weight_changed = base.np_append(weight_trained - weight_initial)
+        # weight_changed_mean = base.np_append(weight_changed_mean, np.mean(np.abs(weight_trained - weight_initial)))
+        # spectral_radius = base.np_append(spectral_radius, base.spectral_radius(S_EE))
+
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, **monitor_record)
+            metric_plasticity =
+
         net.restore('init')
         S_EE.w = weight_trained.copy()
     result.result_save('weight.pkl', {'weight' : weight_trained})
