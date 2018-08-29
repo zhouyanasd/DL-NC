@@ -620,12 +620,14 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    weight_changed, weight_changed_mean, spectral_radius, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
+    weight_changed, weight_changed_mean, spectral_radius, monitor_record_pre_train = run_net_plasticity(
+        data_plasticity_s)
 
 #------save monitor data and results------
 if Switch_monitor:
     result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
     result.result_save('weight_changed.pkl', weight_changed = weight_changed)
+    result.result_save('weight_changed_mean.pkl', weight_changed_mean = weight_changed_mean)
     result.result_save('spectral_radius.pkl', spectral_radius=spectral_radius)
 
 #-------close plasticity--------
