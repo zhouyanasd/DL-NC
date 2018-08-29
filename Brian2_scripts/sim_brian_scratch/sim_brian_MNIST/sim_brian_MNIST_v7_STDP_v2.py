@@ -633,7 +633,7 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    metric_plasticity, monitor_record_pre_train = run_net_plasticity(inputs= data_plasticity_s, label=metric_plasticity)
+    metric_plasticity, monitor_record_pre_train = run_net_plasticity(inputs= data_plasticity_s, label=label_plasticity)
 
 #------save monitor data and results------
 if Switch_monitor:
