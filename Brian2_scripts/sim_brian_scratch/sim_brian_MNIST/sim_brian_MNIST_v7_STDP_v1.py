@@ -389,7 +389,6 @@ def run_net(inputs):
 def run_net_plasticity(inputs):
     spectral_radius = None
     weight_changed = None
-    weight_changed_mean = None
     monitor_record= {
         'm_g_ex.I': None,
         'm_g_ex.v': None,
@@ -407,15 +406,14 @@ def run_net_plasticity(inputs):
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration*Dt)
         weight_trained = S_EE.variables['w'].get_value().copy()
-        weight_changed = base.np_append(weight_trained - weight_initial)
-        weight_changed_mean = base.np_append(weight_changed_mean, np.mean(np.abs(weight_trained - weight_initial)))
+        weight_changed = base.np_append(weight_changed, np.mean(np.abs(weight_trained - weight_initial)))
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, **monitor_record)
         net.restore('init')
         S_EE.w = weight_trained.copy()
     result.result_save('weight.pkl', {'weight' : weight_trained})
-    return weight_changed, weight_changed_mean, spectral_radius, monitor_record
+    return weight_changed, spectral_radius, monitor_record
 
 
 ###################################
@@ -620,14 +618,12 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    weight_changed, weight_changed_mean, spectral_radius, monitor_record_pre_train = run_net_plasticity(
-        data_plasticity_s)
+    weight_changed, spectral_radius, monitor_record_pre_train = run_net_plasticity(data_plasticity_s)
 
 #------save monitor data and results------
 if Switch_monitor:
     result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
     result.result_save('weight_changed.pkl', weight_changed = weight_changed)
-    result.result_save('weight_changed_mean.pkl', weight_changed_mean = weight_changed_mean)
     result.result_save('spectral_radius.pkl', spectral_radius=spectral_radius)
 
 #-------close plasticity--------
