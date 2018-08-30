@@ -407,12 +407,11 @@ def run_net(inputs):
         net.restore('init')
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
-def run_net_plasticity(inputs, *args, **kargs):
+def run_net_plasticity(inputs, *args, **kwargs):
     metric_plasticity = {
         'weight_changed': None,
         'weight_changed_mean': None,
-        'spectral_radius' : None,
-        'label' : kargs['label']}
+        'spectral_radius' : None}
     monitor_record = {
         'm_g_ex.I': None,
         'm_g_ex.v': None,
@@ -422,7 +421,6 @@ def run_net_plasticity(inputs, *args, **kargs):
         'm_read.v': None,
         'm_input.I': None,
         'm_s_ee.w': None,
-        'm_s_ee.d_w': None,
         'm_s_ee.th_m': None}
     for ser, data in enumerate(inputs):
         weight_initial = S_EE.variables['w'].get_value().copy()
@@ -433,13 +431,13 @@ def run_net_plasticity(inputs, *args, **kargs):
         weight_trained = S_EE.variables['w'].get_value().copy()
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.d_w, m_s_ee.th_m,
-                                                **monitor_record)
-            metric_plasticity = base.updata_metrics('numpy', weight_trained - weight_initial,
+                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.d_w, **monitor_record)
+            metric_plasticity = base.update_metrics('numpy', weight_trained - weight_initial,
                                                     np.mean(np.abs(weight_trained - weight_initial)),
                                                     base.spectral_radius(S_EE), **metric_plasticity)
         net.restore('init')
         S_EE.w = weight_trained.copy()
+    metric_plasticity.update(kwargs)
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity, monitor_record
 
@@ -659,7 +657,7 @@ if Switch_monitor :
     m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
     m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
     m_input = StateMonitor(Input, ('I'), record=True)
-    m_s_ee = StateMonitor(S_EE, (['w','d_w','th_m']), record=True)
+    m_s_ee = StateMonitor(S_EE, (['w','th_m']), record=True)
 
 # ------create network-------------
 net = Network(collect())

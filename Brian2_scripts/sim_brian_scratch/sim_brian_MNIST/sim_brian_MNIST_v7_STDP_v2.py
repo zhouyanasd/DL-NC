@@ -394,12 +394,11 @@ def run_net(inputs):
         net.restore('init')
     return (MinMaxScaler().fit_transform(states)).T, monitor_record
 
-def run_net_plasticity(inputs, *args, **kargs):
+def run_net_plasticity(inputs, *args, **kwargs):
     metric_plasticity = {
         'weight_changed': None,
         'weight_changed_mean': None,
-        'spectral_radius' : None,
-        'label' : kargs['label']}
+        'spectral_radius' : None}
     monitor_record = {
         'm_g_ex.I': None,
         'm_g_ex.v': None,
@@ -422,11 +421,12 @@ def run_net_plasticity(inputs, *args, **kargs):
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, m_s_ee.a_latter, m_s_ee.a_ahead,
                                                 **monitor_record)
-            metric_plasticity = base.updata_metrics('numpy', weight_trained - weight_initial,
+            metric_plasticity = base.update_metrics('numpy', weight_trained - weight_initial,
                                                     np.mean(np.abs(weight_trained - weight_initial)),
                                                     base.spectral_radius(S_EE), **metric_plasticity)
         net.restore('init')
         S_EE.w = weight_trained.copy()
+    metric_plasticity.update(kwargs)
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity, monitor_record
 
