@@ -540,13 +540,11 @@ on_pre_ex_stdp = '''
 g+=w
 a_ahead += A_ahead * int(Switch_plasticity)
 w = clip(w+a_latter, w_min, w_max)
-a_latter = 0
 '''
 
 on_post_ex_stdp = '''
 a_latter += A_latter * int(Switch_plasticity)
 w = clip(w+a_ahead, w_min, w_max)
-a_ahead = 0
 '''
 
 # -----Neurons and Synapses setting-------
