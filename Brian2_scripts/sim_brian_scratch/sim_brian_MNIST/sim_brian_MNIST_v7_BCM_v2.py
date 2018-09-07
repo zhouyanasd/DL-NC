@@ -422,24 +422,28 @@ def run_net_plasticity(inputs, *args, **kwargs):
         'm_input.I': None,
         'm_s_ee.w': None,
         'm_s_ee.th_m': None}
+    metric_plasticity_list = [metric_plasticity for S in args]
     for ser, data in enumerate(inputs):
-        weight_initial = S_EE.variables['w'].get_value().copy()
+        weight_initial = [S.variables['w'].get_value().copy() for S in args]
         if ser % 50 == 0:
             print('The simulation is running at %s time' % ser)
         stimulus = TimedArray(data, dt=Dt)
         net.run(duration*Dt)
-        weight_trained = S_EE.variables['w'].get_value().copy()
+        weight_trained = [S.variables['w'].get_value().copy() for S in args]
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, m_s_ee.d_w, **monitor_record)
-            metric_plasticity = base.update_metrics('numpy', weight_trained - weight_initial,
-                                                    np.mean(np.abs(weight_trained - weight_initial)),
-                                                    base.spectral_radius(S_EE), **metric_plasticity)
+            metric_plasticity_list = [base.update_metrics('numpy', x - y,
+                                                    np.mean(np.abs(x-y)),
+                                                    base.spectral_radius(S), **metric)
+                                 for x, y, S, metric in
+                                 zip(weight_trained, weight_initial, args, metric_plasticity_list)]
         net.restore('init')
-        S_EE.w = weight_trained.copy()
+        for S_index, S in enumerate(args):
+            S.w = weight_trained[S_index].copy()
     metric_plasticity.update(kwargs)
     result.result_save('weight.pkl', {'weight' : weight_trained})
-    return metric_plasticity, monitor_record
+    return metric_plasticity_list, monitor_record
 
 
 ###################################
@@ -667,12 +671,13 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    metric_plasticity, monitor_record_pre_train = run_net_plasticity(inputs= data_plasticity_s, label=label_plasticity)
+    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
+                                                                     label=label_plasticity)
 
 #------save monitor data and results------
 if Switch_monitor:
     result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
-    result.result_save('metric_plasticity.pkl', metric_plasticity = metric_plasticity)
+    result.result_save('metric_plasticity.pkl', metric_plasticity = metric_plasticity_list)
 
 #-------close plasticity--------
 Switch_plasticity = False
