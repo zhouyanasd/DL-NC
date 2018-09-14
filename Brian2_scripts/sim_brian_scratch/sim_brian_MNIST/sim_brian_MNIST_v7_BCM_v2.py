@@ -432,7 +432,7 @@ def run_net_plasticity(inputs, *args, **kwargs):
         weight_trained = [S.variables['w'].get_value().copy() for S in args]
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.d_w, **monitor_record)
+                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.th_m, **monitor_record)
             metric_plasticity_list = [base.update_metrics('numpy', x - y,
                                                     np.mean(np.abs(x-y)),
                                                     base.spectral_radius(S), **metric)
