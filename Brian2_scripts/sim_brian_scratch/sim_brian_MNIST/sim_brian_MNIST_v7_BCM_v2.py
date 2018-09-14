@@ -441,7 +441,6 @@ def run_net_plasticity(inputs, *args, **kwargs):
         net.restore('init')
         for S_index, S in enumerate(args):
             S.w = weight_trained[S_index].copy()
-    metric_plasticity.update(kwargs)
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity_list, monitor_record
 
@@ -671,8 +670,7 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
-                                                                     label=label_plasticity)
+    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE)
 
 #------save monitor data and results------
 if Switch_monitor:
