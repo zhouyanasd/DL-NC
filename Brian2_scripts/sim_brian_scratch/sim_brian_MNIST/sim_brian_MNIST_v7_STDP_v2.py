@@ -154,6 +154,27 @@ class Base():
         else:
             raise ('The input need to be a object of Synapses')
 
+    def get_plasticity_confuse(self, metric_plasticity_list, label):
+        dis = []
+        for metric_plasticity in metric_plasticity_list:
+            df = pd.DataFrame({'weight_changed': list(metric_plasticity_list[0]['weight_changed']),
+                               'label': label})
+            df_a = df[:int(0.5 * df.index.size)]
+            df_b = df[int(0.5 * df.index.size):]
+            df_a_devide = [df_a[df_a['label'] == x] for x in
+                           df_a['label'].value_counts().index.sort_values().tolist()]
+            df_b_devide = [df_b[df_b['label'] == x] for x in
+                           df_b['label'].value_counts().index.sort_values().tolist()]
+            n = len(df['label'].value_counts().index.sort_values().tolist())
+            _dis = np.zeros((n, n))
+            for i in range(n):
+                for j in range(n):
+                    _dis[i][j] = numpy.linalg.norm(
+                        np.array(list(df_a_devide[i]['weight_changed'])).mean(axis=0) -
+                        np.array(list(df_b_devide[j]['weight_changed'])).mean(axis=0))
+            dis.append(_dis)
+        return dis
+
 
 class Readout():
     def __init__(self, function):
@@ -430,6 +451,9 @@ def run_net_plasticity(inputs, *args, **kwargs):
         net.restore('init')
         for S_index, S in enumerate(args):
             S.w = weight_trained[S_index].copy()
+    dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
+    for x, y in zip(metric_plasticity_list, dis):
+        x.update({'confuse_matrix':y})
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity_list, monitor_record
 
@@ -634,7 +658,8 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE)
+    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
+                                                                          label= label_plasticity)
 
 #------save monitor data and results------
 if Switch_monitor:
