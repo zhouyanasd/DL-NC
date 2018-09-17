@@ -712,6 +712,14 @@ subplot(424)
 brian_plot(S_II.w)
 show()
 
+#-------vis of metric--------
+fig_conf =plt.figure(figsize=(10,10))
+plt.imshow(metric_plasticity_list[0]['confuse_matrix'], cmap=plt.cm.BuPu_r)
+plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+cax = plt.axes([0.85, 0.1, 0.075, 0.8])
+plt.colorbar(cax=cax)
+plt.show()
+
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
 play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[1]), monitor['m_read.v'], duration, 10*duration)
