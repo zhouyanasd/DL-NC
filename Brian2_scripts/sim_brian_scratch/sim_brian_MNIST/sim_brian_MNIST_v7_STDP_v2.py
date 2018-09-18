@@ -492,7 +492,7 @@ A_inI = 9*f
 p_inE = 0.1
 p_inI = 0.1
 
-learning_rate = 0.01
+learning_rate = 0.005
 
 
 ###########################################
@@ -558,7 +558,7 @@ w_min : 1
 tau_ahead : second
 tau_latter : second
 A_ahead : 1
-A_latter = -A_ahead * tau_ahead / tau_latter * 1.2 : 1
+A_latter = -A_ahead * tau_ahead / tau_latter * 1.05 : 1
 da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
 da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
 '''
@@ -639,8 +639,8 @@ S_II.pre.delay = '0.8*ms'
 
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
-S_EE.A_ahead = learning_rate
-S_EE.tau_ahead = S_EE.tau_latter = '3*ms'
+S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
+S_EE.tau_ahead = S_EE.tau_latter = '5*ms'
 
 # --------monitors setting----------
 if Switch_monitor :
