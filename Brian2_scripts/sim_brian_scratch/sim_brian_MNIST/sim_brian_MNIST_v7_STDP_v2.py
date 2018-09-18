@@ -443,6 +443,7 @@ def run_net_plasticity(inputs, *args, **kwargs):
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, m_s_ee.a_latter, m_s_ee.a_ahead,
                                                 **monitor_record)
+        if Switch_metric:
             metric_plasticity_list = [base.update_metrics('numpy', x - y,
                                                     np.mean(np.abs(x-y)),
                                                     base.spectral_radius(S), **metric)
@@ -451,7 +452,7 @@ def run_net_plasticity(inputs, *args, **kwargs):
         net.restore('init')
         for S_index, S in enumerate(args):
             S.w = weight_trained[S_index].copy()
-    if Switch_monitor:
+    if Switch_metric:
         dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
         for x, y in zip(metric_plasticity_list, dis):
             x.update({'confuse_matrix':y})
@@ -461,6 +462,7 @@ def run_net_plasticity(inputs, *args, **kwargs):
 
 ###################################
 #--------switch setting--------
+Switch_metric = True
 Switch_monitor = True
 Switch_plasticity = True
 READ_WEIGHT = True
