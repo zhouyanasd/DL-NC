@@ -640,7 +640,7 @@ S_II.pre.delay = '0.8*ms'
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
 S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
-S_EE.tau_ahead = S_EE.tau_latter = '5*ms'
+S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
 
 # --------monitors setting----------
 if Switch_monitor :

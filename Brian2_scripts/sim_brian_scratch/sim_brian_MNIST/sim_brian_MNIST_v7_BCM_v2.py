@@ -502,8 +502,8 @@ A_inI = 9*f
 p_inE = 0.1
 p_inI = 0.1
 
-rate_window = 5
-weight_decay = 0.02
+rate_window = 20
+weight_decay = 0.00001
 A_bcm = 100
 
 
@@ -675,7 +675,7 @@ S_II.pre.delay = '0.8*ms'
 
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
-S_EE.tau = '1.5*ms'
+S_EE.tau = '10*ms'
 
 # --------monitors setting----------
 if Switch_monitor :
