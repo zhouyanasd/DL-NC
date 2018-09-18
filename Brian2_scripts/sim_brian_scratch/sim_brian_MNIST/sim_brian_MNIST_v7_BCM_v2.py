@@ -88,7 +88,7 @@ class Base():
     def update_metrics(self, type='numpy', *args, **kwargs):
         for seq, state in enumerate(kwargs):
             if type == 'list':
-                kwargs[state] = kwargs[state].append(args[seq])
+                kwargs[state].append(args[seq])
             elif type == 'numpy':
                 kwargs[state] = self.np_append(kwargs[state], args[seq])
         return kwargs
