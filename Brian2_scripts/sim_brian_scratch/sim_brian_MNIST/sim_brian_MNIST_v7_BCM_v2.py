@@ -482,7 +482,7 @@ coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
 duration = coding_duration*MNIST_shape[0]
-F_plasticity = 0.05
+F_plasticity = 0.005
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
