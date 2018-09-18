@@ -461,9 +461,10 @@ def run_net_plasticity(inputs, *args, **kwargs):
         net.restore('init')
         for S_index, S in enumerate(args):
             S.w = weight_trained[S_index].copy()
-    dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
-    for x, y in zip(metric_plasticity_list, dis):
-        x.update({'confuse_matrix':y})
+    if Switch_monitor:
+        dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
+        for x, y in zip(metric_plasticity_list, dis):
+            x.update({'confuse_matrix':y})
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity_list, monitor_record
 
