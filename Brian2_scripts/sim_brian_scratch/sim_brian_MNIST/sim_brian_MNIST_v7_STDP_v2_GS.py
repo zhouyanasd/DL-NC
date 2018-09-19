@@ -408,9 +408,9 @@ class MNIST_classification(Base):
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 10
-MNIST_shape = (28, 28)
-coding_duration = 10
+coding_n = 1
+MNIST_shape = (1, 784)
+coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_plasticity = 0.005
 F_train = 0.05
@@ -456,8 +456,8 @@ def grad_search(parameter):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-    R = 2
-    f = 1
+    R = 0.9
+    f = 1.2
 
     A_EE = 30*f
     A_EI = 60*f
@@ -466,8 +466,8 @@ def grad_search(parameter):
     A_inE = 18*f
     A_inI = 9*f
 
-    p_inE = 0.1
-    p_inI = 0.1
+    p_inE = 0.01
+    p_inI = 0.01
 
     learning_rate = parameter['learning_rate']
 
@@ -477,7 +477,7 @@ def grad_search(parameter):
     '''
 
     neuron = '''
-    dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+    dv/dt = (I-v) / (15*ms) : 1 (unless refractory)
     dg/dt = (-g)/(3*ms) : 1
     dh/dt = (-h)/(6*ms) : 1
     I = (g+h)+13.5: 1
