@@ -6,6 +6,7 @@
 # change the LSM structure according to Maass paper
 # new calculate flow as Maass_ST
 # simplify the coding method with only extend the rank
+# for the grad search
 # ----------------------------------------
 
 from brian2 import *
@@ -21,6 +22,7 @@ from bqplot import *
 import ipywidgets as widgets
 import warnings
 import os
+from multiprocessing import Pool
 
 
 warnings.filterwarnings("ignore")
@@ -392,111 +394,18 @@ class MNIST_classification(Base):
         label = data_frame['label']
         return np.asarray(data_frame_s), label
 
-#--------define network run function-------------------
-def run_net(inputs):
-    states = None
-    monitor_record= {
-        'm_g_ex.I': None,
-        'm_g_ex.v': None,
-        'm_g_in.I': None,
-        'm_g_in.v': None,
-        'm_read.I': None,
-        'm_read.v': None,
-        'm_input.I': None}
-    for ser, data in enumerate(inputs):
-        if ser % 50 == 0:
-            print('The simulation is running at %s time.' % ser)
-        stimulus = TimedArray(data, dt=Dt)
-        net.run(duration * Dt)
-        states = base.np_append(states, G_readout.variables['v'].get_value())
-        if Switch_monitor :
-            monitor_record= base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, **monitor_record)
-        net.restore('init')
-    return (MinMaxScaler().fit_transform(states)).T, monitor_record
-
-def run_net_plasticity(inputs, *args, **kwargs):
-    metric_plasticity = {
-        'weight_changed': None,
-        'weight_changed_mean': None,
-        'spectral_radius' : None}
-    monitor_record = {
-        'm_g_ex.I': None,
-        'm_g_ex.v': None,
-        'm_g_in.I': None,
-        'm_g_in.v': None,
-        'm_read.I': None,
-        'm_read.v': None,
-        'm_input.I': None,
-        'm_s_ee.w': None,
-        'm_s_ee.a_latter': None,
-        'm_s_ee.a_ahead': None}
-    metric_plasticity_list = [metric_plasticity for S in args]
-    for ser, data in enumerate(inputs):
-        weight_initial = [S.variables['w'].get_value().copy() for S in args]
-        if ser % 50 == 0:
-            print('The simulation is running at %s time' % ser)
-        stimulus = TimedArray(data, dt=Dt)
-        net.run(duration*Dt)
-        weight_trained = [S.variables['w'].get_value().copy() for S in args]
-        if Switch_monitor:
-            monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
-                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.a_latter, m_s_ee.a_ahead,
-                                                **monitor_record)
-            metric_plasticity_list = [base.update_metrics('numpy', x - y,
-                                                    np.mean(np.abs(x-y)),
-                                                    base.spectral_radius(S), **metric)
-                                 for x, y, S, metric in
-                                 zip(weight_trained, weight_initial, args, metric_plasticity_list)]
-        net.restore('init')
-        for S_index, S in enumerate(args):
-            S.w = weight_trained[S_index].copy()
-    if Switch_monitor:
-        dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
-        for x, y in zip(metric_plasticity_list, dis):
-            x.update({'confuse_matrix':y})
-    result.result_save('weight.pkl', {'weight' : weight_trained})
-    return metric_plasticity_list, monitor_record
-
 
 ###################################
-#--------switch setting--------
-Switch_monitor = True
-Switch_plasticity = True
-READ_WEIGHT = True
-
-# -----parameter setting-------
+# -----simulation parameter setting-------
 coding_n = 10
 MNIST_shape = (28, 28)
 coding_duration = 10
 duration = coding_duration*MNIST_shape[0]
-F_plasticity = 0.05
+F_plasticity = 0.005
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
-n_ex = 400
-n_inh = int(n_ex/4)
-n_input = MNIST_shape[1]*coding_n
-n_read = n_ex+n_inh
-
-R = 2
-f = 1
-
-A_EE = 30*f
-A_EI = 60*f
-A_IE = 19*f
-A_II = 19*f
-A_inE = 18*f
-A_inI = 9*f
-
-p_inE = 0.1
-p_inI = 0.1
-
-learning_rate = 0.005
-
-
-###########################################
 #-------class initialization----------------------
 function = Function()
 base = Base(duration, Dt)
@@ -518,210 +427,240 @@ data_plasticity_s, label_plasticity = MNIST.get_series_data_list(df_en_plasticit
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
-#------definition of equation-------------
-neuron_in = '''
-I = stimulus(t,i) : 1
-'''
-
-neuron = '''
-dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
-dg/dt = (-g)/(3*ms) : 1
-dh/dt = (-h)/(6*ms) : 1
-I = (g+h)+13.5: 1
-x : 1
-y : 1
-z : 1
-'''
-
-neuron_read = '''
-dv/dt = (I-v) / (30*ms) : 1
-dg/dt = (-g)/(3*ms) : 1 
-dh/dt = (-h)/(6*ms) : 1
-I = (g+h): 1
-'''
-
-synapse = '''
-w : 1
-'''
-
-on_pre_ex = '''
-g+=w
-'''
-
-on_pre_inh = '''
-h-=w
-'''
-
-synapse_stdp = '''
-w : 1
-w_max : 1
-w_min : 1
-tau_ahead : second
-tau_latter : second
-A_ahead : 1
-A_latter = -A_ahead * tau_ahead / tau_latter * 1.05 : 1
-da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
-da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
-'''
-
-on_pre_ex_stdp = '''
-g+=w
-a_ahead += A_ahead * int(Switch_plasticity)
-w = clip(w+a_latter, w_min, w_max)
-'''
-
-on_post_ex_stdp = '''
-a_latter += A_latter * int(Switch_plasticity)
-w = clip(w+a_ahead, w_min, w_max)
-'''
-
-# -----Neurons and Synapses setting-------
-Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
-                    name = 'neurongroup_input')
-
-G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
-                name ='neurongroup_ex')
-
-G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
-                name ='neurongroup_in')
-
-G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
-
-S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
-
-S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
-
-S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_stdp,method='euler', name='synapses_EE')
-
-S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
-
-S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
-
-S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
-
-S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
-
-S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
-
-#-------initialization of neuron parameters----------
-G_ex.v = '13.5+1.5*rand()'
-G_inh.v = '13.5+1.5*rand()'
-G_readout.v = '0'
-G_ex.g = '0'
-G_inh.g = '0'
-G_readout.g = '0'
-G_ex.h = '0'
-G_inh.h = '0'
-G_readout.h = '0'
-
-[G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
-
-# -------initialization of network topology and synapses parameters----------
-S_inE.connect(condition='j<0.3*N_post', p = p_inE)
-S_inI.connect(condition='j<0.3*N_post', p = p_inI)
-S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_E_readout.connect(j='i')
-S_I_readout.connect(j='i+n_ex')
-
-S_inE.w = function.gamma(A_inE, S_inE.w.shape)
-S_inI.w = function.gamma(A_inI, S_inI.w.shape)
-S_EE.w = function.gamma(A_EE, S_EE.w.shape)
-S_IE.w = function.gamma(A_IE, S_IE.w.shape)
-S_EI.w = function.gamma(A_EI, S_EI.w.shape)
-S_II.w = function.gamma(A_II, S_II.w.shape)
-
-S_EE.pre.delay = '1.5*ms'
-S_EI.pre.delay = '0.8*ms'
-S_IE.pre.delay = '0.8*ms'
-S_II.pre.delay = '0.8*ms'
-
-S_EE.w_max = np.max(S_EE.w)
-S_EE.w_min = np.min(S_EE.w)
-S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
-S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
-
-# --------monitors setting----------
-if Switch_monitor :
-    m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
-    m_g_ex = StateMonitor(G_ex, (['I', 'v']), record=True)
-    m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
-    m_input = StateMonitor(Input, ('I'), record=True)
-    m_s_ee = StateMonitor(S_EE, (['w', 'a_ahead', 'a_latter']), record=True)
-
-# ------create network-------------
-net = Network(collect())
-net.store('init')
+#-------get numpy random state------------
+np_state = np.random.get_state()
 
 
-###############################################
-# ------run for plasticity-------
-if Switch_plasticity:
-    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
-                                                                          label= label_plasticity)
+############################################
+def grad_search(parameter):
+    #---- set numpy random state for each parallel run----
+    np.random.set_state(np_state)
 
-#------save monitor data and results------
-if Switch_monitor:
-    result.result_save('monitor_pre_train.pkl', **monitor_record_pre_train)
-    result.result_save('metric_plasticity.pkl', metric_plasticity = metric_plasticity_list)
+    # --------switch setting--------
+    Switch_plasticity = True
 
-#-------close plasticity--------
-Switch_plasticity = False
+    # -----parameter setting-------
+    n_ex = 400
+    n_inh = int(n_ex/4)
+    n_input = MNIST_shape[1]*coding_n
+    n_read = n_ex+n_inh
+
+    R = 2
+    f = 1
+
+    A_EE = 30*f
+    A_EI = 60*f
+    A_IE = 19*f
+    A_II = 19*f
+    A_inE = 18*f
+    A_inI = 9*f
+
+    p_inE = 0.1
+    p_inI = 0.1
+
+    learning_rate = 0.005
+
+    #------definition of equation-------------
+    neuron_in = '''
+    I = stimulus(t,i) : 1
+    '''
+
+    neuron = '''
+    dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
+    dg/dt = (-g)/(3*ms) : 1
+    dh/dt = (-h)/(6*ms) : 1
+    I = (g+h)+13.5: 1
+    x : 1
+    y : 1
+    z : 1
+    '''
+
+    neuron_read = '''
+    dv/dt = (I-v) / (30*ms) : 1
+    dg/dt = (-g)/(3*ms) : 1 
+    dh/dt = (-h)/(6*ms) : 1
+    I = (g+h): 1
+    '''
+
+    synapse = '''
+    w : 1
+    '''
+
+    on_pre_ex = '''
+    g+=w
+    '''
+
+    on_pre_inh = '''
+    h-=w
+    '''
+
+    synapse_stdp = '''
+    w : 1
+    w_max : 1
+    w_min : 1
+    tau_ahead : second
+    tau_latter : second
+    A_ahead : 1
+    A_latter = -A_ahead * tau_ahead / tau_latter * 1.05 : 1
+    da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
+    da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
+    '''
+
+    on_pre_ex_stdp = '''
+    g+=w
+    a_ahead += A_ahead * int(Switch_plasticity)
+    w = clip(w+a_latter, w_min, w_max)
+    '''
+
+    on_post_ex_stdp = '''
+    a_latter += A_latter * int(Switch_plasticity)
+    w = clip(w+a_ahead, w_min, w_max)
+    '''
+
+    # -----Neurons and Synapses setting-------
+    Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
+                        name = 'neurongroup_input')
+
+    G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
+                    name ='neurongroup_ex')
+
+    G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
+                    name ='neurongroup_in')
+
+    G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
+
+    S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+
+    S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
+
+    S_EE = Synapses(G_ex, G_ex, synapse_stdp, on_pre = on_pre_ex_stdp, on_post= on_post_ex_stdp,method='euler', name='synapses_EE')
+
+    S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
+
+    S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
+
+    S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+
+    S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
+
+    S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
+
+    #-------initialization of neuron parameters----------
+    G_ex.v = '13.5+1.5*rand()'
+    G_inh.v = '13.5+1.5*rand()'
+    G_readout.v = '0'
+    G_ex.g = '0'
+    G_inh.g = '0'
+    G_readout.g = '0'
+    G_ex.h = '0'
+    G_inh.h = '0'
+    G_readout.h = '0'
+
+    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+
+    # -------initialization of network topology and synapses parameters----------
+    S_inE.connect(condition='j<0.3*N_post', p = p_inE)
+    S_inI.connect(condition='j<0.3*N_post', p = p_inI)
+    S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+    S_E_readout.connect(j='i')
+    S_I_readout.connect(j='i+n_ex')
+
+    S_inE.w = function.gamma(A_inE, S_inE.w.shape)
+    S_inI.w = function.gamma(A_inI, S_inI.w.shape)
+    S_EE.w = function.gamma(A_EE, S_EE.w.shape)
+    S_IE.w = function.gamma(A_IE, S_IE.w.shape)
+    S_EI.w = function.gamma(A_EI, S_EI.w.shape)
+    S_II.w = function.gamma(A_II, S_II.w.shape)
+
+    S_EE.pre.delay = '1.5*ms'
+    S_EI.pre.delay = '0.8*ms'
+    S_IE.pre.delay = '0.8*ms'
+    S_II.pre.delay = '0.8*ms'
+
+    S_EE.w_max = np.max(S_EE.w)
+    S_EE.w_min = np.min(S_EE.w)
+    S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
+    S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
+
+    # ------create network-------------
+    net = Network(collect())
+    net.store('init')
+
+    # ---- define network run function----
+    def run_net(inputs):
+        states = None
+        for ser, data in enumerate(inputs):
+            if ser % 100 == 0:
+                print('The simulation is running at %s time.' % ser)
+            stimulus = TimedArray(data, dt=Dt)
+            net.run(duration * Dt)
+            states = base.np_append(states, G_readout.variables['v'].get_value())
+            net.restore('init')
+        return (MinMaxScaler().fit_transform(states)).T
+
+    def run_net_plasticity(inputs, *args, **kwargs):
+        for ser, data in enumerate(inputs):
+            weight_initial = [S.variables['w'].get_value().copy() for S in args]
+            if ser % 50 == 0:
+                print('The simulation is running at %s time' % ser)
+            stimulus = TimedArray(data, dt=Dt)
+            net.run(duration * Dt)
+            weight_trained = [S.variables['w'].get_value().copy() for S in args]
+            net.restore('init')
+            for S_index, S in enumerate(args):
+                S.w = weight_trained[S_index].copy()
+
+    # ------run for plasticity-------
+    if Switch_plasticity:
+        run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
+
+    #-------close plasticity--------
+    Switch_plasticity = False
+
+    # ------run for train-------
+    states_train, monitor_record_train = run_net(data_train_s)
+
+    # ------run for test--------
+    states_test, monitor_record_test = run_net(data_test_s)
+
+    # ------Readout---------------
+    score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
+                                                 multi_class="multinomial")
+
+    # ----------show results-----------
+    print('parameters %s' % parameter)
+    print('Train score: ', score_train)
+    print('Test score: ', score_test)
+
+    return np.array([(score_train, score_test, parameter)],
+                    [('score_train', float), ('score_test', float), ('parameters', object)])
 
 
-###############################################
-#-------read weight ------------
-if READ_WEIGHT:
-    try:
-        weight = result.result_pick('weight.pkl')
-        S_EE.w = weight
-    except FileNotFoundError:
-        print ('Have not trained by plasticity, initial weight have been used')
+##########################################
+# -------prepare parameters---------------
+if __name__ == '__main__':
+    core = 10
+    pool = Pool(core)
+    parameters = base.parameters_GS((30, 300), (0.2, 2), (0.1, 1), tau=10, R=10, f=10)
 
-# ------run for train-------
-states_train, monitor_record_train = run_net(data_train_s)
+    # -------parallel run---------------
+    score = np.asarray(pool.map(grad_search, parameters))
 
-# ------run for test--------
-states_test, monitor_record_test = run_net(data_test_s)
+    # --------get the final results-----
+    score = np.asarray(score)
+    highest_score_train = np.max(score['score_train'])
+    highest_score_test = np.max(score['score_test'])
+    best_parameter_train = score['parameters'][np.where(score['score_train'] == highest_score_train)[0]]
+    best_parameter_test = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
 
-# ------Readout---------------
-score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
-                                             multi_class="multinomial")
-#----------show results-----------
-print('Train score: ',score_train)
-print('Test score: ',score_test)
+    # --------show the final results-----
+    print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'
+          % (highest_score_train, highest_score_test, best_parameter_train, best_parameter_test))
 
-#------save monitor data and results------
-if Switch_monitor:
-    result.result_save('monitor_train.pkl', **monitor_record_train)
-    result.result_save('monitor_test.pkl', **monitor_record_test)
-    result.result_save('states_records.pkl', states_train = states_train, states_test = states_test)
-
-
-#####################################
-# ------vis of results-------
-fig_init_w =plt.figure(figsize=(16,16))
-subplot(421)
-brian_plot(S_EE.w)
-subplot(422)
-brian_plot(S_EI.w)
-subplot(423)
-brian_plot(S_IE.w)
-subplot(424)
-brian_plot(S_II.w)
-show()
-
-#-------vis of metric--------
-fig_conf =plt.figure(figsize=(10,10))
-plt.imshow(metric_plasticity_list[0]['confuse_matrix'], cmap=plt.cm.BuPu_r)
-plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
-cax = plt.axes([0.85, 0.1, 0.075, 0.8])
-plt.colorbar(cax=cax)
-plt.show()
-
-#-------for animation in Jupyter-----------
-monitor = result.result_pick('monitor_test.pkl')
-play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[1]), monitor['m_read.v'], duration, 10*duration)
-widgets.VBox([widgets.HBox([play, slider]),fig])
+    # -----------save the final results-------
+    result.result_save('score_grid_search.pkl', score=score)
+    result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
+                       best_parameter_test=best_parameter_test)
