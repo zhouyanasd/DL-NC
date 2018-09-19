@@ -175,6 +175,9 @@ class Base():
             dis.append(_dis)
         return dis
 
+    def get_confusion(self, confuse_matrix):
+        return np.abs((confuse_matrix - np.diag(np.diag(confuse_matrix))).mean() - np.diag(confuse_matrix).mean())
+
     def parameters_GS(self, *args, **kwargs):
         #---------------
         # args = [(min,max),]
@@ -613,6 +616,9 @@ def grad_search(parameter):
         return (MinMaxScaler().fit_transform(states)).T
 
     def run_net_plasticity(inputs, *args, **kwargs):
+        metric_plasticity = {
+            'weight_changed': None}
+        metric_plasticity_list = [metric_plasticity for S in args]
         for ser, data in enumerate(inputs):
             weight_initial = [S.variables['w'].get_value().copy() for S in args]
             if ser % 50 == 0:
@@ -620,13 +626,18 @@ def grad_search(parameter):
             stimulus = TimedArray(data, dt=Dt)
             net.run(duration * Dt)
             weight_trained = [S.variables['w'].get_value().copy() for S in args]
+            metric_plasticity_list = [base.update_metrics('numpy', x - y, **metric)
+                                 for x, y, metric in
+                                 zip(weight_trained, weight_initial, metric_plasticity_list)]
             net.restore('init')
             for S_index, S in enumerate(args):
                 S.w = weight_trained[S_index].copy()
+            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+            return confusion
 
     # ------run for plasticity-------
     if Switch_plasticity:
-        run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
+        confusion = run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
 
     #-------close plasticity--------
     Switch_plasticity = False
@@ -643,11 +654,12 @@ def grad_search(parameter):
 
     # ----------show results-----------
     print('parameters %s' % parameter)
+    print('confusion: ', confusion)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
 
-    return np.array([(score_train, score_test, parameter)],
-                    [('score_train', float), ('score_test', float), ('parameters', object)])
+    return np.array([(confusion, score_train, score_test, parameter)],
+                    [('confusion', float), ('score_train', float), ('score_test', float), ('parameters', object)])
 
 
 ##########################################
@@ -662,16 +674,15 @@ if __name__ == '__main__':
 
     # --------get the final results-----
     score = np.asarray(score)
-    highest_score_train = np.max(score['score_train'])
     highest_score_test = np.max(score['score_test'])
-    best_parameter_train = score['parameters'][np.where(score['score_train'] == highest_score_train)[0]]
-    best_parameter_test = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
+    score_train = score['score_train'][np.where(score['score_test'] == highest_score_test)[0]]
+    best_parameter = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
+    confusion = score['confusion'][np.where(score['score_test'] == highest_score_test)[0]]
 
     # --------show the final results-----
-    print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'
-          % (highest_score_train, highest_score_test, best_parameter_train, best_parameter_test))
+    print('highest_score_test is %s, score_train is %s, best_parameter is %s, confusion is %s'
+          % (highest_score_test, score_train, best_parameter, confusion))
 
     # -----------save the final results-------
     result.result_save('score_grid_search.pkl', score=score)
-    result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
-                       best_parameter_test=best_parameter_test)
+    result.result_save('best_parameters.pkl', best_parameter=best_parameter)
