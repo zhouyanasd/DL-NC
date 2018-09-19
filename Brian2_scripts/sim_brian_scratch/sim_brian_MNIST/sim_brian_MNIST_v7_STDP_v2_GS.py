@@ -10,10 +10,8 @@
 # ----------------------------------------
 
 from brian2 import *
-from brian2tools import *
 import scipy as sp
 import struct
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
@@ -176,6 +174,19 @@ class Base():
                         np.array(list(df_b_devide[j]['weight_changed'])).mean(axis=0))
             dis.append(_dis)
         return dis
+
+    def parameters_GS(self, *args, **kwargs):
+        #---------------
+        # args = [(min,max),]
+        # kwargs = {'parameter' = number，}
+        #---------------
+        parameters = np.zeros(tuple(kwargs.values()), [(x, float) for x in kwargs.keys()])
+        grids = np.meshgrid(*[np.linspace(min_max[0], min_max[1], scale)
+                              for min_max,scale in zip(args,kwargs.values())], indexing='ij')
+        for index, parameter in enumerate(kwargs.keys()):
+            parameters[parameter] = grids[index]
+        parameters = parameters.reshape(-1)
+        return parameters
 
 
 class Readout():
@@ -458,7 +469,7 @@ def grad_search(parameter):
     p_inE = 0.1
     p_inI = 0.1
 
-    learning_rate = 0.005
+    learning_rate = parameter['learning_rate']
 
     #------definition of equation-------------
     neuron_in = '''
@@ -583,7 +594,7 @@ def grad_search(parameter):
     S_EE.w_max = np.max(S_EE.w)
     S_EE.w_min = np.min(S_EE.w)
     S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
-    S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
+    S_EE.tau_ahead = S_EE.tau_latter = parameter['tau']*ms
 
     # ------create network-------------
     net = Network(collect())
@@ -621,10 +632,10 @@ def grad_search(parameter):
     Switch_plasticity = False
 
     # ------run for train-------
-    states_train, monitor_record_train = run_net(data_train_s)
+    states_train = run_net(data_train_s)
 
     # ------run for test--------
-    states_test, monitor_record_test = run_net(data_test_s)
+    states_test = run_net(data_test_s)
 
     # ------Readout---------------
     score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
@@ -644,7 +655,7 @@ def grad_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = base.parameters_GS((30, 300), (0.2, 2), (0.1, 1), tau=10, R=10, f=10)
+    parameters = base.parameters_GS((0.002, 0.01), (2, 20), learning_rate = 10, tau=10)
 
     # -------parallel run---------------
     score = np.asarray(pool.map(grad_search, parameters))
