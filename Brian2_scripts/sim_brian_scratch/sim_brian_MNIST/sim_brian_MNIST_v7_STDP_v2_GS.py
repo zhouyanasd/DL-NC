@@ -176,7 +176,8 @@ class Base():
         return dis
 
     def get_confusion(self, confuse_matrix):
-        return np.abs((confuse_matrix - np.diag(np.diag(confuse_matrix))).mean() - np.diag(confuse_matrix).mean())
+        return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())
+                for matrix in confuse_matrix]
 
     def parameters_GS(self, *args, **kwargs):
         #---------------
@@ -659,7 +660,7 @@ def grad_search(parameter):
     print('Test score: ', score_test)
 
     return np.array([(confusion, score_train, score_test, parameter)],
-                    [('confusion', float), ('score_train', float), ('score_test', float), ('parameters', object)])
+                    [('confusion', object), ('score_train', float), ('score_test', float), ('parameters', object)])
 
 
 ##########################################
