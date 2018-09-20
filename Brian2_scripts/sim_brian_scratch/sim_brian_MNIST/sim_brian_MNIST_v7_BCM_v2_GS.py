@@ -487,7 +487,7 @@ def grad_search(parameter):
 
     rate_window = 20
     weight_decay = 0.00001
-    A_bcm = parameter['A_bcm']
+    A_bcm = 100
 
     #------definition of equation-------------
     neuron_in = '''
