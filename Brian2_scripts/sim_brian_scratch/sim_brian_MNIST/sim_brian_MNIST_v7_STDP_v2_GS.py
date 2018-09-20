@@ -451,9 +451,6 @@ def grad_search(parameter):
     #---- set numpy random state for each parallel run----
     np.random.set_state(np_state)
 
-    # --------switch setting--------
-    Switch_plasticity = True
-
     # -----parameter setting-------
     n_ex = 400
     n_inh = int(n_ex/4)
@@ -510,6 +507,7 @@ def grad_search(parameter):
     '''
 
     synapse_stdp = '''
+    Switch_plasticity : 1
     w : 1
     w_max : 1
     w_min : 1
@@ -636,9 +634,11 @@ def grad_search(parameter):
         confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
         return confusion
 
+    # --------open plasticity--------
+    Switch_plasticity = True
+
     # ------run for plasticity-------
-    if Switch_plasticity:
-        confusion = run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
+    confusion = run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
 
     #-------close plasticity--------
     Switch_plasticity = False
