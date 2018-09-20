@@ -633,8 +633,8 @@ def grad_search(parameter):
             net.restore('init')
             for S_index, S in enumerate(args):
                 S.w = weight_trained[S_index].copy()
-            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
-            return confusion
+        confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+        return confusion
 
     # ------run for plasticity-------
     if Switch_plasticity:
