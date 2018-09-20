@@ -483,8 +483,6 @@ def grad_search(parameter):
     p_inI = 0.01
 
     rate_window = 20
-    weight_decay = 0.00001
-    A_bcm = 100
 
     #------definition of equation-------------
     neuron_in = '''
@@ -537,6 +535,8 @@ def grad_search(parameter):
 
     synapse_bcm = '''
     Switch_plasticity : 1
+    weight_decay : 1
+    A_bcm : 1
     w : 1
     w_max : 1
     w_min : 1
@@ -634,6 +634,8 @@ def grad_search(parameter):
     S_EE.w_max = np.max(S_EE.w)
     S_EE.w_min = np.min(S_EE.w)
     S_EE.tau = parameter['tau']*ms
+    S_EE.A_bcm = parameter['A_bcm']
+    S_EE.weight_decay = 0.00001
 
 
     # ------create network-------------
@@ -707,7 +709,7 @@ def grad_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = base.parameters_GS((0.002, 0.01), (2, 20), learning_rate = 10, tau=10)
+    parameters = base.parameters_GS((100, 500), (2, 20), A_bcm = 10, tau=10)
 
     # -------parallel run---------------
     score = np.asarray(pool.map(grad_search, parameters))
