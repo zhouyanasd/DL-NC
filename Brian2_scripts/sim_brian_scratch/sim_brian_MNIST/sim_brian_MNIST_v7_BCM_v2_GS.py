@@ -677,13 +677,13 @@ def grad_search(parameter):
 
     ###############################################
     #--------open plasticity--------
-    Switch_plasticity = True
+    S_EE.Switch_plasticity = True
 
     # ------run for plasticity-------
     confusion = run_net_plasticity(data_plasticity_s, S_EE, label=label_plasticity)
 
     #-------close plasticity--------
-    Switch_plasticity = False
+    S_EE.Switch_plasticity = False
 
     # ------run for train-------
     states_train = run_net(data_train_s)
