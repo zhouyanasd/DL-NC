@@ -175,6 +175,10 @@ class Base():
             dis.append(_dis)
         return dis
 
+    def get_confusion(self, confuse_matrix):
+        return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())
+                for matrix in confuse_matrix]
+
 
 class Readout():
     def __init__(self, function):
@@ -454,8 +458,10 @@ def run_net_plasticity(inputs, *args, **kwargs):
             S.w = weight_trained[S_index].copy()
     if Switch_metric:
         dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
-        for x, y in zip(metric_plasticity_list, dis):
+        confusion = base.get_confusion(dis)
+        for x, y, z in zip(metric_plasticity_list, dis, confusion):
             x.update({'confuse_matrix':y})
+            x.update({'confusion': z})
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity_list, monitor_record
 
@@ -663,6 +669,9 @@ net.store('init')
 if Switch_plasticity:
     metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
                                                                           label= label_plasticity)
+
+#----------show plasticity-----------
+print(metric_plasticity_list[0]['confusion'])
 
 #------save monitor data and results------
 if Switch_monitor:
