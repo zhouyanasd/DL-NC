@@ -157,13 +157,13 @@ class Base():
     def get_plasticity_confuse(self, metric_plasticity_list, label):
         dis = []
         for metric_plasticity in metric_plasticity_list:
-            df = pd.DataFrame({'weight_changed': list(metric_plasticity_list[0]['weight_changed']),
+            df = pd.DataFrame({'weight_changed': list(metric_plasticity['weight_changed']),
                                'label': label})
             df_a = df[:int(0.5 * df.index.size)]
             df_b = df[int(0.5 * df.index.size):]
             df_a_divide = [df_a[df_a['label'] == x] for x in
                            df_a['label'].value_counts().index.sort_values().tolist()]
-            df_b_dvide = [df_b[df_b['label'] == x] for x in
+            df_b_divide = [df_b[df_b['label'] == x] for x in
                            df_b['label'].value_counts().index.sort_values().tolist()]
             n = len(df['label'].value_counts().index.sort_values().tolist())
             _dis = np.zeros((n, n))
@@ -171,7 +171,7 @@ class Base():
                 for j in range(n):
                     _dis[i][j] = numpy.linalg.norm(
                         np.array(list(df_a_divide[i]['weight_changed'])).mean(axis=0) -
-                        np.array(list(df_b_deivide[j]['weight_changed'])).mean(axis=0))
+                        np.array(list(df_b_divide[j]['weight_changed'])).mean(axis=0))
             dis.append(_dis)
         return dis
 

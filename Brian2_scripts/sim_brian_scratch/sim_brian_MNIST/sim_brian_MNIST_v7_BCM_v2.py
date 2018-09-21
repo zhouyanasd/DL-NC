@@ -170,7 +170,7 @@ class Base():
     def get_plasticity_confuse(self, metric_plasticity_list, label):
         dis = []
         for metric_plasticity in metric_plasticity_list:
-            df = pd.DataFrame({'weight_changed': list(metric_plasticity_list[0]['weight_changed']),
+            df = pd.DataFrame({'weight_changed': list(metric_plasticity['weight_changed']),
                                'label': label})
             df_a = df[:int(0.5 * df.index.size)]
             df_b = df[int(0.5 * df.index.size):]
