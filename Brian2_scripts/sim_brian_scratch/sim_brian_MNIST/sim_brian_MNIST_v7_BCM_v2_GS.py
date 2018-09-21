@@ -429,7 +429,7 @@ coding_n = 1
 MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
-F_plasticity = 0.005
+F_plasticity = 0.05
 F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
@@ -677,13 +677,13 @@ def grad_search(parameter):
 
     ###############################################
     #--------open plasticity--------
-    Switch_plasticity = True
+    S_EE.Switch_plasticity = True
 
     # ------run for plasticity-------
     confusion = run_net_plasticity(data_plasticity_s, S_EE, label=label_plasticity)
 
     #-------close plasticity--------
-    Switch_plasticity = False
+    S_EE.Switch_plasticity = False
 
     # ------run for train-------
     states_train = run_net(data_train_s)
