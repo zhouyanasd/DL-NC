@@ -685,5 +685,5 @@ if __name__ == '__main__':
           % (highest_score_test, score_train, best_parameter, confusion))
 
     # -----------save the final results-------
-    result.result_save('score_grid_search.pkl', score=score)
-    result.result_save('best_parameters.pkl', best_parameter=best_parameter)
+    result.result_save('score_grid_search_STDP.pkl', score=score)
+    result.result_save('best_parameters_STDP.pkl', best_parameter=best_parameter)
