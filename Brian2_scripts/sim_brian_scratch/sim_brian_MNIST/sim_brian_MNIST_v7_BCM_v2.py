@@ -716,6 +716,7 @@ if Switch_monitor:
 
 #-------close plasticity--------
 Switch_plasticity = False
+net._stored_state['init'][S_EE.name]['w'][0] = S_EE.w
 
 
 ###############################################
