@@ -769,6 +769,12 @@ cax = plt.axes([0.85, 0.1, 0.075, 0.8])
 plt.colorbar(cax=cax)
 plt.show()
 
+#-------vis of weight distribution--------
+fig_distribution_w =plt.figure(figsize=(10,10))
+hist(S_EE.w, 20)
+xlabel('Weight')
+show()
+
 #-------for animation in Jupyter-----------
 monitor = result.result_pick('monitor_test.pkl')
 play, slider, fig = result.animation(np.arange(monitor['m_read.v'].shape[1]), monitor['m_read.v'], duration, 10*duration)
