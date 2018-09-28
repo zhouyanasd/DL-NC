@@ -642,6 +642,7 @@ def grad_search(parameter):
 
     #-------close plasticity--------
     S_EE.Switch_plasticity = False
+    net._stored_state['init'][S_EE.name]['w'] = (S_EE.get_states()['w'], S_EE.w.shape[0])
 
     # ------run for train-------
     states_train = run_net(data_train_s)

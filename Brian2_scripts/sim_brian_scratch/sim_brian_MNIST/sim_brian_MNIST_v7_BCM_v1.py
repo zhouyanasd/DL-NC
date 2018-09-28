@@ -664,6 +664,7 @@ if Switch_monitor:
 
 #-------close plasticity--------
 Switch_plasticity = False
+net._stored_state['init'][S_EE.name]['w'] = (S_EE.get_states()['w'],S_EE.w.shape[0])
 
 
 ###############################################
