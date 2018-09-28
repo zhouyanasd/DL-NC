@@ -176,7 +176,7 @@ class Base():
         return dis
 
     def get_confusion(self, confuse_matrix):
-        return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())/confuse_matrix.mean()
+        return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())/matrix.mean()
                 for matrix in confuse_matrix]
 
     def parameters_GS(self, *args, **kwargs):
