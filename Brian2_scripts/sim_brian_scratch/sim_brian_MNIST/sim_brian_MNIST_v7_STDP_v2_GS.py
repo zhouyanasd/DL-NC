@@ -636,7 +636,7 @@ def grad_search(parameter):
 
     # --------open plasticity--------
     S_EE.Switch_plasticity = True
-    net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['Switch_plasticity']
+    net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
 
     # ------run for plasticity-------
     confusion = run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
@@ -644,7 +644,7 @@ def grad_search(parameter):
     #-------close plasticity--------
     S_EE.Switch_plasticity = False
     net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
-    net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['Switch_plasticity']
+    net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
 
     # ------run for train-------
     states_train = run_net(data_train_s)
