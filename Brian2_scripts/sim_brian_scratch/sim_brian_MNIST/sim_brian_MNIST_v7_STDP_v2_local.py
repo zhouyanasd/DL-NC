@@ -181,7 +181,7 @@ class Base():
 
     def set_local_parameter(self, S, parameter, boundary, method='random', **kwargs):
         if method == 'random':
-            random = rand(S.N_post) * boundary[1] + boundary[0]
+            random = rand(S.N_post) * (boundary[1]-boundary[0]) + boundary[0]
             if '_post' in parameter:
                 S.variables[parameter].set_value(random)
             else:
@@ -192,9 +192,9 @@ class Base():
             random = zeros(S.N_post)
             for i in range(group_n):
                 try:
-                    random[i * n:(i + 1) * n] = rand() * boundary[1] + boundary[0]
+                    random[i * n:(i + 1) * n] = rand() * (boundary[1]-boundary[0]) + boundary[0]
                 except IndexError:
-                    random[i * n:] = rand() * boundary[1] + boundary[0]
+                    random[i * n:] = rand() * (boundary[1]-boundary[0]) + boundary[0]
                     continue
             if '_post' in parameter:
                 S.variables[parameter].set_value(random)
@@ -207,15 +207,15 @@ class Base():
             bound = np.linspace(0, max(S.variables[location_label].get_value() + 1), num=group_n + 1)
             for i in range(group_n):
                 random[(S.variables[location_label].get_value() >= bound[i]) & (
-                            S.variables[location_label].get_value() < bound[i + 1])] = rand() * boundary[1] + boundary[
-                    0]
+                            S.variables[location_label].get_value() < bound[i + 1])] \
+                    = rand() * (boundary[1]-boundary[0]) + boundary[0]
             if '_post' in parameter:
                 S.variables[parameter].set_value(random)
             else:
                 S.variables[parameter].set_value(random[S.j])
         if method == 'in_coming':
             max_incoming = max(S.N_incoming)
-            random = S.N_incoming / max_incoming * boundary[1] + boundary[0]
+            random = S.N_incoming / max_incoming * (boundary[1]-boundary[0]) + boundary[0]
             if '_post' in parameter:
                 S.variables[parameter].set_value(random)
             else:
