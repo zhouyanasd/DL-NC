@@ -179,6 +179,48 @@ class Base():
         return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())/matrix.mean()
                 for matrix in confuse_matrix]
 
+    def set_local_parameter(self, S, parameter, boundary, method='random', **kwargs):
+        if method == 'random':
+            random = rand(S.N_post) * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'group':
+            group_n = kwargs['group_n']
+            n = int(np.floor(S.N_post / group_n))
+            random = zeros(S.N_post)
+            for i in range(group_n):
+                try:
+                    random[i * n:(i + 1) * n] = rand() * (boundary[1]-boundary[0]) + boundary[0]
+                except IndexError:
+                    random[i * n:] = rand() * (boundary[1]-boundary[0]) + boundary[0]
+                    continue
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'location':
+            group_n = kwargs['group_n']
+            location_label = kwargs['location_label']
+            random = zeros(S.N_post)
+            bound = np.linspace(0, max(S.variables[location_label].get_value() + 1), num=group_n + 1)
+            for i in range(group_n):
+                random[(S.variables[location_label].get_value() >= bound[i]) & (
+                            S.variables[location_label].get_value() < bound[i + 1])] \
+                    = rand() * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'in_coming':
+            max_incoming = max(S.N_incoming)
+            random = S.N_incoming / max_incoming * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+
     def parameters_GS(self, *args, **kwargs):
         #---------------
         # args = [(min,max),]
@@ -595,8 +637,13 @@ def grad_search(parameter):
 
     S_EE.w_max = np.max(S_EE.w)
     S_EE.w_min = np.min(S_EE.w)
-    S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
-    S_EE.tau_ahead = S_EE.tau_latter = parameter['tau']*ms
+    base.set_local_parameter(S_EE, 'A_ahead', (learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))*0.5*parameter['A_ahead'],
+                                               learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))*1.5*parameter['A_ahead']),
+                             method='group', group_n= 10)
+    base.set_local_parameter(S_EE, 'tau_ahead', (0.005+parameter['tau'], 0.1+parameter['tau']),
+                             method='group', group_n= 10)
+    base.set_local_parameter(S_EE, 'tau_latter', (0.005+parameter['tau'], 0.1+parameter['tau']),
+                             method='group', group_n= 10)
 
     # ------create network-------------
     net = Network(collect())
@@ -671,7 +718,7 @@ def grad_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = base.parameters_GS((2, 20), tau=10)
+    parameters = base.parameters_GS((0.0, 0.1), (0.7, 1.3), tau=10, A_ahead=10)
 
     # -------parallel run---------------
     score = np.asarray(pool.map(grad_search, parameters))
