@@ -182,7 +182,10 @@ class Base():
     def set_local_parameter(self, S, parameter, boundary, method='random', **kwargs):
         if method == 'random':
             random = rand(S.N_post) * boundary[1] + boundary[0]
-            S.variables[parameter].set_value(random[S.j])
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
         if method == 'group':
             group_n = kwargs['group_n']
             n = int(np.floor(S.N_post / group_n))
@@ -193,7 +196,10 @@ class Base():
                 except IndexError:
                     random[i * n:] = rand() * boundary[1] + boundary[0]
                     continue
-            S.variables[parameter].set_value(random[S.j])
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
         if method == 'location':
             group_n = kwargs['group_n']
             location_label = kwargs['location_label']
@@ -203,11 +209,17 @@ class Base():
                 random[(S.variables[location_label].get_value() >= bound[i]) & (
                             S.variables[location_label].get_value() < bound[i + 1])] = rand() * boundary[1] + boundary[
                     0]
-            S.variables[parameter].set_value(random[S.j])
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
         if method == 'in_coming':
             max_incoming = max(S.N_incoming)
             random = S.N_incoming / max_incoming * boundary[1] + boundary[0]
-            S.variables[parameter].set_value(random)
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
 
 
 class Readout():
