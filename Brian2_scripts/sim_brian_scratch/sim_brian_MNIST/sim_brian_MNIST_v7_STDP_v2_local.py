@@ -179,10 +179,10 @@ class Base():
         return [np.abs((matrix - np.diag(np.diag(matrix))).mean() - np.diag(matrix).mean())/matrix.mean()
                 for matrix in confuse_matrix]
 
-    def set_local_pramater(self, S, pramater, boundary, method='random', **kwargs):
+    def set_local_parameter(self, S, parameter, boundary, method='random', **kwargs):
         if method == 'random':
             random = rand(S.N_post) * boundary[1] + boundary[0]
-            S.variables[pramater].set_value(random[S.j])
+            S.variables[parameter].set_value(random[S.j])
         if method == 'group':
             group_n = kwargs['group_n']
             n = int(np.floor(S.N_post / group_n))
@@ -193,7 +193,7 @@ class Base():
                 except IndexError:
                     random[i * n:] = rand() * boundary[1] + boundary[0]
                     continue
-            S.variables[pramater].set_value(random[S.j])
+            S.variables[parameter].set_value(random[S.j])
         if method == 'location':
             group_n = kwargs['group_n']
             location_label = kwargs['location_label']
@@ -203,11 +203,11 @@ class Base():
                 random[(S.variables[location_label].get_value() >= bound[i]) & (
                             S.variables[location_label].get_value() < bound[i + 1])] = rand() * boundary[1] + boundary[
                     0]
-            S.variables[pramater].set_value(random[S.j])
+            S.variables[parameter].set_value(random[S.j])
         if method == 'in_coming':
             max_incoming = max(S.N_incoming)
             random = S.N_incoming / max_incoming * boundary[1] + boundary[0]
-            S.variables[pramater].set_value(random)
+            S.variables[parameter].set_value(random)
 
 
 class Readout():
@@ -679,8 +679,8 @@ S_II.pre.delay = '0.8*ms'
 S_EE.w_max = np.max(S_EE.w)
 S_EE.w_min = np.min(S_EE.w)
 S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
-base.set_local_pramater(S_EE, 'tau_ahead', (0.005,0.1),method='group', group_n=10 , location_label= 'z_post')
-base.set_local_pramater(S_EE, 'tau_latter', (0.005,0.1),method='group', group_n=10 , location_label= 'z_post')
+base.set_local_parameter(S_EE, 'tau_ahead', (0.005,0.1),method='group', group_n=10 , location_label= 'z_post')
+base.set_local_parameter(S_EE, 'tau_latter', (0.005,0.1),method='group', group_n=10 , location_label= 'z_post')
 
 # --------monitors setting----------
 if Switch_monitor :
