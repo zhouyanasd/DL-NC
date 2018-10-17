@@ -154,6 +154,22 @@ class Base():
         else:
             raise ('The input need to be a object of Synapses')
 
+    def spectral_radius_(self, S):
+        if isinstance(S, Synapses):
+            n_pre = S.N_pre
+            n_post = S.N_post
+            sources = S.i[:]
+            targets = S.j[:]
+            values = S.w[:] - np.mean(S.variables['w'].get_value())
+            if sources.shape[0] == targets.shape[0]:
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
+            else:
+                return -1
+            a, b = np.linalg.eig(ma)
+            return np.max(np.abs(a))
+        else:
+            raise ('The input need to be a object of Synapses')
+
     def get_plasticity_confuse(self, metric_plasticity_list, label):
         dis = []
         for metric_plasticity in metric_plasticity_list:
@@ -434,7 +450,8 @@ def run_net_plasticity(inputs, *args, **kwargs):
         'm_input.I': None,
         'm_s_ee.w': None,
         'm_s_ee.a_latter': None,
-        'm_s_ee.a_ahead': None}
+        'm_s_ee.a_ahead': None,
+        'm_s_ine.w': None}
     metric_plasticity_list = [metric_plasticity for S in args]
     for ser, data in enumerate(inputs):
         weight_initial = [S.variables['w'].get_value().copy() for S in args]
@@ -446,11 +463,11 @@ def run_net_plasticity(inputs, *args, **kwargs):
         if Switch_monitor:
             monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
                                                 m_read.v, m_input.I, m_s_ee.w, m_s_ee.a_latter, m_s_ee.a_ahead,
-                                                **monitor_record)
+                                                m_s_ine.w, **monitor_record)
         if Switch_metric:
             metric_plasticity_list = [base.update_metrics('numpy', x - y,
                                                     np.mean(np.abs(x-y)),
-                                                    base.spectral_radius(S), **metric)
+                                                    base.spectral_radius_(S), **metric)
                                  for x, y, S, metric in
                                  zip(weight_trained, weight_initial, args, metric_plasticity_list)]
         net.restore('init')
@@ -502,7 +519,7 @@ p_inE = 0.1
 p_inI = 0.1
 
 learning_rate = 0.005
-
+learning_rate_eta = 0.01
 
 ###########################################
 #-------class initialization----------------------
@@ -583,16 +600,21 @@ a_latter += A_latter * int(Switch_plasticity)
 w = clip(w+a_ahead, w_min, w_max)
 '''
 
-synapse = '''
+synapse_stdp_inE = '''
 w : 1
+w_max : 1
+w_min : 1
+tau_ahead : second
+eta : 1
+offset: 1
+mu : 1 
+da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
 '''
 
-on_pre_ex = '''
+on_pre_ex_stdp_inE = '''
 g+=w
-'''
-
-on_pre_inh = '''
-h-=w
+a_ahead +=  (w_max-w_min)* int(Switch_plasticity)
+w = clip(w+eta*[(a_ahead - offset*(w_max-w_min))*(1 - (w-w_min)/(w_max-w_min))**mu], w_min, w_max)
 '''
 
 # -----Neurons and Synapses setting-------
@@ -607,7 +629,7 @@ G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method=
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
 
-S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+S_inE = Synapses(Input, G_ex, synapse_stdp_inE, on_pre = on_pre_ex_stdp_inE ,method='euler', name='synapses_inE')
 
 S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
@@ -663,6 +685,14 @@ S_EE.w_min = np.min(S_EE.w)
 S_EE.A_ahead = learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))
 S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
 
+S_inE.w_max = np.max(S_inE.w)
+S_inE.w_min = np.min(S_inE.w)
+S_EE.eta = learning_rate_eta
+S_EE.mu = 0.9
+S_inE.offset = 0.3
+S_EE.tau_ahead = '30*ms'
+
+
 # --------monitors setting----------
 if Switch_monitor :
     m_g_in = StateMonitor(G_in, (['I', 'v']), record=True)
@@ -670,6 +700,7 @@ if Switch_monitor :
     m_read = StateMonitor(G_readout, (['I', 'v']), record=True)
     m_input = StateMonitor(Input, ('I'), record=True)
     m_s_ee = StateMonitor(S_EE, (['w', 'a_ahead', 'a_latter']), record=True)
+    m_s_ine = StateMonitor(S_inE, (['w']), record=True)
 
 # ------create network-------------
 net = Network(collect())
@@ -679,11 +710,12 @@ net.store('init')
 ###############################################
 # ------run for plasticity-------
 if Switch_plasticity:
-    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE,
+    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE, S_inE,
                                                                           label= label_plasticity)
 
 #----------show plasticity-----------
 print(metric_plasticity_list[0]['confusion'])
+print(metric_plasticity_list[1]['confusion'])
 
 #------save monitor data and results------
 if Switch_monitor:
@@ -745,8 +777,12 @@ plt.colorbar(cax=cax)
 plt.show()
 
 #-------vis of weight distribution--------
-fig_distribution_w =plt.figure(figsize=(10,10))
+fig_distribution_w_EE =plt.figure(figsize=(10,10))
 hist(S_EE.w, 20)
+xlabel('Weight')
+
+fig_distribution_w_inE =plt.figure(figsize=(10,10))
+hist(S_inE.w, 20)
 xlabel('Weight')
 show()
 
