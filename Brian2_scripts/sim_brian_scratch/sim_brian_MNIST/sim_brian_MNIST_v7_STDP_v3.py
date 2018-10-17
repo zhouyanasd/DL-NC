@@ -145,8 +145,8 @@ class Base():
             sources = S.i[:]
             targets = S.j[:]
             values = S.w[:] - np.mean(S.variables['w'].get_value())
-            if sources.shape[0] == targets.shape[0]:
-                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
+            if n_pre== n_post:
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(n_post)
             else:
                 raise ('Only synapses with the same source and target can calculate spectral radius')
             a, b = np.linalg.eig(ma)
@@ -161,10 +161,10 @@ class Base():
             sources = S.i[:]
             targets = S.j[:]
             values = S.w[:] - np.mean(S.variables['w'].get_value())
-            if sources.shape[0] == targets.shape[0]:
-                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
+            if n_pre== n_post:
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(n_post)
             else:
-                return -1
+                return np.array(-1)
             a, b = np.linalg.eig(ma)
             return np.max(np.abs(a))
         else:
@@ -614,7 +614,7 @@ da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
 on_pre_ex_stdp_inE = '''
 g+=w
 a_ahead +=  (w_max-w_min)* int(Switch_plasticity)
-w = clip(w+eta*[(a_ahead - offset*(w_max-w_min))*(1 - (w-w_min)/(w_max-w_min))**mu], w_min, w_max)
+w = clip(w+eta*((a_ahead - offset*(w_max-w_min))*(1 - (w-w_min)/(w_max-w_min))**mu), w_min, w_max)
 '''
 
 # -----Neurons and Synapses setting-------
@@ -687,10 +687,10 @@ S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
 
 S_inE.w_max = np.max(S_inE.w)
 S_inE.w_min = np.min(S_inE.w)
-S_EE.eta = learning_rate_eta
-S_EE.mu = 0.9
+S_inE.eta = learning_rate_eta
+S_inE.mu = 0.9
 S_inE.offset = 0.3
-S_EE.tau_ahead = '30*ms'
+S_inE.tau_ahead = '30*ms'
 
 
 # --------monitors setting----------
@@ -731,7 +731,8 @@ net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
 if READ_WEIGHT:
     try:
         weight = result.result_pick('weight.pkl')
-        S_EE.w = weight
+        S_EE.w = weight[0]
+        S_inE.w = weight[1]
     except FileNotFoundError:
         print ('Have not trained by plasticity, initial weight have been used')
 
@@ -769,8 +770,14 @@ brian_plot(S_II.w)
 show()
 
 #-------vis of metric--------
-fig_conf =plt.figure(figsize=(10,10))
+fig_conf_EE =plt.figure(figsize=(10,10))
 plt.imshow(metric_plasticity_list[0]['confuse_matrix'], cmap=plt.cm.BuPu_r)
+plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+cax = plt.axes([0.85, 0.1, 0.075, 0.8])
+plt.colorbar(cax=cax)
+
+fig_conf_inE =plt.figure(figsize=(10,10))
+plt.imshow(metric_plasticity_list[1]['confuse_matrix'], cmap=plt.cm.BuPu_r)
 plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
 cax = plt.axes([0.85, 0.1, 0.075, 0.8])
 plt.colorbar(cax=cax)
