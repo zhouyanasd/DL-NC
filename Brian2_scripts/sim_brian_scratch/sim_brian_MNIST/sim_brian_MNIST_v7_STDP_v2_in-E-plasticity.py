@@ -298,6 +298,22 @@ class Result():
         slider.observe(on_value_change, names='value')
         return play, slider, fig
 
+    def receptive_field(self, S, j, size):
+        temp = where(S.j == j)[0]
+        image = np.zeros(S.N_pre)
+        image[S.i[temp]] = S.w[temp]
+        return image.reshape(size)
+
+    def show_receptive_fields(self, S, index, size, nrows, ncols, figsize):
+        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize,
+                                subplot_kw={'xticks': [], 'yticks': []})
+        fig.subplots_adjust(left=0.03, right=0.97, hspace=0.3, wspace=0.05)
+        for i, ax in enumerate(axs.flat):
+            ax.imshow(self.receptive_field(S, index[i], size), cmap='binary')
+            ax.set_title(str(index[i]))
+        plt.tight_layout()
+        plt.show()
+
 
 class MNIST_classification(Base):
     def __init__(self, shape, duration, dt):
@@ -589,20 +605,28 @@ w = clip(w+a_ahead, w_min, w_max)
 '''
 
 synapse_stdp_inE = '''
-w : 1
 w_max : 1
 w_min : 1
+w : 1
+mu : 1
 tau_ahead : second
-eta : 1
-offset: 1
-mu : 1 
+tau_offset : second
+eta_positive : 1
+eta_negative : 1
+eta_offset : 1
+doffset/dt = -offset/tau_offset : 1 (clock-driven)
 da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
 '''
 
 on_pre_ex_stdp_inE = '''
 g+=w
-a_ahead +=  (w_max-w_min)* int(Switch_plasticity)
-w = clip(w+eta*((a_ahead - offset*(w_max-w_min))*(1 - (w-w_min)/(w_max-w_min))**mu), w_min, w_max)
+a_ahead +=  1
+w = clip(w + int(Switch_plasticity) * (a_ahead - offset) * eta_positive * (w_max-w_min)* (w_max-w)/(w_max-w_min), w_min, w_max)
+'''
+
+on_post_ex_stdp_inE = '''
+offset = offset + (1-offset) * eta_offset
+w = clip(w - int(Switch_plasticity) * eta_negative* (w_max-w_min) * (1 - mu*(w-w_min)/(w_max-w_min)), w_min, w_max)
 '''
 
 # -----Neurons and Synapses setting-------
@@ -617,7 +641,8 @@ G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method=
 
 G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
 
-S_inE = Synapses(Input, G_ex, synapse_stdp_inE, on_pre = on_pre_ex_stdp_inE ,method='euler', name='synapses_inE')
+S_inE = Synapses(Input, G_ex, synapse_stdp_inE, on_pre = on_pre_ex_stdp_inE, on_post = on_post_ex_stdp_inE,
+                 method='euler', name='synapses_inE')
 
 S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
@@ -675,10 +700,13 @@ S_EE.tau_ahead = S_EE.tau_latter = '10*ms'
 
 S_inE.w_max = np.max(S_inE.w)
 S_inE.w_min = np.min(S_inE.w)
-S_inE.eta = learning_rate_eta
 S_inE.mu = 0.9
-S_inE.offset = 0.3
-S_inE.tau_ahead = '30*ms'
+S_inE.offset = 0.0
+S_inE.tau_ahead = '3*ms'
+S_inE.tau_offset = '20*ms'
+S_inE.eta_positive = 0.4
+S_inE.eta_negative = 0.02
+S_inE.eta_offset = 0.5
 
 
 # --------monitors setting----------
@@ -757,6 +785,10 @@ brian_plot(S_IE.w)
 subplot(424)
 brian_plot(S_II.w)
 show()
+
+index = np.arange(1,100)
+np.random.shuffle(index)
+result.show_receptive_fields(S_inE, index[:90], (28,28), 9, 10, (20, 20))
 
 #-------vis of metric--------
 fig_conf_EE =plt.figure(figsize=(10,10))
