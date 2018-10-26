@@ -151,17 +151,21 @@ class Base():
         full_matrix[targets, sources] = values
         return full_matrix
 
-    def spectral_radius(self, S):
+    def spectral_radius(self, S, is_norm = False):
         if isinstance(S, Synapses):
             n_pre = S.N_pre
             n_post = S.N_post
             sources = S.i[:]
             targets = S.j[:]
             values = S.w[:] - np.mean(S.variables['w'].get_value())
-            if sources.shape[0] == targets.shape[0]:
-                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(sources.shape[0])
+            if n_pre== n_post:
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values)
+                if is_norm :
+                    ma = ma /np.sqrt(np.var(ma))/np.sqrt(n_post)
+                else:
+                    ma = ma /np.sqrt(n_post)
             else:
-                raise ('Only synapses with the same source and target can calculate spectral radius')
+                return np.array(-1)
             a, b = np.linalg.eig(ma)
             return np.max(np.abs(a))
         else:

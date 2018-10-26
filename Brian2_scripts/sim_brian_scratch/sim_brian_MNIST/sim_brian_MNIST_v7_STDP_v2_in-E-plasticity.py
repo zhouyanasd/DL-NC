@@ -148,9 +148,11 @@ class Base():
             if n_pre== n_post:
                 ma = self.connection_matrix(n_pre, n_post, sources, targets, values)
                 if is_norm :
-                    ma= ma/np.sqrt(np.var(ma))/np.sqrt(n_post)
+                    ma = ma /np.sqrt(np.var(ma))/np.sqrt(n_post)
+                else:
+                    ma = ma /np.sqrt(n_post)
             else:
-                raise ('Only synapses with the same source and target can calculate spectral radius')
+                return np.array(-1)
             a, b = np.linalg.eig(ma)
             return np.max(np.abs(a))
         else:
