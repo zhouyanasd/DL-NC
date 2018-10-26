@@ -138,7 +138,7 @@ class Base():
         full_matrix[targets, sources] = values
         return full_matrix
 
-    def spectral_radius(self, S):
+    def spectral_radius(self, S, is_norm = False):
         if isinstance(S, Synapses):
             n_pre = S.N_pre
             n_post = S.N_post
@@ -146,25 +146,11 @@ class Base():
             targets = S.j[:]
             values = S.w[:] - np.mean(S.variables['w'].get_value())
             if n_pre== n_post:
-                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(n_post)
+                ma = self.connection_matrix(n_pre, n_post, sources, targets, values)
+                if is_norm :
+                    ma= ma/np.sqrt(np.var(ma))/np.sqrt(n_post)
             else:
                 raise ('Only synapses with the same source and target can calculate spectral radius')
-            a, b = np.linalg.eig(ma)
-            return np.max(np.abs(a))
-        else:
-            raise ('The input need to be a object of Synapses')
-
-    def spectral_radius_(self, S):
-        if isinstance(S, Synapses):
-            n_pre = S.N_pre
-            n_post = S.N_post
-            sources = S.i[:]
-            targets = S.j[:]
-            values = S.w[:] - np.mean(S.variables['w'].get_value())
-            if n_pre== n_post:
-                ma = self.connection_matrix(n_pre, n_post, sources, targets, values) / np.sqrt(n_post)
-            else:
-                return np.array(-1)
             a, b = np.linalg.eig(ma)
             return np.max(np.abs(a))
         else:
@@ -467,7 +453,7 @@ def run_net_plasticity(inputs, *args, **kwargs):
         if Switch_metric:
             metric_plasticity_list = [base.update_metrics('numpy', x - y,
                                                     np.mean(np.abs(x-y)),
-                                                    base.spectral_radius_(S), **metric)
+                                                    base.spectral_radius(S), **metric)
                                  for x, y, S, metric in
                                  zip(weight_trained, weight_initial, args, metric_plasticity_list)]
         net.restore('init')
@@ -725,6 +711,7 @@ if Switch_monitor:
 #-------close plasticity--------
 Switch_plasticity = False
 net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
+net._stored_state['init'][S_inE.name]['w'] = S_EE._full_state()['w']
 
 ###############################################
 #-------read weight ------------
