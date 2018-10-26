@@ -713,7 +713,7 @@ if Switch_monitor:
 #-------close plasticity--------
 Switch_plasticity = False
 net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
-net._stored_state['init'][S_inE.name]['w'] = S_EE._full_state()['w']
+net._stored_state['init'][S_inE.name]['w'] = S_inE._full_state()['w']
 
 ###############################################
 #-------read weight ------------
