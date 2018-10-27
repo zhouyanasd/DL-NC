@@ -1,5 +1,5 @@
 # ----------------------------------------
-# LSM with STDP for MNIST test with in-E plasticity
+# LSM with STDP for MNIST test with in-E plasticity by category
 # add neurons to readout layer for multi-classification(one-versus-the-rest)
 # using softmax(logistic regression)
 # input layer is changed to 781*1 with encoding method
@@ -486,12 +486,15 @@ def run_net_plasticity(inputs, *args, **kwargs):
     result.result_save('weight.pkl', {'weight' : weight_trained})
     return metric_plasticity_list, monitor_record
 
+def run_net_plasticity_by_category(inputs, label, S):
+    N_categories = len(np.unique(label))
+    N_post_neuron = S.N_post
+    # group =
 
 ###################################
 #--------switch setting--------
 Switch_metric = True
 Switch_monitor = True
-Switch_plasticity = True
 READ_WEIGHT = True
 
 # -----parameter setting-------
@@ -594,6 +597,7 @@ da_latter/dt = -a_latter/tau_latter : 1 (clock-driven)
 '''
 
 on_pre_ex_stdp = '''
+Switch_plasticity : 1
 g+=w
 a_ahead += A_ahead * int(Switch_plasticity)
 w = clip(w+a_latter, w_min, w_max)
@@ -605,6 +609,7 @@ w = clip(w+a_ahead, w_min, w_max)
 '''
 
 synapse_stdp_inE = '''
+Switch_plasticity : 1
 w_max : 1
 w_min : 1
 w : 1
@@ -724,9 +729,14 @@ net.store('init')
 
 
 ###############################################
+# --------open plasticity--------
+S_EE.Switch_plasticity = True
+S_inE.Switch_plasticity = True
+net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
+net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
+
 # ------run for plasticity-------
-if Switch_plasticity:
-    metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE, S_inE,
+metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE, S_inE,
                                                                           label= label_plasticity)
 
 #----------show plasticity-----------
@@ -739,9 +749,13 @@ if Switch_monitor:
     result.result_save('metric_plasticity.pkl', metric_plasticity = metric_plasticity_list)
 
 #-------close plasticity--------
-Switch_plasticity = False
+S_EE.Switch_plasticity = False
+S_inE.Switch_plasticity = False
 net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
 net._stored_state['init'][S_inE.name]['w'] = S_inE._full_state()['w']
+net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
+net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
+
 
 ###############################################
 #-------read weight ------------
