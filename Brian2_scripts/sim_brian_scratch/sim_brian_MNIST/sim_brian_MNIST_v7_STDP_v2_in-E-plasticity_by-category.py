@@ -519,7 +519,7 @@ def run_net_plasticity_by_category(inputs, *args, **kwargs):
     for ser, (data, l) in enumerate(zip(inputs, kwargs['label'])):
         for index, G in enumerate(Groups):
             Switch = np.zeros(args[index].N_post)
-            Switch[G[G['label'] == 1]['neuron'].tolist()[0]] = 1
+            Switch[G[G['label'] == l]['neuron'].tolist()[0]] = 1
             args[index].variables['Switch_plasticity'].set_value(Switch[args[index].j])
         weight_initial = [S.variables['w'].get_value().copy() for S in args]
         if ser % 50 == 0:
