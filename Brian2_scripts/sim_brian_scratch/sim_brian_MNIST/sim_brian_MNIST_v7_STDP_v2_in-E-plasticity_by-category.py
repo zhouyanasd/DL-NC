@@ -550,6 +550,62 @@ def run_net_plasticity_by_category(inputs, *args, **kwargs):
     return metric_plasticity_list, monitor_record
 
 
+def run_net_plasticity_by_local_randomly(inputs, *args, **kwargs):
+    metric_plasticity = {
+        'weight_changed': None,
+        'weight_changed_mean': None,
+        'spectral_radius' : None}
+    monitor_record = {
+        'm_g_ex.I': None,
+        'm_g_ex.v': None,
+        'm_g_in.I': None,
+        'm_g_in.v': None,
+        'm_read.I': None,
+        'm_read.v': None,
+        'm_input.I': None,
+        'm_s_ee.w': None,
+        'm_s_ee.a_latter': None,
+        'm_s_ee.a_ahead': None,
+        'm_s_ine.w': None}
+    metric_plasticity_list = [metric_plasticity for S in args]
+    for ser, (data, l) in enumerate(zip(inputs, kwargs['label'])):
+        for index, S in enumerate(args):
+            temp = np.unique(S.j)
+            np.random.shuffle(temp)
+            Group = temp[:int(len(temp) * kwargs['fraction'])]
+            Switch = np.zeros(args[index].N_post)
+            Switch[Group[Group['label'] == l]['neuron']] = 1
+            args[index].variables['Switch_plasticity'].set_value(Switch[args[index].j])
+        weight_initial = [S.variables['w'].get_value().copy() for S in args]
+        if ser % 50 == 0:
+            print('The simulation is running at %s time' % ser)
+        stimulus = TimedArray(data, dt=Dt)
+        net.run(duration*Dt)
+        weight_trained = [S.variables['w'].get_value().copy() for S in args]
+        if Switch_monitor:
+            monitor_record = base.update_states('numpy', m_g_ex.I, m_g_ex.v, m_g_in.I, m_g_in.v, m_read.I,
+                                                m_read.v, m_input.I, m_s_ee.w, m_s_ee.a_latter, m_s_ee.a_ahead,
+                                                m_s_ine.w, **monitor_record)
+        if Switch_metric:
+            metric_plasticity_list = [base.update_metrics('numpy', x - y,
+                                                    np.mean(np.abs(x-y)),
+                                                    base.spectral_radius(S), **metric)
+                                 for x, y, S, metric in
+                                 zip(weight_trained, weight_initial, args, metric_plasticity_list)]
+        net.restore('init')
+        for S_index, S in enumerate(args):
+            S.w = weight_trained[S_index].copy()
+    if Switch_metric:
+        dis = base.get_plasticity_confuse(metric_plasticity_list, kwargs['label'])
+        confusion = base.get_confusion(dis)
+        for x, y, z in zip(metric_plasticity_list, dis, confusion):
+            x.update({'confuse_matrix':y})
+            x.update({'confusion': z})
+    result.result_save('weight.pkl', {'weight' : weight_trained})
+    return metric_plasticity_list, monitor_record
+
+
+
 ###################################
 #--------switch setting--------
 Switch_metric = True
