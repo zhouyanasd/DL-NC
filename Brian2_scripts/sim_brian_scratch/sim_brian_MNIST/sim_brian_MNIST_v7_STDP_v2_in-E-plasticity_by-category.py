@@ -848,7 +848,7 @@ net.store('init')
 # --------open plasticity--------
 S_EE.Switch_plasticity = True
 S_inE.Switch_plasticity = True
-net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
+net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
 net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
 
 # ------run for plasticity-------
