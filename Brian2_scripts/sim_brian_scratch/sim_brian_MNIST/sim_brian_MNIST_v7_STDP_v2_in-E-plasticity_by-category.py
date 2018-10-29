@@ -520,7 +520,8 @@ def run_net_plasticity_by_category(inputs, *args, **kwargs):
         for index, G in enumerate(Groups):
             Switch = np.zeros(args[index].N_post)
             Switch[G[G['label'] == l]['neuron'].tolist()[0]] = 1
-            args[index].variables['Switch_plasticity'].set_value(Switch[args[index].j])
+            kwargs['local_synapse'][index].variables['Switch_plasticity'].set_value(
+                Switch[kwargs['local_synapse'][index].j])
         weight_initial = [S.variables['w'].get_value().copy() for S in args]
         if ser % 50 == 0:
             print('The simulation is running at %s time' % ser)
