@@ -523,7 +523,6 @@ p_inE = 0.1
 p_inI = 0.1
 
 learning_rate = 0.005
-learning_rate_eta = 0.01
 
 ###########################################
 #-------class initialization----------------------
