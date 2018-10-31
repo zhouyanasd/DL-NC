@@ -629,6 +629,7 @@ n_input = MNIST_shape[1]*coding_n
 n_read = n_ex+n_inh
 
 R = 2
+f = 1
 f_inE = 0.8
 
 A_EE = 30*f
