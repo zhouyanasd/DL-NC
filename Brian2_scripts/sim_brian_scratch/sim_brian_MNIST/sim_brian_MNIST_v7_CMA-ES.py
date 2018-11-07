@@ -23,8 +23,11 @@ import ipywidgets as widgets
 import warnings
 import os
 from multiprocessing import Pool
+from cma import purecma
+import logging
 
 
+logging.file_log = False
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
@@ -393,7 +396,7 @@ np_state = np.random.get_state()
 
 
 ############################################
-def grad_search(parameter):
+def parameters_search(parameter):
     #---- set numpy random state for each parallel run----
     np.random.set_state(np_state)
 
@@ -403,8 +406,8 @@ def grad_search(parameter):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-    R = parameter['R']
-    f = parameter['f']
+    R = parameter[1]
+    f = parameter[2]
 
     A_EE = 30*f
     A_EI = 60*f
@@ -413,8 +416,8 @@ def grad_search(parameter):
     A_inE = 18*f
     A_inI = 9*f
 
-    tau_ex = parameter['tau']
-    tau_inh = parameter['tau']
+    tau_ex = parameter[0]
+    tau_inh = parameter[0]
     tau_read= 30
 
     p_inE = 0.1
@@ -530,7 +533,7 @@ def grad_search(parameter):
     def run_net(inputs):
         states = None
         for ser, data in enumerate(inputs):
-            if ser % 100 == 0:
+            if ser % 1000 == 0:
                 print('The simulation is running at %s time.' % ser)
             stimulus = TimedArray(data, dt=Dt)
             net.run(duration * Dt)
@@ -553,31 +556,9 @@ def grad_search(parameter):
     print('Train score: ', score_train)
     print('Test score: ', score_test)
 
-    return np.array([(score_train, score_test, parameter)],
-                    [('score_train',float),('score_test',float),('parameters',object)])
+    return 1-score_test
 
 ##########################################
 # -------prepare parameters---------------
 if __name__ == '__main__':
-    core = 10
-    pool = Pool(core)
-    parameters = base.parameters_GS((30, 300), (0.2, 2), (0.1, 1), tau=10, R=10, f=10)
-
-    # -------parallel run---------------
-    score = np.asarray(pool.map(grad_search, parameters))
-
-    # --------get the final results-----
-    score = np.asarray(score)
-    highest_score_train = np.max(score['score_train'])
-    highest_score_test = np.max(score['score_test'])
-    best_parameter_train = score['parameters'][np.where(score['score_train'] == highest_score_train)[0]]
-    best_parameter_test = score['parameters'][np.where(score['score_test'] == highest_score_test)[0]]
-
-    # --------show the final results-----
-    print('highest_score_train is %s, highest_score_test is %s, best_parameter_train is %s, best_parameter_test is %s'
-          %(highest_score_train, highest_score_test, best_parameter_train, best_parameter_test))
-
-    # -----------save the final results-------
-    result.result_save('score_grid_search.pkl', score=score)
-    result.result_save('best_parameters.pkl', best_parameter_train=best_parameter_train,
-                       best_parameter_test=best_parameter_test)
+    res = purecma.fmin(parameters_search, [30,0.2,0.1], 0.3, verb_disp=100)
