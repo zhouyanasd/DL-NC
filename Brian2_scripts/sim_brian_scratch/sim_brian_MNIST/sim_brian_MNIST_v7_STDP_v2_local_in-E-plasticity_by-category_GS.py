@@ -505,13 +505,14 @@ def grad_search(parameter):
 
     R = 0.9
     f = 1.2
+    f_inE = 0.8
 
     A_EE = 30*f
     A_EI = 60*f
     A_IE = 19*f
     A_II = 19*f
-    A_inE = 18*f
-    A_inI = 9*f
+    A_inE = 18*f_inE
+    A_inI = 9*f_inE
 
     p_inE = 0.01
     p_inI = 0.01
@@ -576,6 +577,32 @@ def grad_search(parameter):
     w = clip(w+a_ahead, w_min, w_max)
     '''
 
+    synapse_stdp_inE = '''
+    Switch_plasticity : 1
+    w_max : 1
+    w_min : 1
+    w : 1
+    mu : 1
+    tau_ahead : second
+    tau_offset : second
+    eta_positive : 1
+    eta_negative : 1
+    eta_offset : 1
+    doffset/dt = -offset/tau_offset : 1 (clock-driven)
+    da_ahead/dt = -a_ahead/tau_ahead : 1 (clock-driven)
+    '''
+
+    on_pre_ex_stdp_inE = '''
+    g+=w
+    a_ahead +=  1
+    w = clip(w + int(Switch_plasticity) * (a_ahead - offset) * eta_positive * (w_max-w_min)* (w_max-w)/(w_max-w_min), w_min, w_max)
+    '''
+
+    on_post_ex_stdp_inE = '''
+    offset = offset + (1-offset) * eta_offset
+    w = clip(w - int(Switch_plasticity) * eta_negative* (w_max-w_min) * (1 - mu*(w-w_min)/(w_max-w_min)), w_min, w_max)
+    '''
+
     # -----Neurons and Synapses setting-------
     Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
                         name = 'neurongroup_input')
@@ -588,7 +615,8 @@ def grad_search(parameter):
 
     G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
 
-    S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+    S_inE = Synapses(Input, G_ex, synapse_stdp_inE, on_pre=on_pre_ex_stdp_inE, on_post=on_post_ex_stdp_inE,
+                     method='euler', name='synapses_inE')
 
     S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
 
