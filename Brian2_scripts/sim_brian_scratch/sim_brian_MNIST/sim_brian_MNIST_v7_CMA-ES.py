@@ -25,6 +25,7 @@ import os
 from multiprocessing import Pool
 from cma import purecma
 import logging
+from functools import partial
 
 
 logging.file_log = False
@@ -396,10 +397,20 @@ np_state = np.random.get_state()
 
 
 ############################################
+# ---- define network run function----
+def run_net(inputs, net):
+    states = None
+    stimulus = TimedArray(inputs[0], dt=Dt)
+    net.run(duration * Dt)
+    states = base.np_append(states, net.get_states()['neurongroup_read']['v'])
+    net.restore('init')
+    return np.array([(states, inputs[1])], [('states', float), ('label', int)])
+
+
 def parameters_search(parameter):
     #---- check parameters >0 -----
-    if (np.array(parameter)>0).all():
-        return 1
+    if (np.array(parameter)<0).any():
+        return 100
 
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
@@ -533,42 +544,23 @@ def parameters_search(parameter):
     net = Network(collect())
     net.store('init')
 
-    # ---- define network run function----
-    def run_net(inputs):
-        states = None
-        for ser, data in enumerate(inputs):
-            if ser % 1000 == 0:
-                print('The simulation is running at %s time.' % ser)
-            stimulus = TimedArray(data['data'], dt=Dt)
-            net.run(duration * Dt)
-            states = base.np_append(states, G_readout.variables['v'].get_value())
-            net.restore('init')
-        return np.array([(states, data['label'])], [('states', float), ('label', int)])
-
     # -------parallel run---------------
     if __name__ == '__main__':
         pool = Pool(core)
-
         # ------run for train-------
-        states_train_list = pool.map(run_net, np.array([x for x in zip(data_train_s, label_train)],
-                                                       [('data', object), ('label', int)]))
-
+        states_train_list = pool.map(partial(run_net, net = net), [(x) for x in zip(data_train_s, label_train)])
         # ----run for test--------
-        states_test_list = pool.map(run_net, np.array([x for x in zip(data_test_s, label_test)],
-                                                      [('data', object), ('label', int)]))
-
+        states_test_list = pool.map(partial(run_net, net = net), [(x) for x in zip(data_test_s, label_test)])
         # ------Readout---------------
         states_train = (MinMaxScaler().fit_transform(np.asarray(states_train_list['data']))).T
         states_test = (MinMaxScaler().fit_transform(np.asarray(states_test_list['data']))).T
         score_train, score_test = readout.readout_sk(states_train, states_test,
                                                      states_train_list['label'], states_test_list['label'],
                                                      solver="lbfgs", multi_class="multinomial")
-
         # ----------show results-----------
         print('parameters %s' % parameter)
         print('Train score: ', score_train)
         print('Test score: ', score_test)
-
         return 1 - score_test
 
 
