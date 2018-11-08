@@ -363,9 +363,9 @@ class MNIST_classification(Base):
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 10
-MNIST_shape = (28, 28)
-coding_duration = 10
+coding_n = 1
+MNIST_shape = (1, 784)
+coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_train = 0.05
 F_test = 0.05
@@ -397,7 +397,11 @@ np_state = np.random.get_state()
 
 ############################################
 def parameters_search(parameter):
-    #---- set numpy random state for each parallel run----
+    #---- check parameters >0 -----
+    if (np.array(parameter>0)).all():
+        return 1
+
+    #---- set numpy random state for each run----
     np.random.set_state(np_state)
 
     # -----parameter setting-------
@@ -420,8 +424,8 @@ def parameters_search(parameter):
     tau_inh = parameter[0]
     tau_read= 30
 
-    p_inE = 0.1
-    p_inI = 0.1
+    p_inE = 0.01
+    p_inI = 0.01
 
     #------definition of equation-------------
     neuron_in = '''
@@ -535,30 +539,40 @@ def parameters_search(parameter):
         for ser, data in enumerate(inputs):
             if ser % 1000 == 0:
                 print('The simulation is running at %s time.' % ser)
-            stimulus = TimedArray(data, dt=Dt)
+            stimulus = TimedArray(data['data'], dt=Dt)
             net.run(duration * Dt)
             states = base.np_append(states, G_readout.variables['v'].get_value())
             net.restore('init')
-        return (MinMaxScaler().fit_transform(states)).T
+        return np.array([(states, data['label'])], [('states', float), ('label', int)])
 
-    # ------run for train-------
-    states_train = run_net(data_train_s)
+    # -------parallel run---------------
+    if __name__ == '__main__':
+        pool = Pool(core)
 
-    # ------run for test-------
-    states_test = run_net(data_test_s)
+        # ------run for train-------
+        states_train_list = pool.map(run_net, np.array([x for x in zip(data_train_s, label_train)],
+                                                       [('data', object), ('label', int)]))
 
-    # ------Readout---------------
-    score_train, score_test = readout.readout_sk(states_train, states_test, label_train, label_test, solver="lbfgs",
-                                                 multi_class="multinomial")
+        # ----run for test--------
+        states_test_list = pool.map(run_net, np.array([x for x in zip(data_test_s, label_test)],
+                                                      [('data', object), ('label', int)]))
 
-    # ----------show results-----------
-    print('parameters %s' % parameter)
-    print('Train score: ', score_train)
-    print('Test score: ', score_test)
+        # ------Readout---------------
+        states_train = (MinMaxScaler().fit_transform(np.asarray(states_train_list['data']))).T
+        states_test = (MinMaxScaler().fit_transform(np.asarray(states_test_list['data']))).T
+        score_train, score_test = readout.readout_sk(states_train, states_test,
+                                                     states_train_list['label'], states_test_list['label'],
+                                                     solver="lbfgs", multi_class="multinomial")
 
-    return 1-score_test
+        # ----------show results-----------
+        print('parameters %s' % parameter)
+        print('Train score: ', score_train)
+        print('Test score: ', score_test)
+
+        return 1 - score_test
+
 
 ##########################################
-# -------prepare parameters---------------
-if __name__ == '__main__':
-    res = purecma.fmin(parameters_search, [30,0.2,0.1], 0.3, verb_disp=100)
+# -------CMA-ES parameters search---------------
+core = 10
+res = purecma.fmin(parameters_search, [30,0.2,0.1], 1, verb_disp=100)
