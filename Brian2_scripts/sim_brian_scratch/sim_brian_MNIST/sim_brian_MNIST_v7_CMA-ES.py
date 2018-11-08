@@ -398,7 +398,7 @@ np_state = np.random.get_state()
 ############################################
 def parameters_search(parameter):
     #---- check parameters >0 -----
-    if (np.array(parameter>0)).all():
+    if (np.array(parameter)>0).all():
         return 1
 
     #---- set numpy random state for each run----
