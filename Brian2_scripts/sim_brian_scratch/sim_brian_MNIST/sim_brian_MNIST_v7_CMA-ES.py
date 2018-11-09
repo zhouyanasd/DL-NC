@@ -372,8 +372,6 @@ F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
-pre_train_loop = 0
-
 #-------class initialization----------------------
 function = Function()
 base = Base(duration, Dt)
