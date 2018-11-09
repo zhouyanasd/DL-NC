@@ -418,8 +418,8 @@ def run_net(inputs, parameter):
     A_inE = 18*f
     A_inI = 9*f
 
-    tau_ex = parameter[0]
-    tau_inh = parameter[0]
+    tau_ex = parameter[0]*coding_duration
+    tau_inh = parameter[0]*coding_duration
     tau_read= 30
 
     p_inE = 0.01
@@ -571,4 +571,4 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    res = purecma.fmin(parameters_search, [30,1,1], 1, verb_disp=100)
+    res = purecma.fmin(parameters_search, [0.5,0.5,0.5], 1, verb_disp=100)
