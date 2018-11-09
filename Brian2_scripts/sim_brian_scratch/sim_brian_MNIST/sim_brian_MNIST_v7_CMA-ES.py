@@ -398,20 +398,7 @@ np_state = np.random.get_state()
 
 ############################################
 # ---- define network run function----
-def run_net(inputs, net):
-    states = None
-    stimulus = TimedArray(inputs[0], dt=Dt)
-    net.run(duration * Dt)
-    states = base.np_append(states, net.get_states()['neurongroup_read']['v'])
-    net.restore('init')
-    return np.array([(states, inputs[1])], [('states', float), ('label', int)])
-
-
-def parameters_search(parameter):
-    #---- check parameters >0 -----
-    if (np.array(parameter)<0).any():
-        return 100
-
+def run_net(inputs, parameter):
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
 
@@ -544,27 +531,44 @@ def parameters_search(parameter):
     net = Network(collect())
     net.store('init')
 
-    # -------parallel run---------------
-    if __name__ == '__main__':
-        pool = Pool(core)
-        # ------run for train-------
-        states_train_list = pool.map(partial(run_net, net = net), [(x) for x in zip(data_train_s, label_train)])
-        # ----run for test--------
-        states_test_list = pool.map(partial(run_net, net = net), [(x) for x in zip(data_test_s, label_test)])
-        # ------Readout---------------
-        states_train = (MinMaxScaler().fit_transform(np.asarray(states_train_list['data']))).T
-        states_test = (MinMaxScaler().fit_transform(np.asarray(states_test_list['data']))).T
-        score_train, score_test = readout.readout_sk(states_train, states_test,
-                                                     states_train_list['label'], states_test_list['label'],
-                                                     solver="lbfgs", multi_class="multinomial")
-        # ----------show results-----------
-        print('parameters %s' % parameter)
-        print('Train score: ', score_train)
-        print('Test score: ', score_test)
-        return 1 - score_test
+    # ------run network-------------
+    stimulus = TimedArray(inputs[0], dt=Dt)
+    net.run(duration * Dt)
+    states = net.get_states()['neurongroup_read']['v']
+    net.restore('init')
+    return (states, inputs[1])
 
+
+def parameters_search(parameter):
+    #---- check parameters -----
+    if (np.array(parameter)<0).any():
+        return np.random.randint(10,100)
+
+    # ------parallel run for train-------
+    states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
+    # ----parallel run for test--------
+    states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
+    # ------Readout---------------
+    states_train, states_test, _label_train, _label_test = [], [], [], []
+    for train, test in zip(states_train_list, states_test_list) :
+        states_train.append(train[0])
+        states_test.append(test[0])
+        _label_train.append(train[1])
+        _label_test.append(test[1])
+    states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
+    states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
+    score_train, score_test = readout.readout_sk(states_train, states_test,
+                                                 np.asarray(_label_train), np.asarray(_label_test),
+                                                 solver="lbfgs", multi_class="multinomial")
+    # ----------show results-----------
+    print('parameters %s' % parameter)
+    print('Train score: ', score_train)
+    print('Test score: ', score_test)
+    return 1 - score_test
 
 ##########################################
 # -------CMA-ES parameters search---------------
-core = 10
-res = purecma.fmin(parameters_search, [30,0.2,0.1], 1, verb_disp=100)
+if __name__ == '__main__':
+    core = 10
+    pool = Pool(core)
+    res = purecma.fmin(parameters_search, [30,1,1], 1, verb_disp=100)
