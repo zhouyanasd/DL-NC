@@ -852,8 +852,12 @@ net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['
 net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
 
 # ------run for plasticity-------
-metric_plasticity_list, monitor_record_pre_train = run_net_plasticity(data_plasticity_s, S_EE, S_inE,
+metric_plasticity_list, monitor_record_pre_train = run_net_plasticity_by_category(data_plasticity_s, S_EE, S_inE,
                                                                           label= label_plasticity)
+
+# metric_plasticity_list, monitor_record_pre_train = run_net_plasticity_by_local_randomly(data_plasticity_s, S_EE, S_inE,
+#                                                                           label= label_plasticity, local_synapse =[S_inE],
+#                                                                           fraction = 0.1)
 
 #----------show plasticity-----------
 print(metric_plasticity_list[0]['confusion'])

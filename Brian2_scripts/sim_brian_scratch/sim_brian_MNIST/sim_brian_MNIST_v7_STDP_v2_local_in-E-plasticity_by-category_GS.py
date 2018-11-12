@@ -796,6 +796,9 @@ def grad_search(parameter):
     confusion = run_net_plasticity_by_category(data_plasticity_s, S_EE, S_inE,
                                                 label= label_plasticity, local_synapse =[S_inE])
 
+    # confusion = run_net_plasticity_by_local_randomly(data_plasticity_s, S_EE, S_inE,
+    #                                                  label=label_plasticity, local_synapse=[S_inE], fraction=0.1)
+
     #-------close plasticity--------
     S_EE.Switch_plasticity = False
     S_inE.Switch_plasticity = False
