@@ -24,11 +24,9 @@ import warnings
 import os
 from multiprocessing import Pool
 from cma import purecma
-import logging
 from functools import partial
 
 
-logging.file_log = False
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()

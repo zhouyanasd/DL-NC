@@ -21,10 +21,8 @@ import ipywidgets as widgets
 import warnings
 import os
 from multiprocessing import Pool
-import logging
 
 
-logging.file_log = False
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
