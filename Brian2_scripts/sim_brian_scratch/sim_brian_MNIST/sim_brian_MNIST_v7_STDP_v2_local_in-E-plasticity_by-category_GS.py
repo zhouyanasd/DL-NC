@@ -505,7 +505,7 @@ def grad_search(parameter):
 
     R = 0.9
     f = 1.2
-    f_inE = 0.8
+    f_inE = parameter['f_inE']
 
     A_EE = 30*f
     A_EI = 60*f
@@ -514,8 +514,8 @@ def grad_search(parameter):
     A_inE = 18*f_inE
     A_inI = 9*f_inE
 
-    p_inE = 0.01
-    p_inI = 0.01
+    p_inE = parameter['p_in']
+    p_inI = parameter['p_in']
 
     learning_rate = 0.001
 
@@ -669,13 +669,19 @@ def grad_search(parameter):
 
     S_EE.w_max = np.max(S_EE.w)
     S_EE.w_min = np.min(S_EE.w)
-    base.set_local_parameter(S_EE, 'A_ahead', (learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))*0.5*parameter['A_ahead'],
-                                               learning_rate*(np.max(S_EE.w)-np.min(S_EE.w))*1.5*parameter['A_ahead']),
-                             method='group', group_n= 10)
-    base.set_local_parameter(S_EE, 'tau_ahead', (0.005+parameter['tau'], 0.1+parameter['tau']),
-                             method='group', group_n= 10)
-    base.set_local_parameter(S_EE, 'tau_latter', (0.005+parameter['tau'], 0.1+parameter['tau']),
-                             method='group', group_n= 10)
+    S_EE.A_ahead = learning_rate * (np.max(S_EE.w) - np.min(S_EE.w))
+    base.set_local_parameter(S_EE, 'tau_ahead', (0.005, 0.1), method='group', group_n=10, location_label='z_post')
+    base.set_local_parameter(S_EE, 'tau_latter', (0.005, 0.1), method='group', group_n=10, location_label='z_post')
+
+    S_inE.w_max = np.max(S_inE.w)
+    S_inE.w_min = np.min(S_inE.w)
+    S_inE.mu = 0.9
+    S_inE.offset = 0.0
+    S_inE.tau_ahead = '3*ms'
+    S_inE.tau_offset = '20*ms'
+    S_inE.eta_offset = 0.5
+    base.set_local_parameter(S_inE, 'eta_positive', (0.3, 0.9))
+    base.set_local_parameter(S_inE, 'eta_negative', (0.01, 0.1))
 
     # ------create network-------------
     net = Network(collect())
@@ -713,17 +719,91 @@ def grad_search(parameter):
         confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
         return confusion
 
+    def run_net_plasticity_by_category(inputs, *args, **kwargs):
+        def allocate_post_neuron_to_label(S, label):
+            dfs = []
+            for s in S:
+                N_n, N_l = len(np.unique(s.j)), len(np.unique(label))
+                N_per_group = N_n // N_l
+                Group = [np.unique(s.j)[i * N_per_group:(i + 1) * N_per_group] for i in range(N_l)]
+                if N_n % N_l != 0:
+                    Group.append(np.unique(s.j)[N_per_group * N_l:])
+                df = pd.DataFrame({'neuron': pd.Series(Group), 'label': pd.Series(np.unique(label))})
+                dfs.append(df)
+            return dfs
+
+        metric_plasticity = {
+            'weight_changed': None,}
+        metric_plasticity_list = [metric_plasticity for S in args]
+        Groups = allocate_post_neuron_to_label(kwargs['local_synapse'], kwargs['label'])
+        for ser, (data, l) in enumerate(zip(inputs, kwargs['label'])):
+            for index, G in enumerate(Groups):
+                Switch = np.zeros(args[index].N_post)
+                Switch[G[G['label'] == l]['neuron'].tolist()[0]] = 1
+                kwargs['local_synapse'][index].variables['Switch_plasticity'].set_value(
+                    Switch[kwargs['local_synapse'][index].j])
+            weight_initial = [S.variables['w'].get_value().copy() for S in args]
+            if ser % 50 == 0:
+                print('The simulation is running at %s time' % ser)
+            stimulus = TimedArray(data, dt=Dt)
+            net.run(duration * Dt)
+            weight_trained = [S.variables['w'].get_value().copy() for S in args]
+            metric_plasticity_list = [base.update_metrics('numpy', x - y, **metric)
+                                          for x, y, metric in
+                                          zip(weight_trained, weight_initial, metric_plasticity_list)]
+            net.restore('init')
+            for S_index, S in enumerate(args):
+                S.w = weight_trained[S_index].copy()
+            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+        return confusion
+
+    def run_net_plasticity_by_local_randomly(inputs, *args, **kwargs):
+        metric_plasticity = {
+            'weight_changed': None}
+        metric_plasticity_list = [metric_plasticity for S in args]
+        for ser, (data, l) in enumerate(zip(inputs, kwargs['label'])):
+            for index, S in enumerate(args):
+                temp = np.unique(S.j)
+                np.random.shuffle(temp)
+                Group = temp[:int(len(temp) * kwargs['fraction'])]
+                Switch = np.zeros(args[index].N_post)
+                Switch[Group[Group['label'] == l]['neuron']] = 1
+                args[index].variables['Switch_plasticity'].set_value(Switch[args[index].j])
+            weight_initial = [S.variables['w'].get_value().copy() for S in args]
+            if ser % 50 == 0:
+                print('The simulation is running at %s time' % ser)
+            stimulus = TimedArray(data, dt=Dt)
+            net.run(duration * Dt)
+            weight_trained = [S.variables['w'].get_value().copy() for S in args]
+            metric_plasticity_list = [base.update_metrics('numpy', x - y, **metric)
+                                          for x, y, metric in
+                                          zip(weight_trained, weight_initial, metric_plasticity_list)]
+            net.restore('init')
+            for S_index, S in enumerate(args):
+                S.w = weight_trained[S_index].copy()
+            net.restore('init')
+            for S_index, S in enumerate(args):
+                S.w = weight_trained[S_index].copy()
+            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+        return confusion
+
     # --------open plasticity--------
     S_EE.Switch_plasticity = True
+    S_inE.Switch_plasticity = True
     net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
+    net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
 
     # ------run for plasticity-------
-    confusion = run_net_plasticity(data_plasticity_s, S_EE,label= label_plasticity)
+    confusion = run_net_plasticity_by_category(data_plasticity_s, S_EE, S_inE,
+                                                label= label_plasticity, local_synapse =[S_inE])
 
     #-------close plasticity--------
     S_EE.Switch_plasticity = False
+    S_inE.Switch_plasticity = False
     net._stored_state['init'][S_EE.name]['w'] = S_EE._full_state()['w']
+    net._stored_state['init'][S_inE.name]['w'] = S_inE._full_state()['w']
     net._stored_state['init'][S_EE.name]['Switch_plasticity'] = S_EE._full_state()['Switch_plasticity']
+    net._stored_state['init'][S_inE.name]['Switch_plasticity'] = S_inE._full_state()['Switch_plasticity']
 
     # ------run for train-------
     states_train = run_net(data_train_s)
@@ -750,7 +830,7 @@ def grad_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = base.parameters_GS((0.0, 0.1), (0.7, 1.3), tau=10, A_ahead=10)
+    parameters = base.parameters_GS((0.01, 0.1), (0.1, 0.5), f_inE=10, p_in=10)
 
     # -------parallel run---------------
     score = np.asarray(pool.map(grad_search, parameters))
