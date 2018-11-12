@@ -754,7 +754,7 @@ def grad_search(parameter):
             net.restore('init')
             for S_index, S in enumerate(args):
                 S.w = weight_trained[S_index].copy()
-            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+        confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
         return confusion
 
     def run_net_plasticity_by_local_randomly(inputs, *args, **kwargs):
@@ -781,10 +781,7 @@ def grad_search(parameter):
             net.restore('init')
             for S_index, S in enumerate(args):
                 S.w = weight_trained[S_index].copy()
-            net.restore('init')
-            for S_index, S in enumerate(args):
-                S.w = weight_trained[S_index].copy()
-            confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
+        confusion = base.get_confusion(base.get_plasticity_confuse(metric_plasticity_list, kwargs['label']))
         return confusion
 
     # --------open plasticity--------
