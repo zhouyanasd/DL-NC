@@ -417,30 +417,58 @@ class KTH_classification():
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 3
-dim = 12
-coding_duration = 10
+LOAD_DATA = True
+USE_VALIDATION = True
+
+origin_size=(120, 160)
+pool_size=(5, 5)
+types='max'
+threshold=0.2
+
 F_train = 1
+F_validation = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
+standard_tau = 30
 
 #-------class initialization----------------------
 function = Function()
 base = Base()
 readout = Readout()
 result = Result()
-Jv = Jv_classification(coding_duration)
+KTH = KTH_classification()
 
 # -------data initialization----------------------
-Jv.load_Data_Jv_all(data_path)
-df_train = Jv.select_data(F_train, Jv.train, False)
-df_test = Jv.select_data(F_test, Jv.test, False)
+if LOAD_DATA:
 
-df_en_train = Jv.encoding_latency_Jv(Jv._encoding_cos_rank, df_train, coding_n)
-df_en_test = Jv.encoding_latency_Jv(Jv._encoding_cos_rank, df_test, coding_n)
+    df_en_train = KTH.load_data(data_path + 'train.p')
+    df_en_validation = KTH.load_data(data_path + 'validation.p')
+    df_en_test = KTH.load_data(data_path + 'test.p')
 
-data_train_s, label_train = Jv.get_series_data_list(df_en_train, is_group=True)
-data_test_s, label_test = Jv.get_series_data_list(df_en_test, is_group=True)
+else:
+
+    KTH.load_Data_KTH_all(data_path)
+
+    df_train = KTH.select_data_KTH(F_train, KTH.train, False)
+    df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
+    df_test = KTH.select_data_KTH(F_train, KTH.test, False)
+
+    df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, types, threshold)
+    df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
+    df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
+
+    KTH.dump_data(data_path + 'train.p', df_en_train)
+    KTH.dump_data(data_path + 'validation.p', df_en_validation)
+    KTH.dump_data(data_path + 'test.p', df_en_test)
+
+data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
+data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
+data_test_s, label_test = KTH.get_series_data_list(df_en_train, is_group=True)
+
+if USE_VALIDATION:
+
+    data_train_s = base.np_extend(data_train_s, data_validation_s)
+    label_train = base.np_extend(label_train, label_validation)
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
@@ -454,9 +482,9 @@ def run_net(inputs, parameter):
 
     # -----parameter setting-------
     n_ex = 400
-    n_inh = int(n_ex/4)
-    n_input = dim * coding_n
-    n_read = n_ex+n_inh
+    n_inh = int(n_ex / 4)
+    n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
+    n_read = n_ex + n_inh
 
     R = parameter[1]
     f = parameter[2]
@@ -468,8 +496,8 @@ def run_net(inputs, parameter):
     A_inE = 18*f
     A_inI = 9*f
 
-    tau_ex = parameter[0]*coding_duration
-    tau_inh = parameter[0]*coding_duration
+    tau_ex = parameter[0]*standard_tau
+    tau_inh = parameter[0]*standard_tau
     tau_read= 30
 
     p_inE = 0.1
