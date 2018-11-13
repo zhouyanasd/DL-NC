@@ -1,5 +1,5 @@
 # ----------------------------------------
-# LSM without STDP for MNIST test
+# LSM without STDP for Jv test
 # add neurons to readout layer for multi-classification(one-versus-the-rest)
 # using softmax(logistic regression)
 # input layer is changed to 781*1 with encoding method
@@ -258,46 +258,53 @@ class Result():
         return play, slider, fig
 
 
-class MNIST_classification(Base):
-    def __init__(self, shape, duration, dt):
-        super().__init__(duration, dt)
-        self.shape = shape
+class Jv_classification():
+    def __init__(self, coding_duration):
+        self.coding_duration = coding_duration
 
-    def load_Data_MNIST(self, n, path_value, path_label, is_norm=True):
-        with open(path_value, 'rb') as f1:
-            buf1 = f1.read()
-        with open(path_label, 'rb') as f2:
-            buf2 = f2.read()
-
-        image_index = 0
-        image_index += struct.calcsize('>IIII')
-        im = []
-        for i in range(n):
-            temp = struct.unpack_from('>784B', buf1, image_index)
-            im.append(np.reshape(temp, self.shape))
-            image_index += struct.calcsize('>784B')
-
-        label_index = 0
-        label_index += struct.calcsize('>II')
-        label = np.asarray(struct.unpack_from('>' + str(n) + 'B', buf2, label_index))
-        if is_norm:
-            f = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-            df = pd.DataFrame({'value': pd.Series(im).apply(f), 'label': pd.Series(label)})
+    def load_Data_Jv(self, t, path_value, path_label, is_norm=True):
+        if t == "train":
+            label = np.loadtxt(path_label, delimiter=None).astype(int)[1]
+        elif t == "test":
+            label = np.loadtxt(path_label, delimiter=None).astype(int)[0]
         else:
-            df = pd.DataFrame({'value': pd.Series(im), 'label': pd.Series(label)})
-        return df
+            raise TypeError("t must be 'train' or 'test'")
+        data = np.loadtxt(path_value, delimiter=None)
+        if is_norm:
+            data = MinMaxScaler().fit_transform(data)
+        s = open(path_value, 'r')
+        i = -1
+        size = []
+        while True:
+            lines = s.readline()
+            i += 1
+            if not lines:
+                break
+            if lines == '\n':  # "\n" needed to be added at the end of the file
+                i -= 1
+                size.append(i)
+                continue
+        size_d = np.concatenate(([0], (np.asarray(size) + 1)))
+        data_list = [data[size_d[i]:size_d[i + 1]] for i in range(len(size_d) - 1)]
+        label_list = []
+        j = 0
+        for n in label:
+            label_list.extend([j] * n)
+            j += 1
+        data_frame = pd.DataFrame({'value': pd.Series(data_list), 'label': pd.Series(label_list)})
+        return data_frame
 
-    def load_Data_MNIST_all(self, path, is_norm=True):
-        self.train = self.load_Data_MNIST(60000, path + 'train-images.idx3-ubyte',
-                                          path + 'train-labels.idx1-ubyte', is_norm)
-        self.test = self.load_Data_MNIST(10000, path + 't10k-images.idx3-ubyte',
-                                         path + 't10k-labels.idx1-ubyte', is_norm)
+    def load_Data_Jv_all(self, path, is_norm=True):
+        self.train = self.load_Data_Jv('train', path + 'train.txt',
+                                       path + 'size.txt', is_norm)
+        self.test = self.load_Data_Jv('test', path + 'test.txt',
+                                      path + 'size.txt', is_norm)
 
     def select_data(self, fraction, data_frame, is_order=True, **kwargs):
         try:
             selected = kwargs['selected']
         except KeyError:
-            selected = np.arange(10)
+            selected = np.arange(9)
         if is_order:
             data_frame_selected = data_frame[data_frame['label'].isin(selected)].sample(
                 frac=fraction).sort_index().reset_index(drop=True)
@@ -306,47 +313,30 @@ class MNIST_classification(Base):
                 drop=True)
         return data_frame_selected
 
+    def _encoding_cos(self, x, n, A):
+        encoding = []
+        for i in range(int(n)):
+            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
+            coding = [([0] * trans_cos.shape[1]) for i in range(A * trans_cos.shape[0])]
+            for index_0, p in enumerate(trans_cos):
+                for index_1, q in enumerate(p):
+                    coding[int(q) + A * index_0][index_1] = 1
+            encoding.extend(coding)
+        return np.asarray(encoding)
+
     def _encoding_cos_rank(self, x, n, A):
         encoding = np.zeros((x.shape[0] * A, n * x.shape[1]), dtype='<i1')
         for i in range(int(n)):
             trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
             for index_0, p in enumerate(trans_cos):
                 for index_1, q in enumerate(p):
-                    encoding[int(q)+ A * index_0, index_1 * n + i] = 1
-        return encoding
+                    encoding[int(q) + A * index_0, index_1 * n + i] = 1
+        return np.asarray(encoding)
 
-    def _encoding_cos_rank_ignore_0(self, x, n, A):
-        encoding = np.zeros((x.shape[0] * A, n * x.shape[1]), dtype='<i1')
-        for i in range(int(n)):
-            trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
-            encoded_zero = int(np.around(0.5 * A * (np.cos(0 + np.pi * (i / n)) + 1)).clip(0, A - 1))
-            for index_0, p in enumerate(trans_cos):
-                for index_1, q in enumerate(p):
-                    if int(q) == encoded_zero:
-                        continue
-                    else:
-                        encoding[int(q)+ A * index_0, index_1 * n + i] = 1
-        return encoding
-
-    def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
+    def encoding_latency_Jv(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
-        coding_duration = self.duration / self.shape[0]
-        if (coding_duration - int(coding_duration)) == 0.0:
-            value = analog_data['value'].apply(f).apply(coding_f, n=coding_n, A=int(coding_duration))
-            return pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(analog_data['label'])})
-        else:
-            raise ValueError('duration must divide (coding_n*length of data) exactly')
-
-    def get_series_data(self, data_frame, is_group=False):
-        data_frame_s = None
-        if not is_group:
-            for value in data_frame['value']:
-                data_frame_s = self.np_extend(data_frame_s, value, 0)
-        else:
-            for value in data_frame['value']:
-                data_frame_s = self.np_append(data_frame_s, value)
-        label = data_frame['label']
-        return data_frame_s, label
+        value = analog_data['value'].apply(f).apply(coding_f, n=coding_n, A=int(self.coding_duration))
+        return pd.DataFrame({'value': pd.Series(value), 'label': pd.Series(analog_data['label'])})
 
     def get_series_data_list(self, data_frame, is_group=False):
         data_frame_s = []
@@ -358,6 +348,7 @@ class MNIST_classification(Base):
                 data_frame_s.append(value)
         label = data_frame['label']
         return np.asarray(data_frame_s), label
+
 
 
 ###################################
