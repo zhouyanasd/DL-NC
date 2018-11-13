@@ -50,24 +50,6 @@ class Function():
 
 
 class Base():
-    def __init__(self, duration, dt):
-        self.duration = duration
-        self.dt = dt
-        self.interval = duration * dt
-
-    def get_states(self, input, running_time, sample, normalize=False):
-        n = int(running_time / self.interval)
-        step = int(self.interval / sample / defaultclock.dt)
-        interval_ = int(self.interval / defaultclock.dt)
-        temp = []
-        for i in range(n):
-            sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:, ::-step], axis=1)
-            temp.append(sum)
-        if normalize:
-            return MinMaxScaler().fit_transform(np.asarray(temp)).T
-        else:
-            return np.asarray(temp).T
-
     def update_states(self, type='pandas', *args, **kwargs):
         for seq, state in enumerate(kwargs):
             if type == 'pandas':
@@ -353,31 +335,30 @@ class Jv_classification():
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 1
-MNIST_shape = (1, 784)
-coding_duration = 30
-duration = coding_duration*MNIST_shape[0]
-F_train = 0.05
-F_test = 0.05
-Dt = defaultclock.dt = 1*ms
+coding_n = 3
+dim = 12
+coding_duration = 10
+F_train = 1
+F_test = 1
+Dt = defaultclock.dt = 1 * ms
 
 #-------class initialization----------------------
 function = Function()
-base = Base(duration, Dt)
-readout = Readout(function.logistic)
+base = Base()
+readout = Readout()
 result = Result()
-MNIST = MNIST_classification(MNIST_shape, duration, Dt)
+Jv = Jv_classification(coding_duration)
 
-#-------data initialization----------------------
-MNIST.load_Data_MNIST_all(data_path)
-df_train = MNIST.select_data(F_train, MNIST.train)
-df_test = MNIST.select_data(F_test, MNIST.test)
+# -------data initialization----------------------
+Jv.load_Data_Jv_all(data_path)
+df_train = Jv.select_data(F_train, Jv.train, False)
+df_test = Jv.select_data(F_test, Jv.test, False)
 
-df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
-df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
+df_en_train = Jv.encoding_latency_Jv(Jv._encoding_cos_rank, df_train, coding_n)
+df_en_test = Jv.encoding_latency_Jv(Jv._encoding_cos_rank, df_test, coding_n)
 
-data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
-data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
+data_train_s, label_train = Jv.get_series_data_list(df_en_train, is_group=True)
+data_test_s, label_test = Jv.get_series_data_list(df_en_test, is_group=True)
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
@@ -392,7 +373,7 @@ def run_net(inputs, parameter):
     # -----parameter setting-------
     n_ex = 400
     n_inh = int(n_ex/4)
-    n_input = MNIST_shape[1]*coding_n
+    n_input = dim * coding_n
     n_read = n_ex+n_inh
 
     R = parameter[1]
@@ -409,8 +390,8 @@ def run_net(inputs, parameter):
     tau_inh = parameter[0]*coding_duration
     tau_read= 30
 
-    p_inE = 0.01
-    p_inI = 0.01
+    p_inE = 0.1
+    p_inI = 0.1
 
     #------definition of equation-------------
     neuron_in = '''
@@ -520,6 +501,7 @@ def run_net(inputs, parameter):
 
     # ------run network-------------
     stimulus = TimedArray(inputs[0], dt=Dt)
+    duration = inputs[0].shape[0]
     net.run(duration * Dt)
     states = net.get_states()['neurongroup_read']['v']
     net.restore('init')
@@ -558,4 +540,4 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    res = purecma.fmin(parameters_search, [0.5,0.5,0.5], 1, verb_disp=100)
+    res = purecma.fmin(parameters_search, [1,1,0.5], 1, verb_disp=100)
