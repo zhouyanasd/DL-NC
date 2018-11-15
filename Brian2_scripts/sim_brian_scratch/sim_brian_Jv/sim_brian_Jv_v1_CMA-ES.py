@@ -518,10 +518,11 @@ def parameters_search(parameter):
     states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_test, _label_train, _label_test = [], [], [], []
-    for train, test in zip(states_train_list, states_test_list) :
+    for train in states_train_list :
         states_train.append(train[0])
-        states_test.append(test[0])
         _label_train.append(train[1])
+    for test in states_test_list:
+        states_test.append(test[0])
         _label_test.append(test[1])
     states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
