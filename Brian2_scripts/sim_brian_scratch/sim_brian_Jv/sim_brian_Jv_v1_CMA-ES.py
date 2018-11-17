@@ -126,67 +126,6 @@ class Base():
 
 
 class Readout():
-    def __init__(self, function):
-        self.function = function
-
-    def data_init(self, M_train, M_test, label_train, label_test, rate, theta):
-        self.rate = rate
-        self.theta = theta
-        self.iter = 0
-        self.X_train = self.add_bis(M_train)
-        self.X_test = self.add_bis(M_test)
-        self.Y_train = self.prepare_Y(label_train)
-        self.Y_test = self.prepare_Y(label_test)
-        self.P = np.random.rand(self.X_train.shape[1], self.Y_train.shape[1])
-        self.cost_train = 1e+100
-        self.cost_test = 1e+100
-
-    def predict_logistic(self, results):
-        labels = (results > 0.5).astype(int).T
-        return labels
-
-    def calculate_score(self, label, label_predict):
-        return [accuracy_score(i, j) for i, j in zip(label, label_predict)]
-
-    def add_bis(self, data):
-        one = np.ones((data.shape[1], 1))  # bis
-        X = np.hstack((data.T, one))
-        return X
-
-    def prepare_Y(self, label):
-        if np.asarray(label).ndim == 1:
-            return np.asarray([label]).T
-        else:
-            return np.asarray(label).T
-
-    def cost(self, X, Y, P):
-        left = np.multiply(Y, np.log(self.function(X.dot(P))))
-        right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
-        return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
-
-    def train(self, X, Y, P):
-        P_ = P + X.T.dot(Y - self.function(X.dot(P))) * self.rate
-        return P_
-
-    def test(self, X, p):
-        return self.function(X.dot(p))
-
-    def stop_condition(self):
-        return ((self.cost_train - self.cost(self.X_train, self.Y_train, self.P)) > self.theta).any() and \
-               ((self.cost_test - self.cost(self.X_test, self.Y_test, self.P)) > self.theta).any() or self.iter < 100
-
-    def readout(self):
-        self.iter = 0
-        while self.stop_condition():
-            self.iter += 1
-            self.cost_train = self.cost(self.X_train, self.Y_train, self.P)
-            self.cost_test = self.cost(self.X_test, self.Y_test, self.P)
-            self.P = self.train(self.X_train, self.Y_train, self.P)
-            if self.iter % 10000 == 0:
-                print(self.iter, self.cost_train, self.cost_test)
-        print(self.iter, self.cost_train, self.cost_test)
-        return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
-
     def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
         from sklearn.linear_model import LogisticRegression
         lr = LogisticRegression(**kwargs)
@@ -194,7 +133,6 @@ class Readout():
         y_train_predictions = lr.predict(X_train.T)
         y_test_predictions = lr.predict(X_test.T)
         return accuracy_score(y_train_predictions, y_train.T), accuracy_score(y_test_predictions, y_test.T)
-
 
 class Result():
     def __init__(self):
