@@ -33,7 +33,7 @@ warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
-data_path = '../../../Data/MNIST_data/'
+data_path = '../../../Data/KTH/'
 
 
 # ------define general function------------
