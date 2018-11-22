@@ -180,5 +180,5 @@ def delete_group_synapse(net, synapse_group, source, target, name = 'dgn'):
     net.restore(name)
 #--------------------------------------
 
-def a(a):
-    print(a)
+# def a(a):
+#     print(a)
