@@ -7,7 +7,7 @@ def visualise_connectivity(S):
     figure(figsize=(10, 4))
     subplot(121)
     plot(zeros(Ns), arange(Ns), 'ok', ms=10)
-    #plot(ones(Nt), arange(Nt), 'ok', ms=10)
+    plot(ones(Nt), arange(Nt), 'ok', ms=10)
     for i, j in zip(S.i, S.j):
         plot([0, 1], [i, j], '-k')
     xticks([0, 1], ['Source', 'Target'])
