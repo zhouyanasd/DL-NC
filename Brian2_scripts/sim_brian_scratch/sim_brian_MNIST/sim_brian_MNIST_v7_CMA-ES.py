@@ -23,7 +23,7 @@ import ipywidgets as widgets
 import warnings
 import os
 from multiprocessing import Pool
-from cma import purecma
+import cma
 from functools import partial
 
 
@@ -536,10 +536,6 @@ def run_net(inputs, parameter):
 
 
 def parameters_search(parameter):
-    #---- check parameters -----
-    if (np.array(parameter)<0).any():
-        return np.random.randint(10,100)
-
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
@@ -568,4 +564,5 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    res = purecma.fmin(parameters_search, [0.5,0.5,0.5], 1, verb_disp=100)
+    res = cma.fmin(parameters_search, [0.5,0.5,0.5], 1, options={'ftarget': 1e-3,'bounds': [0, np.inf],
+                                                                 'maxiter':1000})
