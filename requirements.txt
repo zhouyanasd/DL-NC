@@ -97,3 +97,4 @@ wcwidth==0.1.7
 Werkzeug==0.12.2
 widgetsnbextension==3.0.3
 opencv-python==3.3.0.10
+bayesian-optimization==1.0.0
