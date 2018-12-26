@@ -558,7 +558,7 @@ def parameters_search(**parameter):
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
-    return 1 - score_test
+    return score_test
 
 ##########################################
 # -------BO parameters search---------------
