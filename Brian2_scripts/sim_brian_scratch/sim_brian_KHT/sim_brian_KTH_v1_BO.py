@@ -415,7 +415,7 @@ np_state = np.random.get_state()
 
 ############################################
 # ---- define network run function----
-def run_net(inputs, parameter):
+def run_net(inputs, **parameter):
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
 
@@ -425,8 +425,8 @@ def run_net(inputs, parameter):
     n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
     n_read = n_ex + n_inh
 
-    R = parameter[1]
-    f = parameter[2]
+    R = parameter['R']
+    f = parameter['f']
 
     A_EE = 30*f
     A_EI = 60*f
@@ -435,8 +435,8 @@ def run_net(inputs, parameter):
     A_inE = 18*f
     A_inI = 9*f
 
-    tau_ex = parameter[0]*standard_tau
-    tau_inh = parameter[0]*standard_tau
+    tau_ex = parameter['tau']*standard_tau
+    tau_inh = parameter['tau']*standard_tau
     tau_read= 30
 
     p_inE = 0.1
@@ -557,11 +557,11 @@ def run_net(inputs, parameter):
     return (states, inputs[1])
 
 
-def parameters_search(parameter):
+def parameters_search(**parameter):
      # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_test, _label_train, _label_test = [], [], [], []
     for train in states_train_list :
@@ -582,9 +582,25 @@ def parameters_search(parameter):
     return 1 - score_test
 
 ##########################################
-# -------CMA-ES parameters search---------------
+# -------BO parameters search---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    res = cma.fmin(parameters_search, [0.5,0.5,0.5], 0.5, options={'ftarget': 1e-4,'bounds': [0, np.inf],
-                                                                 'maxiter':10000})
+
+    optimizer = bayes_opt.BayesianOptimization(
+        f=parameters_search,
+        pbounds={'R': (0, 2), 'f': (0, 2), 'tau':(0, 2)},
+        verbose=2,
+        random_state=np.random.RandomState(),
+    )
+
+    logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
+    optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
+
+    optimizer.maximize(
+        init_points=10,
+        n_iter=100,
+        acq='ucb',
+        kappa=2.576,
+        xi=0.0,
+    )

@@ -561,14 +561,14 @@ def parameters_search(**parameter):
     return 1 - score_test
 
 ##########################################
-# -------CMA-ES parameters search---------------
+# -------BO parameters search---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
 
     optimizer = bayes_opt.BayesianOptimization(
         f=parameters_search,
-        pbounds={'R': (0, 10), 'f': (0, 10), 'tau':(0, 10)},
+        pbounds={'R': (0, 2), 'f': (0, 2), 'tau':(0, 2)},
         verbose=2,
         random_state=np.random.RandomState(),
     )
