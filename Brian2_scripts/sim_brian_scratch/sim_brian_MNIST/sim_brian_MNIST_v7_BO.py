@@ -536,11 +536,11 @@ def run_net(inputs, **parameter):
     return (states, inputs[1])
 
 
-def parameters_search(parameter):
+def parameters_search(**parameter):
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_test, _label_train, _label_test = [], [], [], []
     for train in states_train_list :
@@ -577,7 +577,7 @@ if __name__ == '__main__':
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
     optimizer.maximize(
-        init_points=50,
+        init_points=10,
         n_iter=100,
         acq='ucb',
         kappa=2.576,
