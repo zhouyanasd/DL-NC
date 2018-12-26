@@ -11,7 +11,7 @@
 
 from brian2 import *
 from brian2tools import *
-import scipy as sp
+from scipy import stats
 import struct
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -47,7 +47,7 @@ class Function():
         return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
 
     def gamma(self, a, size):
-        return sp.stats.gamma.rvs(a, size=size)
+        return stats.gamma.rvs(a, size=size)
 
 
 class Base():
@@ -568,7 +568,7 @@ if __name__ == '__main__':
 
     optimizer = bayes_opt.BayesianOptimization(
         f=parameters_search,
-        pbounds={'R': (0, 2), 'f': (0, 2), 'tau':(0, 2)},
+        pbounds={'R': (0.01, 2), 'f': (0.01, 2), 'tau':(0.01, 2)},
         verbose=2,
         random_state=np.random.RandomState(),
     )
