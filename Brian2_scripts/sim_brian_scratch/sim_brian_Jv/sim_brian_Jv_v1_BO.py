@@ -304,7 +304,7 @@ np_state = np.random.get_state()
 
 ############################################
 # ---- define network run function----
-def run_net(inputs, parameter):
+def run_net(inputs, **parameter):
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
 
