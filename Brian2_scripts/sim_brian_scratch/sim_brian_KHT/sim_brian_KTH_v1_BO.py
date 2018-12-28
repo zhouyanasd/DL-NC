@@ -594,7 +594,7 @@ if __name__ == '__main__':
         random_state=np.random.RandomState(),
     )
 
-    logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
+    logger = bayes_opt.observer.JSONLogger(path="./BO_res_KTH.json")
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
     optimizer.maximize(
