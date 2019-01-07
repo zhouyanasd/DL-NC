@@ -599,7 +599,7 @@ if __name__ == '__main__':
 
     optimizer.maximize(
         init_points=10,
-        n_iter=100,
+        n_iter=200,
         acq='ucb',
         kappa=2.576,
         xi=0.0,
