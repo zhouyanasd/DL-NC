@@ -11,6 +11,7 @@
 
 from brian2 import *
 from brian2tools import *
+import scipy as sp
 from scipy import stats
 import struct
 import matplotlib.pyplot as plt
