@@ -100,7 +100,7 @@ class Base():
 
     def allocate(self, G, X, Y, Z):
         V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
-        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, X - 1, X), np.linspace(0, X - 1, X),
+        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, X - 1, X), np.linspace(0, Y - 1, Y),
                                              np.linspace(0, Z - 1, Z))
         V = V.reshape(X * Y * Z)
         np.random.shuffle(V)
@@ -558,8 +558,8 @@ def run_net(inputs, parameter):
     G_inh.h = '0'
     G_readout.h = '0'
     G_readout.tau = tau_read
-
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
+
 
     # -------initialization of network topology and synapses parameters----------
     S_inE.connect(condition='j<0.3*N_post', p = p_inE)
