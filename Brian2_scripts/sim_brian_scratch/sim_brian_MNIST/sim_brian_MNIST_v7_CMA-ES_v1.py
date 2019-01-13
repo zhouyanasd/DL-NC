@@ -559,7 +559,7 @@ def run_net(inputs, parameter):
     G_readout.h = '0'
     G_readout.tau = tau_read
 
-    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
 
     # -------initialization of network topology and synapses parameters----------
     S_inE.connect(condition='j<0.3*N_post', p = p_inE)
