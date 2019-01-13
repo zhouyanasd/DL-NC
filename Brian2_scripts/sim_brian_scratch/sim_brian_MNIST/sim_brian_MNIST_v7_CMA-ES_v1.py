@@ -100,7 +100,7 @@ class Base():
 
     def allocate(self, G, X, Y, Z):
         V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
-        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, X - 1, X), np.linspace(0, Y - 1, Y),
+        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, Y - 1, Y), np.linspace(0, X - 1, X),
                                              np.linspace(0, Z - 1, Z))
         V = V.reshape(X * Y * Z)
         np.random.shuffle(V)
@@ -583,8 +583,8 @@ def run_net(inputs, parameter):
     S_IE.pre.delay = '0.8*ms'
     S_II.pre.delay = '0.8*ms'
 
-    base.set_local_parameter(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
-    base.set_local_parameter(S_II, 'tau_post', method='group', group_parameters=tau_inh)
+    base.set_local_parameter_PS(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
+    base.set_local_parameter_PS(S_II, 'tau_post', method='group', group_parameters=tau_inh)
 
     # ------create network-------------
     net = Network(collect())
