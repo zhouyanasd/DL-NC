@@ -575,7 +575,7 @@ if __name__ == '__main__':
     )
 
     # from bayes_opt.util import load_logs
-    # load_logs(optimizer, logs=["./BO_res_Jv.json"])
+    # load_logs(optimizer, logs=["./BO_res_MNIST.json"])
 
     logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
