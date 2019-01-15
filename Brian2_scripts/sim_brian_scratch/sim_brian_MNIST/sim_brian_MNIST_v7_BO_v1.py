@@ -627,7 +627,7 @@ def parameters_search(**parameter):
 ##########################################
 # -------BO parameters search---------------
 if __name__ == '__main__':
-    core = 4
+    core = 10
     pool = Pool(core)
 
     optimizer = bayes_opt.BayesianOptimization(

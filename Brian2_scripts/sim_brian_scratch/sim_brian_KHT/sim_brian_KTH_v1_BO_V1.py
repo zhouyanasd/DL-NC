@@ -86,7 +86,7 @@ class Base():
 
     def allocate(self, G, X, Y, Z):
         V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
-        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, X - 1, X), np.linspace(0, X - 1, X),
+        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, Y - 1, Y), np.linspace(0, X - 1, X),
                                              np.linspace(0, Z - 1, Z))
         V = V.reshape(X * Y * Z)
         np.random.shuffle(V)
@@ -128,6 +128,58 @@ class Base():
             parameters[parameter] = grids[index]
         parameters = parameters.reshape(-1)
         return parameters
+
+    def set_local_parameter_PS(self, S, parameter, boundary = None, method='random', **kwargs):
+        if method == 'random':
+            random = rand(S.N_post) * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'group':
+            try:
+                group_n =  kwargs['group_parameters'].shape[0]
+                n = int(np.floor(S.N_post / group_n))
+                random = zeros(S.N_post)
+                for i in range(group_n):
+                    random[i * n:(i + 1) * n] = kwargs['group_parameters'][i]
+                for j in range(S.N_post - group_n*n):
+                    random[group_n * n + j:group_n * n + j + 1] = random[j * n]
+            except KeyError:
+                group_n = kwargs['group_n']
+                n = int(np.floor(S.N_post / group_n))
+                random = zeros(S.N_post)
+                for i in range(group_n):
+                    try:
+                        random[i * n:(i + 1) * n] = rand() * (boundary[1]-boundary[0]) + boundary[0]
+                    except IndexError:
+                        random[i * n:] = rand() * (boundary[1]-boundary[0]) + boundary[0]
+                        continue
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'location':
+            group_n = kwargs['group_n']
+            location_label = kwargs['location_label']
+            random = zeros(S.N_post)
+            bound = np.linspace(0, max(S.variables[location_label].get_value() + 1), num=group_n + 1)
+            for i in range(group_n):
+                random[(S.variables[location_label].get_value() >= bound[i]) & (
+                            S.variables[location_label].get_value() < bound[i + 1])] \
+                    = rand() * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+        if method == 'in_coming':
+            max_incoming = max(S.N_incoming)
+            random = S.N_incoming / max_incoming * (boundary[1]-boundary[0]) + boundary[0]
+            if '_post' in parameter:
+                S.variables[parameter].set_value(random)
+            else:
+                S.variables[parameter].set_value(random[S.j])
+
 
 
 class Readout():
@@ -422,27 +474,31 @@ def run_net(inputs, **parameter):
     np.random.set_state(np_state)
 
     # -----parameter setting-------
-    n_ex = 400
+    n_ex = 800
     n_inh = int(n_ex / 4)
     n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
     n_read = n_ex + n_inh
 
     R = parameter['R']
-    f = parameter['f']
+    f_in = parameter['f_in']
+    f_EE = parameter['f_EE']
+    f_EI = parameter['f_EI']
+    f_IE = parameter['f_IE']
+    f_II = parameter['f_II']
 
-    A_EE = 30*f
-    A_EI = 60*f
-    A_IE = 19*f
-    A_II = 19*f
-    A_inE = 18*f
-    A_inI = 9*f
+    A_EE = 30 * f_EE
+    A_EI = 60 * f_EI
+    A_IE = 19 * f_IE
+    A_II = 19 * f_II
+    A_inE = 18 * f_in
+    A_inI = 9 * f_in
 
-    tau_ex = parameter['tau']*standard_tau
-    tau_inh = parameter['tau']*standard_tau
-    tau_read= 30
+    tau_ex = np.array([parameter['tau_0'], parameter['tau_1'], parameter['tau_2'], parameter['tau_3']]) * standard_tau
+    tau_inh = np.array([parameter['tau_0'], parameter['tau_1'], parameter['tau_2'], parameter['tau_3']]) * standard_tau
+    tau_read = 30
 
-    p_inE = 0.1
-    p_inI = 0.1
+    p_inE = parameter['p_in'] * 0.02
+    p_inI = parameter['p_in'] * 0.02
 
     #------definition of equation-------------
     neuron_in = '''
@@ -518,11 +574,9 @@ def run_net(inputs, **parameter):
     G_ex.h = '0'
     G_inh.h = '0'
     G_readout.h = '0'
-    G_ex.tau = tau_ex
-    G_inh.tau = tau_inh
     G_readout.tau = tau_read
 
-    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
 
     # -------initialization of network topology and synapses parameters----------
     S_inE.connect(condition='j<0.3*N_post', p = p_inE)
@@ -545,6 +599,9 @@ def run_net(inputs, **parameter):
     S_EI.pre.delay = '0.8*ms'
     S_IE.pre.delay = '0.8*ms'
     S_II.pre.delay = '0.8*ms'
+
+    base.set_local_parameter_PS(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
+    base.set_local_parameter_PS(S_II, 'tau_post', method='group', group_parameters=tau_inh)
 
     # ------create network-------------
     net = Network(collect())
@@ -591,7 +648,9 @@ if __name__ == '__main__':
 
     optimizer = bayes_opt.BayesianOptimization(
         f=parameters_search,
-        pbounds={'R': (0.01, 2), 'f': (0.01, 2), 'tau':(0.01, 2)},
+        pbounds={'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
+                 'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0':(0.01, 2), 'tau_1':(0.01, 2), 'tau_2':(0.01, 2),
+                 'tau_3':(0.01, 2)},
         verbose=2,
         random_state=np.random.RandomState(),
     )
