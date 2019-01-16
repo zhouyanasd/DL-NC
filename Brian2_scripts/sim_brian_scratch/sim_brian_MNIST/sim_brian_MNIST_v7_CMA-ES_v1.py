@@ -414,7 +414,7 @@ class MNIST_classification(Base):
 
 ###################################
 # -----simulation parameter setting-------
-coding_n = 2
+coding_n = 3
 MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
@@ -457,7 +457,7 @@ def run_net(inputs, parameter):
     np.random.set_state(np_state)
 
     # -----parameter setting-------
-    n_ex = 800
+    n_ex = 1600
     n_inh = int(n_ex/4)
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
@@ -558,7 +558,7 @@ def run_net(inputs, parameter):
     G_inh.h = '0'
     G_readout.h = '0'
     G_readout.tau = tau_read
-    [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
+    [G_ex,G_in] = base.allocate([G_ex,G_inh],10,10,20)
 
 
     # -------initialization of network topology and synapses parameters----------
