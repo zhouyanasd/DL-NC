@@ -44,17 +44,11 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
         super(BayesianOptimization_, self).__init__(f, pbounds, random_state=None, verbose=2)
 
     def suggest(self, utility_function):
-        """Most promissing point to probe next"""
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
-
-        # Sklearn's GP throws a large number of warnings at times, but
-        # we don't really need to see them here.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self._gp.fit(self._space.params, self._space.target)
-
-        # Finding argmax of the acquisition function.
         suggestion = self.acq_max_(
             ac=utility_function.utility,
             gp=self._gp,
@@ -62,19 +56,16 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             bounds=self._space.bounds,
             random_state=self._random_state
         )
-
         return self._space.array_to_params(suggestion)
 
     def acq_max_(self,ac, gp, y_max, bounds, random_state):
         x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
                                        size=(bounds.shape[0]))
-        #     print(x_seeds)
-        options = {'ftarget': 1e-3, 'bounds': bounds.T.tolist(), 'maxiter': 100, 'verb_log': 0}
-        res = cma.fmin(lambda x: 30 - ac(x.reshape(1, -1), gp=gp, y_max=y_max), x_seeds, 0.25, options=options,
+        options = {'ftarget': 1e-3, 'bounds': bounds.T.tolist(), 'maxiter': 1000,
+                   'verb_log': 0,'verb_time':False,'verbose':-9}
+        res = cma.fmin(lambda x: 1 - ac(x.reshape(1, -1), gp=gp, y_max=y_max), x_seeds, 0.25, options=options,
                        restarts=0, incpopsize=0, restart_from_best=False, bipop=False)
-        print(res[1])
         x_max = res[0]
-
         return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
 
@@ -670,7 +661,7 @@ if __name__ == '__main__':
     core = 10
     pool = Pool(core)
 
-    optimizer = bayes_opt.BayesianOptimization(
+    optimizer = BayesianOptimization_(
         f=parameters_search,
         pbounds={'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
                  'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0':(0.01, 2), 'tau_1':(0.01, 2), 'tau_2':(0.01, 2),
