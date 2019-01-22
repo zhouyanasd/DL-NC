@@ -45,7 +45,7 @@ numba==0.38.0
 numexpr==2.6.5
 numpy==1.14.5
 olefile==0.44
-pandas==0.19.2
+pandas==0.23.3
 pandocfilters==1.4.2
 pexpect==4.2.1
 picklable-itertools==0.1.1
