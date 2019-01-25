@@ -479,7 +479,7 @@ def run_net(inputs, **parameter):
     A_inI = 9*f_in
 
     tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*coding_duration
-    tau_inh = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*coding_duration
+    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*coding_duration
     tau_read= 30
 
     p_inE = parameter['p_in']*0.02
@@ -634,7 +634,7 @@ if __name__ == '__main__':
         f=parameters_search,
         pbounds={'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
                  'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0':(0.01, 2), 'tau_1':(0.01, 2), 'tau_2':(0.01, 2),
-                 'tau_3':(0.01, 2)},
+                 'tau_3':(0.01, 2), 'tau_4':(0.01, 2), 'tau_5':(0.01, 2), 'tau_6':(0.01, 2), 'tau_7':(0.01, 2)},
         verbose=2,
         random_state=np.random.RandomState(),
     )
