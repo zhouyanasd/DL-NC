@@ -9,6 +9,7 @@
 # for the BO in parallel run
 # with large scale and multiple connection rules
 # combing CMA-ES optimize acquisition function
+# add local structure and reservoirs
 # ----------------------------------------
 
 from brian2 import *
