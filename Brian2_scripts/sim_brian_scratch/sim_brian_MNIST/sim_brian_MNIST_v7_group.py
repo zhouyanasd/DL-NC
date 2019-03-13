@@ -125,6 +125,31 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
+    def set_local_group(self, G, group_n, location = False):
+        # if location = True, group_n should be (a,b,c)
+        # if location = False， group_n should be a
+        if not location:
+            for g in G:
+                g.group = np.sort(list(np.arange(group_n)) * np.ceil(g.N/group_n).astype(int), axis=None)[:g.N]
+        else:
+            X, Y, Z = [],[],[]
+            for g in G:
+                X.extend(g.x)
+                Y.extend(g.y)
+                Z.extend(g.z)
+            group = (int(max(X))+1, int(max(Y))+1,int(max(Z))+1)
+            g_ = (np.ceil(group[0] / group_n[1]).astype(int), np.ceil(group[1] / group_n[0]).astype(int),
+                  np.ceil(group[2] / group_n[2]).astype(int))
+            V = np.zeros(group)
+            k = np.zeros(group_n, [('x', int), ('y', int), ('z', int)])
+            k['x'], k['y'], k['z'] = np.meshgrid(np.arange(0, group[0], g_[0]), np.arange(0, group[1], g_[1]),
+                                                 np.arange(0, group[2], g_[2]))
+            for index, l in enumerate(k.reshape(np.array(group_n).prod())):
+                V[l[0]:l[0] + g_[0], l[1]:l[1] + g_[1], l[2]:l[2] + g_[2]] = int(index)
+            for g in G:
+                for i in range(g.N):
+                    g.group[i] = V[int(g.x[i]),int(g.y[i]), int(g.z[i])]
+
 
 class Readout():
     def __init__(self, function):
@@ -380,7 +405,7 @@ F_train = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
-pre_train_loop = 0
+group = (2, 2, 4)
 
 n_ex = 400
 n_inh = int(n_ex/4)
@@ -431,6 +456,7 @@ I = (g+h)+13.5: 1
 x : 1
 y : 1
 z : 1
+group : 1 
 '''
 
 neuron_read = '''
@@ -491,7 +517,9 @@ G_ex.h = '0'
 G_inh.h = '0'
 G_readout.h = '0'
 
-[G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+# -------location and group----------
+[G_ex, G_in] = base.allocate([G_ex, G_inh], 10, 10, 20)
+base.set_local_group((G_ex, G_inh), group, True)
 
 # -------initialization of network topology and synapses parameters----------
 S_inE.connect(condition='j<0.3*N_post', p = p_inE)
