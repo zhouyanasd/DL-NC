@@ -30,6 +30,20 @@ np.random.seed(100)
 data_path = '../../../Data/MNIST_data/'
 
 
+#-------define brian2 function------------
+@check_units(R=1, pre=1, post=1, result=1)
+def get_R(R, pre, post):
+    return np.array([R[int(pre),int(x)] for x in post])
+
+@check_units(a=1, w=1, result=1)
+def gamma(a, w):
+    return sp.stats.gamma.rvs(a, size=w.shape)
+
+@check_units(a=1, group=1, result=1)
+def gamma_group(a, group):
+    return sp.stats.gamma.rvs(a[group.astype(int)])
+
+
 # ------define general function------------
 class Function():
     def __init__(self):
@@ -124,6 +138,12 @@ class Base():
         if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
+
+    def set_local_parameter_S_group(self, S, parameter, group = 'group', **kwargs):
+        if '_post' in parameter:
+            S.variables[parameter].set_value(kwargs['value'][S.variables[group].get_value().astype(int)])
+        else:
+            S.variables[parameter].set_value(kwargs['value'][S.variables[group].get_value().astype(int)][S.j])
 
     def set_local_group(self, G, group_n, location = False):
         # if location = True, group_n should be (a,b,c)
@@ -406,6 +426,7 @@ F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 group = (2, 2, 4)
+group_ = np.prod(np.array(group))
 
 n_ex = 400
 n_inh = int(n_ex/4)
@@ -414,12 +435,22 @@ n_read = n_ex+n_inh
 
 R = 2
 
-A_EE = 30
-A_EI = 60
-A_IE = 19
-A_II = 19
-A_inE = 18
-A_inI = 9
+f_in = rand(group_)
+f_EE = rand(group_)
+f_EI = rand(group_)
+f_IE = rand(group_)
+f_II = rand(group_)
+
+A_EE = 30*f_EE
+A_EI = 60*f_EI
+A_IE = 19*f_IE
+A_II = 19*f_II
+A_inE = 18*f_in
+A_inI = 9*f_in
+
+tau_ex = np.arange(group_)*10
+tau_inh = np.arange(group_)*10
+tau_read = 30
 
 p_inE = 0.1
 p_inI = 0.1
@@ -449,6 +480,7 @@ I = stimulus(t,i) : 1
 '''
 
 neuron = '''
+tau : 1
 dv/dt = (I-v) / (30*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 dh/dt = (-h)/(6*ms) : 1
@@ -460,6 +492,7 @@ group : 1
 '''
 
 neuron_read = '''
+tau : 1
 dv/dt = (I-v) / (30*ms) : 1
 dg/dt = (-g)/(3*ms) : 1 
 dh/dt = (-h)/(6*ms) : 1
@@ -506,6 +539,10 @@ S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='e
 
 S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
 
+#-------location and group----------
+[G_ex,G_in] = base.allocate([G_ex,G_inh],5,5,20)
+base.set_local_group((G_ex,G_inh),group,True)
+
 #-------initialization of neuron parameters----------
 G_ex.v = '13.5+1.5*rand()'
 G_inh.v = '13.5+1.5*rand()'
@@ -516,27 +553,44 @@ G_readout.g = '0'
 G_ex.h = '0'
 G_inh.h = '0'
 G_readout.h = '0'
-
-# -------location and group----------
-[G_ex, G_in] = base.allocate([G_ex, G_inh], 10, 10, 20)
-base.set_local_group((G_ex, G_inh), group, True)
+base.set_local_parameter_S_group(S_EE, 'tau_post', 'group', value = tau_ex)
+base.set_local_parameter_S_group(S_II, 'tau_post', 'group', value = tau_inh)
+G_readout.tau = tau_read
 
 # -------initialization of network topology and synapses parameters----------
+S_EE.variables.add_dynamic_array('R_', size=(group_,group_))
+S_EI.variables.add_dynamic_array('R_', size=(group_,group_))
+S_IE.variables.add_dynamic_array('R_', size=(group_,group_))
+S_II.variables.add_dynamic_array('R_', size=(group_,group_))
+S_EE.variables['R_'].set_value(np.diag(rand(group_)*R))
+S_EI.variables['R_'].set_value(np.diag(rand(group_)*R))
+S_IE.variables['R_'].set_value(np.diag(rand(group_)*R))
+S_II.variables['R_'].set_value(np.diag(rand(group_)*R))
+
 S_inE.connect(condition='j<0.3*N_post', p = p_inE)
 S_inI.connect(condition='j<0.3*N_post', p = p_inI)
-S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
-S_II.connect(condition='i != j', p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
+S_EE.connect(condition='(i != j)',
+             p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/get_R(R_,group_pre,group_post)**2)')
+S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/get_R(R_,group_pre,group_post)**2)')
+S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/get_R(R_,group_pre,group_post)**2)')
+S_II.connect(condition='i != j',
+             p='0.1*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/get_R(R_,group_pre,group_post)**2)')
 S_E_readout.connect(j='i')
 S_I_readout.connect(j='i+n_ex')
 
-S_inE.w = function.gamma(A_inE, S_inE.w.shape)
-S_inI.w = function.gamma(A_inI, S_inI.w.shape)
-S_EE.w = function.gamma(A_EE, S_EE.w.shape)
-S_IE.w = function.gamma(A_IE, S_IE.w.shape)
-S_EI.w = function.gamma(A_EI, S_EI.w.shape)
-S_II.w = function.gamma(A_II, S_II.w.shape)
+S_inE.variables.add_array('A', size=group_, values=A_inE)
+S_inI.variables.add_array('A', size=group_, values=A_inI)
+S_EE.variables.add_array('A', size=group_, values=A_EE)
+S_IE.variables.add_array('A', size=group_, values=A_IE)
+S_EI.variables.add_array('A', size=group_, values=A_EI)
+S_II.variables.add_array('A', size=group_, values=A_II)
+
+S_inE.w = 'gamma_group(A, group_post)'
+S_inI.w = 'gamma_group(A, group_post)'
+S_EE.w = 'gamma_group(A, group_post)'
+S_IE.w = 'gamma_group(A, group_post)'
+S_EI.w = 'gamma_group(A, group_post)'
+S_II.w = 'gamma_group(A, group_post)'
 
 S_EE.pre.delay = '1.5*ms'
 S_EI.pre.delay = '0.8*ms'
