@@ -627,6 +627,6 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = Parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     res = cma.fmin(parameters_search, parameters, 0.25, options={'ftarget': 1e-3,'bounds': [0, np.inf],
                                                                  'maxiter':1000})

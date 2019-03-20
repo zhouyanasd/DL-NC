@@ -27,6 +27,10 @@ import os
 from multiprocessing import Pool
 import cma
 from functools import partial
+from bayes_opt import BayesianOptimization
+from bayes_opt import UtilityFunction
+from bayes_opt.target_space import TargetSpace
+from bayes_opt.target_space import _hashable
 
 
 warnings.filterwarnings("ignore")
@@ -37,6 +41,71 @@ data_path = '../../../Data/MNIST_data/'
 
 
 # ------define general function------------
+def f(**p):
+    return (np.array(p['x'])) ** 2 + (np.array(p['y'])) ** 2 + 1
+
+
+class TargetSpace_(TargetSpace):
+    def __init__(self, target_func, pbounds, random_state=None):
+        super(TargetSpace_, self).__init__(target_func, pbounds, random_state=None)
+
+    def register(self, params, target):
+        x = self._as_array(params)
+        if x in self:
+            raise KeyError('Data point {} is not unique'.format(x))
+        self._cache[_hashable(x.ravel())] = -target
+        self._params = np.concatenate([self._params, x.reshape(1, -1)])
+        self._target = np.concatenate([self._target, [-target]])
+
+
+class BayesianOptimization_(BayesianOptimization):
+    def __init__(self, f, pbounds, random_state=None, verbose=2):
+        super(BayesianOptimization_, self).__init__(f, pbounds, random_state=None, verbose=2)
+        self._space = TargetSpace_(f, pbounds, random_state)
+
+    def acq_max_fixedpoint(self, ac, gp, X, y_max):
+        gauss = ac(X, gp=gp, y_max=y_max)
+        return gauss
+
+    def guess_fixedpoint(self, utility_function, X):
+        self._gp.fit(self._space.params, self._space.target)
+        gauss = self.acq_max_fixedpoint(
+            ac=utility_function.utility,
+            gp=self._gp,
+            X=X,
+            y_max=self._space.target.max(),
+        )
+        return gauss
+
+
+class SAES():
+    def __init__(self, f, acquisition, x0, sigma, kappa=2.576, xi=0.0, **opts):
+        self.f = f
+        self.optimizer = BayesianOptimization_(
+            f=f,
+            pbounds=opts['bounds'],
+            random_state=1,
+        )
+        self.util = UtilityFunction(kind=acquisition, kappa=kappa, xi=xi)
+        opts['bounds'] = self.optimizer._space._bounds.T.tolist()
+        self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
+
+    def run(self, n):
+        X = self.es.ask()  # get the initial offstpring
+        fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X]  # evaluated by the real fitness
+        for x, eva in zip(X, fit):
+            self.optimizer._space.register(x, eva)  # build the BO model
+        while not self.es.stop():
+            X = self.es.ask(self.es.popsize * n)  # initial n times offspring for pre-selection
+            guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
+            X_ = np.array(X)[guess.argsort()[::-1][0:int(self.es.popsize)]]  # select the top n possible solution
+            fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]  # evaluted by real fitness function
+            for x, eva in zip(X_, fit_):
+                self.optimizer._space.register(x, eva)  # update the BO model
+            self.es.tell(X_, fit_)  # update the CMA-ES model
+            self.es.logger.add()  # update the log
+            self.es.disp()
+
 class Function():
     def __init__(self):
         pass
@@ -628,6 +697,11 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = Parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    res = cma.fmin(parameters_search, parameters, 0.25, options={'ftarget': 1e-3,'bounds': [0, np.inf],
-                                                                 'maxiter':1000})
+    parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    bounds = {'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
+               'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0': (0.01, 2), 'tau_1': (0.01, 2), 'tau_2': (0.01, 2),
+               'tau_3': (0.01, 2), 'tau_4': (0.01, 2), 'tau_5': (0.01, 2), 'tau_6': (0.01, 2), 'tau_7': (0.01, 2)}
+    saes = SAES(parameters_search, 'ei', parameters, 0.25, kappa=2.576, xi=0.0,
+                **{'ftarget': 1e-3, 'bounds': bounds, 'maxiter': 1000,
+                   'popsize': 3})
+    saes.run(4)
