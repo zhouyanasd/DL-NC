@@ -516,7 +516,7 @@ np_state = np.random.get_state()
 
 ############################################
 # ---- define network run function----
-def run_net(inputs, parameter):
+def run_net(inputs, **parameter):
     """
         run_net(inputs, parameter)
             Parameters = [R, p_inE/I, f_in, f_EE, f_EI, f_IE, f_II, tau_ex, tau_inh]
@@ -532,12 +532,12 @@ def run_net(inputs, parameter):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-    R = parameter[0]
-    f_in = parameter[2]
-    f_EE = parameter[3]
-    f_EI = parameter[4]
-    f_IE = parameter[5]
-    f_II = parameter[6]
+    R = parameter['R']
+    f_in = parameter['f_in']
+    f_EE = parameter['f_EE']
+    f_EI = parameter['f_EI']
+    f_IE = parameter['f_IE']
+    f_II = parameter['f_II']
 
     A_EE = 30*f_EE
     A_EI = 60*f_EI
@@ -546,12 +546,12 @@ def run_net(inputs, parameter):
     A_inE = 18*f_in
     A_inI = 9*f_in
 
-    tau_ex = parameter[7:11]*coding_duration
-    tau_inh = parameter[11:15]*coding_duration
+    tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*coding_duration
+    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*coding_duration
     tau_read= 30
 
-    p_inE = parameter[1]*0.02
-    p_inI = parameter[1]*0.02
+    p_inE = parameter['p_in']*0.02
+    p_inI = parameter['p_in']*0.02
 
     #------definition of equation-------------
     neuron_in = '''
@@ -668,7 +668,7 @@ def run_net(inputs, parameter):
     return (states, inputs[1])
 
 
-def parameters_search(parameter):
+def parameters_search(**parameter):
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
