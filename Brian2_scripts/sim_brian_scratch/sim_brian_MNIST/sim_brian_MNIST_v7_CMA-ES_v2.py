@@ -41,10 +41,6 @@ data_path = '../../../Data/MNIST_data/'
 
 
 # ------define general function------------
-def f(**p):
-    return (np.array(p['x'])) ** 2 + (np.array(p['y'])) ** 2 + 1
-
-
 class TargetSpace_(TargetSpace):
     def __init__(self, target_func, pbounds, random_state=None):
         super(TargetSpace_, self).__init__(target_func, pbounds, random_state=None)
@@ -670,9 +666,9 @@ def run_net(inputs, **parameter):
 
 def parameters_search(**parameter):
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_test, _label_train, _label_test = [], [], [], []
     for train in states_train_list :
