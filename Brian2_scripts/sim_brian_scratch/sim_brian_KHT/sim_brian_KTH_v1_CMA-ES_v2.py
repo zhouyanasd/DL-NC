@@ -91,6 +91,9 @@ class SAES():
     def run(self, n):
         X = self.es.ask()  # get the initial offstpring
         fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X]  # evaluated by the real fitness
+        self.es.tell(X, fit)  # update the CMA-ES model
+        self.es.logger.add()  # update the log
+        self.es.disp()
         for x, eva in zip(X, fit):
             self.optimizer._space.register(x, eva)  # build the BO model
         while not self.es.stop():
