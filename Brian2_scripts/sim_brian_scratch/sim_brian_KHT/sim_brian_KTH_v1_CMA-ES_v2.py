@@ -564,8 +564,8 @@ def run_net(inputs, **parameter):
     A_inE = 18*f_in
     A_inI = 9*f_in
 
-    tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*coding_duration
-    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*coding_duration
+    tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*standard_tau
+    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*standard_tau
     tau_read= 30
 
     p_inE = parameter['p_in']*0.02
