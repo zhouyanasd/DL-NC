@@ -8,7 +8,7 @@
 # simplify the coding method with only extend the rank
 # for the CMA-ES in parallel run
 # with large scale and multiple connection rules
-# combing with BO to select offspring
+# combing with BO to select offspring (pre-selection)
 # ----------------------------------------
 
 from brian2 import *
