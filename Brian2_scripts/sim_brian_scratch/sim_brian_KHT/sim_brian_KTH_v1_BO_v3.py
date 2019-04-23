@@ -6,14 +6,16 @@
 # change the LSM structure according to Maass paper
 # new calculate flow as Maass_ST
 # simplify the coding method with only extend the rank
-# for the CMA-ES in parallel run
+# for the BO in parallel run
 # with large scale and multiple connection rules
-# combing with BO to select offspring(pre-selection)
+# combing CMA-ES optimize acquisition function
+# add LHS to pre-build BO
 # ----------------------------------------
 
 from brian2 import *
 from brian2tools import *
 import scipy as sp
+from scipy import stats
 import struct
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -28,11 +30,8 @@ import cv2
 import re
 from multiprocessing import Pool
 import cma
+import bayes_opt
 from functools import partial
-from bayes_opt import BayesianOptimization
-from bayes_opt import UtilityFunction
-from bayes_opt.target_space import TargetSpace
-from bayes_opt.target_space import _hashable
 
 
 warnings.filterwarnings("ignore")
@@ -43,69 +42,34 @@ data_path = '../../../Data/KTH/'
 
 
 # ------define general function------------
-class TargetSpace_(TargetSpace):
-    def __init__(self, target_func, pbounds, random_state=None):
-        super(TargetSpace_, self).__init__(target_func, pbounds, random_state=None)
-
-    def register(self, params, target):
-        x = self._as_array(params)
-        if x in self:
-            raise KeyError('Data point {} is not unique'.format(x))
-        self._cache[_hashable(x.ravel())] = -target
-        self._params = np.concatenate([self._params, x.reshape(1, -1)])
-        self._target = np.concatenate([self._target, [-target]])
-
-
-class BayesianOptimization_(BayesianOptimization):
+class BayesianOptimization_(bayes_opt.BayesianOptimization):
     def __init__(self, f, pbounds, random_state=None, verbose=2):
         super(BayesianOptimization_, self).__init__(f, pbounds, random_state=None, verbose=2)
-        self._space = TargetSpace_(f, pbounds, random_state)
 
-    def acq_max_fixedpoint(self, ac, gp, X, y_max):
-        gauss = ac(X, gp=gp, y_max=y_max)
-        return gauss
-
-    def guess_fixedpoint(self, utility_function, X):
-        self._gp.fit(self._space.params, self._space.target)
-        gauss = self.acq_max_fixedpoint(
+    def suggest(self, utility_function):
+        if len(self._space) == 0:
+            return self._space.array_to_params(self._space.random_sample())
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self._gp.fit(self._space.params, self._space.target)
+        suggestion = self.acq_max_(
             ac=utility_function.utility,
             gp=self._gp,
-            X=X,
             y_max=self._space.target.max(),
+            bounds=self._space.bounds,
+            random_state=self._random_state
         )
-        return gauss
+        return self._space.array_to_params(suggestion)
 
-
-class SAES():
-    def __init__(self, f, acquisition, x0, sigma, kappa=2.576, xi=0.0, **opts):
-        self.f = f
-        self.optimizer = BayesianOptimization_(
-            f=f,
-            pbounds=opts['bounds'],
-            random_state=1,
-        )
-        self.util = UtilityFunction(kind=acquisition, kappa=kappa, xi=xi)
-        opts['bounds'] = self.optimizer._space._bounds.T.tolist()
-        self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
-
-    def run(self, n):
-        X = self.es.ask()  # get the initial offstpring
-        fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X]  # evaluated by the real fitness
-        self.es.tell(X, fit)  # update the CMA-ES model
-        self.es.logger.add()  # update the log
-        self.es.disp()
-        for x, eva in zip(X, fit):
-            self.optimizer._space.register(x, eva)  # build the BO model
-        while not self.es.stop():
-            X = self.es.ask(self.es.popsize * n)  # initial n times offspring for pre-selection
-            guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
-            X_ = np.array(X)[guess.argsort()[::-1][0:int(self.es.popsize)]]  # select the top n possible solution
-            fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]  # evaluted by real fitness function
-            for x, eva in zip(X_, fit_):
-                self.optimizer._space.register(x, eva)  # update the BO model
-            self.es.tell(X_, fit_)  # update the CMA-ES model
-            self.es.logger.add()  # update the log
-            self.es.disp()
+    def acq_max_(self,ac, gp, y_max, bounds, random_state):
+        x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
+                                       size=(bounds.shape[0]))
+        options = {'ftarget': 1e-3, 'bounds': bounds.T.tolist(), 'maxiter': 1000,
+                   'verb_log': 0,'verb_time':False,'verbose':-9}
+        res = cma.fmin(lambda x: 1 - ac(x.reshape(1, -1), gp=gp, y_max=y_max), x_seeds, 0.25, options=options,
+                       restarts=0, incpopsize=0, restart_from_best=False, bipop=False)
+        x_max = res[0]
+        return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
 
 class Function():
@@ -119,7 +83,7 @@ class Function():
         return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
 
     def gamma(self, a, size):
-        return sp.stats.gamma.rvs(a, size=size)
+        return stats.gamma.rvs(a, size=size)
 
 
 class Base():
@@ -538,12 +502,6 @@ np_state = np.random.get_state()
 ############################################
 # ---- define network run function----
 def run_net(inputs, **parameter):
-    """
-        run_net(inputs, parameter)
-            Parameters = [R, p_inE/I, f_in, f_EE, f_EI, f_IE, f_II, tau_ex, tau_inh]
-            ----------
-    """
-
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
 
@@ -560,19 +518,19 @@ def run_net(inputs, **parameter):
     f_IE = parameter['f_IE']
     f_II = parameter['f_II']
 
-    A_EE = 30*f_EE
-    A_EI = 60*f_EI
-    A_IE = 19*f_IE
-    A_II = 19*f_II
-    A_inE = 18*f_in
-    A_inI = 9*f_in
+    A_EE = 30 * f_EE
+    A_EI = 60 * f_EI
+    A_IE = 19 * f_IE
+    A_II = 19 * f_II
+    A_inE = 18 * f_in
+    A_inI = 9 * f_in
 
-    tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*standard_tau
-    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*standard_tau
-    tau_read= 30
+    tau_ex = np.array([parameter['tau_0'], parameter['tau_1'], parameter['tau_2'], parameter['tau_3']]) * standard_tau
+    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']]) * standard_tau
+    tau_read = 30
 
-    p_inE = parameter['p_in']*0.02
-    p_inI = parameter['p_in']*0.02
+    p_inE = parameter['p_in'] * 0.02
+    p_inI = parameter['p_in'] * 0.02
 
     #------definition of equation-------------
     neuron_in = '''
@@ -712,18 +670,33 @@ def parameters_search(**parameter):
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
-    return 1 - score_test
+    return score_test
 
 ##########################################
-# -------CMA-ES parameters search---------------
+# -------BO parameters search---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    bounds = {'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
-               'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0': (0.01, 2), 'tau_1': (0.01, 2), 'tau_2': (0.01, 2),
-               'tau_3': (0.01, 2), 'tau_4': (0.01, 2), 'tau_5': (0.01, 2), 'tau_6': (0.01, 2), 'tau_7': (0.01, 2)}
-    saes = SAES(parameters_search, 'ei', parameters, 0.25, kappa=2.576, xi=0.0,
-                **{'ftarget': 1e-3, 'bounds': bounds, 'maxiter': 1000,
-                   'popsize': 3})
-    saes.run(4)
+
+    optimizer = BayesianOptimization_(
+        f=parameters_search,
+        pbounds={'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
+                 'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0':(0.01, 2), 'tau_1':(0.01, 2), 'tau_2':(0.01, 2),
+                 'tau_3':(0.01, 2), 'tau_4':(0.01, 2), 'tau_5':(0.01, 2), 'tau_6':(0.01, 2), 'tau_7':(0.01, 2)},
+        verbose=2,
+        random_state=np.random.RandomState(),
+    )
+
+    # from bayes_opt.util import load_logs
+    # load_logs(optimizer, logs=["./BO_res_KTH.json"])
+
+    logger = bayes_opt.observer.JSONLogger(path="./BO_res_KTH.json")
+    optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
+
+    optimizer.maximize(
+        init_points=10,
+        n_iter=200,
+        acq='ucb',
+        kappa=2.576,
+        xi=0.0,
+    )
