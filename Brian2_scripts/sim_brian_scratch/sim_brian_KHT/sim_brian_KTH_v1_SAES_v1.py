@@ -7,7 +7,7 @@
 # new calculate flow as Maass_ST
 # simplify the coding method with only extend the rank
 # for the CMA-ES in parallel run
-# with large scale and multiple connection rules
+# with large scale
 # combing with BO to estimate the fitness (best-strategy)
 # add LHS to pre-build BO
 # ----------------------------------------
@@ -62,6 +62,31 @@ class BayesianOptimization_(BayesianOptimization):
         super(BayesianOptimization_, self).__init__(f, pbounds, random_state=None, verbose=2)
         self._space = TargetSpace_(f, pbounds, random_state)
 
+    def LHSample(self,N,bounds,D=None):
+        if D == None:
+            D = bounds.shape[0]
+        result = np.empty([N, D])
+        temp = np.empty([N])
+        d = 1.0 / N
+        for i in range(D):
+            for j in range(N):
+                temp[j] = np.random.uniform(
+                    low=j * d, high=(j + 1) * d, size = 1)[0]
+            np.random.shuffle(temp)
+            for j in range(N):
+                result[j, i] = temp[j]
+        lower_bounds = bounds[:,0]
+        upper_bounds = bounds[:,1]
+        if np.any(lower_bounds > upper_bounds):
+            print ('bounds error')
+            return None
+        np.add(np.multiply(result,
+                       (upper_bounds - lower_bounds),
+                       out=result),
+               lower_bounds,
+               out=result)
+        return result
+
     def acq_max_fixedpoint(self, ac, gp, X, y_max):
         gauss = ac(X, gp=gp, y_max=y_max)
         return gauss
@@ -89,7 +114,7 @@ class SAES():
         opts['bounds'] = self.optimizer._space._bounds.T.tolist()
         self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
 
-    def run(self, n):
+    def run_pre_selection(self, n):
         X = self.es.ask()  # get the initial offstpring
         fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X]  # evaluated by the real fitness
         self.es.tell(X, fit)  # update the CMA-ES model
@@ -108,6 +133,33 @@ class SAES():
             self.es.logger.add()  # update the log
             self.es.disp()
 
+
+    def run_best_strategy(self, init_points, n, inter=1):
+        LHS_points = self.optimizer.LHSample(np.clip(init_points-self.es.popsize,1,np.inf).astype(int),
+                                             self.optimizer._space.bounds)# LHS for BO
+        fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in LHS_points] # evaluated by the real fitness
+        for x,eva in zip(LHS_points, fit_init):
+            self.optimizer._space.register(x,eva)# pre-build BO model
+        X = self.es.ask() # get the initial offstpring
+        fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X] # evaluated by the real fitness
+        for x,eva in zip(X,fit):
+            self.optimizer._space.register(x,eva)# update the BO model
+        estimation = 1 # counter
+        while not self.es.stop():
+            X = self.es.ask()# initial offspring
+            guess = self.optimizer.guess_fixedpoint(self.util, X)# predice the possible good solution by BO
+            fit = -self.optimizer._gp.predict(X)# get the estimated value(needs negative value)
+            if estimation >=inter:
+                estimation=1 # initilize the counter
+                X_ = np.array(X)[guess.argsort()[::-1][0:int(n)]] # select the top n possible solution
+                fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]# evaluted by real fitness function
+                fit[guess.argsort()[::-1][0:int(n)]] = fit_# replace the estimated value by real value
+                for x,eva in zip(X_,fit_):
+                    self.optimizer._space.register(x,eva)# update the BO model
+            estimation += 1
+            self.es.tell(X, fit)# update the CMA-ES model
+            self.es.logger.add()# update the log
+            self.es.disp()
 
 class Function():
     def __init__(self):
@@ -491,7 +543,7 @@ F_train = 1
 F_validation = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
-standard_tau = 30
+standard_tau = 100
 
 #-------class initialization----------------------
 function = Function()
@@ -561,19 +613,19 @@ def run_net(inputs, **parameter):
     f_IE = parameter['f_IE']
     f_II = parameter['f_II']
 
-    A_EE = 30*f_EE
-    A_EI = 60*f_EI
-    A_IE = 19*f_IE
-    A_II = 19*f_II
-    A_inE = 18*f_in
-    A_inI = 9*f_in
+    A_EE = 100*f_EE
+    A_EI = 100*f_EI
+    A_IE = 100*f_IE
+    A_II = 100*f_II
+    A_inE = 100*f_in
+    A_inI = 100*f_in
 
-    tau_ex = np.array([parameter['tau_0'],parameter['tau_1'],parameter['tau_2'],parameter['tau_3']])*standard_tau
-    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']])*standard_tau
+    tau_ex = parameter['tau_ex']*standard_tau
+    tau_inh = parameter['tau_inh']*standard_tau
     tau_read= 30
 
-    p_inE = parameter['p_in']*0.02
-    p_inI = parameter['p_in']*0.02
+    p_inE = parameter['p_in']
+    p_inI = parameter['p_in']
 
     #------definition of equation-------------
     neuron_in = '''
@@ -649,6 +701,8 @@ def run_net(inputs, **parameter):
     G_ex.h = '0'
     G_inh.h = '0'
     G_readout.h = '0'
+    G_ex.tau = tau_ex
+    G_inh.tau = tau_inh
     G_readout.tau = tau_read
 
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
@@ -674,9 +728,6 @@ def run_net(inputs, **parameter):
     S_EI.pre.delay = '0.8*ms'
     S_IE.pre.delay = '0.8*ms'
     S_II.pre.delay = '0.8*ms'
-
-    base.set_local_parameter_PS(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
-    base.set_local_parameter_PS(S_II, 'tau_post', method='group', group_parameters=tau_inh)
 
     # ------create network-------------
     net = Network(collect())
@@ -720,11 +771,9 @@ def parameters_search(**parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    bounds = {'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
-               'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0': (0.01, 2), 'tau_1': (0.01, 2), 'tau_2': (0.01, 2),
-               'tau_3': (0.01, 2), 'tau_4': (0.01, 2), 'tau_5': (0.01, 2), 'tau_6': (0.01, 2), 'tau_7': (0.01, 2)}
-    saes = SAES(parameters_search, 'ei', parameters, 0.25, kappa=2.576, xi=0.0,
-                **{'ftarget': 1e-3, 'bounds': bounds, 'maxiter': 1000,
-                   'popsize': 3})
-    saes.run(4)
+    parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
+               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
+    saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
+                **{'ftarget': 1e-3, 'bounds': bounds, 'maxiter': 20})
+    saes.run_best_strategy(50,1,5)

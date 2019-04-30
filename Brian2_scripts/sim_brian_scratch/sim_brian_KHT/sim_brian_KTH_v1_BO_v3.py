@@ -7,7 +7,7 @@
 # new calculate flow as Maass_ST
 # simplify the coding method with only extend the rank
 # for the BO in parallel run
-# with large scale and multiple connection rules
+# with large scale
 # combing CMA-ES optimize acquisition function
 # add LHS to pre-build BO
 # ----------------------------------------
@@ -31,6 +31,8 @@ import re
 from multiprocessing import Pool
 import cma
 import bayes_opt
+from bayes_opt.event import Events
+from bayes_opt.util import UtilityFunction
 from functools import partial
 
 
@@ -45,6 +47,31 @@ data_path = '../../../Data/KTH/'
 class BayesianOptimization_(bayes_opt.BayesianOptimization):
     def __init__(self, f, pbounds, random_state=None, verbose=2):
         super(BayesianOptimization_, self).__init__(f, pbounds, random_state=None, verbose=2)
+
+    def LHSample(self, N, bounds, D=None):
+        if D == None:
+            D = bounds.shape[0]
+        result = np.empty([N, D])
+        temp = np.empty([N])
+        d = 1.0 / N
+        for i in range(D):
+            for j in range(N):
+                temp[j] = np.random.uniform(
+                    low=j * d, high=(j + 1) * d, size=1)[0]
+            np.random.shuffle(temp)
+            for j in range(N):
+                result[j, i] = temp[j]
+        lower_bounds = bounds[:, 0]
+        upper_bounds = bounds[:, 1]
+        if np.any(lower_bounds > upper_bounds):
+            print('bounds error')
+            return None
+        np.add(np.multiply(result,
+                           (upper_bounds - lower_bounds),
+                           out=result),
+               lower_bounds,
+               out=result)
+        return result
 
     def suggest(self, utility_function):
         if len(self._space) == 0:
@@ -70,6 +97,42 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
                        restarts=0, incpopsize=0, restart_from_best=False, bipop=False)
         x_max = res[0]
         return np.clip(x_max, bounds[:, 0], bounds[:, 1])
+
+    def _prime_queue_LHS(self, init_points):
+        """Make sure there's something in the queue at the very beginning."""
+        if self._queue.empty and self._space.empty:
+            init_points = max(init_points, 1)
+        LHS_points = self.LHSample(init_points, self._space.bounds)
+        #         print(LHS_points)
+        for point in LHS_points:
+            self._queue.add(point)
+
+    def maximize(self,
+                  init_points=5,
+                  is_LHS=False,
+                  n_iter=25,
+                  acq='ucb',
+                  kappa=2.576,
+                  xi=0.0,
+                  **gp_params):
+         """Mazimize your function"""
+         self._prime_subscriptions()
+         self.dispatch(Events.OPTMIZATION_START)
+         if is_LHS:
+             self._prime_queue_LHS(init_points)
+         else:
+             self._prime_queue(init_points)
+         self.set_gp_params(**gp_params)
+         util = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
+         iteration = 0
+         while not self._queue.empty or iteration < n_iter:
+             try:
+                 x_probe = next(self._queue)
+             except StopIteration:
+                 x_probe = self.suggest(util)
+                 iteration += 1
+             self.probe(x_probe, lazy=False)
+         self.dispatch(Events.OPTMIZATION_END)
 
 
 class Function():
@@ -454,7 +517,7 @@ F_train = 1
 F_validation = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
-standard_tau = 30
+standard_tau = 100
 
 #-------class initialization----------------------
 function = Function()
@@ -518,19 +581,19 @@ def run_net(inputs, **parameter):
     f_IE = parameter['f_IE']
     f_II = parameter['f_II']
 
-    A_EE = 30 * f_EE
-    A_EI = 60 * f_EI
-    A_IE = 19 * f_IE
-    A_II = 19 * f_II
-    A_inE = 18 * f_in
-    A_inI = 9 * f_in
+    A_EE = 100*f_EE
+    A_EI = 100*f_EI
+    A_IE = 100*f_IE
+    A_II = 100*f_II
+    A_inE = 100*f_in
+    A_inI = 100*f_in
 
-    tau_ex = np.array([parameter['tau_0'], parameter['tau_1'], parameter['tau_2'], parameter['tau_3']]) * standard_tau
-    tau_inh = np.array([parameter['tau_4'], parameter['tau_5'], parameter['tau_6'], parameter['tau_7']]) * standard_tau
-    tau_read = 30
+    tau_ex = parameter['tau_ex']*standard_tau
+    tau_inh = parameter['tau_inh']*standard_tau
+    tau_read= 30
 
-    p_inE = parameter['p_in'] * 0.02
-    p_inI = parameter['p_in'] * 0.02
+    p_inE = parameter['p_in']
+    p_inI = parameter['p_in']
 
     #------definition of equation-------------
     neuron_in = '''
@@ -606,6 +669,8 @@ def run_net(inputs, **parameter):
     G_ex.h = '0'
     G_inh.h = '0'
     G_readout.h = '0'
+    G_ex.tau = tau_ex
+    G_inh.tau = tau_inh
     G_readout.tau = tau_read
 
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
@@ -631,9 +696,6 @@ def run_net(inputs, **parameter):
     S_EI.pre.delay = '0.8*ms'
     S_IE.pre.delay = '0.8*ms'
     S_II.pre.delay = '0.8*ms'
-
-    base.set_local_parameter_PS(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
-    base.set_local_parameter_PS(S_II, 'tau_post', method='group', group_parameters=tau_inh)
 
     # ------create network-------------
     net = Network(collect())
@@ -680,9 +742,8 @@ if __name__ == '__main__':
 
     optimizer = BayesianOptimization_(
         f=parameters_search,
-        pbounds={'R': (0.01, 2), 'p_in': (0.01, 2), 'f_in': (0.01, 2), 'f_EE': (0.01, 2), 'f_EI': (0.01, 2),
-                 'f_IE': (0.01, 2), 'f_II': (0.01, 2), 'tau_0':(0.01, 2), 'tau_1':(0.01, 2), 'tau_2':(0.01, 2),
-                 'tau_3':(0.01, 2), 'tau_4':(0.01, 2), 'tau_5':(0.01, 2), 'tau_6':(0.01, 2), 'tau_7':(0.01, 2)},
+        pbounds= {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
+               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)},
         verbose=2,
         random_state=np.random.RandomState(),
     )
@@ -694,7 +755,8 @@ if __name__ == '__main__':
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
     optimizer.maximize(
-        init_points=10,
+        init_points=50,
+        is_LHS = True,
         n_iter=200,
         acq='ucb',
         kappa=2.576,
