@@ -25,6 +25,7 @@ from bqplot import *
 import ipywidgets as widgets
 import warnings
 import os
+import time
 from multiprocessing import Pool
 import cma
 from functools import partial
@@ -42,6 +43,34 @@ data_path = '../../../Data/MNIST_data/'
 
 
 # ------define general function------------
+class timelog():
+    def __init__(self, func):
+        self.func = func
+        self.itime = time.time()
+        self.iteration = 0
+        with open('wall_time' + '.dat', 'w') as f:
+            f.write('iteration' + ' '
+                    + 'wall_time' + ' '
+                    + 'result' + ' '
+                    + 'parameters' + ' '
+                    + '\n')
+
+    def __call__(self, *args, **kwargs):
+        res, parameters= self.func(*args, **kwargs)
+        self.save(res, parameters)
+        return res
+
+    @property
+    def elapsed(self):
+        return time.time() - self.itime
+
+    def save(self, generation, result, parameters):
+        self.iteration += 1
+        with open('wall_time' + '.dat', 'a') as f:
+            f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(result) + ' '
+                    + str(parameters) + ' ' + '\n')
+
+
 class TargetSpace_(TargetSpace):
     def __init__(self, target_func, pbounds, random_state=None):
         super(TargetSpace_, self).__init__(target_func, pbounds, random_state=None)
@@ -719,7 +748,7 @@ def run_net(inputs, **parameter):
     net.restore('init')
     return (states, inputs[1])
 
-
+@timelog
 def parameters_search(**parameter):
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
@@ -742,7 +771,7 @@ def parameters_search(**parameter):
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
-    return 1 - score_test
+    return 1 - score_test, parameter
 
 ##########################################
 # -------CMA-ES parameters search---------------
