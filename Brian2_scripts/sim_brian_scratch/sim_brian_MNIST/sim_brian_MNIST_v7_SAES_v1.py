@@ -621,19 +621,19 @@ def run_net(inputs, **parameter):
     f_IE = parameter['f_IE']
     f_II = parameter['f_II']
 
-    A_EE = 100*f_EE
-    A_EI = 100*f_EI
-    A_IE = 100*f_IE
-    A_II = 100*f_II
-    A_inE = 100*f_in
-    A_inI = 100*f_in
+    A_EE = 60*f_EE
+    A_EI = 60*f_EI
+    A_IE = 60*f_IE
+    A_II = 60*f_II
+    A_inE = 60*f_in
+    A_inI = 60*f_in
 
     tau_ex = parameter['tau_ex']*coding_duration
     tau_inh = parameter['tau_inh']*coding_duration
     tau_read= 30
 
-    p_inE = parameter['p_in']
-    p_inI = parameter['p_in']
+    p_inE = parameter['p_in']*0.1
+    p_inI = parameter['p_in']*0.1
 
     #------definition of equation-------------
     neuron_in = '''
