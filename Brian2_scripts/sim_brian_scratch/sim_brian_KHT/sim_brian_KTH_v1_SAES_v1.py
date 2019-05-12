@@ -66,7 +66,7 @@ class timelog():
     def elapsed(self):
         return time.time() - self.itime
 
-    def save(self, generation, result, parameters):
+    def save(self, result, parameters):
         self.iteration += 1
         with open('wall_time' + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(result) + ' '
