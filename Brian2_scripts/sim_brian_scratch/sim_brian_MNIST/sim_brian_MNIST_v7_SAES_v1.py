@@ -26,6 +26,7 @@ import ipywidgets as widgets
 import warnings
 import os
 import time
+import re
 from multiprocessing import Pool
 import cma
 from functools import partial
