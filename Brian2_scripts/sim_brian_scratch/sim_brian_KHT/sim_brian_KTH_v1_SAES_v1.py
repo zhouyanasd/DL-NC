@@ -143,6 +143,21 @@ class SAES():
         opts['bounds'] = self.optimizer._space._bounds.T.tolist()
         self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
 
+    def load_LHS(self,path):
+        X,fit =[],[]
+        with open(path, 'r') as f:
+            l = f.readlines()
+        l.pop(0)
+        p1 = re.compile(r'[{](.*?)[}]', re.S)
+        for i in range(0, len(l)):
+            l[i] = l[i].rstrip('\n')
+            s = re.findall(p1, l[i])[0]
+            d = eval('{'+s+'}')
+            X.append(np.array(list(d.values())))
+            f = float(l[i].replace('{'+s+'}','').split(' ')[1])
+            fit.append(f)
+        return X, fit
+
     def run_pre_selection(self, n):
         X = self.es.ask()  # get the initial offstpring
         fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X]  # evaluated by the real fitness
@@ -163,19 +178,28 @@ class SAES():
             self.es.disp()
 
 
-    def run_best_strategy(self, init_points, n, inter=1):
-        LHS_points = self.optimizer.LHSample(np.clip(init_points-self.es.popsize,1,np.inf).astype(int),
+    def run_best_strategy(self, init_points, n, inter=1, path=None):
+        if path == None:
+            LHS_points = self.optimizer.LHSample(np.clip(init_points-self.es.popsize,1,np.inf).astype(int),
                                              self.optimizer._space.bounds)# LHS for BO
-        fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in LHS_points] # evaluated by the real fitness
-        for x,eva in zip(LHS_points, fit_init):
-            self.optimizer._space.register(x,eva)# pre-build BO model
-        X = self.es.ask() # get the initial offstpring
-        fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X] # evaluated by the real fitness
-        self.es.tell(X, fit)  # initial the CMA-ES model
-        self.es.logger.add()  # update the log
-        self.es.disp()
-        for x,eva in zip(X,fit):
-            self.optimizer._space.register(x,eva)# update the BO model
+            fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in LHS_points] # evaluated by the real fitness
+            for x,eva in zip(LHS_points, fit_init):
+                self.optimizer._space.register(x,eva)# pre-build BO model
+            X = self.es.ask() # get the initial offstpring
+            fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X] # evaluated by the real fitness
+            self.es.tell(X, fit)# initial the CMA-ES model
+            self.es.logger.add()# update the log
+            self.es.disp()
+            for x,eva in zip(X,fit):
+                self.optimizer._space.register(x,eva)# update the BO model
+        else:
+            X, fit = self.load_LHS(path)
+            for x,eva in zip(X,fit):
+                self.optimizer._space.register(x,eva)# build the BO model
+            self.es.ask()
+            self.es.tell(X[-self.es.popsize:], fit[-self.es.popsize:])# initial the CMA-ES model
+            self.es.logger.add()# update the log
+            self.es.disp()
         estimation = 1 # counter
         while not self.es.stop():
             X = self.es.ask()# initial offspring
@@ -808,4 +832,4 @@ if __name__ == '__main__':
                'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
                 **{'ftarget': -1e-3, 'bounds': bounds, 'maxiter': 500})
-    saes.run_best_strategy(50,1,5)
+    saes.run_best_strategy(50,1,5, path='LHS.dat')
