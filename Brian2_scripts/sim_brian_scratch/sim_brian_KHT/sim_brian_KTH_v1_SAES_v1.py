@@ -154,7 +154,7 @@ class SAES():
             s = re.findall(p1, l[i])[0]
             d = eval('{'+s+'}')
             X.append(np.array(list(d.values())))
-            f = float(l[i].replace('{'+s+'}','').split(' ')[1])
+            f = float(l[i].replace('{'+s+'}','').split(' ')[2])
             fit.append(f)
         return X, fit
 
