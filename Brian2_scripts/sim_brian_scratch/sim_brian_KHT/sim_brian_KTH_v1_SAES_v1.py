@@ -200,13 +200,13 @@ class SAES():
             self.es.tell(X[-self.es.popsize:], fit[-self.es.popsize:])# initial the CMA-ES model
             self.es.logger.add()# update the log
             self.es.disp()
-        estimation = 1 # counter
+        estimation = 0 # counter
         while not self.es.stop():
             X = self.es.ask()# initial offspring
             guess = self.optimizer.guess_fixedpoint(self.util, X)# predice the possible good solution by BO
             fit = -self.optimizer._gp.predict(X)# get the estimated value(needs negative value)
             if estimation >=inter:
-                estimation=1 # initilize the counter
+                estimation=0 # initilize the counter
                 X_ = np.array(X)[guess.argsort()[::-1][0:int(n)]] # select the top n possible solution
                 fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]# evaluted by real fitness function
                 fit[guess.argsort()[::-1][0:int(n)]] = fit_# replace the estimated value by real value
