@@ -198,7 +198,7 @@ class SAES():
             self.es.tell(X[-self.es.popsize:], fit[-self.es.popsize:])# initial the CMA-ES model
             self.es.logger.add()# update the log
             self.es.disp()
-        estimation = 0 # counter
+        estimation = 1 # counter
         while not self.es.stop():
             X = self.es.ask()# initial offspring
             guess = self.optimizer.guess_fixedpoint(self.util, X)# predice the possible good solution by BO
