@@ -810,5 +810,5 @@ if __name__ == '__main__':
     bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
                'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
-                **{'ftarget': -1e-3, 'bounds': bounds, 'maxiter': 500})
+                **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
     saes.run_best_strategy(50,1,5,path='LHS.dat')
