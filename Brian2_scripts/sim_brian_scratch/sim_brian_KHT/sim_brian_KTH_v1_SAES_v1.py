@@ -121,7 +121,6 @@ class BayesianOptimization_(BayesianOptimization):
         return gauss
 
     def guess_fixedpoint(self, utility_function, X):
-        self._gp.fit(self._space.params, self._space.target)
         gauss = self.acq_max_fixedpoint(
             ac=utility_function.utility,
             gp=self._gp,
@@ -165,18 +164,20 @@ class SAES():
         self.es.logger.add()  # update the log
         self.es.disp()
         for x, eva in zip(X, fit):
-            self.optimizer._space.register(x, eva)  # build the BO model
+            self.optimizer._space.register(x, eva)  # update solution space
+        self.optimizer._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
         while not self.es.stop():
             X = self.es.ask(self.es.popsize * n)  # initial n times offspring for pre-selection
             guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
             X_ = np.array(X)[guess.argsort()[::-1][0:int(self.es.popsize)]]  # select the top n possible solution
             fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]  # evaluted by real fitness function
             for x, eva in zip(X_, fit_):
-                self.optimizer._space.register(x, eva)  # update the BO model
+                self.optimizer._space.register(x, eva)  # update solution space
+            self.optimizer._gp.fit(self.optimizer._space.params,
+                                   self.optimizer._space.target)  # update the BO model
             self.es.tell(X_, fit_)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
-
 
     def run_best_strategy(self, init_points, n, inter=1, path=None):
         if path == None:
@@ -184,22 +185,23 @@ class SAES():
                                              self.optimizer._space.bounds)# LHS for BO
             fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in LHS_points] # evaluated by the real fitness
             for x,eva in zip(LHS_points, fit_init):
-                self.optimizer._space.register(x,eva)# pre-build BO model
+                self.optimizer._space.register(x,eva)# add LHS points to solution space
             X = self.es.ask() # get the initial offstpring
             fit = [self.f(**self.optimizer._space.array_to_params(x)) for x in X] # evaluated by the real fitness
             self.es.tell(X, fit)# initial the CMA-ES model
             self.es.logger.add()# update the log
             self.es.disp()
             for x,eva in zip(X,fit):
-                self.optimizer._space.register(x,eva)# update the BO model
+                self.optimizer._space.register(x,eva)# update solution space
         else:
             X, fit = self.load_LHS(path)
             for x,eva in zip(X,fit):
-                self.optimizer._space.register(x,eva)# build the BO model
+                self.optimizer._space.register(x,eva)# add loaded LHS points to solution space
             self.es.ask()
             self.es.tell(X[-self.es.popsize:], fit[-self.es.popsize:])# initial the CMA-ES model
             self.es.logger.add()# update the log
             self.es.disp()
+        self.optimizer._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
         estimation = 1 # counter
         while not self.es.stop():
             X = self.es.ask()# initial offspring
@@ -211,7 +213,9 @@ class SAES():
                 fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]# evaluted by real fitness function
                 fit[guess.argsort()[::-1][0:int(n)]] = fit_# replace the estimated value by real value
                 for x,eva in zip(X_,fit_):
-                    self.optimizer._space.register(x,eva)# update the BO model
+                    self.optimizer._space.register(x,eva)# update the solution space
+                self.optimizer._gp.fit(self.optimizer._space.params,
+                                       self.optimizer._space.target)  # update the BO model
             estimation += 1
             self.es.tell(X, fit)# update the CMA-ES model
             self.es.logger.add()# update the log

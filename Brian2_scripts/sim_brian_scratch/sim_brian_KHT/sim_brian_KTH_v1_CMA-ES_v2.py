@@ -66,7 +66,6 @@ class BayesianOptimization_(BayesianOptimization):
         return gauss
 
     def guess_fixedpoint(self, utility_function, X):
-        self._gp.fit(self._space.params, self._space.target)
         gauss = self.acq_max_fixedpoint(
             ac=utility_function.utility,
             gp=self._gp,
@@ -95,14 +94,17 @@ class SAES():
         self.es.logger.add()  # update the log
         self.es.disp()
         for x, eva in zip(X, fit):
-            self.optimizer._space.register(x, eva)  # build the BO model
+            self.optimizer._space.register(x, eva)  # update solution space
+        self.optimizer._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
         while not self.es.stop():
             X = self.es.ask(self.es.popsize * n)  # initial n times offspring for pre-selection
             guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
             X_ = np.array(X)[guess.argsort()[::-1][0:int(self.es.popsize)]]  # select the top n possible solution
             fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]  # evaluted by real fitness function
             for x, eva in zip(X_, fit_):
-                self.optimizer._space.register(x, eva)  # update the BO model
+                self.optimizer._space.register(x, eva)  # update solution space
+            self.optimizer._gp.fit(self.optimizer._space.params,
+                                   self.optimizer._space.target)  # update the BO model
             self.es.tell(X_, fit_)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
