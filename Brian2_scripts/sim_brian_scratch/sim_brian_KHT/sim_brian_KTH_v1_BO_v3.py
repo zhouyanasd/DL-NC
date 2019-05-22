@@ -747,7 +747,7 @@ if __name__ == '__main__':
 
     optimizer = BayesianOptimization_(
         f=parameters_search,
-        pbounds= {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
+        pbounds= {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.0001, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
                'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)},
         verbose=2,
         random_state=np.random.RandomState(),
