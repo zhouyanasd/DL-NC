@@ -106,6 +106,7 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             self._queue.add(point)
 
     def maximize(self,
+                  LHS_path = None,
                   init_points=5,
                   is_LHS=False,
                   n_iter=25,
@@ -116,10 +117,14 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
          """Mazimize your function"""
          self._prime_subscriptions()
          self.dispatch(Events.OPTMIZATION_START)
-         if is_LHS:
-             self._prime_queue_LHS(init_points)
+         if LHS_path == None:
+            if is_LHS:
+                self._prime_queue_LHS(init_points)
+            else:
+                self._prime_queue(init_points)
          else:
-             self._prime_queue(init_points)
+            from bayes_opt.util import load_logs
+            load_logs(self, logs=[LHS_path])
          self.set_gp_params(**gp_params)
          util = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
          iteration = 0
@@ -732,13 +737,11 @@ if __name__ == '__main__':
         random_state=np.random.RandomState(),
     )
 
-    # from bayes_opt.util import load_logs
-    # load_logs(optimizer, logs=["./BO_res_MNIST.json"])
-
     logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
     optimizer.maximize(
+        LHS_path='./LHS.json',
         init_points=50,
         is_LHS = True,
         n_iter=200,
