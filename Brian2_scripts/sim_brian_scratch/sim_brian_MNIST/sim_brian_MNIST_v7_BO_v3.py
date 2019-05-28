@@ -744,7 +744,7 @@ if __name__ == '__main__':
         LHS_path='./LHS.json',
         init_points=50,
         is_LHS = True,
-        n_iter=200,
+        n_iter=250,
         acq='ucb',
         kappa=2.576,
         xi=0.0,
