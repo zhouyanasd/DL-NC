@@ -205,10 +205,10 @@ class SAES():
         estimation = 1 # counter
         while not self.es.stop():
             X = self.es.ask()# initial offspring
-            guess = self.optimizer.guess_fixedpoint(self.util, X)# predice the possible good solution by BO
             fit = -self.optimizer._gp.predict(X)# get the estimated value(needs negative value)
             if estimation >=inter:
                 estimation=0 # initilize the counter
+                guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
                 X_ = np.array(X)[guess.argsort()[::-1][0:int(n)]] # select the top n possible solution
                 fit_ = [self.f(**self.optimizer._space.array_to_params(x)) for x in X_]# evaluted by real fitness function
                 fit[guess.argsort()[::-1][0:int(n)]] = fit_# replace the estimated value by real value
@@ -836,4 +836,4 @@ if __name__ == '__main__':
                'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
                 **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
-    saes.run_best_strategy(50,1,5, path='LHS.dat')
+    saes.run_best_strategy(50,1,2, path='LHS.dat')
