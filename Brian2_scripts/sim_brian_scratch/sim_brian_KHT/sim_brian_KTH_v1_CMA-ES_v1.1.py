@@ -490,19 +490,19 @@ def run_net(inputs, parameter):
     f_IE = parameter[5]
     f_II = parameter[6]
 
-    A_EE = 30 * f_EE
-    A_EI = 60 * f_EI
-    A_IE = 19 * f_IE
-    A_II = 19 * f_II
-    A_inE = 18 * f_in
-    A_inI = 9 * f_in
+    A_EE = 60*f_EE
+    A_EI = 60*f_EI
+    A_IE = 60*f_IE
+    A_II = 60*f_II
+    A_inE = 60*f_in
+    A_inI = 60*f_in
 
-    tau_ex = parameter[7:11] * standard_tau
-    tau_inh = parameter[11:15] * standard_tau
-    tau_read = 30
+    tau_ex = parameter[7] * standard_tau
+    tau_inh = parameter[8] * standard_tau
+    tau_read= 30
 
-    p_inE = parameter[1] * 0.02
-    p_inI = parameter[1] * 0.02
+    p_inE = parameter[1]*0.1
+    p_inI = parameter[1]*0.1
 
     #------definition of equation-------------
     neuron_in = '''
@@ -578,6 +578,8 @@ def run_net(inputs, parameter):
     G_ex.h = '0'
     G_inh.h = '0'
     G_readout.h = '0'
+    G_ex.tau = tau_ex
+    G_inh.tau = tau_inh
     G_readout.tau = tau_read
 
     [G_ex,G_in] = base.allocate([G_ex,G_inh],5,10,20)
@@ -603,9 +605,6 @@ def run_net(inputs, parameter):
     S_EI.pre.delay = '0.8*ms'
     S_IE.pre.delay = '0.8*ms'
     S_II.pre.delay = '0.8*ms'
-
-    base.set_local_parameter_PS(S_EE, 'tau_post', method='group', group_parameters=tau_ex)
-    base.set_local_parameter_PS(S_II, 'tau_post', method='group', group_parameters=tau_inh)
 
     # ------create network-------------
     net = Network(collect())
@@ -649,6 +648,6 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = Parameters = [0.9, 0.5, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    res = cma.fmin(parameters_search, parameters, 0.25, options={'ftarget': 1e-3,'bounds': [0, np.inf],
-                                                                 'maxiter':1000})
+    parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    res = cma.fmin(parameters_search, parameters, 0.5, options={'ftarget': 1e-3,'bounds': [0, 1],
+                                                                 'maxiter':30})
