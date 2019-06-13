@@ -239,7 +239,7 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             gp=self._gp,
             y_max=self._space.target.max(),
             bounds=self._space.bounds,
-            random_state=self._random_state
+            random_state=self._random_state.randint(100000)
         )
         return self._space.array_to_params(suggestion)
 
@@ -254,7 +254,8 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
         return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
     def acq_max_DE(self, ac, gp, y_max, bounds, random_state, ngen=100, npop=45, f=0.4, c=0.3):
-        de = DiffEvol(lambda x : 1 -ac(x.reshape(1, -1), gp=gp, y_max=y_max)[0], bounds, npop, f=f, c=c)
+        de = DiffEvol(lambda x : 1 -ac(x.reshape(1, -1), gp=gp, y_max=y_max)[0], bounds, npop, f=f, c=c,
+                      seed = random_state)
         de.optimize(ngen)
         print(de.minimum_value,de.minimum_location,de.minimum_index)
         x_max = de.minimum_location
