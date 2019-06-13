@@ -627,5 +627,5 @@ if __name__ == '__main__':
     core = 10
     pool = Pool(core)
     parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    res = cma.fmin(parameters_search, parameters, 0.5, options={'ftarget': 1e-3,'bounds': [0, 1],
+    res = cma.fmin(parameters_search, parameters, 0.5, options={'ftarget': -1e+3,'bounds': [0, 1],
                                                                  'maxiter':30})
