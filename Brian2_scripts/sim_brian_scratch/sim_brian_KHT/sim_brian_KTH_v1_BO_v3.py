@@ -35,7 +35,6 @@ from bayes_opt.event import Events
 from bayes_opt.util import UtilityFunction
 from functools import partial
 
-from numba import njit
 from numpy import asarray, zeros, zeros_like, tile, array, argmin, mod
 from numpy.random import random, randint, rand, seed as rseed, uniform
 
@@ -94,7 +93,7 @@ class DiffEvol(object):
     def __init__(self, fun, bounds, npop, f=None, c=None, seed=None, maximize=False, vectorize=False, cbounds=(0.25, 1),
                  fbounds=(0.25, 0.75), pool=None, min_ptp=1e-2, args=[], kwargs={}):
         if seed is not None:
-            np.random.rseed(seed)
+            rseed(seed)
 
         self.minfun = _function_wrapper(fun, args, kwargs)
         self.bounds = asarray(bounds)
