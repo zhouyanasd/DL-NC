@@ -240,7 +240,7 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             gp=self._gp,
             y_max=self._space.target.max(),
             bounds=self._space.bounds,
-            random_state=self._random_state.RandomState()
+            random_state=self._random_state.randint(100000)
         )
         return self._space.array_to_params(suggestion)
 
