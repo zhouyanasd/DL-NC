@@ -483,7 +483,7 @@ def run_net(inputs, parameter):
     n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
     n_read = n_ex + n_inh
 
-    R = parameter[0]
+    R = parameter[0]*2
     f_in = parameter[2]
     f_EE = parameter[3]
     f_EI = parameter[4]
