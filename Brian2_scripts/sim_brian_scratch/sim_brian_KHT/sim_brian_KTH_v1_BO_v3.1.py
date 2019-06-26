@@ -28,6 +28,7 @@ import warnings
 import os
 import cv2
 import re
+import time
 from multiprocessing import Pool
 import cma
 import bayes_opt
@@ -47,6 +48,34 @@ data_path = '../../../Data/KTH/'
 
 
 # ------define general function------------
+class timelog():
+    def __init__(self, func):
+        self.func = func
+        self.itime = time.time()
+        self.iteration = 0
+        with open('Results_Record' + '.dat', 'w') as f:
+            f.write('iteration' + ' '
+                    + 'wall_time' + ' '
+                    + 'result_validation' + ' '
+                    + 'result_test' + ' '
+                    + 'parameters' + ' '
+                    + '\n')
+
+    def __call__(self, *args, **kwargs):
+        validation, test, parameters= self.func(*args, **kwargs)
+        self.save(validation, test, parameters)
+        return validation
+
+    @property
+    def elapsed(self):
+        return time.time() - self.itime
+
+    def save(self, validation, test, parameters):
+        self.iteration += 1
+        with open('Results_Record' + '.dat', 'a') as f:
+            f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
+                    + str(test) + ' '+ str(parameters) + ' ' + '\n')
+
 def wrap(v, vmin, vmax):
     w = vmax - vmin
     return vmin + mod(asarray(v) - vmin, w)
@@ -447,13 +476,16 @@ class Base():
 
 
 class Readout():
-    def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
+    def readout_sk(self, X_train, X_validation, X_test, y_train, y_validation, y_test, **kwargs):
         from sklearn.linear_model import LogisticRegression
         lr = LogisticRegression(**kwargs)
         lr.fit(X_train.T, y_train.T)
         y_train_predictions = lr.predict(X_train.T)
+        y_validation_predictions = lr.predict(X_validation.T)
         y_test_predictions = lr.predict(X_test.T)
-        return accuracy_score(y_train_predictions, y_train.T), accuracy_score(y_test_predictions, y_test.T)
+        return accuracy_score(y_train_predictions, y_train.T), \
+               accuracy_score(y_validation_predictions, y_validation.T),\
+               accuracy_score(y_test_predictions, y_test.T)
 
 class Result():
     def __init__(self):
@@ -675,7 +707,6 @@ class KTH_classification():
 ###################################
 # -----simulation parameter setting-------
 LOAD_DATA = True
-USE_VALIDATION = True
 
 origin_size=(120, 160)
 pool_size=(5, 5)
@@ -721,11 +752,6 @@ else:
 data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
 data_test_s, label_test = KTH.get_series_data_list(df_en_train, is_group=True)
-
-if USE_VALIDATION:
-
-    data_train_s = base.np_extend(data_train_s, data_validation_s)
-    label_train = base.np_extend(label_train, label_validation)
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
@@ -879,29 +905,34 @@ def run_net(inputs, **parameter):
     return (states, inputs[1])
 
 
+@timelog
 def parameters_search(**parameter):
-     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
+    # ------parallel run for train-------
+    states_train_list = pool.map(partial(run_net, parameter=parameter), [(x) for x in zip(data_train_s, label_train)])
+    # ------parallel run for validation-------
+    states_validation_list = pool.map(partial(run_net, parameter=parameter),
+                                      [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, parameter=parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
-    states_train, states_test, _label_train, _label_test = [], [], [], []
-    for train in states_train_list :
+    states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
+    for train in states_train_list:
         states_train.append(train[0])
         _label_train.append(train[1])
+    for validation in states_validation_list:
+        states_validation.append(validation[0])
+        _label_validation.append(validation[1])
     for test in states_test_list:
         states_test.append(test[0])
         _label_test.append(test[1])
     states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
+    states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
-    score_train, score_test = readout.readout_sk(states_train, states_test,
-                                                 np.asarray(_label_train), np.asarray(_label_test),
-                                                 solver="lbfgs", multi_class="multinomial")
-    # ----------show results-----------
-    print('parameters %s' % parameter)
-    print('Train score: ', score_train)
-    print('Test score: ', score_test)
-    return score_test
+    score_train, score_validation, score_test = readout.readout_sk(states_train, states_validation, states_test,
+                                                                   np.asarray(_label_train),
+                                                                   np.asarray(_label_validation),
+                                                                   np.asarray(_label_test), solver="lbfgs",
+                                                                   multi_class="multinomial")
 
 ##########################################
 # -------BO parameters search---------------
