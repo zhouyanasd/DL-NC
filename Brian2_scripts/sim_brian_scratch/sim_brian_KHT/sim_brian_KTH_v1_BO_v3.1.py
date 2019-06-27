@@ -908,12 +908,12 @@ def run_net(inputs, **parameter):
 @timelog
 def parameters_search(**parameter):
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, parameter=parameter), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, parameter=parameter),
+    states_validation_list = pool.map(partial(run_net, **parameter),
                                       [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, parameter=parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for train in states_train_list:
