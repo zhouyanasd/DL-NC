@@ -27,6 +27,7 @@ from bqplot import *
 import ipywidgets as widgets
 import warnings
 import os
+import re
 import time
 from multiprocessing import Pool
 import cma
@@ -258,6 +259,21 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
                out=result)
         return result
 
+    def load_LHS(self,path):
+        X,fit =[],[]
+        with open(path, 'r') as f:
+            l = f.readlines()
+        l.pop(0)
+        p1 = re.compile(r'[{](.*?)[}]', re.S)
+        for i in range(0, len(l)):
+            l[i] = l[i].rstrip('\n')
+            s = re.findall(p1, l[i])[0]
+            d = eval('{'+s+'}')
+            X.append(np.array(list(d.values())))
+            f = float(l[i].replace('{'+s+'}','').split(' ')[2])
+            fit.append(f)
+        return X, fit
+
     def suggest(self, utility_function):
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
@@ -318,8 +334,9 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             else:
                 self._prime_queue(init_points)
          else:
-            from bayes_opt.util import load_logs
-            load_logs(self, logs=[LHS_path])
+            X, fit = self.load_LHS(LHS_path)
+            for x, eva in zip(X, fit):
+                self.register(x, 1-eva)
          self.set_gp_params(**gp_params)
          util = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
          iteration = 0

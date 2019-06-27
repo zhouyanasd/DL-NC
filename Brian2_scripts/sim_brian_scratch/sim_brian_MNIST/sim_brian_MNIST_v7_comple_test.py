@@ -4,16 +4,12 @@
 # ----------------------------------------
 
 from brian2 import *
-from brian2tools import *
 import scipy as sp
 import struct
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
-import pickle
 from bqplot import *
-import ipywidgets as widgets
 import warnings
 import os
 import time
@@ -58,68 +54,18 @@ class timelog():
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
                     + str(test) + ' '+ str(parameters) + ' ' + '\n')
 
-class Function():
-    def __init__(self):
+class Complement_test():
+    def __init__(self, type, path):
+        self.type = type
+        self.path = path
+
+    def load(self):
         pass
 
-    def logistic(self, f):
-        return 1 / (1 + np.exp(-f))
-
-    def softmax(self, z):
-        return np.array([(np.exp(i) / np.sum(np.exp(i))) for i in z])
-
-    def gamma(self, a, size):
-        return sp.stats.gamma.rvs(a, size=size)
-
+    def run(self):
+        pass
 
 class Base():
-    def __init__(self, duration, dt):
-        self.duration = duration
-        self.dt = dt
-        self.interval = duration * dt
-
-    def get_states(self, input, running_time, sample, normalize=False):
-        n = int(running_time / self.interval)
-        step = int(self.interval / sample / defaultclock.dt)
-        interval_ = int(self.interval / defaultclock.dt)
-        temp = []
-        for i in range(n):
-            sum = np.sum(input[:, i * interval_: (i + 1) * interval_][:, ::-step], axis=1)
-            temp.append(sum)
-        if normalize:
-            return MinMaxScaler().fit_transform(np.asarray(temp)).T
-        else:
-            return np.asarray(temp).T
-
-    def update_states(self, type='pandas', *args, **kwargs):
-        for seq, state in enumerate(kwargs):
-            if type == 'pandas':
-                kwargs[state] = kwargs[state].append(pd.DataFrame(args[seq]))
-            elif type == 'numpy':
-                kwargs[state] = self.np_extend(kwargs[state], args[seq], 1)
-        return kwargs
-
-    def normalization_min_max(self, arr):
-        arr_n = arr
-        for i in range(arr.size):
-            x = float(arr[i] - np.min(arr)) / (np.max(arr) - np.min(arr))
-            arr_n[i] = x
-        return arr_n
-
-    def mse(self, y_test, y):
-        return sp.sqrt(sp.mean((y_test - y) ** 2))
-
-    def classification(self, thea, data):
-        data_n = self.normalization_min_max(data)
-        data_class = []
-        for a in data_n:
-            if a >= thea:
-                b = 1
-            else:
-                b = 0
-            data_class.append(b)
-        return np.asarray(data_class), data_n
-
     def allocate(self, G, X, Y, Z):
         V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
         V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, Y - 1, Y), np.linspace(0, X - 1, X),
@@ -132,11 +78,6 @@ class Base():
                 g.x[i], g.y[i], g.z[i] = V[n][0], V[n][1], V[n][2]
                 n += 1
         return G
-
-    def w_norm2(self, n_post, Synapsis):
-        for i in range(n_post):
-            a = Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]]
-            Synapsis.w[np.where(Synapsis._synaptic_post == i)[0]] = a / np.linalg.norm(a)
 
     def np_extend(self, a, b, axis=0):
         if a is None:
@@ -152,133 +93,8 @@ class Base():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
-    def parameters_GS(self, *args, **kwargs):
-        #---------------
-        # args = [(min,max),]
-        # kwargs = {'parameter' = number，}
-        #---------------
-        parameters = np.zeros(tuple(kwargs.values()), [(x, float) for x in kwargs.keys()])
-        grids = np.meshgrid(*[np.linspace(min_max[0], min_max[1], scale)
-                              for min_max,scale in zip(args,kwargs.values())], indexing='ij')
-        for index, parameter in enumerate(kwargs.keys()):
-            parameters[parameter] = grids[index]
-        parameters = parameters.reshape(-1)
-        return parameters
-
-    def set_local_parameter_PS(self, S, parameter, boundary = None, method='random', **kwargs):
-        if method == 'random':
-            random = rand(S.N_post) * (boundary[1]-boundary[0]) + boundary[0]
-            if '_post' in parameter:
-                S.variables[parameter].set_value(random)
-            else:
-                S.variables[parameter].set_value(random[S.j])
-        if method == 'group':
-            try:
-                group_n =  kwargs['group_parameters'].shape[0]
-                n = int(np.floor(S.N_post / group_n))
-                random = zeros(S.N_post)
-                for i in range(group_n):
-                    random[i * n:(i + 1) * n] = kwargs['group_parameters'][i]
-                for j in range(S.N_post - group_n*n):
-                    random[group_n * n + j:group_n * n + j + 1] = random[j * n]
-            except KeyError:
-                group_n = kwargs['group_n']
-                n = int(np.floor(S.N_post / group_n))
-                random = zeros(S.N_post)
-                for i in range(group_n):
-                    try:
-                        random[i * n:(i + 1) * n] = rand() * (boundary[1]-boundary[0]) + boundary[0]
-                    except IndexError:
-                        random[i * n:] = rand() * (boundary[1]-boundary[0]) + boundary[0]
-                        continue
-            if '_post' in parameter:
-                S.variables[parameter].set_value(random)
-            else:
-                S.variables[parameter].set_value(random[S.j])
-        if method == 'location':
-            group_n = kwargs['group_n']
-            location_label = kwargs['location_label']
-            random = zeros(S.N_post)
-            bound = np.linspace(0, max(S.variables[location_label].get_value() + 1), num=group_n + 1)
-            for i in range(group_n):
-                random[(S.variables[location_label].get_value() >= bound[i]) & (
-                            S.variables[location_label].get_value() < bound[i + 1])] \
-                    = rand() * (boundary[1]-boundary[0]) + boundary[0]
-            if '_post' in parameter:
-                S.variables[parameter].set_value(random)
-            else:
-                S.variables[parameter].set_value(random[S.j])
-        if method == 'in_coming':
-            max_incoming = max(S.N_incoming)
-            random = S.N_incoming / max_incoming * (boundary[1]-boundary[0]) + boundary[0]
-            if '_post' in parameter:
-                S.variables[parameter].set_value(random)
-            else:
-                S.variables[parameter].set_value(random[S.j])
-
 
 class Readout():
-    def __init__(self, function):
-        self.function = function
-
-    def data_init(self, M_train, M_test, label_train, label_test, rate, theta):
-        self.rate = rate
-        self.theta = theta
-        self.iter = 0
-        self.X_train = self.add_bis(M_train)
-        self.X_test = self.add_bis(M_test)
-        self.Y_train = self.prepare_Y(label_train)
-        self.Y_test = self.prepare_Y(label_test)
-        self.P = np.random.rand(self.X_train.shape[1], self.Y_train.shape[1])
-        self.cost_train = 1e+100
-        self.cost_test = 1e+100
-
-    def predict_logistic(self, results):
-        labels = (results > 0.5).astype(int).T
-        return labels
-
-    def calculate_score(self, label, label_predict):
-        return [accuracy_score(i, j) for i, j in zip(label, label_predict)]
-
-    def add_bis(self, data):
-        one = np.ones((data.shape[1], 1))  # bis
-        X = np.hstack((data.T, one))
-        return X
-
-    def prepare_Y(self, label):
-        if np.asarray(label).ndim == 1:
-            return np.asarray([label]).T
-        else:
-            return np.asarray(label).T
-
-    def cost(self, X, Y, P):
-        left = np.multiply(Y, np.log(self.function(X.dot(P))))
-        right = np.multiply((1 - Y), np.log(1 - self.function(X.dot(P))))
-        return -np.sum(np.nan_to_num(left + right), axis=0) / (len(Y))
-
-    def train(self, X, Y, P):
-        P_ = P + X.T.dot(Y - self.function(X.dot(P))) * self.rate
-        return P_
-
-    def test(self, X, p):
-        return self.function(X.dot(p))
-
-    def stop_condition(self):
-        return ((self.cost_train - self.cost(self.X_train, self.Y_train, self.P)) > self.theta).any() and \
-               ((self.cost_test - self.cost(self.X_test, self.Y_test, self.P)) > self.theta).any() or self.iter < 100
-
-    def readout(self):
-        self.iter = 0
-        while self.stop_condition():
-            self.iter += 1
-            self.cost_train = self.cost(self.X_train, self.Y_train, self.P)
-            self.cost_test = self.cost(self.X_test, self.Y_test, self.P)
-            self.P = self.train(self.X_train, self.Y_train, self.P)
-            if self.iter % 10000 == 0:
-                print(self.iter, self.cost_train, self.cost_test)
-        print(self.iter, self.cost_train, self.cost_test)
-        return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
-
     def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
         from sklearn.linear_model import LogisticRegression
         lr = LogisticRegression(**kwargs)
@@ -286,50 +102,6 @@ class Readout():
         y_train_predictions = lr.predict(X_train.T)
         y_test_predictions = lr.predict(X_test.T)
         return accuracy_score(y_train_predictions, y_train.T), accuracy_score(y_test_predictions, y_test.T)
-
-
-class Result():
-    def __init__(self):
-        pass
-
-    def result_save(self, path, *arg, **kwarg):
-        if os.path.exists(path):
-            os.remove(path)
-        fw = open(path, 'wb')
-        pickle.dump(kwarg, fw)
-        fw.close()
-
-    def result_pick(self, path):
-        fr = open(path, 'rb')
-        data = pickle.load(fr)
-        fr.close()
-        return data
-
-    def animation(self, t, v, interval, duration, a_step=10, a_interval=100, a_duration=10):
-        xs = LinearScale()
-        ys = LinearScale()
-        line = Lines(x=t[:interval], y=v[:, :interval], scales={'x': xs, 'y': ys})
-        xax = Axis(scale=xs, label='x', grid_lines='solid')
-        yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
-        fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
-
-        def on_value_change(change):
-            line.x = t[change['new']:interval + change['new']]
-            line.y = v[:, change['new']:interval + change['new']]
-
-        play = widgets.Play(
-            interval=a_interval,
-            value=0,
-            min=0,
-            max=duration,
-            step=a_step,
-            description="Press play",
-            disabled=False
-        )
-        slider = widgets.IntSlider(min=0, max=duration)
-        widgets.jslink((play, 'value'), (slider, 'value'))
-        slider.observe(on_value_change, names='value')
-        return play, slider, fig
 
 
 class MNIST_classification(Base):
@@ -435,31 +207,36 @@ class MNIST_classification(Base):
 
 
 ###################################
+TYPE = 'CMA-ES'
+
 # -----simulation parameter setting-------
 coding_n = 3
 MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_train = 0.05
+F_validation = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 #-------class initialization----------------------
-function = Function()
+complement = Complement_test(TYPE,path='')
 base = Base(duration, Dt)
 readout = Readout(function.logistic)
-result = Result()
 MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
 df_train = MNIST.select_data(F_train, MNIST.train)
+df_validation = MNIST.select_data(F_validation, MNIST.test)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
+df_en_validation = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_validation, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
+data_validation_s, label_validation = MNIST.get_series_data_list(df_en_validation, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
 #-------get numpy random state------------
@@ -618,7 +395,7 @@ def run_net(inputs, parameter):
     net.restore('init')
     return (states, inputs[1])
 
-
+@timelog
 def parameters_search(parameter):
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
@@ -648,6 +425,4 @@ def parameters_search(parameter):
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    res = cma.fmin(parameters_search, parameters, 0.5, options={'ftarget': -1e+3,'bounds': [0, 1],
-                                                                 'maxiter':30})
+    complement.run()
