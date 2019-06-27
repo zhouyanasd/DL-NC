@@ -50,27 +50,28 @@ class timelog():
         self.func = func
         self.itime = time.time()
         self.iteration = 0
-        with open('wall_time' + '.dat', 'w') as f:
+        with open('Results_Record' + '.dat', 'w') as f:
             f.write('iteration' + ' '
                     + 'wall_time' + ' '
-                    + 'result' + ' '
+                    + 'result_validation' + ' '
+                    + 'result_test' + ' '
                     + 'parameters' + ' '
                     + '\n')
 
     def __call__(self, *args, **kwargs):
-        res, parameters= self.func(*args, **kwargs)
-        self.save(res, parameters)
-        return res
+        validation, test, parameters= self.func(*args, **kwargs)
+        self.save(validation, test, parameters)
+        return validation
 
     @property
     def elapsed(self):
         return time.time() - self.itime
 
-    def save(self, result, parameters):
+    def save(self, validation, test, parameters):
         self.iteration += 1
-        with open('wall_time' + '.dat', 'a') as f:
-            f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(result) + ' '
-                    + str(parameters) + ' ' + '\n')
+        with open('Results_Record' + '.dat', 'a') as f:
+            f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
+                    + str(test) + ' '+ str(parameters) + ' ' + '\n')
 
 
 class TargetSpace_(TargetSpace):
@@ -443,13 +444,16 @@ class Readout():
         print(self.iter, self.cost_train, self.cost_test)
         return self.test(self.X_train, self.P), self.test(self.X_test, self.P)
 
-    def readout_sk(self, X_train, X_test, y_train, y_test, **kwargs):
+    def readout_sk(self, X_train, X_validation, X_test, y_train, y_validation, y_test, **kwargs):
         from sklearn.linear_model import LogisticRegression
         lr = LogisticRegression(**kwargs)
         lr.fit(X_train.T, y_train.T)
         y_train_predictions = lr.predict(X_train.T)
+        y_validation_predictions = lr.predict(X_validation.T)
         y_test_predictions = lr.predict(X_test.T)
-        return accuracy_score(y_train_predictions, y_train.T), accuracy_score(y_test_predictions, y_test.T)
+        return accuracy_score(y_train_predictions, y_train.T), \
+               accuracy_score(y_validation_predictions, y_validation.T),\
+               accuracy_score(y_test_predictions, y_test.T)
 
 
 class Result():
@@ -605,6 +609,7 @@ MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_train = 0.05
+F_validation = 0.05
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
@@ -618,12 +623,15 @@ MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
 df_train = MNIST.select_data(F_train, MNIST.train)
+df_validation = MNIST.select_data(F_validation, MNIST.test)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
+df_en_validation = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_validation, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
 data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
+data_validation_s, label_validation = MNIST.get_series_data_list(df_en_validation, is_group = True)
 data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
 
 #-------get numpy random state------------
@@ -786,26 +794,35 @@ def run_net(inputs, **parameter):
 def parameters_search(**parameter):
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
+    # ------parallel run for validation-------
+    states_validation_list = pool.map(partial(run_net, **parameter),
+                                      [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
     states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
-    states_train, states_test, _label_train, _label_test = [], [], [], []
-    for train in states_train_list :
+    states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
+    for train in states_train_list:
         states_train.append(train[0])
         _label_train.append(train[1])
+    for validation in states_validation_list:
+        states_validation.append(validation[0])
+        _label_validation.append(validation[1])
     for test in states_test_list:
         states_test.append(test[0])
         _label_test.append(test[1])
     states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
+    states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
-    score_train, score_test = readout.readout_sk(states_train, states_test,
-                                                 np.asarray(_label_train), np.asarray(_label_test),
-                                                 solver="lbfgs", multi_class="multinomial")
+    score_train, score_validation, score_test = readout.readout_sk(states_train, states_validation, states_test,
+                                                                   np.asarray(_label_train),
+                                                                   np.asarray(_label_validation),
+                                                                   np.asarray(_label_test), solver="lbfgs",
+                                                                   multi_class="multinomial")
     # ----------show results-----------
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
-    return 1 - score_test, parameter
+    return 1-score_validation, 1 - score_test, parameter
 
 ##########################################
 # -------CMA-ES parameters search---------------

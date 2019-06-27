@@ -647,7 +647,6 @@ def run_net(inputs, parameter):
     net.restore('init')
     return (states, inputs[1])
 
-
 @timelog
 def parameters_search(parameter):
     # ------parallel run for train-------

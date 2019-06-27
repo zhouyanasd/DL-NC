@@ -905,7 +905,6 @@ def run_net(inputs, **parameter):
     net.restore('init')
     return (states, inputs[1])
 
-
 @timelog
 def parameters_search(**parameter):
     # ------parallel run for train-------
@@ -934,6 +933,11 @@ def parameters_search(**parameter):
                                                                    np.asarray(_label_validation),
                                                                    np.asarray(_label_test), solver="lbfgs",
                                                                    multi_class="multinomial")
+    # ----------show results-----------
+    print('parameters %s' % parameter)
+    print('Train score: ', score_train)
+    print('Test score: ', score_test)
+    return 1-score_validation, 1 - score_test, parameter
 
 ##########################################
 # -------BO parameters search---------------
