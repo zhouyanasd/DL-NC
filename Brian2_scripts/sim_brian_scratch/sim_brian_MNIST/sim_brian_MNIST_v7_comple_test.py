@@ -11,6 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 from bqplot import *
 import warnings
+import re
 import os
 import time
 from multiprocessing import Pool
@@ -59,11 +60,52 @@ class Complement_test():
         self.type = type
         self.path = path
 
-    def load(self):
-        pass
+    def load_SAES(self):
+        X,fit =[],[]
+        with open(self.path, 'r') as f:
+            l = f.readlines()
+        l.pop(0)
+        p1 = re.compile(r'[{](.*?)[}]', re.S)
+        for i in range(0, len(l)):
+            l[i] = l[i].rstrip('\n')
+            s = re.findall(p1, l[i])[0]
+            d = eval('{'+s+'}')
+            X.append(d)
+            f = float(l[i].replace('{'+s+'}','').split(' ')[2])
+            fit.append(f)
+        return X, fit
 
-    def run(self):
-        pass
+    def load_CMAES(self):
+        fit = np.loadtext(self.path, delimiter=None, comments='%', usecols=(4))
+        X = np.loadtext(self.path, delimiter=None, comments='%', usecols=(5,6,7,8,9,10,11,12,13))
+        return X, fit
+
+    def load_BO(self):
+        X, fit = [], []
+        with open(self.path, 'r') as load_f:
+            while True:
+                try:
+                    iteration = next(load_f)
+                except StopIteration:
+                    break
+                iteration = json.loads(iteration)
+                X.append(iteration['params'])
+                fit.append(iteration['target'])
+        return X, fit
+
+    def load(self):
+        if self.type == 'CMA-ES':
+            self.X, self.res = self.load_CMAES()
+        elif self.type == 'SAES':
+            self.X, self.res = self.load_SAES()
+        elif self.type == 'BO':
+            self.X, self.res =  self.load_BO()
+        else:
+            print('wrong type')
+
+    def run(self, f):
+        for parameter, validation in zip(self.X, self.res):
+            f(validation, parameter)
 
 class Base():
     def allocate(self, G, X, Y, Z):
@@ -207,7 +249,7 @@ class MNIST_classification(Base):
 
 
 ###################################
-TYPE = 'CMA-ES'
+TYPE = 'CMA-ES' # or 'BO' 'SAES'
 
 # -----simulation parameter setting-------
 coding_n = 3
@@ -246,6 +288,7 @@ np_state = np.random.get_state()
 ############################################
 # ---- define network run function----
 def run_net(inputs, parameter):
+
     """
         run_net(inputs, parameter)
             Parameters = [R, p_inE/I, f_in, f_EE, f_EI, f_IE, f_II, tau_ex, tau_inh]
@@ -254,6 +297,8 @@ def run_net(inputs, parameter):
 
     #---- set numpy random state for each run----
     np.random.set_state(np_state)
+    if type(parameter) == dict:
+        parameter = np.array(list(parameter.values))
 
     # -----parameter setting-------
     n_ex = 1600
@@ -396,7 +441,7 @@ def run_net(inputs, parameter):
     return (states, inputs[1])
 
 @timelog
-def parameters_search(parameter):
+def parameters_search(validation, parameter):
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
     # ----parallel run for test--------
@@ -418,11 +463,11 @@ def parameters_search(parameter):
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Test score: ', score_test)
-    return 1 - score_test
+    return validation, 1 - score_test, parameter
 
 ##########################################
 # -------CMA-ES parameters search---------------
 if __name__ == '__main__':
     core = 10
     pool = Pool(core)
-    complement.run()
+    complement.run(parameters_search)
