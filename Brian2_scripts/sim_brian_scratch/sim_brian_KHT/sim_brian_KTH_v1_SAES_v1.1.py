@@ -61,8 +61,8 @@ class timelog():
                     + '\n')
 
     def __call__(self, *args, **kwargs):
-        validation, test, parameters= self.func(*args, **kwargs)
-        self.save(validation, test, parameters)
+        validation, test, train, parameters= self.func(*args, **kwargs)
+        self.save(validation, test, train, parameters)
         return validation
 
     @property
