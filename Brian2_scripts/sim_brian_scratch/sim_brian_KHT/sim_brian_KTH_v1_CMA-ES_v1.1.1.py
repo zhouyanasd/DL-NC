@@ -239,7 +239,7 @@ class Result():
 
 
 class KTH_classification():
-    def __init__(self):
+    def __init__(self, type, **kwargs):
         self.CATEGORIES = {
             "boxing": 0,
             "handclapping": 1,
@@ -248,9 +248,29 @@ class KTH_classification():
             "running": 4,
             "walking": 5
         }
-        self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
-        self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
-        self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
+        self.spilt_data(type, **kwargs)
+
+    def spilt_data(self, type, **kwargs):
+        if type == 'official':
+            self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
+            self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
+            self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
+        elif type == 'random':
+            x = np.arange(25)
+            np.random.shuffle(x)
+            s = kwargs['split']
+            self.TRAIN_PEOPLE_ID = x[:s[0]]
+            self.VALIDATION_PEOPLE_ID =  x[s[0]:sum(s[:2])]
+            self.TEST_PEOPLE_ID = x[sum(s[:2]):sum(s)]
+        elif type == 'solid':
+            self.TRAIN_PEOPLE_ID = kwargs['train']
+            self.VALIDATION_PEOPLE_ID = kwargs['validation']
+            self.TEST_PEOPLE_ID = kwargs['test']
+        else:
+            print('worng type, use official instead')
+            self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
+            self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
+            self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
 
     def parse_sequence_file(self, path):
         print("Parsing %s" % path)
@@ -431,14 +451,14 @@ function = Function()
 base = Base()
 readout = Readout()
 result = Result()
-KTH = KTH_classification()
+KTH = KTH_classification(type = 'random', split = [13,6,6])
 
 # -------data initialization----------------------
 if LOAD_DATA:
 
-    df_en_train = KTH.load_data(data_path + 'train.p')
-    df_en_validation = KTH.load_data(data_path + 'validation.p')
-    df_en_test = KTH.load_data(data_path + 'test.p')
+    df_en_train = KTH.load_data(data_path + 'train_v1_0.p')
+    df_en_validation = KTH.load_data(data_path + 'validation_v1_0.p')
+    df_en_test = KTH.load_data(data_path + 'test_v1_0.p')
 
 else:
 
@@ -452,14 +472,13 @@ else:
     df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
     df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
 
-    KTH.dump_data(data_path + 'train.p', df_en_train)
-    KTH.dump_data(data_path + 'validation.p', df_en_validation)
-    KTH.dump_data(data_path + 'test.p', df_en_test)
+    KTH.dump_data(data_path + 'train_temp.p', df_en_train)
+    KTH.dump_data(data_path + 'validation_temp.p', df_en_validation)
+    KTH.dump_data(data_path + 'test_temp.p', df_en_test)
 
 data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
 data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
-
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
