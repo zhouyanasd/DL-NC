@@ -56,6 +56,7 @@ class timelog():
                     + 'wall_time' + ' '
                     + 'result_validation' + ' '
                     + 'result_test' + ' '
+                    + 'result_train'+ ' '
                     + 'parameters' + ' '
                     + '\n')
 
@@ -68,11 +69,11 @@ class timelog():
     def elapsed(self):
         return time.time() - self.itime
 
-    def save(self, validation, test, parameters):
+    def save(self, validation, test, train, parameters):
         self.iteration += 1
         with open('Results_Record' + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
-                    + str(test) + ' '+ str(parameters) + ' ' + '\n')
+                    + str(test) + ' '+ str(train) + ' '+ str(parameters) + ' ' + '\n')
 
 
 class TargetSpace_(TargetSpace):
@@ -641,7 +642,7 @@ else:
 
 data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-data_test_s, label_test = KTH.get_series_data_list(df_en_train, is_group=True)
+data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
@@ -831,8 +832,9 @@ def parameters_search(**parameter):
     # ----------show results-----------
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
+    print('Validation score: ', score_validation)
     print('Test score: ', score_test)
-    return 1-score_validation, 1 - score_test, parameter
+    return 1-score_validation, 1 - score_test, 1 - score_train, parameter
 
 ##########################################
 # -------CMA-ES parameters search---------------
