@@ -12,16 +12,12 @@
 # ----------------------------------------
 
 from brian2 import *
-from brian2tools import *
 import scipy as sp
 import struct
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 import pickle
-from bqplot import *
-import ipywidgets as widgets
 import warnings
 import os
 import cv2
@@ -240,32 +236,6 @@ class Result():
         data = pickle.load(fr)
         fr.close()
         return data
-
-    def animation(self, t, v, interval, duration, a_step=10, a_interval=100, a_duration=10):
-        xs = LinearScale()
-        ys = LinearScale()
-        line = Lines(x=t[:interval], y=v[:, :interval], scales={'x': xs, 'y': ys})
-        xax = Axis(scale=xs, label='x', grid_lines='solid')
-        yax = Axis(scale=ys, orientation='vertical', tick_format='0.2f', label='y', grid_lines='solid')
-        fig = Figure(marks=[line], axes=[xax, yax], animation_duration=a_duration)
-
-        def on_value_change(change):
-            line.x = t[change['new']:interval + change['new']]
-            line.y = v[:, change['new']:interval + change['new']]
-
-        play = widgets.Play(
-            interval=a_interval,
-            value=0,
-            min=0,
-            max=duration,
-            step=a_step,
-            description="Press play",
-            disabled=False
-        )
-        slider = widgets.IntSlider(min=0, max=duration)
-        widgets.jslink((play, 'value'), (slider, 'value'))
-        slider.observe(on_value_change, names='value')
-        return play, slider, fig
 
 
 class KTH_classification():
