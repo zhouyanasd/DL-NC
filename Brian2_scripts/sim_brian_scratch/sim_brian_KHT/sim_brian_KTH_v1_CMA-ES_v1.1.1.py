@@ -12,6 +12,7 @@
 # ----------------------------------------
 
 from brian2 import *
+import numpy as np
 import scipy as sp
 import struct
 import pandas as pd
@@ -462,7 +463,7 @@ if LOAD_DATA:
 
 else:
 
-    KTH.load_Data_KTH_all(data_path)
+    KTH.load_data_KTH_all(data_path)
 
     df_train = KTH.select_data_KTH(F_train, KTH.train, False)
     df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
