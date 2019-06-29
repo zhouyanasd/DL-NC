@@ -456,7 +456,7 @@ else:
 
 data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-data_test_s, label_test = KTH.get_series_data_list(df_en_train, is_group=True)
+data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 
 if USE_VALIDATION:
 
