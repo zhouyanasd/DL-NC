@@ -14,10 +14,12 @@
 # ----------------------------------------
 
 from brian2 import *
+import numpy as np
 import scipy as sp
 from scipy import stats
 import struct
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 import pickle
@@ -708,7 +710,7 @@ MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_train = 0.05
-F_validation = 0.05
+F_validation = 0.00833333
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
@@ -721,8 +723,9 @@ MNIST = MNIST_classification(MNIST_shape, duration, Dt)
 
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
-df_train = MNIST.select_data(F_train, MNIST.train)
-df_validation = MNIST.select_data(F_validation, MNIST.test)
+df_train_validation = MNIST.select_data(F_train+F_validation, MNIST.train)
+df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation/(F_validation+F_train),
+                                           random_state=42)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
 df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
