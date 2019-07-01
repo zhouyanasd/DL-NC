@@ -945,7 +945,7 @@ if __name__ == '__main__':
     optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
     optimizer.maximize(
-        LHS_path='./LHS.json',
+        LHS_path='./LHS.dat',
         init_points=50,
         is_LHS = True,
         n_iter=250,
