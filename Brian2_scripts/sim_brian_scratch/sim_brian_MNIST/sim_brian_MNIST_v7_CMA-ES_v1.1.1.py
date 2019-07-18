@@ -426,7 +426,7 @@ MNIST_shape = (1, 784)
 coding_duration = 30
 duration = coding_duration*MNIST_shape[0]
 F_train = 0.05
-F_validation = 0.05
+F_validation = 0.00833333
 F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
