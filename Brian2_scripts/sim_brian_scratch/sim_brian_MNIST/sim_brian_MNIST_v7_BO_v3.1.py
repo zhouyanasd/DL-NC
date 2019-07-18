@@ -62,7 +62,7 @@ class timelog():
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters= self.func(*args, **kwargs)
-        self.save(validation, test, train, parameters)
+        self.save(1-validation, 1-test, 1-train, parameters)
         return validation
 
     @property
@@ -270,7 +270,7 @@ class BayesianOptimization_(bayes_opt.BayesianOptimization):
             d = eval('{'+s+'}')
             X.append(np.array(list(d.values())))
             f = float(l[i].replace('{'+s+'}','').split(' ')[2])
-            fit.append(f)
+            fit.append(1-f)
         return X, fit
 
     def suggest(self, utility_function):
@@ -925,7 +925,7 @@ def parameters_search(**parameter):
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
     print('Test score: ', score_test)
-    return 1-score_validation, 1 - score_test, 1 - score_train, parameter
+    return score_validation, score_test, score_train, parameter
 
 ##########################################
 # -------BO parameters search---------------
@@ -949,7 +949,7 @@ if __name__ == '__main__':
         init_points=50,
         is_LHS = True,
         n_iter=250,
-        acq='ucb',
+        acq='ei',
         kappa=2.576,
         xi=0.0,
     )
