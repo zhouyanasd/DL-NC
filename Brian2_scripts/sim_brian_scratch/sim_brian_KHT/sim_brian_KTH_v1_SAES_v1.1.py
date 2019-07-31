@@ -74,6 +74,12 @@ class timelog():
 
 
 class TargetSpace_(TargetSpace):
+    #     """Negative target space
+    #
+    #     Convert the maximum to the minimum through using negative target space.
+    #     The search space keep the same, but use negative targets.
+    #
+    #     """
     def __init__(self, target_func, pbounds, random_state=None):
         super(TargetSpace_, self).__init__(target_func, pbounds, random_state=None)
 
