@@ -7,6 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 from .core import *
+import re
 
 import cma
 import bayes_opt
@@ -36,7 +37,7 @@ class DiffEvol(object):
         if seed is not None:
             rseed(seed)
 
-        self.minfun = _function_wrapper(fun, args, kwargs)
+        self.minfun = self._function_wrapper(fun, args, kwargs)
         self.bounds = asarray(bounds)
         self.n_pop = npop
         self.n_par = self.bounds.shape[0]
@@ -197,7 +198,7 @@ class UtilityFunction_(UtilityFunction):
 
 
 class BayesianOptimization_(BayesianOptimization):
-    def __init__(self, f, pbounds, random_state=None, verbose=2):
+    def __init__(self, f, pbounds, random_state=None, verbose=0):
         super(BayesianOptimization_, self).__init__(f, pbounds, random_state, verbose)
 
     def _prime_queue_LHS(self, init_points):
@@ -334,8 +335,8 @@ class SAES():
         opts['bounds'] = self.optimizer._space._bounds.T.tolist()
         self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
 
-    def run_pre_selection(self, n, path=None):
-        if path == None:
+    def run_pre_selection(self, n, LHS_path=None):
+        if LHS_path == None:
             LHS_points = self.optimizer.LHSample(np.clip(init_points - self.es.popsize, 1, np.inf).astype(int),
                                                  self.optimizer._space.bounds)  # LHS for BO
             fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in
@@ -350,7 +351,7 @@ class SAES():
             for x, eva in zip(X, fit):
                 self.optimizer._space.register(x, eva)  # update solution space
         else:
-            X, fit = self.optimizer.load_LHS(path)
+            X, fit = self.optimizer.load_LHS(LHS_path)
             for x, eva in zip(X, fit):
                 self.optimizer._space.register(x, eva)  # add loaded LHS points to solution space
             self.es.ask()
@@ -371,8 +372,8 @@ class SAES():
             self.es.logger.add()  # update the log
             self.es.disp()
 
-    def run_best_strategy(self, init_points, n, inter=1, path=None):
-        if path == None:
+    def run_best_strategy(self, init_points, n, inter=1, LHS_path=None):
+        if LHS_path == None:
             LHS_points = self.optimizer.LHSample(np.clip(init_points - self.es.popsize, 1, np.inf).astype(int),
                                                  self.optimizer._space.bounds)  # LHS for BO
             fit_init = [self.f(**self.optimizer._space.array_to_params(x)) for x in
@@ -387,7 +388,7 @@ class SAES():
             for x, eva in zip(X, fit):
                 self.optimizer._space.register(x, eva)  # update solution space
         else:
-            X, fit = self.optimizer.load_LHS(path)
+            X, fit = self.optimizer.load_LHS(LHS_path)
             for x, eva in zip(X, fit):
                 self.optimizer._space.register(x, eva)  # add loaded LHS points to solution space
             self.es.ask()
@@ -414,17 +415,3 @@ class SAES():
             self.es.tell(X, fit)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
-
-def AddParaName(keys):
-    def addkeys(func):
-        def trans(*arg,**kwargs):
-            if kwargs:
-                return func(**kwargs)
-            if arg:
-                kwargs = dict(zip(keys, *arg))
-                return func(**kwargs)
-        return trans
-
-    return addkeys
-
-

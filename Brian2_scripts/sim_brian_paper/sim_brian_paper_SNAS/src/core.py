@@ -9,15 +9,9 @@
 
 import os
 import pickle
-import re
 import time
-import warnings
 
-from brian2 import *
 import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 
@@ -50,6 +44,20 @@ class Timelog():
         with open('Results_Record' + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
                     + str(test) + ' '+ str(train) + ' '+ str(parameters) + ' ' + '\n')
+
+
+class AddParaName():
+    def __init__(self, func):
+        self.func = func
+        self.keys = []
+
+    def __call__(self, *arg, **kwargs):
+        if kwargs:
+            return self.func(**kwargs)
+        if arg:
+            kwargs = dict(zip(self.keys, *arg))
+            return self.func(**kwargs)
+
 
 class Base():
     """Standardize a dataset along any axis
@@ -101,6 +109,17 @@ class Base():
                 g.x[i], g.y[i], g.z[i] = V[n][0], V[n][1], V[n][2]
                 n += 1
         return G
+
+    def addParaName(self,keys):
+        def addKeys(func):
+            def trans(*arg, **kwargs):
+                if kwargs:
+                    return func(**kwargs)
+                if arg:
+                    kwargs = dict(zip(keys, *arg))
+                    return func(**kwargs)
+            return trans
+        return addKeys
 
 
 class Readout():

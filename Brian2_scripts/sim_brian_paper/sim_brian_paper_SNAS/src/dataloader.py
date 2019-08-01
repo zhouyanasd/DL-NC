@@ -7,15 +7,24 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .core import *
+from .core import Base
 
+import os
+import re
 import struct
+import pickle
+
 import cv2
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
 class MNIST_classification(Base):
-    def __init__(self, shape, duration, dt):
-        super().__init__(duration, dt)
+    def __init__(self, shape, duration):
+        super().__init__()
         self.shape = shape
+        self.duration = duration
 
     def load_Data_MNIST(self, n, path_value, path_label, is_norm=True):
         with open(path_value, 'rb') as f1:

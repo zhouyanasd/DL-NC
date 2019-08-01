@@ -22,10 +22,12 @@ Citation
 
 """
 
-from .core import *
-from .dataloader import *
-from .optimizer import *
+from src.core import *
+from src.dataloader import *
+from src.optimizer import *
+import warnings
 
+from brian2 import *
 from functools import partial
 from multiprocessing import Pool
 
@@ -48,11 +50,9 @@ F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 #-------class initialization----------------------
-function = Function()
-base = Base(duration, Dt)
-readout = Readout(function.logistic)
-result = Result()
-MNIST = MNIST_classification(MNIST_shape, duration, Dt)
+base = Base()
+readout = Readout()
+MNIST = MNIST_classification(MNIST_shape, duration)
 
 #-------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
@@ -75,7 +75,7 @@ np_state = np.random.get_state()
 
 ############################################
 # ---- define network run function----
-def run_net(inputs, parameter):
+def run_net(inputs, **parameter):
     """
         run_net(inputs, parameter)
             Parameters = [R, p_inE/I, f_in, f_EE, f_EI, f_IE, f_II, tau_ex, tau_inh]
@@ -91,12 +91,12 @@ def run_net(inputs, parameter):
     n_input = MNIST_shape[1]*coding_n
     n_read = n_ex+n_inh
 
-    R = parameter[0]
-    f_in = parameter[2]
-    f_EE = parameter[3]
-    f_EI = parameter[4]
-    f_IE = parameter[5]
-    f_II = parameter[6]
+    R = parameter['R']
+    f_in = parameter['f_in']
+    f_EE = parameter['f_EE']
+    f_EI = parameter['f_EI']
+    f_IE = parameter['f_IE']
+    f_II = parameter['f_II']
 
     A_EE = 60*f_EE
     A_EI = 60*f_EI
@@ -105,12 +105,12 @@ def run_net(inputs, parameter):
     A_inE = 60*f_in
     A_inI = 60*f_in
 
-    tau_ex = parameter[7]*coding_duration
-    tau_inh = parameter[8]*coding_duration
+    tau_ex = parameter['tau_ex']*coding_duration
+    tau_inh = parameter['tau_inh']*coding_duration
     tau_read= 30
 
-    p_inE = parameter[1]*0.1
-    p_inI = parameter[1]*0.1
+    p_inE = parameter['p_in']*0.1
+    p_inI = parameter['p_in']*0.1
 
     #------definition of equation-------------
     neuron_in = '''
@@ -226,20 +226,21 @@ def run_net(inputs, parameter):
     return (states, inputs[1])
 
 @Timelog
-def parameters_search(parameter):
+@AddParaName
+def parameters_search(**parameter):
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_validation_s,
-                                                                                                 label_validation)])
+    states_validation_list = pool.map(partial(run_net, **parameter),
+                                      [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, parameter = parameter), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, **parameter), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
-    for train in states_train_list :
+    for train in states_train_list:
         states_train.append(train[0])
         _label_train.append(train[1])
-    for validation in states_validation_list :
+    for validation in states_validation_list:
         states_validation.append(validation[0])
         _label_validation.append(validation[1])
     for test in states_test_list:
@@ -249,21 +250,57 @@ def parameters_search(parameter):
     states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
     score_train, score_validation, score_test = readout.readout_sk(states_train, states_validation, states_test,
-                                                 np.asarray(_label_train), np.asarray(_label_validation),
-                                                 np.asarray(_label_test), solver="lbfgs", multi_class="multinomial")
+                                                                   np.asarray(_label_train),
+                                                                   np.asarray(_label_validation),
+                                                                   np.asarray(_label_test), solver="lbfgs",
+                                                                   multi_class="multinomial")
     # ----------show results-----------
     print('parameters %s' % parameter)
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
     print('Test score: ', score_test)
-    return 1-score_validation, 1 - score_test, 1 - score_train, parameter
+    return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
 ##########################################
-# -------CMA-ES parameters search---------------
+# -------parameters search---------------
 if __name__ == '__main__':
-    core = 10
+    core = 1
     pool = Pool(core)
     parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    res = cma.fmin(parameters_search, parameters, 0.5, options={'ftarget': -1e+3,'bounds': [0, 1],
-                                                                 'maxiter':30})
+    bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
+              'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
+    parameters_search.keys = list(bounds.keys())
+
+    SNAS = 'SAES'
+
+    if SNAS == 'BO':
+        optimizer = BayesianOptimization_(
+            f=parameters_search,
+            pbounds= bounds,
+            random_state=np.random.RandomState(),
+        )
+
+        logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
+        optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
+
+        optimizer.minimize(
+            LHS_path='./LHS.dat',
+            init_points=50,
+            is_LHS = True,
+            n_iter=250,
+            acq='ei',
+            opt = optimizer.acq_min_DE,
+            kappa=2.576,
+            xi=0.0,
+        )
+
+    elif SNAS == 'SAES':
+        saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
+                    **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
+        saes.run_best_strategy(50,1,2,LHS_path='./LHS.dat')
+
+    elif SNAS == 'CMA':
+        res = cma.fmin(parameters_search, parameters, 0.5,
+                       options={'ftarget': -1e+3, 'maxiter':30,
+                                'bounds': np.array([list(x) for x in list(bounds.values())]).T.tolist()})
 
