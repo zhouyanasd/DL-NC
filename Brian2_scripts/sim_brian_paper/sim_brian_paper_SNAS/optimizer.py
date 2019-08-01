@@ -22,6 +22,15 @@ from numpy.random import random, randint, rand, seed as rseed, uniform
 
 class DiffEvol(object):
 
+    class _function_wrapper(object):
+        def __init__(self, f, args, kwargs):
+            self.f = f
+            self.args = args
+            self.kwargs = kwargs
+
+        def __call__(self, x):
+            return self.f(x, *self.args, **self.kwargs)
+
     def __init__(self, fun, bounds, npop, f=None, c=None, seed=None, maximize=False, vectorize=False, cbounds=(0.25, 1),
                  fbounds=(0.25, 0.75), pool=None, min_ptp=1e-2, args=[], kwargs={}):
         if seed is not None:
@@ -155,14 +164,7 @@ class DiffEvol(object):
 
             yield popc[self._minidx, :], fitc[self._minidx]
 
-class _function_wrapper(object):
-    def __init__(self, f, args, kwargs):
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
 
-    def __call__(self, x):
-        return self.f(x, *self.args, **self.kwargs)
 
 
 class UtilityFunction_(UtilityFunction):
@@ -321,7 +323,7 @@ class BayesianOptimization_(BayesianOptimization):
 
 
 class SAES():
-    def __init__(self, f, acquisition, x, sigma, kappa=2.576, xi=0.0, **opts):
+    def __init__(self, f, acquisition, x0, sigma, kappa=2.576, xi=0.0, **opts):
         self.f = f
         self.optimizer = BayesianOptimization_(
             f=f,
@@ -330,7 +332,7 @@ class SAES():
         )
         self.util = UtilityFunction_(kind=acquisition, kappa=kappa, xi=xi)
         opts['bounds'] = self.optimizer._space._bounds.T.tolist()
-        self.es = CMA(x, sigma, opts)
+        self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
 
     def run_pre_selection(self, n, path=None):
         if path == None:
@@ -413,49 +415,16 @@ class SAES():
             self.es.logger.add()  # update the log
             self.es.disp()
 
-
-class CMA(cma.CMAEvolutionStrategy):
-    def __init__(self, x, sigma0, inopts=None):
-        x0 = list(x.values())
-        self.keys = set(x.keys())
-        super(CMA, self).__init__(x0, sigma0, inopts)
-
-    @staticmethod
-    def Fmin(objective_function, x, sigma0,
-             options=None,
-             args=(),
-             gradf=None,
-             restarts=0,
-             restart_from_best='False',
-             incpopsize=2,
-             eval_initial_x=False,
-             noise_handler=None,
-             noise_change_sigma_exponent=1,
-             noise_kappa_exponent=0,
-             bipop=False,
-             callback=None):
-        x0 = list(x.values())
-        return cma.fmin(objective_function, x0, sigma0,
-                    options=options,
-                    args=args,
-                    gradf=gradf,
-                    restarts=restarts,
-                    restart_from_best=restart_from_best,
-                    incpopsize=incpopsize,
-                    eval_initial_x=eval_initial_x,
-                    noise_handler=noise_handler,
-                    noise_change_sigma_exponent=noise_change_sigma_exponent,
-                    noise_kappa_exponent=noise_kappa_exponent,
-                    bipop=bipop,
-                    callback=callback)
-
-
 def AddParaName(keys):
     def addkeys(func):
-        def trans(args):
-            kwargs = dict(zip(keys,args))
-            return func(kwargs)
+        def trans(*arg,**kwargs):
+            if kwargs:
+                return func(**kwargs)
+            if arg:
+                kwargs = dict(zip(keys, *arg))
+                return func(**kwargs)
         return trans
+
     return addkeys
 
 
