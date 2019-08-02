@@ -22,14 +22,14 @@ Citation
 
 """
 
-from src.core import *
-from src.dataloader import *
-from src.optimizer import *
-import warnings
+from src import *
 
-from brian2 import *
+import warnings
 from functools import partial
 from multiprocessing import Pool
+
+from brian2 import *
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
@@ -50,7 +50,8 @@ F_test = 0.05
 Dt = defaultclock.dt = 1*ms
 
 #-------class initialization----------------------
-base = Base()
+function = MathFunctions()
+base = BaseFunctions()
 readout = Readout()
 MNIST = MNIST_classification(MNIST_shape, duration)
 
@@ -262,17 +263,19 @@ def parameters_search(**parameter):
     return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
 ##########################################
-# -------parameters search---------------
+# -------optimizer settings---------------
 if __name__ == '__main__':
     core = 1
     pool = Pool(core)
     parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.01, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
+    bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.0001, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
-    parameters_search.keys = list(bounds.keys())
+    parameters_search.func.keys = list(bounds.keys())
 
+    LHS_path = './LHS.dat'
     SNAS = 'SAES'
 
+# -------parameters search---------------
     if SNAS == 'BO':
         optimizer = BayesianOptimization_(
             f=parameters_search,
@@ -284,20 +287,18 @@ if __name__ == '__main__':
         optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
         optimizer.minimize(
-            LHS_path='./LHS.dat',
+            LHS_path=LHS_path,
             init_points=50,
             is_LHS = True,
             n_iter=250,
             acq='ei',
             opt = optimizer.acq_min_DE,
-            kappa=2.576,
-            xi=0.0,
         )
 
     elif SNAS == 'SAES':
-        saes = SAES(parameters_search, 'ei', parameters, 0.5, kappa=2.576, xi=0.0,
+        saes = SAES(parameters_search, 'ei', parameters, 0.5,
                     **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
-        saes.run_best_strategy(50,1,2,LHS_path='./LHS.dat')
+        saes.run_best_strategy(50,1,2, LHS_path=LHS_path)
 
     elif SNAS == 'CMA':
         res = cma.fmin(parameters_search, parameters, 0.5,

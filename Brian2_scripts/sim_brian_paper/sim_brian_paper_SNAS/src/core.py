@@ -12,6 +12,7 @@ import pickle
 import time
 
 import numpy as np
+import scipy as sp
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 
@@ -26,12 +27,12 @@ class Timelog():
                     + 'wall_time' + ' '
                     + 'result_validation' + ' '
                     + 'result_test' + ' '
-                    + 'result_train'+ ' '
+                    + 'result_train' + ' '
                     + 'parameters' + ' '
                     + '\n')
 
     def __call__(self, *args, **kwargs):
-        validation, test, train, parameters= self.func(*args, **kwargs)
+        validation, test, train, parameters = self.func(*args, **kwargs)
         self.save(validation, test, train, parameters)
         return validation
 
@@ -43,7 +44,7 @@ class Timelog():
         self.iteration += 1
         with open('Results_Record' + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
-                    + str(test) + ' '+ str(train) + ' '+ str(parameters) + ' ' + '\n')
+                    + str(test) + ' ' + str(train) + ' ' + str(parameters) + ' ' + '\n')
 
 
 class AddParaName():
@@ -59,20 +60,18 @@ class AddParaName():
             return self.func(**kwargs)
 
 
-class Base():
+class MathFunctions():
+    def __init__(self):
+        pass
+
+    def gamma(self, a, size):
+        return sp.stats.gamma.rvs(a, size=size)
+
+
+class BaseFunctions():
     """Standardize a dataset along any axis
 
     Center to the mean and component wise scale to unit variance.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}
-        The data to center and scale.
-
-    axis : int (0 by default)
-        axis used to compute the means and standard deviations along. If 0,
-        independently standardize each feature, otherwise (if 1) standardize
-        each sample.
 
     Notes
     -----
@@ -80,6 +79,7 @@ class Base():
     See also
     --------
     """
+
     def __init__(self):
         pass
 
@@ -110,17 +110,6 @@ class Base():
                 n += 1
         return G
 
-    def addParaName(self,keys):
-        def addKeys(func):
-            def trans(*arg, **kwargs):
-                if kwargs:
-                    return func(**kwargs)
-                if arg:
-                    kwargs = dict(zip(keys, *arg))
-                    return func(**kwargs)
-            return trans
-        return addKeys
-
 
 class Readout():
     """Some basic function for data transformation or calculation.
@@ -143,6 +132,7 @@ class Readout():
     -----
 
     """
+
     def __init__(self):
         pass
 

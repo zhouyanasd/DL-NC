@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .core import Base
+from .core import BaseFunctions
 
 import os
 import re
@@ -18,9 +18,8 @@ import cv2
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 
-class MNIST_classification(Base):
+class MNIST_classification(BaseFunctions):
     def __init__(self, shape, duration):
         super().__init__()
         self.shape = shape

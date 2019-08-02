@@ -6,7 +6,6 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
-from .core import *
 import re
 
 import cma
