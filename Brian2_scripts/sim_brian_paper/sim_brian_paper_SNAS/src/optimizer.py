@@ -7,14 +7,15 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 import re
+import warnings
 
 import cma
 import bayes_opt
 from bayes_opt.event import Events
 from bayes_opt import BayesianOptimization
 from bayes_opt import UtilityFunction
-from bayes_opt.target_space import TargetSpace
 
+import numpy as np
 from scipy.stats import norm
 from numpy import asarray, zeros, zeros_like, tile, array, argmin, mod
 from numpy.random import random, randint, rand, seed as rseed, uniform
@@ -192,6 +193,7 @@ class UtilityFunction_(UtilityFunction):
 
     @staticmethod
     def _poi_(x, gp, y_min, xi):
+        mean, std = gp.predict(x, return_std=True)
         z = (y_min - mean - xi) / std
         return -norm.cdf(z)
 
@@ -334,7 +336,7 @@ class SAES():
         opts['bounds'] = self.optimizer._space._bounds.T.tolist()
         self.es = cma.CMAEvolutionStrategy(x0, sigma, opts)
 
-    def run_pre_selection(self, n, LHS_path=None):
+    def run_pre_selection(self, init_points, n, LHS_path=None):
         if LHS_path == None:
             LHS_points = self.optimizer.LHSample(np.clip(init_points - self.es.popsize, 1, np.inf).astype(int),
                                                  self.optimizer._space.bounds)  # LHS for BO
