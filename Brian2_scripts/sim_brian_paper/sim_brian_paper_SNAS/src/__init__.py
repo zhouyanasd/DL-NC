@@ -1,5 +1,5 @@
 from .core import BaseFunctions, MathFunctions, Timelog, AddParaName, Readout, Result
-from .optimizer import BayesianOptimization_, SAES, cma
+from .optimizer import BayesianOptimization_, SAES, cma, bayes_opt
 from .dataloader import MNIST_classification, KTH_classification
 
 __all__ = [
@@ -13,7 +13,8 @@ __all__ = [
     "SAES",
     "MNIST_classification",
     "KTH_classification",
-    "cma"
+    "cma",
+    "bayes_opt"
 ]
 
 __doc__ = """

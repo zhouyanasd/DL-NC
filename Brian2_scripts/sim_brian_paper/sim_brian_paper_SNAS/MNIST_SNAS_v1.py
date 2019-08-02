@@ -21,14 +21,13 @@ Citation
 =======
 
 """
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_SNAS.src import *
 
-from src import *
-
-import warnings
 from functools import partial
 from multiprocessing import Pool
 
 from brian2 import *
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
@@ -265,7 +264,7 @@ def parameters_search(**parameter):
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
-    core = 1
+    core = 8
     pool = Pool(core)
     parameters = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     bounds = {'R': (0.0001, 1), 'p_in': (0.0001, 1), 'f_in': (0.0001, 1), 'f_EE': (0.0001, 1), 'f_EI': (0.0001, 1),
