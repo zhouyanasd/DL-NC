@@ -39,6 +39,7 @@ data_path = '../../../Data/KTH/'
 ###################################
 # -----simulation parameter setting-------
 LOAD_DATA = True
+SAVE_DATA = False
 
 origin_size=(120, 160)
 pool_size=(5, 5)
@@ -76,9 +77,11 @@ else:
     df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
     df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
 
-    KTH.dump_data(data_path + 'train_temp.p', df_en_train)
-    KTH.dump_data(data_path + 'validation_temp.p', df_en_validation)
-    KTH.dump_data(data_path + 'test_temp.p', df_en_test)
+    if SAVE_DATA:
+
+        KTH.dump_data(data_path + 'train_temp.p', df_en_train)
+        KTH.dump_data(data_path + 'validation_temp.p', df_en_validation)
+        KTH.dump_data(data_path + 'test_temp.p', df_en_test)
 
 data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
