@@ -38,8 +38,8 @@ data_path = '../../../Data/KTH/'
 
 ###################################
 # -----simulation parameter setting-------
-LOAD_DATA = True
-SAVE_DATA = False
+GenerateData = False
+DataName = 'temp.p'
 
 origin_size=(120, 160)
 pool_size=(5, 5)
@@ -59,33 +59,16 @@ readout = Readout()
 KTH = KTH_classification(type = 'random', split = [13,6,6])
 
 # -------data initialization----------------------
-if LOAD_DATA:
+try:
+    df_en_train = KTH.load_data(data_path + 'train_'+ DataName)
+    df_en_validation = KTH.load_data(data_path + 'validation_'+ DataName)
+    df_en_test = KTH.load_data(data_path + 'test_'+ DataName)
 
-    df_en_train = KTH.load_data(data_path + 'train_v1_[13,6,6].p')
-    df_en_validation = KTH.load_data(data_path + 'validation_v1_[13,6,6].p')
-    df_en_test = KTH.load_data(data_path + 'test_v1_[13,6,6].p')
-
-else:
-
-    KTH.load_data_KTH_all(data_path)
-
-    df_train = KTH.select_data_KTH(F_train, KTH.train, False)
-    df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
-    df_test = KTH.select_data_KTH(F_train, KTH.test, False)
-
-    df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, types, threshold)
-    df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
-    df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
-
-    if SAVE_DATA:
-
-        KTH.dump_data(data_path + 'train_temp.p', df_en_train)
-        KTH.dump_data(data_path + 'validation_temp.p', df_en_validation)
-        KTH.dump_data(data_path + 'test_temp.p', df_en_test)
-
-data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
-data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
+    data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
+    data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
+    data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
+except FileNotFoundError:
+    GenerateData = True
 
 #-------get numpy random state------------
 np_state = np.random.get_state()
@@ -292,6 +275,21 @@ if __name__ == '__main__':
 
     LHS_path = './LHS.dat'
     SNAS = 'SAES'
+
+    if GenerateData:
+        KTH.load_data_KTH_all(data_path)
+
+        df_train = KTH.select_data_KTH(F_train, KTH.train, False)
+        df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
+        df_test = KTH.select_data_KTH(F_train, KTH.test, False)
+
+        df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, types, threshold)
+        df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
+        df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
+
+        KTH.dump_data(data_path + 'train_'+ DataName, df_en_train)
+        KTH.dump_data(data_path + 'validation_'+ DataName, df_en_validation)
+        KTH.dump_data(data_path + 'test_'+ DataName, df_en_test)
 
 # -------parameters search---------------
     if SNAS == 'BO':
