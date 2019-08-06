@@ -270,7 +270,7 @@ class KTH_classification():
     def load_data_KTH_all(self, data_path, split_type, **kwargs):
         self.spilt_data(split_type, **kwargs)
         self.parse_sequence_file(data_path+'00sequences.txt')
-        if self.type == 'mixed':
+        if split_type == 'mixed':
             self.train = self.load_data_KTH(data_path, dataset="train")
             self.train = self.select_data_KTH(1, self.train, False)
             self.train, self.test = train_test_split(self.train,
