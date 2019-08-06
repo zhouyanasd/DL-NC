@@ -17,7 +17,7 @@ import pickle
 import cv2
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
 class MNIST_classification(BaseFunctions):
     def __init__(self, shape, duration):
@@ -132,7 +132,8 @@ class KTH_classification():
             "running": 4,
             "walking": 5
         }
-        self.spilt_data(type, **kwargs)
+        self.type = type
+        self.kwargs = kwargs
 
     def spilt_data(self, type, **kwargs):
         if type == 'official':
@@ -150,6 +151,8 @@ class KTH_classification():
             self.TRAIN_PEOPLE_ID = kwargs['train']
             self.VALIDATION_PEOPLE_ID = kwargs['validation']
             self.TEST_PEOPLE_ID = kwargs['test']
+        elif type == 'mixed':
+            self.TRAIN_PEOPLE_ID = np.arange(25)
         else:
             print('worng type, use official instead')
             self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
@@ -267,10 +270,21 @@ class KTH_classification():
         return frames
 
     def load_data_KTH_all(self, data_path):
+        self.spilt_data(self.type, **self.kwargs)
         self.parse_sequence_file(data_path+'00sequences.txt')
-        self.train = self.load_data_KTH(data_path, dataset="train")
-        self.validation = self.load_data_KTH(data_path, dataset="validation")
-        self.test = self.load_data_KTH(data_path, dataset="test")
+        if self.type == 'mixed':
+            self.train = self.load_data_KTH(data_path, dataset="train")
+            self.train = self.select_data_KTH(1, self.train, False)
+            self.train, self.test = train_test_split(self.train,
+                                                           test_size=self.kwargs['split'][-1] / sum(self.kwargs['split']),
+                                                           random_state=42)
+            self.train, self.validation = train_test_split(self.train,
+                                                     test_size=self.kwargs['split'][1] / sum(self.kwargs['split'][:2]),
+                                                     random_state=42)
+        else:
+            self.train = self.load_data_KTH(data_path, dataset="train")
+            self.validation = self.load_data_KTH(data_path, dataset="validation")
+            self.test = self.load_data_KTH(data_path, dataset="test")
 
     def select_data_KTH(self, fraction, data_frame, is_order=True, **kwargs):
         try:
