@@ -612,14 +612,14 @@ function = Function()
 base = Base()
 readout = Readout()
 result = Result()
-KTH = KTH_classification(type = 'random', split = [13,6,6])
+KTH = KTH_classification(type = 'random', split = [12,6,6])
 
 # -------data initialization----------------------
 if LOAD_DATA:
 
-    df_en_train = KTH.load_data(data_path + 'train_v1_[13,6,6].p')
-    df_en_validation = KTH.load_data(data_path + 'validation_v1_[13,6,6].p')
-    df_en_test = KTH.load_data(data_path + 'test_v1_[13,6,6].p')
+    df_en_train = KTH.load_data(data_path + 'train_v1_[12,6,6].p')
+    df_en_validation = KTH.load_data(data_path + 'validation_v1_[12,6,6].p')
+    df_en_test = KTH.load_data(data_path + 'test_v1_[12,6,6].p')
 
 else:
 
