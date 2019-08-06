@@ -56,7 +56,7 @@ standard_tau = 100
 function = MathFunctions()
 base = BaseFunctions()
 readout = Readout()
-KTH = KTH_classification(type = 'random', split = [13,6,6])
+KTH = KTH_classification(type = 'mixed', split = [16,4,4])
 
 # -------data initialization----------------------
 try:
