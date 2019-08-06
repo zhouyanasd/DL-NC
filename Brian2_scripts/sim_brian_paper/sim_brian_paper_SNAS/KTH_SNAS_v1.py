@@ -56,7 +56,7 @@ standard_tau = 100
 function = MathFunctions()
 base = BaseFunctions()
 readout = Readout()
-KTH = KTH_classification(type = 'mixed', split = [16,4,4])
+KTH = KTH_classification()
 
 # -------data initialization----------------------
 try:
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     SNAS = 'SAES'
 
     if GenerateData:
-        KTH.load_data_KTH_all(data_path)
+        KTH.load_data_KTH_all(data_path, split_type = 'mixed', split = [16,4,4])
 
         df_train = KTH.select_data_KTH(F_train, KTH.train, False)
         df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)

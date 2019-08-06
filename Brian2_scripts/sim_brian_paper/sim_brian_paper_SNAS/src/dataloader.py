@@ -123,7 +123,7 @@ class MNIST_classification(BaseFunctions):
 
 
 class KTH_classification():
-    def __init__(self, type, **kwargs):
+    def __init__(self):
         self.CATEGORIES = {
             "boxing": 0,
             "handclapping": 1,
@@ -132,26 +132,24 @@ class KTH_classification():
             "running": 4,
             "walking": 5
         }
-        self.type = type
-        self.kwargs = kwargs
 
-    def spilt_data(self, type, **kwargs):
-        if type == 'official':
+    def spilt_data(self, split_type, **kwargs):
+        if split_type == 'official':
             self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
             self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
             self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
-        elif type == 'random':
+        elif split_type == 'random':
             x = np.arange(25)
             np.random.shuffle(x)
             s = kwargs['split']
             self.TRAIN_PEOPLE_ID = x[:s[0]]
             self.VALIDATION_PEOPLE_ID =  x[s[0]:sum(s[:2])]
             self.TEST_PEOPLE_ID = x[sum(s[:2]):sum(s)]
-        elif type == 'solid':
+        elif split_type == 'solid':
             self.TRAIN_PEOPLE_ID = kwargs['train']
             self.VALIDATION_PEOPLE_ID = kwargs['validation']
             self.TEST_PEOPLE_ID = kwargs['test']
-        elif type == 'mixed':
+        elif split_type == 'mixed':
             self.TRAIN_PEOPLE_ID = np.arange(25)
         else:
             print('worng type, use official instead')
@@ -269,17 +267,17 @@ class KTH_classification():
         frames = frames.astype('<i1')
         return frames
 
-    def load_data_KTH_all(self, data_path):
-        self.spilt_data(self.type, **self.kwargs)
+    def load_data_KTH_all(self, data_path, split_type, **kwargs):
+        self.spilt_data(split_type, **kwargs)
         self.parse_sequence_file(data_path+'00sequences.txt')
         if self.type == 'mixed':
             self.train = self.load_data_KTH(data_path, dataset="train")
             self.train = self.select_data_KTH(1, self.train, False)
             self.train, self.test = train_test_split(self.train,
-                                                           test_size=self.kwargs['split'][-1] / sum(self.kwargs['split']),
+                                                           test_size=kwargs['split'][-1] / sum(kwargs['split']),
                                                            random_state=42)
             self.train, self.validation = train_test_split(self.train,
-                                                     test_size=self.kwargs['split'][1] / sum(self.kwargs['split'][:2]),
+                                                     test_size=kwargs['split'][1] / sum(kwargs['split'][:2]),
                                                      random_state=42)
         else:
             self.train = self.load_data_KTH(data_path, dataset="train")
