@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    The functions for preparing the data.
+    Data load and encoding functions for SNN.
 
 :Author: Yan Zhou
 
@@ -18,6 +18,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
 
 class MNIST_classification(BaseFunctions):
     def __init__(self, shape, duration):
@@ -74,7 +75,7 @@ class MNIST_classification(BaseFunctions):
             trans_cos = np.around(0.5 * A * (np.cos(x + np.pi * (i / n)) + 1)).clip(0, A - 1)
             for index_0, p in enumerate(trans_cos):
                 for index_1, q in enumerate(p):
-                    encoding[int(q)+ A * index_0, index_1 * n + i] = 1
+                    encoding[int(q) + A * index_0, index_1 * n + i] = 1
         return encoding
 
     def _encoding_cos_rank_ignore_0(self, x, n, A):
@@ -87,7 +88,7 @@ class MNIST_classification(BaseFunctions):
                     if int(q) == encoded_zero:
                         continue
                     else:
-                        encoding[int(q)+ A * index_0, index_1 * n + i] = 1
+                        encoding[int(q) + A * index_0, index_1 * n + i] = 1
         return encoding
 
     def encoding_latency_MNIST(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
@@ -143,7 +144,7 @@ class KTH_classification():
             np.random.shuffle(x)
             s = kwargs['split']
             self.TRAIN_PEOPLE_ID = x[:s[0]]
-            self.VALIDATION_PEOPLE_ID =  x[s[0]:sum(s[:2])]
+            self.VALIDATION_PEOPLE_ID = x[s[0]:sum(s[:2])]
             self.TEST_PEOPLE_ID = x[sum(s[:2]):sum(s)]
         elif split_type == 'solid':
             self.TRAIN_PEOPLE_ID = kwargs['train']
@@ -269,16 +270,16 @@ class KTH_classification():
 
     def load_data_KTH_all(self, data_path, split_type, **kwargs):
         self.spilt_data(split_type, **kwargs)
-        self.parse_sequence_file(data_path+'00sequences.txt')
+        self.parse_sequence_file(data_path + '00sequences.txt')
         if split_type == 'mixed':
             self.train = self.load_data_KTH(data_path, dataset="train")
             self.train = self.select_data_KTH(1, self.train, False)
             self.train, self.test = train_test_split(self.train,
-                                                           test_size=kwargs['split'][-1] / sum(kwargs['split']),
-                                                           random_state=42)
-            self.train, self.validation = train_test_split(self.train,
-                                                     test_size=kwargs['split'][1] / sum(kwargs['split'][:2]),
+                                                     test_size=kwargs['split'][-1] / sum(kwargs['split']),
                                                      random_state=42)
+            self.train, self.validation = train_test_split(self.train,
+                                                           test_size=kwargs['split'][1] / sum(kwargs['split'][:2]),
+                                                           random_state=42)
         else:
             self.train = self.load_data_KTH(data_path, dataset="train")
             self.validation = self.load_data_KTH(data_path, dataset="validation")
@@ -299,7 +300,7 @@ class KTH_classification():
 
     def encoding_latency_KTH(self, analog_data, origin_size=(120, 160), pool_size=(5, 5), types='max', threshold=0.2):
         data_diff = analog_data.frames.apply(self.frame_diff, origin_size=origin_size)
-        data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size = pool_size, types = types)
+        data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
         label = analog_data.category.map(self.CATEGORIES).astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})

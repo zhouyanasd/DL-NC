@@ -137,14 +137,13 @@ class Readout():
         pass
 
     def readout_sk(self, X_train, X_validation, X_test, y_train, y_validation, y_test, **kwargs):
-        from sklearn.linear_model import LogisticRegression
         lr = LogisticRegression(**kwargs)
         lr.fit(X_train.T, y_train.T)
         y_train_predictions = lr.predict(X_train.T)
         y_validation_predictions = lr.predict(X_validation.T)
         y_test_predictions = lr.predict(X_test.T)
         return accuracy_score(y_train_predictions, y_train.T), \
-               accuracy_score(y_validation_predictions, y_validation.T),\
+               accuracy_score(y_validation_predictions, y_validation.T), \
                accuracy_score(y_test_predictions, y_test.T)
 
 

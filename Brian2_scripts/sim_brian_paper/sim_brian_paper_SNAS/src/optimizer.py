@@ -10,7 +10,6 @@ import re
 import warnings
 
 import cma
-import bayes_opt
 from bayes_opt.event import Events
 from bayes_opt import BayesianOptimization
 from bayes_opt import UtilityFunction
@@ -22,7 +21,6 @@ from numpy.random import random, randint, rand, seed as rseed, uniform
 
 
 class DiffEvol(object):
-
     class _function_wrapper(object):
         def __init__(self, f, args, kwargs):
             self.f = f
@@ -166,8 +164,6 @@ class DiffEvol(object):
             yield popc[self._minidx, :], fitc[self._minidx]
 
 
-
-
 class UtilityFunction_(UtilityFunction):
     def __init__(self, kind, kappa, xi):
         super(UtilityFunction_, self).__init__(kind, kappa, xi)
@@ -309,7 +305,7 @@ class BayesianOptimization_(BayesianOptimization):
             X, fit = self.load_LHS(LHS_path)
             for x, eva in zip(X, fit):
                 self.register(x, eva)
-        if opt==None:
+        if opt == None:
             opt = self.acq_min_DE
         self.set_gp_params(**gp_params)
         util = UtilityFunction_(kind=acq, kappa=kappa, xi=xi)

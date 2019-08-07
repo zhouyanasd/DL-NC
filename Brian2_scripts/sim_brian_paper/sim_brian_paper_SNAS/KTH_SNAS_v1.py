@@ -43,7 +43,7 @@ DataName = 'temp.p'
 
 origin_size=(120, 160)
 pool_size=(5, 5)
-types='max'
+pool_types='max'
 threshold=0.2
 
 F_train = 1
@@ -283,9 +283,9 @@ if __name__ == '__main__':
         df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
         df_test = KTH.select_data_KTH(F_train, KTH.test, False)
 
-        df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, types, threshold)
-        df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, types, threshold)
-        df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, types, threshold)
+        df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, threshold)
+        df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, threshold)
+        df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, threshold)
 
         KTH.dump_data(data_path + 'train_'+ DataName, df_en_train)
         KTH.dump_data(data_path + 'validation_'+ DataName, df_en_validation)
