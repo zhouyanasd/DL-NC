@@ -36,28 +36,27 @@ start_scope()
 np.random.seed(100)
 data_path = '../../../Data/MNIST_data/'
 
-
 ###################################
 # -----simulation parameter setting-------
 coding_n = 3
 MNIST_shape = (1, 784)
 coding_duration = 30
-duration = coding_duration*MNIST_shape[0]
+duration = coding_duration * MNIST_shape[0]
 F_train = 0.05
 F_validation = 0.00833333
 F_test = 0.05
-Dt = defaultclock.dt = 1*ms
+Dt = defaultclock.dt = 1 * ms
 
-#-------class initialization----------------------
+# -------class initialization----------------------
 function = MathFunctions()
 base = BaseFunctions()
 readout = Readout()
 MNIST = MNIST_classification(MNIST_shape, duration)
 
-#-------data initialization----------------------
+# -------data initialization----------------------
 MNIST.load_Data_MNIST_all(data_path)
-df_train_validation = MNIST.select_data(F_train+F_validation, MNIST.train)
-df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation/(F_validation+F_train),
+df_train_validation = MNIST.select_data(F_train + F_validation, MNIST.train)
+df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation / (F_validation + F_train),
                                            random_state=42)
 df_test = MNIST.select_data(F_test, MNIST.test)
 
@@ -65,11 +64,11 @@ df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df
 df_en_validation = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_validation, coding_n)
 df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
 
-data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group = True)
-data_validation_s, label_validation = MNIST.get_series_data_list(df_en_validation, is_group = True)
-data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group = True)
+data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group=True)
+data_validation_s, label_validation = MNIST.get_series_data_list(df_en_validation, is_group=True)
+data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group=True)
 
-#-------get numpy random state------------
+# -------get numpy random state------------
 np_state = np.random.get_state()
 
 
@@ -82,14 +81,14 @@ def run_net(inputs, **parameter):
             ----------
     """
 
-    #---- set numpy random state for each run----
+    # ---- set numpy random state for each run----
     np.random.set_state(np_state)
 
     # -----parameter setting-------
     n_ex = 1600
-    n_inh = int(n_ex/4)
-    n_input = MNIST_shape[1]*coding_n
-    n_read = n_ex+n_inh
+    n_inh = int(n_ex / 4)
+    n_input = MNIST_shape[1] * coding_n
+    n_read = n_ex + n_inh
 
     R = parameter['R']
     f_in = parameter['f_in']
@@ -98,21 +97,21 @@ def run_net(inputs, **parameter):
     f_IE = parameter['f_IE']
     f_II = parameter['f_II']
 
-    A_EE = 60*f_EE
-    A_EI = 60*f_EI
-    A_IE = 60*f_IE
-    A_II = 60*f_II
-    A_inE = 60*f_in
-    A_inI = 60*f_in
+    A_EE = 60 * f_EE
+    A_EI = 60 * f_EI
+    A_IE = 60 * f_IE
+    A_II = 60 * f_II
+    A_inE = 60 * f_in
+    A_inI = 60 * f_in
 
-    tau_ex = parameter['tau_ex']*coding_duration
-    tau_inh = parameter['tau_inh']*coding_duration
-    tau_read= 30
+    tau_ex = parameter['tau_ex'] * coding_duration
+    tau_inh = parameter['tau_inh'] * coding_duration
+    tau_read = 30
 
-    p_inE = parameter['p_in']*0.1
-    p_inI = parameter['p_in']*0.1
+    p_inE = parameter['p_in'] * 0.1
+    p_inI = parameter['p_in'] * 0.1
 
-    #------definition of equation-------------
+    # ------definition of equation-------------
     neuron_in = '''
     I = stimulus(t,i) : 1
     '''
@@ -150,33 +149,33 @@ def run_net(inputs, **parameter):
 
     # -----Neurons and Synapses setting-------
     Input = NeuronGroup(n_input, neuron_in, threshold='I > 0', method='euler', refractory=0 * ms,
-                        name = 'neurongroup_input')
+                        name='neurongroup_input')
 
     G_ex = NeuronGroup(n_ex, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=3 * ms,
-                    name ='neurongroup_ex')
+                       name='neurongroup_ex')
 
     G_inh = NeuronGroup(n_inh, neuron, threshold='v > 15', reset='v = 13.5', method='euler', refractory=2 * ms,
-                    name ='neurongroup_in')
+                        name='neurongroup_in')
 
     G_readout = NeuronGroup(n_read, neuron_read, method='euler', name='neurongroup_read')
 
-    S_inE = Synapses(Input, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inE')
+    S_inE = Synapses(Input, G_ex, synapse, on_pre=on_pre_ex, method='euler', name='synapses_inE')
 
-    S_inI = Synapses(Input, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_inI')
+    S_inI = Synapses(Input, G_inh, synapse, on_pre=on_pre_ex, method='euler', name='synapses_inI')
 
-    S_EE = Synapses(G_ex, G_ex, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EE')
+    S_EE = Synapses(G_ex, G_ex, synapse, on_pre=on_pre_ex, method='euler', name='synapses_EE')
 
-    S_EI = Synapses(G_ex, G_inh, synapse, on_pre = on_pre_ex ,method='euler', name='synapses_EI')
+    S_EI = Synapses(G_ex, G_inh, synapse, on_pre=on_pre_ex, method='euler', name='synapses_EI')
 
-    S_IE = Synapses(G_inh, G_ex, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_IE')
+    S_IE = Synapses(G_inh, G_ex, synapse, on_pre=on_pre_inh, method='euler', name='synapses_IE')
 
-    S_II = Synapses(G_inh, G_inh, synapse, on_pre = on_pre_inh ,method='euler', name='synapses_I')
+    S_II = Synapses(G_inh, G_inh, synapse, on_pre=on_pre_inh, method='euler', name='synapses_I')
 
     S_E_readout = Synapses(G_ex, G_readout, 'w = 1 : 1', on_pre=on_pre_ex, method='euler')
 
     S_I_readout = Synapses(G_inh, G_readout, 'w = 1 : 1', on_pre=on_pre_inh, method='euler')
 
-    #-------initialization of neuron parameters----------
+    # -------initialization of neuron parameters----------
     G_ex.v = '13.5+1.5*rand()'
     G_inh.v = '13.5+1.5*rand()'
     G_readout.v = '0'
@@ -189,12 +188,11 @@ def run_net(inputs, **parameter):
     G_ex.tau = tau_ex
     G_inh.tau = tau_inh
     G_readout.tau = tau_read
-    [G_ex,G_in] = base.allocate([G_ex,G_inh],10,10,20)
-
+    [G_ex, G_in] = base.allocate([G_ex, G_inh], 10, 10, 20)
 
     # -------initialization of network topology and synapses parameters----------
-    S_inE.connect(condition='j<0.3*N_post', p = p_inE)
-    S_inI.connect(condition='j<0.3*N_post', p = p_inI)
+    S_inE.connect(condition='j<0.3*N_post', p=p_inE)
+    S_inI.connect(condition='j<0.3*N_post', p=p_inI)
     S_EE.connect(condition='i != j', p='0.3*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
     S_EI.connect(p='0.2*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
     S_IE.connect(p='0.4*exp(-((x_pre-x_post)**2+(y_pre-y_post)**2+(z_pre-z_post)**2)/R**2)')
@@ -224,6 +222,7 @@ def run_net(inputs, **parameter):
     states = net.get_states()['neurongroup_read']['v']
     net.restore('init')
     return (states, inputs[1])
+
 
 @Timelog
 @AddParaName
@@ -261,6 +260,7 @@ def parameters_search(**parameter):
     print('Test score: ', score_test)
     return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
+
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
@@ -274,11 +274,11 @@ if __name__ == '__main__':
     LHS_path = './LHS.dat'
     SNAS = 'SAES'
 
-# -------parameters search---------------
+    # -------parameters search---------------
     if SNAS == 'BO':
         optimizer = BayesianOptimization_(
             f=parameters_search,
-            pbounds= bounds,
+            pbounds=bounds,
             random_state=np.random.RandomState(),
         )
 
@@ -288,19 +288,18 @@ if __name__ == '__main__':
         optimizer.minimize(
             LHS_path=LHS_path,
             init_points=50,
-            is_LHS = True,
+            is_LHS=True,
             n_iter=250,
             acq='ei',
-            opt = optimizer.acq_min_DE,
+            opt=optimizer.acq_min_DE,
         )
 
     elif SNAS == 'SAES':
         saes = SAES(parameters_search, 'ei', parameters, 0.5,
                     **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
-        saes.run_best_strategy(50,1,2, LHS_path=LHS_path)
+        saes.run_best_strategy(50, 1, 2, LHS_path=LHS_path)
 
     elif SNAS == 'CMA':
         res = cma.fmin(parameters_search, parameters, 0.5,
-                       options={'ftarget': -1e+3, 'maxiter':30,
+                       options={'ftarget': -1e+3, 'maxiter': 30,
                                 'bounds': np.array([list(x) for x in list(bounds.values())]).T.tolist()})
-
