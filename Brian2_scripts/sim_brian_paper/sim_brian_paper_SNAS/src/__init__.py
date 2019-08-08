@@ -1,6 +1,8 @@
 from .core import BaseFunctions, MathFunctions, Timelog, AddParaName, Readout, Result
-from .optimizer import BayesianOptimization_, SAES, cma, bayes_opt
+from .optimizer import BayesianOptimization_, SAES, cma
 from .dataloader import MNIST_classification, KTH_classification
+
+import bayes_opt
 
 __all__ = [
     "BaseFunctions",
