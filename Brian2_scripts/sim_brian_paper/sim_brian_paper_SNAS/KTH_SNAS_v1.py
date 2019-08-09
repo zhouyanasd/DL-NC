@@ -39,7 +39,7 @@ data_path = '../../../Data/KTH/'
 ###################################
 # -----simulation parameter setting-------
 GenerateData = False
-DataName = 'temp.p'
+DataName = 'temp'
 
 origin_size = (120, 160)
 pool_size = (5, 5)
@@ -60,9 +60,9 @@ KTH = KTH_classification()
 
 # -------data initialization----------------------
 try:
-    df_en_train = KTH.load_data(data_path + 'train_' + DataName)
-    df_en_validation = KTH.load_data(data_path + 'validation_' + DataName)
-    df_en_test = KTH.load_data(data_path + 'test_' + DataName)
+    df_en_train = KTH.load_data(data_path + 'train_' + DataName+'.p')
+    df_en_validation = KTH.load_data(data_path + 'validation_' + DataName+'.p')
+    df_en_test = KTH.load_data(data_path + 'test_' + DataName+'.p')
 
     data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
     data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
@@ -275,11 +275,11 @@ if __name__ == '__main__':
               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     parameters_search.func.keys = list(bounds.keys())
 
-    LHS_path = './LHS.dat'
+    LHS_path = './LHS_KTH.dat'
     SNAS = 'SAES'
 
     if GenerateData:
-        KTH.load_data_KTH_all(data_path, split_type='mixed', split=[16, 4, 4])
+        KTH.load_data_KTH_all(data_path, split_type='mixed', split=[15, 5, 4])
 
         df_train = KTH.select_data_KTH(F_train, KTH.train, False)
         df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)

@@ -271,7 +271,7 @@ if __name__ == '__main__':
               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     parameters_search.func.keys = list(bounds.keys())
 
-    LHS_path = './LHS.dat'
+    LHS_path = './LHS_MNIST.dat'
     SNAS = 'SAES'
 
     # -------parameters search---------------
