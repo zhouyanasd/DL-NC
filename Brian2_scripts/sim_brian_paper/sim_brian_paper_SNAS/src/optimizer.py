@@ -397,6 +397,7 @@ class SAES():
         while not self.es.stop():
             X = self.es.ask()  # initial offspring
             fit = self.optimizer._gp.predict(X)  # get the estimated value
+            estimation += 1
             if estimation >= inter:
                 estimation = 0  # initilize the counter
                 guess = self.optimizer.guess_fixedpoint(self.util, X)  # predice the possible good solution by BO
@@ -408,7 +409,6 @@ class SAES():
                     self.optimizer._space.register(x, eva)  # update the solution space
                 self.optimizer._gp.fit(self.optimizer._space.params,
                                        self.optimizer._space.target)  # update the BO model
-            estimation += 1
             self.es.tell(X, fit)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
