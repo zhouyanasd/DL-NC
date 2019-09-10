@@ -445,7 +445,7 @@ F_train = 1
 F_validation = 1
 F_test = 1
 Dt = defaultclock.dt = 1 * ms
-standard_tau = 30
+standard_tau = 100
 
 #-------class initialization----------------------
 function = Function()
