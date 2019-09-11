@@ -103,7 +103,7 @@ class Base():
 
     def allocate(self, G, X, Y, Z):
         V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
-        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, X - 1, X), np.linspace(0, X - 1, X),
+        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, Y - 1, Y), np.linspace(0, X - 1, X),
                                              np.linspace(0, Z - 1, Z))
         V = V.reshape(X * Y * Z)
         np.random.shuffle(V)
