@@ -368,6 +368,7 @@ class SAES():
             self.es.tell(X_, fit_)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
+        self.es.result_pretty()
 
     def run_best_strategy(self, init_points, n, inter=1, LHS_path=None):
         if LHS_path == None:
@@ -412,3 +413,4 @@ class SAES():
             self.es.tell(X, fit)  # update the CMA-ES model
             self.es.logger.add()  # update the log
             self.es.disp()
+        self.es.result_pretty()
