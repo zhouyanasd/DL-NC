@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     elif SNAS == 'SAES':
         saes = SAES(parameters_search, 'ei', parameters, 0.5,
-                    **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500})
+                    **{'ftarget': -1e+3, 'bounds': bounds, 'maxiter': 500,'tolstagnation': 500})
         saes.run_best_strategy(50, 1, 2, LHS_path=LHS_path)
 
     elif SNAS == 'CMA':
