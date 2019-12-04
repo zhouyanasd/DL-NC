@@ -21,54 +21,52 @@ Citation
 =======
 
 """
-
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_SNAS.src import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_SAES.src import *
 
 from functools import partial
 from multiprocessing import Pool
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
-data_path = '../../../Data/KTH/'
+data_path = '../../../Data/MNIST_data/'
 
 ###################################
 # -----simulation parameter setting-------
-GenerateData = False
-DataName = 'temp'
-
-origin_size = (120, 160)
-pool_size = (5, 5)
-pool_types = 'max'
-threshold = 0.2
-
-F_train = 1
-F_validation = 1
-F_test = 1
+coding_n = 3
+MNIST_shape = (1, 784)
+coding_duration = 30
+duration = coding_duration * MNIST_shape[0]
+F_train = 0.05
+F_validation = 0.00833333
+F_test = 0.05
 Dt = defaultclock.dt = 1 * ms
-standard_tau = 100
 
 # -------class initialization----------------------
 function = MathFunctions()
 base = BaseFunctions()
 readout = Readout()
-KTH = KTH_classification()
+MNIST = MNIST_classification(MNIST_shape, duration)
 
 # -------data initialization----------------------
-try:
-    df_en_train = KTH.load_data(data_path + 'train_' + DataName+'.p')
-    df_en_validation = KTH.load_data(data_path + 'validation_' + DataName+'.p')
-    df_en_test = KTH.load_data(data_path + 'test_' + DataName+'.p')
+MNIST.load_Data_MNIST_all(data_path)
+df_train_validation = MNIST.select_data(F_train + F_validation, MNIST.train)
+df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation / (F_validation + F_train),
+                                           random_state=42)
+df_test = MNIST.select_data(F_test, MNIST.test)
 
-    data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
-    data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-    data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
-except FileNotFoundError:
-    GenerateData = True
+df_en_train = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_train, coding_n)
+df_en_validation = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_validation, coding_n)
+df_en_test = MNIST.encoding_latency_MNIST(MNIST._encoding_cos_rank_ignore_0, df_test, coding_n)
+
+data_train_s, label_train = MNIST.get_series_data_list(df_en_train, is_group=True)
+data_validation_s, label_validation = MNIST.get_series_data_list(df_en_validation, is_group=True)
+data_test_s, label_test = MNIST.get_series_data_list(df_en_test, is_group=True)
 
 # -------get numpy random state------------
 np_state = np.random.get_state()
@@ -89,10 +87,10 @@ def run_net(inputs, **parameter):
     # -----parameter setting-------
     n_ex = 1600
     n_inh = int(n_ex / 4)
-    n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
+    n_input = MNIST_shape[1] * coding_n
     n_read = n_ex + n_inh
 
-    R = parameter['R'] * 2
+    R = parameter['R']
     f_in = parameter['f_in']
     f_EE = parameter['f_EE']
     f_EI = parameter['f_EI']
@@ -106,8 +104,8 @@ def run_net(inputs, **parameter):
     A_inE = 60 * f_in
     A_inI = 60 * f_in
 
-    tau_ex = parameter['tau_ex'] * standard_tau
-    tau_inh = parameter['tau_inh'] * standard_tau
+    tau_ex = parameter['tau_ex'] * coding_duration
+    tau_inh = parameter['tau_inh'] * coding_duration
     tau_read = 30
 
     p_inE = parameter['p_in'] * 0.1
@@ -190,7 +188,6 @@ def run_net(inputs, **parameter):
     G_ex.tau = tau_ex
     G_inh.tau = tau_inh
     G_readout.tau = tau_read
-
     [G_ex, G_in] = base.allocate([G_ex, G_inh], 10, 10, 20)
 
     # -------initialization of network topology and synapses parameters----------
@@ -221,7 +218,6 @@ def run_net(inputs, **parameter):
 
     # ------run network-------------
     stimulus = TimedArray(inputs[0], dt=Dt)
-    duration = inputs[0].shape[0]
     net.run(duration * Dt)
     states = net.get_states()['neurongroup_read']['v']
     net.restore('init')
@@ -275,23 +271,8 @@ if __name__ == '__main__':
               'f_IE': (0.0001, 1), 'f_II': (0.0001, 1), 'tau_ex': (0.0001, 1), 'tau_inh': (0.0001, 1)}
     parameters_search.func.keys = list(bounds.keys())
 
-    LHS_path = './LHS_KTH.dat'
+    LHS_path = './LHS_MNIST.dat'
     SNAS = 'SAES'
-
-    if GenerateData:
-        KTH.load_data_KTH_all(data_path, split_type='mixed', split=[15, 5, 4])
-
-        df_train = KTH.select_data_KTH(F_train, KTH.train, False)
-        df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
-        df_test = KTH.select_data_KTH(F_train, KTH.test, False)
-
-        df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, threshold)
-        df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, threshold)
-        df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, threshold)
-
-        KTH.dump_data(data_path + 'train_' + DataName, df_en_train)
-        KTH.dump_data(data_path + 'validation_' + DataName, df_en_validation)
-        KTH.dump_data(data_path + 'test_' + DataName, df_en_test)
 
     # -------parameters search---------------
     if SNAS == 'BO':
@@ -301,7 +282,7 @@ if __name__ == '__main__':
             random_state=np.random.RandomState(),
         )
 
-        logger = bayes_opt.observer.JSONLogger(path="./BO_res_KTH.json")
+        logger = bayes_opt.observer.JSONLogger(path="./BO_res_MNIST.json")
         optimizer.subscribe(bayes_opt.event.Events.OPTMIZATION_STEP, logger)
 
         optimizer.minimize(
