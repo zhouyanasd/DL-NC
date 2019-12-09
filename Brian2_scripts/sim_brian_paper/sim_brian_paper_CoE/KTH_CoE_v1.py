@@ -22,9 +22,7 @@ Citation
 
 """
 
-from .core import *
-from .dataloader import *
-from .optimizer import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import *
 
 import warnings
 

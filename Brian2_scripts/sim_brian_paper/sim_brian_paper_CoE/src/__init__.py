@@ -1,4 +1,4 @@
-from .core import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 
 __all__ = [
 

@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .core import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 
 import cv2
 import re
