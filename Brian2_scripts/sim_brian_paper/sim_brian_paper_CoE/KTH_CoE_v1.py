@@ -24,7 +24,7 @@ Citation
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import *
 
-import warnings
+from brian2 import *
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"

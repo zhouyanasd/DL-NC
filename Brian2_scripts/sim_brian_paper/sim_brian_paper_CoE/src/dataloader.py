@@ -9,8 +9,13 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 
-import cv2
+import os
 import re
+
+import cv2
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 class KTH_classification():
     def __init__(self):
@@ -22,9 +27,30 @@ class KTH_classification():
             "running": 4,
             "walking": 5
         }
-        self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
-        self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
-        self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
+
+    def spilt_data(self, split_type, **kwargs):
+        if split_type == 'official':
+            self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
+            self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
+            self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
+        elif split_type == 'random':
+            x = np.arange(25)
+            np.random.shuffle(x)
+            s = kwargs['split']
+            self.TRAIN_PEOPLE_ID = x[:s[0]]
+            self.VALIDATION_PEOPLE_ID = x[s[0]:sum(s[:2])]
+            self.TEST_PEOPLE_ID = x[sum(s[:2]):sum(s)]
+        elif split_type == 'solid':
+            self.TRAIN_PEOPLE_ID = kwargs['train']
+            self.VALIDATION_PEOPLE_ID = kwargs['validation']
+            self.TEST_PEOPLE_ID = kwargs['test']
+        elif split_type == 'mixed':
+            self.TRAIN_PEOPLE_ID = np.arange(25)
+        else:
+            print('worng type, use official instead')
+            self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
+            self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
+            self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
 
     def parse_sequence_file(self, path):
         print("Parsing %s" % path)
@@ -136,11 +162,22 @@ class KTH_classification():
         frames = frames.astype('<i1')
         return frames
 
-    def load_data_KTH_all(self, data_path):
-        self.parse_sequence_file(data_path+'00sequences.txt')
-        self.train = self.load_data_KTH(data_path, dataset="train")
-        self.validation = self.load_data_KTH(data_path, dataset="validation")
-        self.test = self.load_data_KTH(data_path, dataset="test")
+    def load_data_KTH_all(self, data_path, split_type, **kwargs):
+        self.spilt_data(split_type, **kwargs)
+        self.parse_sequence_file(data_path + '00sequences.txt')
+        if split_type == 'mixed':
+            self.train = self.load_data_KTH(data_path, dataset="train")
+            self.train = self.select_data_KTH(1, self.train, False)
+            self.train, self.test = train_test_split(self.train,
+                                                     test_size=kwargs['split'][-1] / sum(kwargs['split']),
+                                                     random_state=42)
+            self.train, self.validation = train_test_split(self.train,
+                                                           test_size=kwargs['split'][1] / sum(kwargs['split'][:2]),
+                                                           random_state=42)
+        else:
+            self.train = self.load_data_KTH(data_path, dataset="train")
+            self.validation = self.load_data_KTH(data_path, dataset="validation")
+            self.test = self.load_data_KTH(data_path, dataset="test")
 
     def select_data_KTH(self, fraction, data_frame, is_order=True, **kwargs):
         try:
@@ -157,7 +194,7 @@ class KTH_classification():
 
     def encoding_latency_KTH(self, analog_data, origin_size=(120, 160), pool_size=(5, 5), types='max', threshold=0.2):
         data_diff = analog_data.frames.apply(self.frame_diff, origin_size=origin_size)
-        data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size = pool_size, types = types)
+        data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
         label = analog_data.category.map(self.CATEGORIES).astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})

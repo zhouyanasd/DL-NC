@@ -1,7 +1,9 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
+from .core import *
+from .dataloader import *
+from .optimizer import *
 
 __all__ = [
-
+"KTH_classification",
 ]
 
 __doc__ = """
@@ -9,4 +11,4 @@ __doc__ = """
 """
 
 __author__ = 'Yan Zhou'
-__version__ = "0.1.0  $Revision: 001 $ $Date: 2019-06-14 13:13:52 +0200 (Fri, 14 Jun 2019) $"
+__version__ = "0.1.0  $Revision: 001 $ $Date: 2019-12-10 13:13:52 +0200 (Fri, 14 Jun 2019) $"
