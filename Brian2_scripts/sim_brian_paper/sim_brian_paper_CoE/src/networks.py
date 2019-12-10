@@ -12,7 +12,21 @@
 from brian2 import *
 
 class Block():
-    def __init__(self):
+    """Some basic function for data transformation or calculation.
+
+    This class offers ....
+
+    Parameters
+    ----------
+    N: the number of neurons
+    Group
+    Synapse
+
+    Functions
+    ----------
+
+    """
+    def __init__(self, N):
         pass
 
 
