@@ -19,24 +19,49 @@ class Block():
     Parameters
     ----------
     N: int, the number of neurons
-
-    Functions
-    ----------
-
     """
+
     def __init__(self, N, equ, on_pre):
         self.N = N
 
     def create_neurons(self, model, threshold, reset,refractory):
-        self.neurons = NeuronGroup(self.N, self.equ, threshold='v > 0.9', reset='v = 0', method='linear',refractory=1*ms )
+        '''
+         Create neurons group for the block.
 
-    def create_synapse(self, ):
-        self.synapse = Synapses(self.neurons, self.neurons, 'w = 1 : 1',on_pre = self.on_pre, method='linear', delay = 1*ms)
+         Parameters
+         ----------
+         The parameters follow the necessary 'NeuronGroup' class of Brain2.
+         '''
+        self.neurons = NeuronGroup(self.N, model, threshold=threshold, reset=reset, refractory=refractory, method='linear')
+
+    def create_synapse(self, model, on_pre, delay):
+        '''
+         Create synapse between neurons for the block.
+
+         Parameters
+         ----------
+         The parameters follow the necessary 'Synapses' class of Brain2.
+         '''
+        self.synapse = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, delay = delay, method='linear')
 
     def connect(self, connect_matrix):
+        '''
+         Connect neurons using synapse based on the fixed connection matrix.
+
+         Parameters
+         ----------
+         connect_matrix: numpy array, the fixed connection matrix.
+         '''
         self.synapse.connect(i=[],j=[])
 
     def join_networks(self, net):
+        '''
+         Let the objects of block join the whole neural network.
+
+         Parameters
+         ----------
+         net: Brian2 Network object, the existing neural network.
+         '''
         net.add(self.neurons, self.synapse)
 
 
@@ -47,7 +72,7 @@ class Neuron():
 
     Parameters
     ----------
-    property: 'ex' or 'inh'
+    property: basestring, 'ex' or 'inh'
 
     """
     def __init__(self, property):
