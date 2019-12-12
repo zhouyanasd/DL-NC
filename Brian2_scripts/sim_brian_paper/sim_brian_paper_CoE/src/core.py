@@ -97,19 +97,6 @@ class BaseFunctions():
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
-    def allocate(self, G, X, Y, Z):
-        V = np.zeros((X, Y, Z), [('x', float), ('y', float), ('z', float)])
-        V['x'], V['y'], V['z'] = np.meshgrid(np.linspace(0, Y - 1, Y), np.linspace(0, X - 1, X),
-                                             np.linspace(0, Z - 1, Z))
-        V = V.reshape(X * Y * Z)
-        np.random.shuffle(V)
-        n = 0
-        for g in G:
-            for i in range(g.N):
-                g.x[i], g.y[i], g.z[i] = V[n][0], V[n][1], V[n][2]
-                n += 1
-        return G
-
 
 class Readout():
     """Some basic function for data transformation or calculation.

@@ -52,7 +52,7 @@ class Block():
          ----------
          connect_matrix: numpy array, the fixed connection matrix.
          '''
-        self.synapse.connect(i=[],j=[])
+        self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
     def join_networks(self, net):
         '''
@@ -65,15 +65,15 @@ class Block():
         net.add(self.neurons, self.synapse)
 
 
-class Neuron():
-    """Some basic function for data transformation or calculation.
-
-    This class offers ....
-
-    Parameters
-    ----------
-    property: basestring, 'ex' or 'inh'
-
-    """
-    def __init__(self, property):
-        self.property = property
+# class Neuron():
+#     """Some basic function for data transformation or calculation.
+#
+#     This class offers ....
+#
+#     Parameters
+#     ----------
+#     property: basestring, 'ex' or 'inh'
+#     """
+#
+#     def __init__(self, property):
+#         self.property = property
