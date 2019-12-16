@@ -65,17 +65,3 @@ class Block():
          net: Brian2 Network object, the existing neural network.
          '''
         net.add(self.neurons, self.synapse)
-
-
-# class Neuron():
-#     """Some basic function for data transformation or calculation.
-#
-#     This class offers ....
-#
-#     Parameters
-#     ----------
-#     property: basestring, 'ex' or 'inh'
-#     """
-#
-#     def __init__(self, property):
-#         self.property = property

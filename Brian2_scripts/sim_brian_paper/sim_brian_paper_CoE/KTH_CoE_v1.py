@@ -69,9 +69,12 @@ except FileNotFoundError:
 # -------get numpy random state------------
 # np_state = np.random.get_state()
 
-n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
+neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
+neurons_block = 10
+blocks_reservoir = 10
 
-dynamics_spike_train = '''
+# keep 'stimulus' a globe name or a available in local namespace
+dynamics_encoding = '''
 I = stimulus(t,i) : 1
 '''
 
@@ -80,39 +83,77 @@ property : 1
 tau : 1
 dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
-I = g+13.5 : 1
+I = g + 13.5 : 1
 '''
 
-# neuron_read = '''
-# tau : 1
-# dv/dt = (I-v) / (tau*ms) : 1
-# dg/dt = (-g)/(3*ms) : 1
-# dh/dt = (-h)/(6*ms) : 1
-# I = (g+h): 1
-# '''
+dynamics_readout = '''
+tau : 1
+dv/dt = (I-v) / (tau*ms) : 1
+dg/dt = (-g)/(3*ms) : 1
+I = g : 1
+'''
 
 dynamics_synapse = '''
 w : 1
 '''
 
+# must add '_pre' after the 'property'
 dynamics_pre_synapse = '''
-g += w * property
+g += w * property_pre 
 '''
-
-# on_pre_inh = '''
-# h-=w
-# '''
 
 connect_matrix = np.array([[1,1,2,2],[3,3,4,4]])
 
-net = Network(collect())
+#-----------------------------------------------------
+net = Network()
 
-block_input = Block()
+block_encoding = Block(neurons_encoding)
+block_encoding.create_neurons(dynamics_encoding, threshold='I > 0',  refractory=0 * ms, name = 'encoding')
+block_encoding.join_networks(net)
 
-block = Block(10)
-block.create_neurons(dynamics_neuron, threshold='v > 15', reset='v = 13.5',  refractory=3 * ms)
-block.create_synapse(dynamics_synapse, dynamics_pre_synapse)
-block.connect(connect_matrix)
-block.join_networks(net)
+block_readout = Block(neurons_block)
+block_readout.create_neurons('w = 1 : 1', name='neurongroup_read')
+block_readout.join_networks(net)
+
+reservoir = []
+synapses = []
+for i in range(blocks_reservoir):
+    block_reservoir = Block(neurons_block)
+    block_reservoir.create_neurons(dynamics_neuron, threshold='v > 15', reset='v = 13.5',  refractory=3 * ms,
+                               name = 'block_'+str(i))
+    block_reservoir.create_synapse(dynamics_synapse, dynamics_pre_synapse, delay= 1*ms, name = 'block_block')
+    block_reservoir.connect(connect_matrix)
+    block_reservoir.join_networks(net)
+    reservoir.append(block_reservoir)
+
+    synapse_encoding_reservoir = Synapses(block_encoding.neurons, block.neurons, dynamics_synapse, on_pre=dynamics_pre_synapse,
+                                    method='euler', name='encoding_block_'+str(i))
+    synapse_encoding_reservoir.connect(condition='j<0.3*N_post')
+    synapses.append(synapse_encoding_reservoir)
+
+    synapse_reservoir_readout = Synapses(block_reservoir.neurons, block_readout.neurons, dynamics_synapse,
+                                    on_pre=dynamics_pre_synapse, name = 'readout_'+str(i))
+
+    synapse_reservoir_readout.connect(j='i')
+    synapses.append(synapse_reservoir_readout)
 
 
+
+    # -------initialization of neuron parameters----------
+    block_reservoir.neurons.v = '13.5+1.5*rand()'
+    block_readout.neurons.v = '0'
+    block_reservoir.neurons.g = '0'
+    block_readout.neurons.g = '0'
+    block_reservoir.neurons.tau = 30*ms
+    block_readout.neurons.tau = 30*ms
+
+    block_reservoir.synapse.w = 'rand()'
+    synapse_encoding_reservoir.w = 'rand()'
+
+net.add(*synapses)
+#net.store('init')
+
+inputs = zip(data_train_s, label_train)[0]
+stimulus = TimedArray(inputs[0], dt=Dt)
+duration = inputs[0].shape[0]
+net.run(duration * Dt)
