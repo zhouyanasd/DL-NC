@@ -67,6 +67,52 @@ except FileNotFoundError:
     GenerateData = True
 
 # -------get numpy random state------------
-np_state = np.random.get_state()
+# np_state = np.random.get_state()
+
+n_input = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
+
+dynamics_spike_train = '''
+I = stimulus(t,i) : 1
+'''
+
+dynamics_neuron = '''
+property : 1
+tau : 1
+dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
+dg/dt = (-g)/(3*ms) : 1
+I = g+13.5 : 1
+'''
+
+# neuron_read = '''
+# tau : 1
+# dv/dt = (I-v) / (tau*ms) : 1
+# dg/dt = (-g)/(3*ms) : 1
+# dh/dt = (-h)/(6*ms) : 1
+# I = (g+h): 1
+# '''
+
+dynamics_synapse = '''
+w : 1
+'''
+
+dynamics_pre_synapse = '''
+g += w * property
+'''
+
+# on_pre_inh = '''
+# h-=w
+# '''
+
+connect_matrix = np.array([[1,1,2,2],[3,3,4,4]])
+
+net = Network(collect())
+
+block_input = Block()
+
+block = Block(10)
+block.create_neurons(dynamics_neuron, threshold='v > 15', reset='v = 13.5',  refractory=3 * ms)
+block.create_synapse(dynamics_synapse, dynamics_pre_synapse)
+block.connect(connect_matrix)
+block.join_networks(net)
 
 

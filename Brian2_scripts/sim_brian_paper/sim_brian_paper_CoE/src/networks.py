@@ -21,10 +21,10 @@ class Block():
     N: int, the number of neurons
     """
 
-    def __init__(self, N, equ, on_pre):
+    def __init__(self, N):
         self.N = N
 
-    def create_neurons(self, model, threshold, reset,refractory):
+    def create_neurons(self, model, threshold, reset,refractory, **kwargs):
         '''
          Create neurons group for the block.
 
@@ -32,9 +32,10 @@ class Block():
          ----------
          The parameters follow the necessary 'NeuronGroup' class of Brain2.
          '''
-        self.neurons = NeuronGroup(self.N, model, threshold=threshold, reset=reset, refractory=refractory, method='linear')
+        self.neurons = NeuronGroup(self.N, model, threshold=threshold, reset=reset, refractory=refractory,
+                                   method='euler', **kwargs)
 
-    def create_synapse(self, model, on_pre, delay):
+    def create_synapse(self, model, on_pre, delay, **kwargs):
         '''
          Create synapse between neurons for the block.
 
@@ -42,7 +43,8 @@ class Block():
          ----------
          The parameters follow the necessary 'Synapses' class of Brain2.
          '''
-        self.synapse = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, delay = delay, method='linear')
+        self.synapse = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, delay = delay,
+                                method='euler', **kwargs)
 
     def connect(self, connect_matrix):
         '''

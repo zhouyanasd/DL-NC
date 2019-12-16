@@ -4,7 +4,11 @@ from .networks import *
 from .optimizer import *
 
 __all__ = [
-"KTH_classification",
+    "KTH_classification",
+    "BaseFunctions",
+    "MathFunctions",
+    "Readout",
+    "Block"
 ]
 
 __doc__ = """
