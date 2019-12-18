@@ -49,9 +49,9 @@ Dt = defaultclock.dt = 1 * ms
 standard_tau = 100
 
 # -------class initialization----------------------
-function = MathFunctions()
-base = BaseFunctions()
-readout = Readout()
+math_function = MathFunctions()
+base_function = BaseFunctions()
+evaluate = Evaluation()
 KTH = KTH_classification()
 
 # -------data initialization----------------------
@@ -77,6 +77,9 @@ ex_neurons = int(neurons_block*(1/(ex_inh_ratio+1)))
 inh_neurons = neurons_block - ex_neurons
 
 connect_matrix = np.array([[1,1,2,2],[3,5,4,6]])
+delay_synapse_block = [1] * blocks_reservoir
+strength_synapse_block = ['rand'] * blocks_reservoir
+strength_synapse_encoding_reservoir = ['rand'] * blocks_reservoir
 
 dynamics_encoding = '''
 property : 1
@@ -106,22 +109,33 @@ dynamics_synapse_pre = '''
 g += w * property_pre 
 '''
 
-#-----------------------------------------------------
+##-----------------------------------------------------
+#--- create network ---
 net = Network()
 
+#--- create encoding and readout neurons ---
 encoding = NeuronGroup(neurons_encoding, dynamics_encoding, threshold='I > 0', method='euler', refractory=0 * ms,
                         name='encoding')
 readout = NeuronGroup(neurons_block*blocks_reservoir, dynamics_readout, method='euler', name='neurongroup_read')
 
+#--- initialize the parameters of encoding and readout neurons ---
+encoding.property = '1'
+readout.v = '0'
+readout.g = '0'
+readout.tau = 30
+
+#--- create reservoir ---
 for index in range(blocks_reservoir):
+    #--- create blocks ---
     block_reservoir = Block(neurons_block)
     block_reservoir.create_neurons(dynamics_reservoir, threshold='v > 15', reset='v = 13.5', refractory=3 * ms,
                                    name='block_' + str(index))
-    block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre, delay=1 * ms,
+    block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre, delay=0 * ms,
                                    name='block_block_' + str(index))
     block_reservoir.connect(connect_matrix)
     block_reservoir.join_networks(net)
 
+    #--- create synapses outside blocks---
     synapse_encoding_reservoir = Synapses(encoding, block_reservoir.neurons, dynamics_synapse,
                                           on_pre=dynamics_synapse_pre,
                                           method='euler', name='encoding_block_' + str(index))
@@ -134,19 +148,17 @@ for index in range(blocks_reservoir):
     synapse_reservoir_readout.connect(j='i+' + str(index * neurons_block))
     net.add(synapse_reservoir_readout)
 
-    # -------initialization of neuron parameters----------
+    # synapse_blocks = Synapses()
+
+    # --- initialize the parameters of blocks and synapses ----------
     block_reservoir.neurons.property = np.array(([-1] * ex_neurons) + ([1] * inh_neurons))
     block_reservoir.neurons.v = '13.5+1.5*rand()'
     block_reservoir.neurons.g = '0'
     block_reservoir.neurons.tau = 30
 
-    block_reservoir.synapse.w = 'rand()'
-    synapse_encoding_reservoir.w = 'rand()'
-
-encoding.property = '1'
-readout.g = '0'
-readout.g = '0'
-readout.tau = 30
+    block_reservoir.synapse.w = strength_synapse_block[index]
+    block_reservoir.synapse.delay = delay_synapse_block[index]
+    synapse_encoding_reservoir.w = strength_synapse_encoding_reservoir[index]
 
 net.add(encoding, readout)
 #net.store('init')

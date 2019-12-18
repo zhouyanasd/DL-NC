@@ -98,8 +98,8 @@ class BaseFunctions():
         return np.append(a, b.reshape(tuple(shape)), axis=0)
 
 
-class Readout():
-    """Some basic function for data transformation or calculation.
+class Evaluation():
+    """Some basic function for evaluate the output of LSM.
 
     This class offers ....
 

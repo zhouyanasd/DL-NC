@@ -7,7 +7,7 @@ __all__ = [
     "KTH_classification",
     "BaseFunctions",
     "MathFunctions",
-    "Readout",
+    "Evaluation",
     "Block"
 ]
 
