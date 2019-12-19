@@ -58,8 +58,11 @@ class Block():
         self.connect_matrix = connect_matrix
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
-    def initialize_parameters(self):
-        pass
+    def initialize_parameters(self, object, parameter_name, parameter_value):
+        if isinstance (object, NeuronGroup):
+            pass
+        elif isinstance (object, Synapses):
+            pass
 
     def join_networks(self, net):
         '''
@@ -139,8 +142,9 @@ class Reservoir():
             block_post = self.blocks[self.connect_matrix[1][index]]
             synapse.connect(i = block_pre.input, j = block_post.output)
 
-    def initialize_parameters(self):
-        pass
+    def initialize_parameters(self, object, parameter_name, parameter_value):
+        if isinstance (object, Synapses):
+            pass
 
     def join_network(self, net):
         '''
