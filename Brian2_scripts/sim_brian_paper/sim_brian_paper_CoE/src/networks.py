@@ -18,8 +18,6 @@ class Block():
     Parameters
     ----------
     N: int, the number of neurons
-    connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
-                    The first list is the pre-synapse neurons and the second list is the post-synapse neurons.
     """
 
     def __init__(self, N):
@@ -54,7 +52,8 @@ class Block():
 
          Parameters
          ----------
-         connect_matrix: list[list[int], list[int]], the fixed connection matrix.
+        connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
+                        The first list is the pre-synapse neurons and the second list is the post-synapse neurons.
          '''
         self.connect_matrix = connect_matrix
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
@@ -88,8 +87,6 @@ class Reservoir():
     Parameters
     ----------
     N: int, the number of blocks
-    connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse between blocks.
-                    The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
     blocks: list[Block], the list of block
     synapses: list[Brain.Synapse], the list of synapse between blocks
     """
@@ -110,29 +107,44 @@ class Reservoir():
          '''
         self.blocks.append(block)
 
-    def create_synapse(self, block_pre, block_post, model, on_pre, delay, name, **kwargs):
+    def create_synapse(self, connect_matrix, model, on_pre, delay, name, **kwargs):
         '''
          Create synapses between blocks.
 
          Parameters
          ----------
-         block_pre: Block, the block before the synapse
-         block_post Block, the block after the synapse
+         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse between blocks.
+                        The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
          Other parameters follow the necessary 'Synapses' class of Brain2.
          '''
-        synapse = Synapses(block_pre.neurons, block_post.neurons, model, on_pre=on_pre, delay=delay,
+        for index_i, index_j in zip(connect_matrix[0], connect_matrix[1]):
+            synapse = Synapses(block[index_i].neurons, block[index_j].neurons, model, on_pre=on_pre, delay=delay,
                                 method='euler', name = name, **kwargs)
-        self.synapses.append(synapse)
+            self.synapses.append(synapse)
 
-    def connect_blocks(self, synapse):
+    def connect_blocks(self):
+        '''
+         Connect blocks base on the synapses in the reservoir.
+
+         Parameters
+         ----------
+         '''
         for block in self.blocks:
             block.determine_input_output()
-        synapse.connect(i = [], j = [])
+        for index, synapse in enumerate(self.synapses):
+            block_pre = self.blocks[self.connect_matrix[0][index]]
+            block_post = self.blocks[self.connect_matrix[1][index]]
+            synapse.connect(i = block_pre.input, j = block_post.output)
 
     def join_network(self, net):
-            for block in self.blocks:
-                block.join_networks(net)
-            net.add(*self.synapses)
+        '''
+         Let the objects of reservoir join the whole neural network.
+
+         Parameters
+         ----------
+         net: Brian2.Network, the existing neural network.
+         '''
+        net.add(*self.synapses)
 
     # def create_blocks(self, N_blocks, neurons_block, dynamics_neurons, dynamics_synapse,
     #                   dynamics_synapse_pre, threshold, reset, refractory, delay, connect_matrix,
