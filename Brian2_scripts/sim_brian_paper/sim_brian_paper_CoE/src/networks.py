@@ -145,16 +145,3 @@ class Reservoir():
          net: Brian2.Network, the existing neural network.
          '''
         net.add(*self.synapses)
-
-    # def create_blocks(self, N_blocks, neurons_block, dynamics_neurons, dynamics_synapse,
-    #                   dynamics_synapse_pre, threshold, reset, refractory, delay, connect_matrix,
-    #                   name_neurons, name_synapses):
-    #
-    #     for index in range(N_blocks):
-    #         block = Block(neurons_block)
-    #         block.create_neurons(dynamics_neurons, threshold, reset, refractory,
-    #                                        name_neurons)
-    #         block.create_synapse(dynamics_synapse, dynamics_synapse_pre, delay,
-    #                                        name_synapses)
-    #         block.connect(connect_matrix)
-    #         self.add_block(block)
