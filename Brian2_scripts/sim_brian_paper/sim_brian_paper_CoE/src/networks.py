@@ -59,10 +59,21 @@ class Block():
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
     def initialize_parameters(self, object, parameter_name, parameter_value):
+        '''
+         Set the initial parameters of the objects in the block.
+
+         Parameters
+         ----------
+         object: Brian2.NeuronGroup or Brian2.Synapse, one of the two kinds of objects.
+         parameter_name: str, the name of the parameter.
+         parameter_value: np.array, the value of the parameter.
+         '''
         if isinstance (object, NeuronGroup):
-            pass
+            object.variables[parameter_name].set_value(parameter_value)
         elif isinstance (object, Synapses):
-            pass
+            object.pre.variables[parameter_name].set_value(parameter_value)
+        else:
+            print('wrong object type')
 
     def join_networks(self, net):
         '''
@@ -143,8 +154,19 @@ class Reservoir():
             synapse.connect(i = block_pre.input, j = block_post.output)
 
     def initialize_parameters(self, object, parameter_name, parameter_value):
-        if isinstance (object, Synapses):
-            pass
+        '''
+         Set the initial parameters of the objects (synapses) in the reservoir.
+
+         Parameters
+         ----------
+         object: Brian2.Synapse, one of the two kinds of objects.
+         parameter_name: str, the name of the parameter.
+         parameter_value: np.array, the value of the parameter.
+         '''
+        if isinstance (object, NeuronGroup):
+            object.pre.variables[parameter_name].set_value(parameter_value)
+        else:
+            print('wrong object type')
 
     def join_network(self, net):
         '''
