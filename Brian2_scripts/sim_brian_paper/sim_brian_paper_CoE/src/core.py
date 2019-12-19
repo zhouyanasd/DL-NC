@@ -61,6 +61,10 @@ class AddParaName():
 
 
 class MathFunctions():
+    """
+    Some math functions for the simulations
+
+    """
     def __init__(self):
         pass
 
@@ -69,15 +73,9 @@ class MathFunctions():
 
 
 class BaseFunctions():
-    """Standardize a dataset along any axis
+    """
+    Some basic functions for the simulations
 
-    Center to the mean and component wise scale to unit variance.
-
-    Notes
-    -----
-
-    See also
-    --------
     """
 
     def __init__(self):
@@ -99,24 +97,10 @@ class BaseFunctions():
 
 
 class Evaluation():
-    """Some basic function for evaluate the output of LSM.
+    """
+    Some basic function for evaluate the output of LSM.
 
-    This class offers ....
-
-    Parameters
-    ----------
-
-    Attributes
-    ----------
-
-    Examples
-    --------
-
-    See also
-    --------
-
-    Notes
-    -----
+    This class offers evaluation functions for learning tasks.
 
     """
 
@@ -135,6 +119,10 @@ class Evaluation():
 
 
 class Result():
+    """
+    Some functions for dealing with the results.
+
+    """
     def __init__(self):
         pass
 

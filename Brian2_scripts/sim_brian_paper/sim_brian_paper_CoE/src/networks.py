@@ -58,6 +58,9 @@ class Block():
         self.connect_matrix = connect_matrix
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
+    def initialize_parameters(self):
+        pass
+
     def join_networks(self, net):
         '''
          Let the objects of block join the whole neural network.
@@ -135,6 +138,9 @@ class Reservoir():
             block_pre = self.blocks[self.connect_matrix[0][index]]
             block_post = self.blocks[self.connect_matrix[1][index]]
             synapse.connect(i = block_pre.input, j = block_post.output)
+
+    def initialize_parameters(self):
+        pass
 
     def join_network(self, net):
         '''

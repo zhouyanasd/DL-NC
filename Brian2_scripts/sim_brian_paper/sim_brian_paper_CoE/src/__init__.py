@@ -8,7 +8,8 @@ __all__ = [
     "BaseFunctions",
     "MathFunctions",
     "Evaluation",
-    "Block"
+    "Block",
+    "Reservoir",
 ]
 
 __doc__ = """
