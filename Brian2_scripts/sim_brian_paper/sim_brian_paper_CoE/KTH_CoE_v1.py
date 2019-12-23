@@ -111,6 +111,7 @@ g += w * property_pre
 
 ##-----------------------------------------------------
 #--- create network ---
+reservoir = Reservoir(blocks_reservoir)
 net = Network()
 
 #--- create encoding and readout neurons ---

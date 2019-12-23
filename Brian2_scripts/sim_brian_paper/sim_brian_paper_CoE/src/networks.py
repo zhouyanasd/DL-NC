@@ -18,6 +18,7 @@ class Block():
     Parameters
     ----------
     N: int, the number of neurons
+    connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
     """
 
     def __init__(self, N):
@@ -104,6 +105,7 @@ class Reservoir():
     Parameters
     ----------
     N: int, the number of blocks
+    connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
     blocks: list[Block], the list of block
     synapses: list[Brain.Synapse], the list of synapse between blocks
     """
@@ -159,7 +161,7 @@ class Reservoir():
 
          Parameters
          ----------
-         object: Brian2.Synapse, one of the two kinds of objects.
+         object: Brian2.Synapse, mainly synapses between blocks.
          parameter_name: str, the name of the parameter.
          parameter_value: np.array, the value of the parameter.
          '''
