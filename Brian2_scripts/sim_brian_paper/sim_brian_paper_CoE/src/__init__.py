@@ -10,6 +10,8 @@ __all__ = [
     "Evaluation",
     "Block",
     "Reservoir",
+    "LSM_Network",
+    "initialize_parameters",
 ]
 
 __doc__ = """

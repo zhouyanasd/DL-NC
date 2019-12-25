@@ -18,11 +18,15 @@ class Block():
     Parameters
     ----------
     N: int, the number of neurons
+    ratio: default int(4), the ratio of excitatory neurons/inhibitory neurons
     connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
     """
 
-    def __init__(self, N):
+    def __init__(self, N, ratio = 4):
         self.N = N
+        self.ex_inh_ratio = ratio
+        self.ex_neurons = int(self.N * (1 / (self.ex_inh_ratio + 1)))
+        self.inh_neurons = self.N - self.ex_neurons
         self.connect_matrix = None
 
     def create_neurons(self, model, threshold, reset,refractory, name, **kwargs):
@@ -36,7 +40,7 @@ class Block():
         self.neurons = NeuronGroup(self.N, model, threshold=threshold, reset=reset, refractory=refractory,
                                    method='euler', name = name, **kwargs)
 
-    def create_synapse(self, model, on_pre, delay, name, **kwargs):
+    def create_synapse(self, model, on_pre, name, **kwargs):
         '''
          Create synapse between neurons for the block.
 
@@ -59,24 +63,7 @@ class Block():
         self.connect_matrix = connect_matrix
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
-    def initialize_parameters(self, object, parameter_name, parameter_value):
-        '''
-         Set the initial parameters of the objects in the block.
-
-         Parameters
-         ----------
-         object: Brian2.NeuronGroup or Brian2.Synapse, one of the two kinds of objects.
-         parameter_name: str, the name of the parameter.
-         parameter_value: np.array, the value of the parameter.
-         '''
-        if isinstance (object, NeuronGroup):
-            object.variables[parameter_name].set_value(parameter_value)
-        elif isinstance (object, Synapses):
-            object.pre.variables[parameter_name].set_value(parameter_value)
-        else:
-            print('wrong object type')
-
-    def join_networks(self, net):
+    def join_network(self, net):
         '''
          Let the objects of block join the whole neural network.
 
@@ -126,7 +113,19 @@ class Reservoir():
          '''
         self.blocks.append(block)
 
-    def create_synapse(self, connect_matrix, model, on_pre, delay, name, **kwargs):
+    def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
+                      dynamics_synapse_pre, threshold, reset, refractory):
+
+        for index, connect_matrix in zip(range(self.N), connect_matrix_blocks):
+            block_reservoir = Block(neurons_block)
+            block_reservoir.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
+                                           refractory = refractory, name='block_' + str(index))
+            block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre,
+                                           name='block_block_' + str(index))
+            block_reservoir.connect(connect_matrix)
+            self.add_block(block_reservoir)
+
+    def create_synapse(self, connect_matrix, model, on_pre, **kwargs):
         '''
          Create synapses between blocks.
 
@@ -136,9 +135,9 @@ class Reservoir():
                         The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
          Other parameters follow the necessary 'Synapses' class of Brain2.
          '''
-        for index_i, index_j in zip(connect_matrix[0], connect_matrix[1]):
-            synapse = Synapses(block[index_i].neurons, block[index_j].neurons, model, on_pre=on_pre, delay=delay,
-                                method='euler', name = name, **kwargs)
+        for index, (index_i, index_j) in enumerate(zip(connect_matrix[0], connect_matrix[1])):
+            synapse = Synapses(block[index_i].neurons, block[index_j].neurons, model, on_pre = on_pre, delay = delay,
+                                method = 'euler', name = 'reservoir_' + str(index), **kwargs)
             self.synapses.append(synapse)
 
     def connect_blocks(self):
@@ -155,21 +154,6 @@ class Reservoir():
             block_post = self.blocks[self.connect_matrix[1][index]]
             synapse.connect(i = block_pre.input, j = block_post.output)
 
-    def initialize_parameters(self, object, parameter_name, parameter_value):
-        '''
-         Set the initial parameters of the objects (synapses) in the reservoir.
-
-         Parameters
-         ----------
-         object: Brian2.Synapse, mainly synapses between blocks.
-         parameter_name: str, the name of the parameter.
-         parameter_value: np.array, the value of the parameter.
-         '''
-        if isinstance (object, NeuronGroup):
-            object.pre.variables[parameter_name].set_value(parameter_value)
-        else:
-            print('wrong object type')
-
     def join_network(self, net):
         '''
          Let the objects of reservoir join the whole neural network.
@@ -178,4 +162,75 @@ class Reservoir():
          ----------
          net: Brian2.Network, the existing neural network.
          '''
+        for block in self.blocks:
+            block.join_network(net)
         net.add(*self.synapses)
+
+    def determine_input(self, reservoir_input):
+        '''
+         Determine the index of input and output neurons.
+
+         Parameters
+         ----------
+         '''
+        self.input = [1, 2]
+
+
+class LSM_Network(Network):
+    def __init__(self):
+        super().__init__()
+        self.layers = {}
+        self.synapses_readout = []
+        self.synapses_encoding = []
+
+    def register_layer(self, layer, name):
+        self.layers[name] = layer
+        try:
+            self.add(layer)
+        except TypeError:
+            layer.join_network(self)
+
+    def create_synapse_encoding(self, dynamics_synapse, dynamics_synapse_pre):
+        self.layers['reservoir'].determine_input()
+        for index, block_reservoir in enumerate(self.layers['reservoir'].input):
+            synapse_encoding_reservoir = Synapses(self.layers['encoding'], block_reservoir.neurons, dynamics_synapse,
+                                                  on_pre=dynamics_synapse_pre,
+                                                  method='euler', name='encoding_block_' + str(index))
+            self.synapses_encoding.append(synapse_encoding_reservoir)
+
+    def create_synapse_readout(self, dynamics_synapse_pre):
+        for index, block_reservoir in enumerate(self.layers['reservoir']):
+            synapse_reservoir_readout = Synapses(block_reservoir.neurons, self.layers['readout'], 'w = 1 : 1',
+                                                 on_pre = dynamics_synapse_pre, name='readout_' + str(index))
+            self.synapses_readout.append(synapse_reservoir_readout)
+
+    def connect_encoding(self):
+        for index, synapse_encoding_reservoir in enumerate(self.synapses_encoding):
+            block_post = self.layers['reservoir'].input[index]
+            input = block_post.input
+            synapse_encoding_reservoir.connect(j='k for k in input') # var 'input' needs to be test
+
+    def connect_readout(self, neurons_block):
+        for index, synapse_reservoir_readout in enumerate(self.synapses_readout):
+            synapse_reservoir_readout.connect(j='i+' + str(index * neurons_block))
+
+    def join_network(self, net):
+        net.add(*self.synapses_readout, *self.synapses_encoding)
+
+
+def initialize_parameters(object, parameter_name, parameter_value):
+    '''
+     Set the initial parameters of the objects in the block.
+
+     Parameters
+     ----------
+     object: Brian2.NeuronGroup or Brian2.Synapse, one of the two kinds of objects.
+     parameter_name: str, the name of the parameter.
+     parameter_value: np.array, the value of the parameter.
+     '''
+    if isinstance(object, NeuronGroup):
+        object.variables[parameter_name].set_value(parameter_value)
+    elif isinstance(object, Synapses):
+        object.pre.variables[parameter_name].set_value(parameter_value)
+    else:
+        print('wrong object type')

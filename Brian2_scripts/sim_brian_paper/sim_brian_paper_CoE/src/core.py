@@ -81,6 +81,9 @@ class BaseFunctions():
     def __init__(self):
         pass
 
+    def get_weight_connection_matrix(self, connection_matrix, weight):
+        pass
+
     def np_extend(self, a, b, axis=0):
         if a is None:
             shape = list(b.shape)
