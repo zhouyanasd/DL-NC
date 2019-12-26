@@ -48,7 +48,7 @@ class Block():
          ----------
          The parameters follow the necessary 'Synapses' class of Brain2.
          '''
-        self.synapse = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, delay = delay,
+        self.synapse = Synapses(self.neurons, self.neurons, model, on_pre = on_pre,
                                 method='euler', name = name, **kwargs)
 
     def connect(self, connect_matrix):
