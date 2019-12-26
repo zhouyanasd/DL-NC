@@ -68,14 +68,17 @@ except FileNotFoundError:
 
 #------------------------------------------
 # -------get numpy random state------------
-# np_state = np.random.get_state()
+np_state = np.random.get_state()
 
+# --- basic settings ---
 neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
-reservoir_input = 2
+reservoir_input = 1
 blocks_input = 1
+blocks_output = 1
 blocks_reservoir = 10
 neurons_block = 10
 
+# --- parameters needs to be update by optimizer ---
 connect_matrix_block = np.array([[1,1,2,2],[3,5,4,6]])
 connect_matrix_blocks = [connect_matrix_block]*blocks_reservoir
 connect_matrix_reservoir = np.array([[1,2,3,4],[5,6,7,8]])
@@ -90,6 +93,7 @@ delay_synapse_reservoir = np.random.rand((blocks_reservoir*blocks_reservoir)) * 
 
 strength_synapse_encoding_reservoir = np.random.rand(neurons_encoding * reservoir_input)
 
+# --- dynamic models ---
 dynamics_encoding = '''
 property : 1
 I = stimulus(t,i) : 1
@@ -125,68 +129,78 @@ net = LSM_Network()
 #--- create encoding and readout neurons ---
 encoding = NeuronGroup(neurons_encoding, dynamics_encoding, threshold='I > 0', method='euler', refractory=0 * ms,
                         name='encoding')
-readout = NeuronGroup(neurons_block*blocks_reservoir, dynamics_readout, method='euler', name='neurongroup_read')
+net.register_layer(encoding,'encoding')
 
-#--- initialize the parameters of encoding and readout neurons ---
-encoding.property = '1'
-readout.v = '0'
-readout.g = '0'
-readout.tau = 30
+readout = NeuronGroup(neurons_block*blocks_reservoir, dynamics_readout, method='euler', name='neurongroup_read')
+net.register_layer(readout,'readout')
 
 #--- create reservoir ---
 reservoir = Reservoir(blocks_reservoir)
 
 # --- create blocks ---
-# for index, connect_matrix in zip(range(blocks_reservoir), connect_matrix_blocks):
 reservoir.connect_blocks(neurons_block, connect_matrix_blocks, dynamics_reservoir, dynamics_synapse,
                          dynamics_synapse_pre, threshold='v > 15', reset='v = 13.5', refractory=3 * ms)
 
 #--- create synapses between blocks in reservoir---
-reservoir.create_synapse(connect_matrix_reservoir, dynamics_synapse, dynamics_synapse_pre)
+reservoir.create_synapse(connect_matrix_reservoir, dynamics_synapse, dynamics_synapse_pre, blocks_input, blocks_output)
 reservoir.connect_blocks()
+net.register_layer(reservoir,'reservoir')
 
 #--- create synapses encoding and readout between reservoir---
-net.create_synapse_encoding(dynamics_synapse, dynamics_synapse_pre)
+net.create_synapse_encoding(dynamics_synapse, dynamics_synapse_pre, reservoir_input)
 net.create_synapse_readout(dynamics_synapse_pre)
 net.connect_encoding()
-net.connect_readout(neurons_block)
-net.join_network(net)
+net.connect_readout()
+net.join_network()
 
 
-# --- initialize the parameters of blocks and synapses ----------
+# ------------------------------------
+#--- initialize the parameters encoding and readout neurons ---
+encoding.property = '1'
+readout.v = '0'
+readout.g = '0'
+readout.tau = 30
+
+#--- initialize the parameters reservoir and blocks ---
 for index, block_reservoir in enumerate(reservoir.blocks):
     neuron_property = np.array(([-1] * block_reservoir.ex_neurons) + ([1] * block_reservoir.inh_neurons))
     np.random.shuffle(neuron_property)
-    initialize_parameters(block_reservoir.neurons, 'property', neuron_property)
-    initialize_parameters(block_reservoir.neurons, 'v', np.array([13.5]*neurons_block)+
+    base_function.initialize_parameters(block_reservoir.neurons, 'property', neuron_property)
+    base_function.initialize_parameters(block_reservoir.neurons, 'v', np.array([13.5]*neurons_block)+
                                           np.random.rand(neurons_block)*1.5)
-    initialize_parameters(block_reservoir.neurons, 'g', np.array([0] * neurons_block))
-    initialize_parameters(block_reservoir.neurons, 'tau', np.array([tau_neurons] * neurons_block))
+    base_function.initialize_parameters(block_reservoir.neurons, 'g', np.array([0] * neurons_block))
+    base_function.initialize_parameters(block_reservoir.neurons, 'tau', np.array([tau_neurons] * neurons_block))
 
-
-    initialize_parameters(block_reservoir.synapse, 'w',
+    base_function.initialize_parameters(block_reservoir.synapse, 'w',
                                           base_function.get_weight_connection_matrix(connect_matrix_blocks[index],
                                                                                      strength_synapse_block))
-    initialize_parameters(block_reservoir.synapse, 'delay',
+    base_function.initialize_parameters(block_reservoir.synapse, 'delay',
                                           base_function.get_weight_connection_matrix(connect_matrix_blocks[index],
                                                                                      delay_synapse_block))
 
 
+converted_connect_matrix_reservoir, converted_strength_matrix_reservoir = \
+    base_function.convert_connect_matrix_reservoir(reservoir, connect_matrix_reservoir, strength_synapse_reservoir)
 for index, synapse_reservoir in enumerate(reservoir.synapses):
-    initialize_parameters(synapse_reservoir, 'w',
-                                            base_function.get_weight_connection_matrix(connect_matrix_reservoir,
-                                                                                    strength_synapse_reservoir))
-    initialize_parameters(synapse_reservoir, 'delay',
-                                            base_function.get_weight_connection_matrix(connect_matrix_reservoir,
-                                                                                    strength_synapse_reservoir))
+    base_function.initialize_parameters(synapse_reservoir, 'w',
+                                            base_function.get_weight_connection_matrix(
+                                                converted_connect_matrix_reservoir[index],
+                                                converted_strength_matrix_reservoir))
+
+    base_function.initialize_parameters(synapse_reservoir, 'delay',
+                                            base_function.get_weight_connection_matrix(
+                                                converted_connect_matrix_reservoir[index],
+                                                converted_strength_matrix_reservoir))
 
 connect_matrix_encoding = base_function.full_connect_encoding(neurons_encoding, reservoir.input)
 for index, synapse_encoding_reservoir in enumerate(net.synapses_encoding):
-    initialize_parameters(synapse_encoding_reservoir, 'w',
-                                            base_function.get_weight_connection_matrix(connect_matrix_encoding,
+    base_function.initialize_parameters(synapse_encoding_reservoir, 'w',
+                                            base_function.get_weight_connection_matrix(connect_matrix_encoding[index],
                                                                             strength_synapse_encoding_reservoir))
 
-#net.store('init')
+
+# ---------------------------------------
+net.store('init')
 
 inputs = zip(data_train_s, label_train)[0]
 stimulus = TimedArray(inputs[0], dt=Dt)

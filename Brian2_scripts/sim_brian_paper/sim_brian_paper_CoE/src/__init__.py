@@ -11,7 +11,6 @@ __all__ = [
     "Block",
     "Reservoir",
     "LSM_Network",
-    "initialize_parameters",
 ]
 
 __doc__ = """
