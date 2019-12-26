@@ -180,10 +180,10 @@ for index, synapse_reservoir in enumerate(reservoir.synapses):
                                             base_function.get_weight_connection_matrix(connect_matrix_reservoir,
                                                                                     strength_synapse_reservoir))
 
+connect_matrix_encoding = base_function.full_connect_encoding(neurons_encoding, reservoir.input)
 for index, synapse_encoding_reservoir in enumerate(net.synapses_encoding):
     initialize_parameters(synapse_encoding_reservoir, 'w',
-                                            base_function.get_weight_connection_matrix(
-                                                        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 2, ([1] * 10) + ([2] * 10)],
+                                            base_function.get_weight_connection_matrix(connect_matrix_encoding,
                                                                             strength_synapse_encoding_reservoir))
 
 #net.store('init')

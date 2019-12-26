@@ -73,7 +73,7 @@ class Block():
          '''
         net.add(self.neurons, self.synapse)
 
-    def determine_input_output(self):
+    def determine_input_output(self, blocks_input):
         '''
          Determine the index of input and output neurons.
 

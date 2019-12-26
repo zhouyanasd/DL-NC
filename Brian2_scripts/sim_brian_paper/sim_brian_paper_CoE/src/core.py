@@ -81,6 +81,13 @@ class BaseFunctions():
     def __init__(self):
         pass
 
+    def full_connect_encoding(self, neurons_encoding, reservoir_inputs):
+        outputs = np.arange(len(neurons_encoding))* reservoir_inputs
+        inputs = reservoir_inputs*len(neurons_encoding)
+        inputs.sort()
+        connect_matrix_encoding = [outputs, inputs]
+        return connect_matrix_encoding
+
     def get_weight_connection_matrix(self, connection_matrix, weight):
         pass
 
