@@ -91,7 +91,7 @@ delay_synapse_block = np.random.rand((neurons_block*neurons_block)) * ms
 strength_synapse_reservoir = np.random.rand((blocks_reservoir*blocks_reservoir))
 delay_synapse_reservoir = np.random.rand((blocks_reservoir*blocks_reservoir)) * ms
 
-strength_synapse_encoding_reservoir = np.random.rand(neurons_encoding * reservoir_input)
+strength_synapse_encoding_reservoir = np.random.rand(blocks_reservoir)
 
 # --- dynamic models ---
 dynamics_encoding = '''
@@ -180,23 +180,24 @@ for index, block_reservoir in enumerate(reservoir.blocks):
 
 
 converted_connect_matrix_reservoir, converted_strength_matrix_reservoir = \
-    base_function.convert_connect_matrix_reservoir(reservoir, connect_matrix_reservoir, strength_synapse_reservoir)
+    base_function.convert_connect_matrix_reservoir(reservoir, strength_synapse_reservoir)
 for index, synapse_reservoir in enumerate(reservoir.synapses):
     base_function.initialize_parameters(synapse_reservoir, 'w',
                                             base_function.get_weight_connection_matrix(
                                                 converted_connect_matrix_reservoir[index],
-                                                converted_strength_matrix_reservoir))
+                                                converted_strength_matrix_reservoir[index]))
 
     base_function.initialize_parameters(synapse_reservoir, 'delay',
                                             base_function.get_weight_connection_matrix(
                                                 converted_connect_matrix_reservoir[index],
-                                                converted_strength_matrix_reservoir))
+                                                converted_strength_matrix_reservoir[index]))
 
-connect_matrix_encoding = base_function.full_connect_encoding(neurons_encoding, reservoir.input)
+connect_matrix_encoding, converted_strength_synapse_encoding_reservoir = base_function.full_connect_encoding(
+    neurons_encoding, reservoir, strength_synapse_encoding_reservoir)
 for index, synapse_encoding_reservoir in enumerate(net.synapses_encoding):
     base_function.initialize_parameters(synapse_encoding_reservoir, 'w',
                                             base_function.get_weight_connection_matrix(connect_matrix_encoding[index],
-                                                                            strength_synapse_encoding_reservoir))
+                                                                       converted_strength_synapse_encoding_reservoir))
 
 
 # ---------------------------------------
