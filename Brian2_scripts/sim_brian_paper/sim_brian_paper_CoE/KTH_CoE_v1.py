@@ -95,7 +95,7 @@ strength_synapse_encoding_reservoir = np.random.rand(blocks_reservoir)
 
 # --- dynamic models ---
 dynamics_encoding = '''
-property : 1
+property = 1 : 1
 I = stimulus(t,i) : 1
 '''
 
@@ -138,7 +138,7 @@ net.register_layer(readout,'readout')
 reservoir = Reservoir(blocks_reservoir)
 
 # --- create blocks ---
-reservoir.connect_blocks(neurons_block, connect_matrix_blocks, dynamics_reservoir, dynamics_synapse,
+reservoir.create_blocks(neurons_block, connect_matrix_blocks, dynamics_reservoir, dynamics_synapse,
                          dynamics_synapse_pre, threshold='v > 15', reset='v = 13.5', refractory=3 * ms)
 
 #--- create synapses between blocks in reservoir---
@@ -162,21 +162,13 @@ readout.g = '0'
 readout.tau = 30
 
 #--- initialize the parameters reservoir and blocks ---
-for index, block_reservoir in enumerate(reservoir.blocks):
-    neuron_property = np.array(([-1] * block_reservoir.ex_neurons) + ([1] * block_reservoir.inh_neurons))
-    np.random.shuffle(neuron_property)
-    base_function.initialize_parameters(block_reservoir.neurons, 'property', neuron_property)
-    base_function.initialize_parameters(block_reservoir.neurons, 'v', np.array([13.5]*neurons_block)+
-                                          np.random.rand(neurons_block)*1.5)
-    base_function.initialize_parameters(block_reservoir.neurons, 'g', np.array([0] * neurons_block))
-    base_function.initialize_parameters(block_reservoir.neurons, 'tau', np.array([tau_neurons] * neurons_block))
+reservoir.initialize_blocks_neurons(v = np.array([13.5]*neurons_block) + np.random.rand(neurons_block)*1.5,
+                                    g = np.array([0] * neurons_block),
+                                    tau = np.array([tau_neurons] * neurons_block))
 
-    base_function.initialize_parameters(block_reservoir.synapse, 'w',
-                                          base_function.get_weight_connection_matrix(connect_matrix_blocks[index],
-                                                                                     strength_synapse_block))
-    base_function.initialize_parameters(block_reservoir.synapse, 'delay',
-                                          base_function.get_weight_connection_matrix(connect_matrix_blocks[index],
-                                                                                     delay_synapse_block))
+reservoir.initialize_blocks_synapses(connect_matrix_blocks,
+                                     w = strength_synapse_block,
+                                     delay = delay_synapse_block)
 
 
 converted_connect_matrix_reservoir, converted_strength_matrix_reservoir = \

@@ -65,8 +65,8 @@ class AddParaName():
 class MathFunctions():
     """
     Some math functions for the simulations
-
     """
+
     def __init__(self):
         pass
 
@@ -83,7 +83,7 @@ class BaseFunctions():
     def __init__(self):
         pass
 
-    def initialize_parameters(object, parameter_name, parameter_value):
+    def initialize_parameters(self, object, parameter_name, parameter_value):
         '''
          Set the initial parameters of the objects in the block.
 
@@ -93,6 +93,7 @@ class BaseFunctions():
          parameter_name: str, the name of the parameter.
          parameter_value: np.array, the value of the parameter.
          '''
+
         if isinstance(object, NeuronGroup):
             object.variables[parameter_name].set_value(parameter_value)
         elif isinstance(object, Synapses):
@@ -103,6 +104,7 @@ class BaseFunctions():
     def full_connect_encoding(self, neurons_encoding, reservoir, strength_synapse_encoding_reservoir):
         connect_matrix_encoding = []
         converted_strength_synapse_encoding_reservoir = []
+
         for block_input_index in reservoir.input:
             block_input = reservoir.blocks[block_input_index]
             connect_matrix = np.meshgrid(np.arange(len(neurons_encoding)), block_input.input)
@@ -114,11 +116,13 @@ class BaseFunctions():
             for index, (index_i, index_j) in enumerate(zip(connect_matrix)):
                 strength_synapse[index_i][index_j] = strength_[index]
             converted_strength_synapse_encoding_reservoir.append(strength_synapse)
+
             return connect_matrix_encoding, converted_strength_synapse_encoding_reservoir
 
     def convert_connect_matrix_reservoir(self, reservoir, strength_synapse_reservoir):
         converted_connect_matrix_reservoir = []
         converted_strength_synapse_reservoir = []
+
         for index, synapse in enumerate(reservoir.synapses):
             block_pre_index = reservoir.connect_matrix[0][index]
             block_post_index = reservoir.connect_matrix[1][index]
@@ -136,12 +140,20 @@ class BaseFunctions():
 
             return converted_connect_matrix_reservoir, converted_strength_synapse_reservoir
 
-
-    def get_weight_connection_matrix(self, connection_matrix, weight):
-        weight_list = []
+    def get_parameters(self, connection_matrix, parameter):
+        parameter_list = []
         for index_i, index_j in connection_matrix[0], connection_matrix[1]:
-            weight_list.append(weight[index_i][index_j])
-        return weight_list
+            parameter_list.append(parameter[index_i][index_j])
+        return parameter_list
+
+    def np_two_combination(self, a, b):
+        x = []
+        y = []
+        for i in a:
+            for j in b:
+                x.append(i)
+                y.append(j)
+        return np.array[x, y]
 
     def np_extend(self, a, b, axis=0):
         if a is None:
@@ -163,7 +175,6 @@ class Evaluation():
     Some basic function for evaluate the output of LSM.
 
     This class offers evaluation functions for learning tasks.
-
     """
 
     def __init__(self):
@@ -183,8 +194,8 @@ class Evaluation():
 class Result():
     """
     Some functions for dealing with the results.
-
     """
+
     def __init__(self):
         pass
 
