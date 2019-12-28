@@ -101,45 +101,6 @@ class BaseFunctions():
         else:
             print('wrong object type')
 
-    def full_connect_encoding(self, neurons_encoding, reservoir, strength_synapse_encoding_reservoir):
-        connect_matrix_encoding = []
-        converted_strength_synapse_encoding_reservoir = []
-
-        for block_input_index in reservoir.input:
-            block_input = reservoir.blocks[block_input_index]
-            connect_matrix = np.meshgrid(np.arange(len(neurons_encoding)), block_input.input)
-            connect_matrix_encoding.append(connect_matrix)
-
-            strength_synapse = np.zeros(neurons_encoding, block_input.N)
-            strength = strength_synapse_encoding_reservoir[block_input_index]
-            strength_ = np.random.rand(len(neurons_encoding) * len(block_input.input)) * strength
-            for index, (index_i, index_j) in enumerate(zip(connect_matrix)):
-                strength_synapse[index_i][index_j] = strength_[index]
-            converted_strength_synapse_encoding_reservoir.append(strength_synapse)
-
-            return connect_matrix_encoding, converted_strength_synapse_encoding_reservoir
-
-    def convert_connect_matrix_reservoir(self, reservoir, strength_synapse_reservoir):
-        converted_connect_matrix_reservoir = []
-        converted_strength_synapse_reservoir = []
-
-        for index, synapse in enumerate(reservoir.synapses):
-            block_pre_index = reservoir.connect_matrix[0][index]
-            block_post_index = reservoir.connect_matrix[1][index]
-            block_pre = reservoir.blocks[block_pre_index]
-            block_post = reservoir.blocks[block_post_index]
-            connect_matrix = np.meshgrid(block_pre.output, block_post.input)
-            converted_connect_matrix_reservoir.append(connect_matrix)
-
-            strength_synapse = np.zeros(block_pre.N, block_post.N)
-            strength = strength_synapse_reservoir[block_pre_index][block_post_index]
-            strength_ = np.random.rand(len(block_pre.output) * len(block_post.input))*strength
-            for index, (index_i, index_j) in enumerate(zip(connect_matrix)):
-                strength_synapse[index_i][index_j] = strength_[index]
-            converted_strength_synapse_reservoir.append(strength_synapse)
-
-            return converted_connect_matrix_reservoir, converted_strength_synapse_reservoir
-
     def get_parameters(self, connection_matrix, parameter):
         parameter_list = []
         for index_i, index_j in connection_matrix[0], connection_matrix[1]:
