@@ -340,7 +340,7 @@ class CoE():
     def surrogate_init(self, init_points, LHS_path=None):
         if LHS_path == None:
             LHS_points = self.surrogate.LHSample(init_points.astype(int), self.surrogate._space.bounds)  # LHS for BO
-            fit_init = [self.aimfunc(**self.surrogate._space.array_to_params(x)) for x in
+            fit_init = [self.aimfunc(**self.surrogate._space.array_to_params(x)) for x in # 还是要和GA用的函数形式匹配一下
                         LHS_points]  # evaluated by the real fitness
             for x, eva in zip(LHS_points, fit_init):
                 self.optimizer._space.register(x, eva)  # add LHS points to solution space
@@ -384,12 +384,20 @@ class CoE():
             Chrom[:, SubCom_i] = P_i
             LegV_i = np.ones((NIND, 1))
             [ObjV_i, LegV_i] = self.aimfuc(Chrom, LegV_i)  # 求子问题的目标函数值
+            for x, eva in zip(Chrom, ObjV_i):
+                self.optimizer._space.register(x, eva) # update the solution space
+            self.surrogate._gp.fit(self.optimizer._space.params, self.optimizer._space.target) # update the BO model
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
 
         gen = 0
         badCounter = 0  # 用于记录在“遗忘策略下”被忽略的代数
+
+
+
+
+
         # 开始进化！！
         start_time = time.time()  # 开始计时
         while gen < MAXGEN:
