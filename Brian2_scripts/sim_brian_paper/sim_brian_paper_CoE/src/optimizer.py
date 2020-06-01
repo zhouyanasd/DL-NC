@@ -323,19 +323,18 @@ class BayesianOptimization_(BayesianOptimization):
 
 
 class CoE():
-    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, acquisition, kappa=2.576, xi=0.0, **opts):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, acquisition, keys, kappa=2.576, xi=0.0, **opts):
         self.aimfunc = f
         self.punfunc = f_p
+        self.SubCom = SubCom
+        self.FieldDR = ga.crtfld(ranges, borders, precisions)
+        self.keys = keys
         self.surrogate = BayesianOptimization_(
             f=f,
-            pbounds=opts['bounds'], # 此处需要修改到和borders匹配的形式
+            pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])), # 此处需要修改到和borders匹配的形式
             random_state=1,
         )
         self.util = UtilityFunction_(kind=acquisition, kappa=kappa, xi=xi)
-        # opts['bounds'] = self.optimizer._space._bounds.T.tolist()
-
-        self.SubCom = SubCom
-        self.FieldDR = ga.crtfld(ranges, borders, precisions)
 
     def surrogate_init(self, init_points, LHS_path=None):
         if LHS_path == None:
@@ -349,6 +348,9 @@ class CoE():
             for x, eva in zip(LHS_points, fit_init):
                 self.optimizer._space.register(x, eva)  # add loaded LHS points to solution space
         self.surrogate._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
+
+    def aimfunc_(self, Phen, LegV):
+        return [self.aimfunc(Phen), LegV]
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1,  MAXGEN=100, NIND=10,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5,
@@ -390,7 +392,6 @@ class CoE():
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
-
         gen = 0
         badCounter = 0  # 用于记录在“遗忘策略下”被忽略的代数
 
