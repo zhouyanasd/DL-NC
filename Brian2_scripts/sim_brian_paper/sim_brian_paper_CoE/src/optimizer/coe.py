@@ -6,16 +6,15 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian \
+    import BayesianOptimization, UtilityFunction
 
 import re, time
 import warnings
 
-import cma
 import geatpy as ga
 
 import numpy as np
-from scipy.stats import norm
-
 
 
 
@@ -26,12 +25,12 @@ class CoE():
         self.SubCom = SubCom
         self.FieldDR = ga.crtfld(ranges, borders, precisions)
         self.keys = keys
-        self.surrogate = BayesianOptimization_(
+        self.surrogate = BayesianOptimization(
             f=f,
             pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])), # 此处需要修改到和borders匹配的形式
             random_state=1,
         )
-        self.util = UtilityFunction_(kind=acquisition, kappa=kappa, xi=xi)
+        self.util = UtilityFunction(kind=acquisition, kappa=kappa, xi=xi)
 
     def surrogate_init(self, init_points, LHS_path=None):
         if LHS_path == None:

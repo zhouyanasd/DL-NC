@@ -6,3 +6,13 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
+
+from .bayesian import *
+from .coe import *
+from .de import *
+
+__all__ = [
+    "DiffEvol",
+    "BayesianOptimization_",
+    "CoE",
+]

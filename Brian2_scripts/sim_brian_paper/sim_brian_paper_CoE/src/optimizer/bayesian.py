@@ -1,9 +1,31 @@
-from bayes_opt.event import Events
-from bayes_opt import BayesianOptimization
-from bayes_opt import UtilityFunction
-import numpy as np
-from .util import ensure_rng
+# from bayes_opt.event import Events
+# from bayes_opt import BayesianOptimization
+# from bayes_opt import UtilityFunction
 
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.de import DiffEvol
+
+import re, warnings
+
+import numpy as np
+from scipy.stats import norm
+from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process import GaussianProcessRegressor
+
+import cma
+
+def ensure_rng(random_state=None):
+    """
+    Creates a random number generator based on an optional seed.  This can be
+    an integer or another random state for a seeded rng, or None for an
+    unseeded rng.
+    """
+    if random_state is None:
+        random_state = np.random.RandomState()
+    elif isinstance(random_state, int):
+        random_state = np.random.RandomState(random_state)
+    else:
+        assert isinstance(random_state, np.random.RandomState)
+    return random_state
 
 def _hashable(x):
     """ ensure that an point is hashable by a python dict """
@@ -17,13 +39,13 @@ class TargetSpace(object):
 
     Example
     -------
-    >>> def target_func(p1, p2):
-    >>>     return p1 + p2
-    >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
-    >>> space = TargetSpace(target_func, pbounds, random_state=0)
-    >>> x = space.random_points(1)[0]
-    >>> y = space.register_point(x)
-    >>> assert self.max_point()['max_val'] == y
+    # >>> def target_func(p1, p2):
+    # >>>     return p1 + p2
+    # >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
+    # >>> space = TargetSpace(target_func, pbounds, random_state=0)
+    # >>> x = space.random_points(1)[0]
+    # >>> y = space.register_point(x)
+    # >>> assert self.max_point()['max_val'] == y
     """
     def __init__(self, target_func, pbounds, random_state=None):
         """
@@ -149,15 +171,15 @@ class TargetSpace(object):
 
         Example
         -------
-        >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
-        >>> space = TargetSpace(lambda p1, p2: p1 + p2, pbounds)
-        >>> len(space)
-        0
-        >>> x = np.array([0, 0])
-        >>> y = 1
-        >>> space.add_observation(x, y)
-        >>> len(space)
-        1
+        # >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
+        # >>> space = TargetSpace(lambda p1, p2: p1 + p2, pbounds)
+        # >>> len(space)
+        # 0
+        # >>> x = np.array([0, 0])
+        # >>> y = 1
+        # >>> space.add_observation(x, y)
+        # >>> len(space)
+        # 1
         """
         x = self._as_array(params)
         if x in self:
@@ -209,10 +231,10 @@ class TargetSpace(object):
 
         Example
         -------
-        >>> target_func = lambda p1, p2: p1 + p2
-        >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
-        >>> space = TargetSpace(target_func, pbounds, random_state=0)
-        >>> space.random_points(1)
+        # >>> target_func = lambda p1, p2: p1 + p2
+        # >>> pbounds = {'p1': (0, 1), 'p2': (1, 100)}
+        # >>> space = TargetSpace(target_func, pbounds, random_state=0)
+        # >>> space.random_points(1)
         array([[ 55.33253689,   0.54488318]])
         """
         # TODO: support integer, category, and basic scipy.optimize constraints
@@ -283,9 +305,19 @@ class Queue:
         self._queue.append(obj)
 
 
-class UtilityFunction_(UtilityFunction):
+class UtilityFunction():
     def __init__(self, kind, kappa, xi):
-        super(UtilityFunction_, self).__init__(kind, kappa, xi)
+        self.kappa = kappa
+
+        self.xi = xi
+
+        if kind not in ['ucb', 'ei', 'poi']:
+            err = "The utility function " \
+                  "{} has not been implemented, " \
+                  "please choose one of ucb, ei, or poi.".format(kind)
+            raise NotImplementedError(err)
+        else:
+            self.kind = kind
 
     def utility(self, x, gp, y_min):
         if self.kind == 'ucb':
@@ -313,9 +345,58 @@ class UtilityFunction_(UtilityFunction):
         return -norm.cdf(z)
 
 
-class BayesianOptimization_(BayesianOptimization):
+class BayesianOptimization():
     def __init__(self, f, pbounds, random_state=None, verbose=0):
-        super(BayesianOptimization_, self).__init__(f, pbounds, random_state, verbose)
+
+        self._random_state = ensure_rng(random_state)
+
+        # Data structure containing the function to be optimized, the bounds of
+        # its domain, and a record of the evaluations we have done so far
+        self._space = TargetSpace(f, pbounds, random_state)
+
+        # queue
+        self._queue = Queue()
+
+        # Internal GP regressor
+        self._gp = GaussianProcessRegressor(
+            kernel=Matern(nu=2.5),
+            alpha=1e-6,
+            normalize_y=True,
+            n_restarts_optimizer=25,
+            random_state=self._random_state,
+        )
+
+        self._verbose = verbose
+
+    @property
+    def space(self):
+        return self._space
+
+    @property
+    def max(self):
+        return self._space.max()
+
+    @property
+    def res(self):
+        return self._space.res()
+
+    def register(self, params, target):
+        """Expect observation with known target"""
+        self._space.register(params, target)
+
+    def probe(self, params, lazy=True):
+        """Probe target of x"""
+        if lazy:
+            self._queue.add(params)
+        else:
+            self._space.probe(params)
+
+    def _prime_queue(self, init_points):
+        """Make sure there's something in the queue at the very beginning."""
+        if self._queue.empty and self._space.empty:
+            init_points = max(init_points, 1)
+        for _ in range(init_points):
+            self._queue.add(self._space.random_sample())
 
     def _prime_queue_LHS(self, init_points):
         """Make sure there's something in the queue at the very beginning."""
@@ -383,7 +464,7 @@ class BayesianOptimization_(BayesianOptimization):
         x_min = de.minimum_location
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
-    def suggest_(self, utility_function, opt_function):
+    def suggest(self, utility_function, opt_function):
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
         with warnings.catch_warnings():
@@ -413,8 +494,6 @@ class BayesianOptimization_(BayesianOptimization):
                  xi=0.0,
                  **gp_params):
         """Mazimize your function"""
-        self._prime_subscriptions()
-        self.dispatch(Events.OPTMIZATION_START)
         if LHS_path == None:
             if is_LHS:
                 self._prime_queue_LHS(init_points)
@@ -427,13 +506,12 @@ class BayesianOptimization_(BayesianOptimization):
         if opt == None:
             opt = self.acq_min_DE
         self.set_gp_params(**gp_params)
-        util = UtilityFunction_(kind=acq, kappa=kappa, xi=xi)
+        util = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
                 x_probe = next(self._queue)
             except StopIteration:
-                x_probe = self.suggest_(util, opt)
+                x_probe = self.suggest(util, opt)
                 iteration += 1
             self.probe(x_probe, lazy=False)
-        self.dispatch(Events.OPTMIZATION_END)
