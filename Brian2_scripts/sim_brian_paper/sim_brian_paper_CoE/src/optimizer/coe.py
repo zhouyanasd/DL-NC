@@ -9,16 +9,13 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian \
     import BayesianOptimization, UtilityFunction
 
-import re, time
-import warnings
-
-import geatpy as ga
+import time
 
 import numpy as np
+import geatpy as ga
 
 
-
-class CoE():
+class CoE_surrgate():
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, acquisition, keys, kappa=2.576, xi=0.0, **opts):
         self.f = f # for BO with dict input
         self.f_p = f_p
@@ -38,11 +35,11 @@ class CoE():
             fit_init = [self.aimfunc(**self.surrogate._space.array_to_params(x)) for x in # 还是要和GA用的函数形式匹配一下
                         LHS_points]  # evaluated by the real fitness
             for x, eva in zip(LHS_points, fit_init):
-                self.optimizer._space.register(x, eva)  # add LHS points to solution space
+                self.surrogate._space.register(x, eva)  # add LHS points to solution space
         else:
             LHS_points, fit_init = self.surrogate.load_LHS(LHS_path)
             for x, eva in zip(LHS_points, fit_init):
-                self.optimizer._space.register(x, eva)  # add loaded LHS points to solution space
+                self.surrogate._space.register(x, eva)  # add loaded LHS points to solution space
         self.surrogate._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
 
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and oupput

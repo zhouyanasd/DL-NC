@@ -13,6 +13,6 @@ from .de import *
 
 __all__ = [
     "DiffEvol",
-    "BayesianOptimization_",
-    "CoE",
+    "BayesianOptimization",
+    "CoE_surrgate",
 ]

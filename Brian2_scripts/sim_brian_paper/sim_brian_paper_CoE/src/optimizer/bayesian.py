@@ -1,7 +1,3 @@
-# from bayes_opt.event import Events
-# from bayes_opt import BayesianOptimization
-# from bayes_opt import UtilityFunction
-
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.de import DiffEvol
 
 import re, warnings
@@ -367,6 +363,16 @@ class BayesianOptimization():
         )
 
         self._verbose = verbose
+
+    def utilityfunction(self, kind, x, gp, y_min, kappa, xi):
+        mean, std = gp.predict(x, return_std=True)
+        z = (y_min - mean - xi) / std
+        if kind == 'ucb':
+            return mean - kappa * std
+        if kind == 'ei':
+            return -(y_min - mean - xi) * norm.cdf(z) - std * norm.pdf(z)
+        if kind == 'poi':
+            return -norm.cdf(z)
 
     @property
     def space(self):
