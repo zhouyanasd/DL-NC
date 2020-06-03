@@ -16,7 +16,8 @@ import geatpy as ga
 
 
 class CoE_surrgate():
-    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, acquisition, keys, kappa=2.576, xi=0.0, **opts):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
+                 opt='cma', **gp_params):
         self.f = f # for BO with dict input
         self.f_p = f_p
         self.SubCom = SubCom
@@ -26,8 +27,8 @@ class CoE_surrgate():
             f=f,
             pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])), # 此处需要修改到和borders匹配的形式
             random_state=1,
+            acq=acq, opt=opt, kappa = kappa, xi =xi, **gp_params
         )
-        self.util = UtilityFunction(kind=acquisition, kappa=kappa, xi=xi)
 
     def surrogate_init(self, init_points, LHS_path=None):
         if LHS_path == None:
@@ -114,12 +115,13 @@ class CoE_surrgate():
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
                 Gauss = []
                 for x in Chrom:
-                    guess = self.optimizer.guess_fixedpoint(self.util, x)
+                    guess = self.optimizer.guess_fixedpoint(self.util, x) # 估计子种群的适应度
                     Gauss.append(guess)
-                Chrom_ = np.array(Chrom)[Gauss.argsort()[0:int(1)]]
+                Chrom_ = np.array(Chrom)[Gauss.argsort()[0:int(1)]] # 找到估计最好的1个基因
                 [ObjVSel, LegVSel] = self.aimfuc(Chrom_, LegVSel)  # 求育种种群的目标函数值
                 for x, eva in zip(Chrom, ObjV_i):
                     self.optimizer._space.register(x, eva)  # update the solution space
+                    #ToDo:需要更新评估的值到估计的基因中
                 self.surrogate._gp.fit(self.optimizer._space.params,
                                        self.optimizer._space.target)  # update the BO model
                 # 更新context vector 及其fitness （已经考虑排除不可行解）

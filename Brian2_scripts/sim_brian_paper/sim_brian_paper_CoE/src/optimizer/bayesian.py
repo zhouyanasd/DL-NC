@@ -342,7 +342,8 @@ class UtilityFunction():
 
 
 class BayesianOptimization():
-    def __init__(self, f, pbounds, random_state=None, verbose=0):
+    def __init__(self, f, pbounds, random_state=None, acq='ucb', opt='de', kappa=2.576, xi=0.0,
+                  verbose=0, **gp_params):
 
         self._random_state = ensure_rng(random_state)
 
@@ -361,18 +362,16 @@ class BayesianOptimization():
             n_restarts_optimizer=25,
             random_state=self._random_state,
         )
+        self._gp.set_params(**gp_params)
+
+        if opt == 'cma':
+            self.opt_function = self.acq_min_CMA
+        else:
+            self.opt_function = self.acq_min_DE
+
+        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
 
         self._verbose = verbose
-
-    def utilityfunction(self, kind, x, gp, y_min, kappa, xi):
-        mean, std = gp.predict(x, return_std=True)
-        z = (y_min - mean - xi) / std
-        if kind == 'ucb':
-            return mean - kappa * std
-        if kind == 'ei':
-            return -(y_min - mean - xi) * norm.cdf(z) - std * norm.pdf(z)
-        if kind == 'poi':
-            return -norm.cdf(z)
 
     @property
     def space(self):
@@ -470,14 +469,14 @@ class BayesianOptimization():
         x_min = de.minimum_location
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
-    def suggest(self, utility_function, opt_function):
+    def suggest(self):
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self._gp.fit(self._space.params, self._space.target)
-        suggestion = opt_function(
-            ac=utility_function.utility,
+        suggestion = self.opt_function(
+            ac=self.utility_function.utility,
             gp=self._gp,
             y_min=self._space.target.min(),
             bounds=self._space.bounds,
@@ -485,8 +484,8 @@ class BayesianOptimization():
         )
         return self._space.array_to_params(suggestion)
 
-    def guess_fixedpoint(self, utility_function, X):
-        gauss = utility_function.utility(X, self._gp, self._space.target.min())
+    def guess_fixedpoint(self, X):
+        gauss =self.utility_function.utility(X, self._gp, self._space.target.min())
         return gauss
 
     def minimize(self,
@@ -494,11 +493,7 @@ class BayesianOptimization():
                  init_points=5,
                  is_LHS=False,
                  n_iter=25,
-                 acq='ucb',
-                 opt=None,
-                 kappa=2.576,
-                 xi=0.0,
-                 **gp_params):
+                 ):
         """Mazimize your function"""
         if LHS_path == None:
             if is_LHS:
@@ -509,15 +504,11 @@ class BayesianOptimization():
             X, fit = self.load_LHS(LHS_path)
             for x, eva in zip(X, fit):
                 self.register(x, eva)
-        if opt == None:
-            opt = self.acq_min_DE
-        self.set_gp_params(**gp_params)
-        util = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
                 x_probe = next(self._queue)
             except StopIteration:
-                x_probe = self.suggest(util, opt)
+                x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
