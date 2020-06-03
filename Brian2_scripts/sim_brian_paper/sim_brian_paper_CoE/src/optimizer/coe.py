@@ -113,19 +113,26 @@ class CoE_surrgate():
                 Chrom[:, SubCom_i] = SelCh
 
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
-                Gauss = []
-                for x in Chrom:
-                    guess = self.optimizer.guess_fixedpoint(self.util, x) # 估计子种群的适应度
-                    Gauss.append(guess)
-                Chrom_ = np.array(Chrom)[Gauss.argsort()[0:int(1)]] # 找到估计最好的1个基因
-                [ObjVSel, LegVSel] = self.aimfuc(Chrom_, LegVSel)  # 求育种种群的目标函数值
+
+                ObjVSel = self.optimizer._gp.predict(Chrom)  # get the estimated value
+
+                guess = self.optimizer.guess_fixedpoint(self.util, Chrom) # 估计子种群的适应度
+
+                Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]] # 找到估计最好的1个基因
+                LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
+                [ObjVSel_, LegVSel_] = self.aimfuc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
+
+                ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_ # replace the estimated value by real value
+                LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
+
                 for x, eva in zip(Chrom, ObjV_i):
                     self.optimizer._space.register(x, eva)  # update the solution space
-                    #ToDo:需要更新评估的值到估计的基因中
+
                 self.surrogate._gp.fit(self.optimizer._space.params,
                                        self.optimizer._space.target)  # update the BO model
+
                 # 更新context vector 及其fitness （已经考虑排除不可行解）
-                for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel, LegVSel)):
+                for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
                     if maxormin == 1:
                         if ObjVSel_j < F_B and LegVSel_j == 1:
                             F_B = ObjVSel_j
@@ -146,7 +153,7 @@ class CoE_surrgate():
 
                 bestIdx = np.argmax(FitnV)  # 获取最优个体的下标
                 if LegV_i[bestIdx] != 0:
-                    feasible = np.where(LegV_i != 0)[0]  # 排除非可行解
+                    # feasible = np.where(LegV_i != 0)[0]  # 排除非可行解
                     repnum = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])  # 计算最优个体重复数
                     badCounter = 0  # badCounter计数器清零
                 else:
