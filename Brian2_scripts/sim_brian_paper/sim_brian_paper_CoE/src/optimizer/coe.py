@@ -32,22 +32,24 @@ class CoE_surrgate():
 
     def surrogate_init(self, init_points, LHS_path=None):
         if LHS_path == None:
-            LHS_points = self.surrogate.LHSample(init_points.astype(int), self.surrogate._space.bounds)  # LHS for BO
-            fit_init = [self.aimfunc(**self.surrogate._space.array_to_params(x)) for x in # 还是要和GA用的函数形式匹配一下
-                        LHS_points]  # evaluated by the real fitness
+            LHS_points = self.surrogate.LHSample(init_points, self.surrogate._space.bounds)  # LHS for BO
+            fit_init = [self.f(**self.surrogate._space.array_to_params(x)) for x in LHS_points]  # evaluated by the real fitness
             for x, eva in zip(LHS_points, fit_init):
                 self.surrogate._space.register(x, eva)  # add LHS points to solution space
         else:
             LHS_points, fit_init = self.surrogate.load_LHS(LHS_path)
             for x, eva in zip(LHS_points, fit_init):
                 self.surrogate._space.register(x, eva)  # add loaded LHS points to solution space
-        self.surrogate._gp.fit(self.optimizer._space.params, self.optimizer._space.target)  # initialize the BO model
+        self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target)  # initialize the BO model
 
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and oupput
-        Phen_ = dict(zip(self.keys, Phen))
-        return [self.aimfunc(Phen_), LegV]
+        res = []
+        for phen in Phen:
+            phen_ = dict(zip(self.keys, phen))
+            res.append(self.f(**phen_))
+        return [res, LegV]
 
-    def punfunc(self,LegV, FitnV):
+    def punfunc(self, LegV, FitnV):
         return self.f_p(LegV, FitnV)
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1,  MAXGEN=100, NIND=10,
@@ -68,7 +70,7 @@ class CoE_surrgate():
             B = ga.crtrp(1, self.FieldDR)  # 定义初始contex vector
         elif problem == 'I':
             B = ga.crtip(1, self.FieldDR)
-        [F_B, LegV_B] = self.aimfuc(B, np.ones((1, 1)))  # 求初代contex vector 的 fitness
+        [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))  # 求初代contex vector 的 fitness
 
         # 初始化各个子种群
         P = []
@@ -83,10 +85,10 @@ class CoE_surrgate():
             Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
             Chrom[:, SubCom_i] = P_i
             LegV_i = np.ones((NIND, 1))
-            [ObjV_i, LegV_i] = self.aimfuc(Chrom, LegV_i)  # 求子问题的目标函数值
+            [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)  # 求子问题的目标函数值
             for x, eva in zip(Chrom, ObjV_i):
-                self.optimizer._space.register(x, eva) # update the solution space
-            self.surrogate._gp.fit(self.optimizer._space.params, self.optimizer._space.target) # update the BO model
+                self.surrogate._space.register(x, eva) # update the solution space
+            self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target) # update the BO model
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
@@ -114,22 +116,22 @@ class CoE_surrgate():
 
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
 
-                ObjVSel = self.optimizer._gp.predict(Chrom)  # get the estimated value
+                ObjVSel = self.surrogate._gp.predict(Chrom)  # get the estimated value
 
-                guess = self.optimizer.guess_fixedpoint(self.util, Chrom) # 估计子种群的适应度
+                guess = self.surrogate.guess_fixedpoint(Chrom) # 估计子种群的适应度
 
                 Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]] # 找到估计最好的1个基因
                 LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
-                [ObjVSel_, LegVSel_] = self.aimfuc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
+                [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
 
                 ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_ # replace the estimated value by real value
                 LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
 
-                for x, eva in zip(Chrom, ObjV_i):
-                    self.optimizer._space.register(x, eva)  # update the solution space
+                for x, eva in zip(Chrom_, ObjVSel_):
+                    self.surrogate._space.register(x, eva)  # update the solution space
 
-                self.surrogate._gp.fit(self.optimizer._space.params,
-                                       self.optimizer._space.target)  # update the BO model
+                self.surrogate._gp.fit(self.surrogate._space.params,
+                                       self.surrogate._space.target)  # update the BO model
 
                 # 更新context vector 及其fitness （已经考虑排除不可行解）
                 for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
