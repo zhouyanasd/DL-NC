@@ -63,7 +63,7 @@ class CoE_surrgate():
         pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
         # 定义变量记录器，记录控制变量值，初始值为nan
         var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
-        repnum = 0  # 初始化重复个体数为0
+        repnum = [0] * len(self.SubCom)  # 初始化重复个体数为0
         ax = None  # 存储上一帧图形
         """=========================开始遗传算法进化======================="""
         if problem == 'R':
@@ -106,7 +106,7 @@ class CoE_surrgate():
                 SelCh = ga.recombin(recombinStyle, P_i, recopt, SUBPOP)  # 重组
                 if problem == 'R':
                     SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
-                    if distribute == True and repnum > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+                    if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
                         SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
                 elif problem == 'I':
                     SelCh = ga.mutint(SelCh, FieldDR_i, pm)
@@ -156,7 +156,7 @@ class CoE_surrgate():
                 bestIdx = np.argmax(FitnV)  # 获取最优个体的下标
                 if LegV_i[bestIdx] != 0:
                     # feasible = np.where(LegV_i != 0)[0]  # 排除非可行解
-                    repnum = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])  # 计算最优个体重复数
+                    repnum[index] = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])  # 计算最优个体重复数
                     badCounter = 0  # badCounter计数器清零
                 else:
                     gen -= 1  # 忽略这一代
