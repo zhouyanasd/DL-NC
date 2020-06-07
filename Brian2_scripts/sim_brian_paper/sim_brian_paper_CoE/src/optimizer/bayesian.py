@@ -77,10 +77,10 @@ class TargetSpace(object):
         # keep track of unique points we have seen so far
         self._cache = {}
 
-    def __contains__(self, x):
+    def __contains__(self, x): # in self
         return _hashable(x) in self._cache
 
-    def __len__(self):
+    def __len__(self): # len(self)
         assert len(self._params) == len(self._target)
         return len(self._target)
 

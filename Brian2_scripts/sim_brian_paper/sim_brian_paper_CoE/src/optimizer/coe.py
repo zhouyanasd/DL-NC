@@ -46,15 +46,18 @@ class CoE_surrgate():
         res = []
         for phen in Phen:
             phen_ = dict(zip(self.keys, phen))
-            res.append(self.f(**phen_))
-        return [res, LegV]
+            res.append(self.f(**phen_)) # probe replace f and use space checking and register
+        return [np.array(res).reshape(-1,1), LegV]
 
     def punfunc(self, LegV, FitnV):
-        return self.f_p(LegV, FitnV)
+        if self.f_p == None:
+            return FitnV
+        else:
+            return self.f_p(LegV, FitnV)
 
-    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1,  MAXGEN=100, NIND=10,
+    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5,
-                                   selectStyle='sus', recombinStyle='xovdp',distribute=True, drawing=0):
+                                   selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
 
         """==========================初始化配置==========================="""
         # GGAP = 0.5  # 因为父子合并后选择，因此要将代沟设为0.5以维持种群规模
@@ -87,8 +90,8 @@ class CoE_surrgate():
             LegV_i = np.ones((NIND, 1))
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)  # 求子问题的目标函数值
             for x, eva in zip(Chrom, ObjV_i):
-                self.surrogate._space.register(x, eva) # update the solution space
-            self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target) # update the BO model
+                self.surrogate._space.register(x, eva[0])  # update the solution space
+            self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target)  # update the BO model
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
@@ -116,19 +119,19 @@ class CoE_surrgate():
 
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
 
-                ObjVSel = self.surrogate._gp.predict(Chrom)  # get the estimated value
+                ObjVSel = self.surrogate._gp.predict(Chrom).reshape(-1, 1)  # get the estimated value
 
-                guess = self.surrogate.guess_fixedpoint(Chrom) # 估计子种群的适应度
+                guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的适应度
 
-                Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]] # 找到估计最好的1个基因
+                Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]]  # 找到估计最好的1个基因
                 LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
                 [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
 
-                ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_ # replace the estimated value by real value
+                ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_  # replace the estimated value by real value
                 LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
 
                 for x, eva in zip(Chrom_, ObjVSel_):
-                    self.surrogate._space.register(x, eva)  # update the solution space
+                    self.surrogate._space.register(x, eva[0])  # update the solution space
 
                 self.surrogate._gp.fit(self.surrogate._space.params,
                                        self.surrogate._space.target)  # update the BO model
@@ -150,8 +153,7 @@ class CoE_surrgate():
                 LegV_i = np.vstack([LegV_i, LegVSel])
                 # 对合并的种群进行适应度评价
                 FitnV = ga.ranking(maxormin * ObjV_i, LegV_i, None, SUBPOP)
-                if self.punfunc is not None:
-                    FitnV = self.punfunc(LegV_i, FitnV)  # 调用罚函数
+                FitnV = self.punfunc(LegV_i, FitnV)  # 调用罚函数
 
                 bestIdx = np.argmax(FitnV)  # 获取最优个体的下标
                 if LegV_i[bestIdx] != 0:
@@ -164,7 +166,7 @@ class CoE_surrgate():
                 if distribute == True:  # 若要增强种群的分布性（可能会造成收敛慢）
                     idx = np.argsort(ObjV_i[:, 0], 0)
                     dis = np.diff(ObjV_i[idx, 0]) / (
-                                np.max(ObjV_i[idx, 0]) - np.min(ObjV_i[idx, 0]) + 1)  # 差分计算距离的修正偏移量
+                            np.max(ObjV_i[idx, 0]) - np.min(ObjV_i[idx, 0]) + 1)  # 差分计算距离的修正偏移量
                     dis = np.hstack([dis, dis[-1]])
                     dis = dis + np.min(dis)  # 修正偏移量+最小量=修正绝对量
                     FitnV[idx, 0] *= np.exp(dis)  # 根据相邻距离修改适应度，突出相邻距离大的个体，以增加种群的多样性
