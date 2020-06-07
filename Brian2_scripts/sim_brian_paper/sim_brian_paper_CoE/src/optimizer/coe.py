@@ -45,8 +45,7 @@ class CoE_surrgate():
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and oupput
         res = []
         for phen in Phen:
-            phen_ = dict(zip(self.keys, phen))
-            res.append(self.f(**phen_)) # probe replace f and use space checking and register
+            res.append(self.surrogate.probe(phen, lazy=False)) # probe replace f and use space checking and register
         return [np.array(res).reshape(-1,1), LegV]
 
     def punfunc(self, LegV, FitnV):
@@ -89,9 +88,7 @@ class CoE_surrgate():
             Chrom[:, SubCom_i] = P_i
             LegV_i = np.ones((NIND, 1))
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)  # 求子问题的目标函数值
-            for x, eva in zip(Chrom, ObjV_i):
-                self.surrogate._space.register(x, eva[0])  # update the solution space
-            self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target)  # update the BO model
+            self.surrogate.update_model()  # update the BO model
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
@@ -116,9 +113,7 @@ class CoE_surrgate():
 
                 Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
                 Chrom[:, SubCom_i] = SelCh
-
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
-
                 ObjVSel = self.surrogate._gp.predict(Chrom).reshape(-1, 1)  # get the estimated value
 
                 guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的适应度
@@ -126,15 +121,10 @@ class CoE_surrgate():
                 Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]]  # 找到估计最好的1个基因
                 LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
                 [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
+                self.surrogate.update_model()  # update the BO model
 
                 ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_  # replace the estimated value by real value
                 LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
-
-                for x, eva in zip(Chrom_, ObjVSel_):
-                    self.surrogate._space.register(x, eva[0])  # update the solution space
-
-                self.surrogate._gp.fit(self.surrogate._space.params,
-                                       self.surrogate._space.target)  # update the BO model
 
                 # 更新context vector 及其fitness （已经考虑排除不可行解）
                 for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):

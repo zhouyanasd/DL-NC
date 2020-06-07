@@ -394,7 +394,7 @@ class BayesianOptimization():
         if lazy:
             self._queue.add(params)
         else:
-            self._space.probe(params)
+            return self._space.probe(params)
 
     def _prime_queue(self, init_points):
         """Make sure there's something in the queue at the very beginning."""
@@ -469,12 +469,14 @@ class BayesianOptimization():
         x_min = de.minimum_location
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
+    def update_model(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+        self._gp.fit(self._space.params, self._space.target)
+
     def suggest(self):
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self._gp.fit(self._space.params, self._space.target)
         suggestion = self.opt_function(
             ac=self.utility_function.utility,
             gp=self._gp,
@@ -509,6 +511,7 @@ class BayesianOptimization():
             try:
                 x_probe = next(self._queue)
             except StopIteration:
+                self.update_model()
                 x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
