@@ -472,7 +472,7 @@ class BayesianOptimization():
     def update_model(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-        self._gp.fit(self._space.params, self._space.target)
+            self._gp.fit(self._space.params, self._space.target)
 
     def suggest(self):
         if len(self._space) == 0:
