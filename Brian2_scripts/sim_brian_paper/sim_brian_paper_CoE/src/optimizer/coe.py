@@ -6,8 +6,7 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian \
-    import BayesianOptimization, UtilityFunction
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import BayesianOptimization
 
 import time
 
@@ -30,18 +29,6 @@ class CoE_surrgate():
             acq=acq, opt=opt, kappa = kappa, xi =xi, **gp_params
         )
 
-    def surrogate_init(self, init_points, LHS_path=None):
-        if LHS_path == None:
-            LHS_points = self.surrogate.LHSample(init_points, self.surrogate._space.bounds)  # LHS for BO
-            fit_init = [self.f(**self.surrogate._space.array_to_params(x)) for x in LHS_points]  # evaluated by the real fitness
-            for x, eva in zip(LHS_points, fit_init):
-                self.surrogate._space.register(x, eva)  # add LHS points to solution space
-        else:
-            LHS_points, fit_init = self.surrogate.load_LHS(LHS_path)
-            for x, eva in zip(LHS_points, fit_init):
-                self.surrogate._space.register(x, eva)  # add loaded LHS points to solution space
-        self.surrogate._gp.fit(self.surrogate._space.params, self.surrogate._space.target)  # initialize the BO model
-
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and oupput
         res = []
         for phen in Phen:
@@ -54,7 +41,7 @@ class CoE_surrgate():
         else:
             return self.f_p(LegV, FitnV)
 
-    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5,
                                    selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
 
@@ -66,6 +53,7 @@ class CoE_surrgate():
         # 定义变量记录器，记录控制变量值，初始值为nan
         var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
         repnum = [0] * len(self.SubCom)  # 初始化重复个体数为0
+        self.surrogate.initial_model(init_points = init_points, LHS_path = None, is_LHS = True, lazy = False)
         ax = None  # 存储上一帧图形
         """=========================开始遗传算法进化======================="""
         if problem == 'R':

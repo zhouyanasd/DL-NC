@@ -490,13 +490,12 @@ class BayesianOptimization():
         gauss =self.utility_function.utility(X, self._gp, self._space.target.min())
         return gauss
 
-    def minimize(self,
-                 LHS_path=None,
-                 init_points=5,
-                 is_LHS=False,
-                 n_iter=25,
-                 ):
-        """Mazimize your function"""
+    def initial_model(self,
+                     LHS_path=None,
+                     init_points=5,
+                     is_LHS=False,
+                     lazy = True,
+                     ):
         if LHS_path == None:
             if is_LHS:
                 self._prime_queue_LHS(init_points)
@@ -506,6 +505,23 @@ class BayesianOptimization():
             X, fit = self.load_LHS(LHS_path)
             for x, eva in zip(X, fit):
                 self.register(x, eva)
+        if not lazy:
+            try:
+                x_probe = next(self._queue)
+            except StopIteration:
+                self.update_model()
+            self.probe(x_probe, lazy=False)
+
+    def minimize(self,
+                 LHS_path=None,
+                 init_points=5,
+                 is_LHS=False,
+                 n_iter=25,
+                 ):
+        """Mazimize your function"""
+
+        self.initial_model(LHS_path, init_points, is_LHS)
+
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
