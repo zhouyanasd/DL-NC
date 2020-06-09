@@ -42,7 +42,7 @@ class CoE_surrgate():
             return self.f_p(LegV, FitnV)
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
-                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5,
+                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True,
                                    selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
 
         """==========================初始化配置==========================="""
@@ -109,7 +109,8 @@ class CoE_surrgate():
                 Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]]  # 找到估计最好的1个基因
                 LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
                 [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
-                self.surrogate.update_model()  # update the BO model
+                if online :
+                    self.surrogate.update_model()  # update the BO model
 
                 ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_  # replace the estimated value by real value
                 LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
