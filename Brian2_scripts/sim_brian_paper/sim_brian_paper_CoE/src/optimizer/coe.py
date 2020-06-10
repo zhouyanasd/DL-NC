@@ -104,7 +104,7 @@ class CoE_surrgate():
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
                 ObjVSel = self.surrogate._gp.predict(Chrom).reshape(-1, 1)  # get the estimated value
 
-                guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的适应度
+                guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的acquisition function value
 
                 Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]]  # 找到估计最好的1个基因
                 LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
