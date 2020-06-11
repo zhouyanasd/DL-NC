@@ -84,7 +84,7 @@ class EntropySearch(object):
         # Evaluate mean and covariance of GP at all representer points and
         # points x where MRS will be evaluated
         f_mean_all, f_cov_all = \
-            self.model.gp.predict(np.vstack((self.X_candidate, x)),
+            self.model.predict(np.vstack((self.X_candidate, x)),
                                   return_cov=True)
         f_mean = f_mean_all[:self.n_candidates]
         f_cov = f_cov_all[:self.n_candidates, :self.n_candidates]
@@ -108,7 +108,7 @@ class EntropySearch(object):
             for j in range(self.n_samples_y):
                 # "sample" outcomes y_i[j] (more specifically where on the
                 # Gaussian distribution over y_i[j] we would end up)
-                y_delta = np.sqrt(f_cov_query + self.model.gp.alpha)[:, 0] \
+                y_delta = np.sqrt(f_cov_query + self.model.alpha)[:, 0] \
                     * self.percent_points[j]
                 # Compute change in GP mean at representer points
                 f_mean_delta = f_cov_cross.dot(f_cov_query_inv).dot(y_delta)
@@ -154,7 +154,7 @@ class EntropySearch(object):
                 # Sample function from GP posterior and select the trial points
                 # which maximizes the posterior sample as representer points
                 try:
-                    y_samples = self.model.gp.sample_y(candidates)
+                    y_samples = self.model.sample_y(candidates)
                     self.X_candidate[i] = candidates[np.argmax(y_samples)]
                 except np.linalg.LinAlgError:  # This should happen very infrequently
                     self.X_candidate[i] = candidates[0]
@@ -164,7 +164,7 @@ class EntropySearch(object):
         ### Determine base entropy
         # Draw n_gp_samples functions from GP posterior
         f_mean, f_cov = \
-            self.model.gp.predict(self.X_candidate, return_cov=True)
+            self.model.predict(self.X_candidate, return_cov=True)
         f_samples = np.random.RandomState(self.rng_seed).multivariate_normal(
             f_mean, f_cov, self.n_gp_samples).T
         # Count frequency of the candidates being the optima in the samples
@@ -470,7 +470,7 @@ class UtilityFunction():
             return self._ei_(x, gp, y_min, self.xi)
         if self.kind == 'poi':
             return self._poi_(x, gp, y_min, self.xi)
-        if self.kink == 'es':
+        if self.kind == 'es':
             entropy_search = EntropySearch(gp)
             entropy_search.set_boundaries(self.bounds)
             return entropy_search(x, y_min)
@@ -521,7 +521,7 @@ class BayesianOptimization():
         else:
             self.opt_function = self.acq_min_DE
 
-        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi)
+        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds = self._space.bounds)
 
         self._verbose = verbose
 
