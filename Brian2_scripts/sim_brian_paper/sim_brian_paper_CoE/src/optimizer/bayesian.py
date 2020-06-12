@@ -116,12 +116,12 @@ class EntropySearch(object):
                 # Adapt samples to changes in GP posterior mean
                 f_samples_j = f_samples + f_mean_delta[:, np.newaxis]
                 # Count frequency of the candidates being the optima in the samples
-                p_max = np.bincount(np.argmax(f_samples_j, 0),
+                p_min = np.bincount(np.argmin(f_samples_j, 0),
                                     minlength=f_mean.shape[0]) \
                     / float(self.n_gp_samples)
                 # Determing entropy of distr. p_max and compare to base entropy
                 a_ES[i - self.n_candidates, j] = \
-                    self.base_entropy - entropy(p_max)
+                    self.base_entropy - entropy(p_min)
 
          # Average entropy change over the different  assumed outcomes y_i[j]
         return a_ES.mean(1)
@@ -155,7 +155,7 @@ class EntropySearch(object):
                 # which maximizes the posterior sample as representer points
                 try:
                     y_samples = self.model.sample_y(candidates)
-                    self.X_candidate[i] = candidates[np.argmax(y_samples)]
+                    self.X_candidate[i] = candidates[np.argmin(y_samples)]
                 except np.linalg.LinAlgError:  # This should happen very infrequently
                     self.X_candidate[i] = candidates[0]
         else:
@@ -168,10 +168,10 @@ class EntropySearch(object):
         f_samples = np.random.RandomState(self.rng_seed).multivariate_normal(
             f_mean, f_cov, self.n_gp_samples).T
         # Count frequency of the candidates being the optima in the samples
-        p_max = np.bincount(np.argmax(f_samples, 0), minlength=f_mean.shape[0]) \
+        p_min = np.bincount(np.argmin(f_samples, 0), minlength=f_mean.shape[0]) \
             / float(self.n_gp_samples)
         # Determing entropy of distr. p_max
-        self.base_entropy = entropy(p_max)
+        self.base_entropy = entropy(p_min)
 
 
 class TargetSpace(object):
@@ -471,7 +471,8 @@ class UtilityFunction():
         if self.kind == 'poi':
             return self._poi_(x, gp, y_min, self.xi)
         if self.kind == 'es':
-            entropy_search = EntropySearch(gp)
+            entropy_search = EntropySearch(gp, n_candidates=20, n_gp_samples=500,
+                 n_samples_y=10, n_trial_points=500, rng_seed=0)
             entropy_search.set_boundaries(self.bounds)
             return entropy_search(x, y_min)
 
@@ -658,11 +659,13 @@ class BayesianOptimization():
             for x, eva in zip(X, fit):
                 self.register(x, eva)
         if not lazy:
-            try:
-                x_probe = next(self._queue)
-            except StopIteration:
-                self.update_model()
-            self.probe(x_probe, lazy=False)
+            while True:
+                try:
+                    x_probe = next(self._queue)
+                except StopIteration:
+                    self.update_model()
+                    break
+                self.probe(x_probe, lazy=False)
 
     def minimize(self,
                  LHS_path=None,
