@@ -60,6 +60,13 @@ class BaseFunctions():
                 y.append(j)
         return np.array[x, y]
 
+    def connection_matrix_to_adjacent_matrix(self, connection_matrix):
+        n = len(connection_matrix[0])
+        adjacent_matrix = np.zeros(shape=(n, n), dtype='int')
+        for a,b in zip(connection_matrix[0],connection_matrix[1]):
+            adjacent_matrix[a][b] = 1
+        return adjacent_matrix
+
     def np_extend(self, a, b, axis=0):
         if a is None:
             shape = list(b.shape)
