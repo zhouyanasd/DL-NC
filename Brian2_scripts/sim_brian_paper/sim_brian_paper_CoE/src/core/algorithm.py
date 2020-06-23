@@ -46,6 +46,7 @@ class DFS():
         self.pi = np.zeros(self.n) - 1 # 前驱节点
         self.discovery = np.zeros(self.n) # 发现时间
         self.finishing = np.zeros(self.n) # 完成时间
+        self.show_actions = False
 
     def dfs(self):
         N = np.arange(self.n) # 随机找到一个根节点开始搜索
@@ -58,16 +59,22 @@ class DFS():
         self.time += 1
         self.discovery[u] = self.time
         self.color[u] = TraversalState.GRAY
-        print(u, 'gray', self.time)
+        self.show(u, 'gray', self.time)
         for v, con in enumerate(self.g[u]): # 根据链接找后驱节点，当没被访问时，递归调用，进行搜索
             if con == 1:
                 if self.color[v] == TraversalState.WHITE:
                     self.pi[v] = u
                     self.visit(v)
         self.color[u] = TraversalState.BLACK # 结束搜索，回溯操作，记录结束时间
-        print(u, 'black', self.time)
+        self.show(u, 'black', self.time)
         self.time += 1
         self.finishing[u] = self.time
+
+    def show(self, *args):
+        if self.show_actions is True:
+            print(*args)
+        else:
+            pass
 
 
 class Tarjan(DFS):
@@ -104,7 +111,7 @@ class Tarjan(DFS):
         self.discovery[u] = self.low[u] = self.time
         self.stack.append(u) # 与DFS相比，这里多了一个入栈
         self.color[u] = TraversalState.GRAY
-        print(u, 'gray', self.time)
+        self.show(u, 'gray', self.time)
         for v, con in enumerate(self.g[u]):
             if con == 1:
                 if self.color[v] == TraversalState.WHITE:
@@ -115,21 +122,21 @@ class Tarjan(DFS):
                     if (self.discovery[v] < self.low[u]):
                         self.low[u] = self.discovery[v]
         if (self.discovery[u] == self.low[u] and len(self.stack) != 0): # 回溯时出栈
-            print("********连通图********")
+            self.show("********连通图********")
             m = self.stack.pop() # 首先栈顶出栈，并随后记为结束搜索
             self.color[m] = TraversalState.BLACK
             self.time += 1
             self.finishing[m] = self.time
             self.components[u] = [m] # 将改节点作为一个联通图的根节点
-            print(m, 'black', self.time)
+            self.show(m, 'black', self.time)
             while m != u and len(self.stack) != 0: # 如果节点u的后续栈中还有元素则继续弹出直到u为止
                 m = self.stack.pop()
                 self.components[u].append(m)
                 self.color[m] = TraversalState.BLACK
                 self.time += 1
                 self.finishing[m] = self.time
-                print(m, 'black', self.time)
-            print("**********************")
+                self.show(m, 'black', self.time)
+            self.show("**********************")
 
 
 class Topological_sorting_tarjan(Tarjan):

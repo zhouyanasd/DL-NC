@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    The optimization methods used for NAS.
+    The based methods used for CoE.
 
 :Author: Yan Zhou
 
