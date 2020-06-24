@@ -108,6 +108,10 @@ class Block(BaseFunctions):
         self.input, self.output = topological_sorting_tarjan.suggest_inout()
 
 
+class Super_synapse():
+    pass
+
+
 class Reservoir(BaseFunctions):
     """
     This class offers a basic property and functions of reservoir containing blocks.
