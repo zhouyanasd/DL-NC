@@ -108,9 +108,23 @@ class Block(BaseFunctions):
         self.input, self.output = topological_sorting_tarjan.suggest_inout()
 
 
-class Super_synapse():
-    pass
+class Pipeline(BaseFunctions):
+    '''
+     Pipeline contains the synapses between blocks, which
+     offer the basic synaptic-like function of connection.
 
+     Parameters
+     ----------
+     '''
+
+    def __init__(self, connect_matrix, model, on_pre, on_post,  name = name, **kwargs):
+        super().__init__()
+        self.pre = connect_matrix[0]
+        self.post = connect_matrix[1]
+        self.synapse = []
+
+    def connect(self):
+        pass
 
 class Reservoir(BaseFunctions):
     """
@@ -163,7 +177,7 @@ class Reservoir(BaseFunctions):
             block_reservoir.connect(connect_matrix)
             self.add_block(block_reservoir)
 
-    def create_synapse(self, connect_matrix, model, on_pre, blocks_input, blocks_output, **kwargs):
+    def create_synapse(self, connect_matrix, model, on_pre, **kwargs):
         '''
          Create synapses between blocks.
 
@@ -175,7 +189,7 @@ class Reservoir(BaseFunctions):
          '''
 
         for block in self.blocks:
-            block.determine_input_output(blocks_input, blocks_output)
+            block.determine_input_output()
         for index, (index_i, index_j) in enumerate(zip(connect_matrix[0], connect_matrix[1])):
             synapse = Synapses(block[index_i].neurons, block[index_j].neurons, model, on_pre = on_pre,
                                 method = 'euler', name = 'reservoir_' + str(index), **kwargs)
