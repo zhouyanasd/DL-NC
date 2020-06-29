@@ -22,8 +22,6 @@ Citation
 
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import *
-
 from brian2 import *
 
 warnings.filterwarnings("ignore")
