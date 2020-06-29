@@ -135,6 +135,9 @@ class Pathway(BaseFunctions):
                                on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
             self.synapses.append(synapse)
 
+    def add_synapse(self, synapse):
+        self.synapse.append(synapse)
+
     def connect(self):
         for index, synapse in enumerate(self.synapses):
             block_pre = self.blocks[self.pre[index]]
