@@ -95,11 +95,28 @@ class Block(BaseFunctions):
         self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
         self.determine_input_output()
 
-    def initialize_neurons(self, parameter_name, parameter_value):
-        self.initialize_parameters(self.neurons, parameter_name, parameter_value)
+    def initialize_neurons(self, **kwargs):
+        '''
+         Initialize the parameters of the neurons.
 
-    def initialize_synapses(self, parameter_name, parameter_value):
-        self.initialize_parameters(self.synapses, parameter_name, parameter_value)
+         Parameters
+         ----------
+         kwargs: dict{key:str(name), value:np.array[n*1]}, extensible dict of parameters.
+         '''
+        for key, value in zip(kwargs.keys(), kwargs.values()):
+            self.initialize_parameters(self.neurons, key, value)
+
+    def initialize_synapses(self, **kwargs):
+        '''
+         Initialize the parameters of the neurons.
+
+         Parameters
+         ----------
+         kwargs: dict{key:str(name), value:np.array[n*n]}, extensible dict of parameters.
+         '''
+        for key, value in zip(kwargs.keys(), kwargs.values()):
+            converted_value = self.get_parameters(self.connect_matrix, value)
+            self.initialize_parameters(self.synapses, key, converted_value)
 
     def join_network(self, net):
         '''
@@ -145,6 +162,9 @@ class Pathway(BaseFunctions):
             connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
             synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
+    def initial_synapses(self):
+        pass
+
 
 class Reservoir(BaseFunctions):
     """
@@ -162,6 +182,7 @@ class Reservoir(BaseFunctions):
         super().__init__()
         self.N = N
         self.blocks = []
+        self.pathway = []
 
     def add_block(self, block):
         '''
@@ -173,6 +194,9 @@ class Reservoir(BaseFunctions):
          '''
 
         self.blocks.append(block)
+
+    def add_pathway(self, pathway):
+        self.pathway.append(pathway)
 
     def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
                       dynamics_synapse_pre, threshold, reset, refractory):
@@ -228,8 +252,7 @@ class Reservoir(BaseFunctions):
          '''
 
         for block_reservoir in self.blocks:
-            for key, value in zip(kwargs.keys(), kwargs.values()):
-                block_reservoir.initialize_neurons(key, value)
+            block_reservoir.initialize_neurons(**kwargs)
 
     def initialize_blocks_synapses(self, **kwargs):
         '''
@@ -241,9 +264,7 @@ class Reservoir(BaseFunctions):
          '''
 
         for block_reservoir in self.blocks:
-            for key, value in zip(kwargs.keys(), kwargs.values()):
-                converted_value = self.get_parameters(block_reservoir.connect_matrix, value)
-                block_reservoir.initialize_synapses(key, converted_value)
+            block_reservoir.initialize_synapses(**kwargs)
 
     def initialize_reservoir_synapses(self, **kwargs):
         '''
