@@ -24,10 +24,11 @@ class Block(BaseFunctions):
     connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
     """
 
-    def __init__(self, N, ratio = 4):
+    def __init__(self, N, connect_matrix, ratio = 4):
         super().__init__()
         self.N = N
         self.ex_inh_ratio = ratio
+        self.connect_matrix = connect_matrix
 
     def separate_ex_inh(self, random_state = None):
         '''
@@ -50,6 +51,7 @@ class Block(BaseFunctions):
          Determine the index of input and output neurons.
          The input and output are list, e.g. [1,2], [3,4].
          '''
+
         adjacent_matrix = self.connection_matrix_to_adjacent_matrix(self.connect_matrix)
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
@@ -63,6 +65,7 @@ class Block(BaseFunctions):
          ----------
          The parameters follow the necessary 'NeuronGroup' class of Brain2.
          '''
+
         self.neurons = NeuronGroup(self.N, model, threshold=threshold, reset=reset, refractory=refractory,
                                    method='euler', name = name, **kwargs)
         try:
@@ -79,10 +82,11 @@ class Block(BaseFunctions):
          ----------
          The parameters follow the necessary 'Synapses' class of Brain2.
          '''
+
         self.synapses = Synapses(self.neurons, self.neurons, model, on_pre = on_pre,
                                 method='euler', name = name, **kwargs)
 
-    def connect(self, connect_matrix):
+    def connect(self):
         '''
          Connect neurons using synapse based on the fixed connection matrix.
 
@@ -91,32 +95,23 @@ class Block(BaseFunctions):
         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
                         The first list is the pre-synapse neurons and the second list is the post-synapse neurons.
          '''
-        self.connect_matrix = connect_matrix
-        self.synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
+
+        self.synapse.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
         self.determine_input_output()
 
-    def initialize_neurons(self, **kwargs):
+    def initialize(self, NorS, **kwargs):
         '''
-         Initialize the parameters of the neurons.
+         Initialize the parameters of the neurons or synapses.
 
          Parameters
          ----------
-         kwargs: dict{key:str(name), value:np.array[n*1]}, extensible dict of parameters.
+         NorS: self.synapse or self.neurons.
+         kwargs: dict{key:str(name), value:np.array[n*1] or np.array[n*n]},
+         extensible dict of parameters.
          '''
-        for key, value in zip(kwargs.keys(), kwargs.values()):
-            self.initialize_parameters(self.neurons, key, value)
 
-    def initialize_synapses(self, **kwargs):
-        '''
-         Initialize the parameters of the neurons.
-
-         Parameters
-         ----------
-         kwargs: dict{key:str(name), value:np.array[n*n]}, extensible dict of parameters.
-         '''
         for key, value in zip(kwargs.keys(), kwargs.values()):
-            converted_value = self.get_parameters(self.connect_matrix, value)
-            self.initialize_parameters(self.synapses, key, converted_value)
+            self.initialize_parameters(NorS, key, value)
 
     def join_network(self, net):
         '''
@@ -126,8 +121,53 @@ class Block(BaseFunctions):
          ----------
          net: Brian2.Network, the existing neural network.
          '''
+
         net.add(self.neurons, self.synapse)
 
+
+class BlockGroup(BaseFunctions):
+    def __init__(self):
+        super().__init__()
+        self.N = 0
+        self.blocks = []
+
+    def add_block(self, block):
+        '''
+         Add block to the reservoir.
+
+         Parameters
+         ----------
+         block: Block, the object of Block.
+         '''
+
+        self.blocks.append(block)
+        self.N += 1
+
+    def initialize(self, parameter_neuron, parameter_synapse):
+        '''
+         Initial the parameters of blocks.
+
+         Parameters
+         ----------
+         parameter_neuron, parameter_synapse: list[dict], the parameter of
+         neuron and synapse.
+         '''
+
+        for block, p_n, p_s in zip(self.blocks, parameter_neuron, parameter_synapse):
+            block.initialize(block.neurons, **p_n)
+            block.initialize(block.synapses, **p_s)
+
+    def join_network(self, net):
+        '''
+         Let the objects of reservoir join the whole neural network.
+
+         Parameters
+         ----------
+         net: Brian2.Network, the existing neural network.
+         '''
+
+        for block in self.blocks:
+            block.join_network(net)
 
 class Pathway(BaseFunctions):
     '''
@@ -141,19 +181,18 @@ class Pathway(BaseFunctions):
      Other parameters follow the necessary 'Synapses' class of Brain2.
      '''
 
-    def __init__(self, blocks, connect_matrix, model, on_pre, on_post,  name = name, **kwargs):
+    def __init__(self, blocks, connect_matrix):
         super().__init__()
         self.pre = connect_matrix[0]
         self.post = connect_matrix[1]
         self.blocks = blocks
-        self.synapse = []
-        for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
-            synapse = Synapses(blocks[index_i].neurons, blocks[index_j].neurons, model, on_pre = on_pre,
-                               on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
-            self.synapses.append(synapse)
+        self.synapses_group = []
 
-    def add_synapse(self, synapse):
-        self.synapse.append(synapse)
+    def create_synapse(self, model, on_pre, on_post,  name = name, **kwargs):
+        for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
+            synapses = Synapses(self.blocks[index_i].neurons, self.blocks[index_j].neurons, model, on_pre = on_pre,
+                               on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
+            self.synapses_group.append(synapses)
 
     def connect(self):
         for index, synapse in enumerate(self.synapses):
@@ -162,8 +201,26 @@ class Pathway(BaseFunctions):
             connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
             synapse.connect(i = connect_matrix[0], j = connect_matrix[1])
 
-    def initial_synapses(self):
-        pass
+    def _initialize(self, synapses, **kwargs):
+        for key, value in zip(kwargs.keys(), kwargs.values()):
+            converted_value = self.get_parameters(self.connect_matrix, value)
+            self.initialize_parameters(synapses, key, converted_value)
+
+    def initialize(self, parameter_synapse):
+        for synapses, p_s in zip(self.synapse, parameter_synapse):
+            self._initialize(synapses, **p_s)
+
+    def join_network(self, net):
+        '''
+         Let the objects of reservoir join the whole neural network.
+
+         Parameters
+         ----------
+         net: Brian2.Network, the existing neural network.
+         '''
+
+        for synapse in self.synapse:
+            net.add(synapse)
 
 
 class Reservoir(BaseFunctions):
@@ -178,13 +235,12 @@ class Reservoir(BaseFunctions):
     synapses: list[Brain.Synapse], the list of synapse between blocks
     """
 
-    def __init__(self, N):
+    def __init__(self):
         super().__init__()
-        self.N = N
-        self.blocks = []
-        self.pathway = []
+        self.block_group = None
+        self.pathway = None
 
-    def add_block(self, block):
+    def register_blocks(self, block_group):
         '''
          Add block to the reservoir.
 
@@ -193,46 +249,20 @@ class Reservoir(BaseFunctions):
          block: Block, the object of Block.
          '''
 
-        self.blocks.append(block)
+        self.block_group = block_group
 
-    def add_pathway(self, pathway):
-        self.pathway.append(pathway)
-
-    def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
-                      dynamics_synapse_pre, threshold, reset, refractory):
+    def register_pathway(self, pathway):
         '''
-         Create blocks for the reservoir.
+         Add pathway to the reservoir.
 
          Parameters
          ----------
-         neurons_block: int, the number of neurons in each block.
-         connect_matrix_blocks: list, a list of connect_matrix for the block.
-         Other parameters follow the necessary 'Synapses' class of Brain2.
+         pathway: Pathway, the object of Pathway.
          '''
 
-        for index, connect_matrix in zip(range(self.N), connect_matrix_blocks):
-            block_reservoir = Block(neurons_block)
-            block_reservoir.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
-                                           refractory = refractory, name='block_' + str(index))
-            block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                                           name='block_block_' + str(index))
-            block_reservoir.connect(connect_matrix)
-            self.add_block(block_reservoir)
+        self.pathway = pathway
 
-    def create_synapse(self, connect_matrix, model, on_pre, **kwargs):
-        '''
-         Create synapses between blocks.
-
-         Parameters
-         ----------
-         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse between blocks.
-                        The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
-         Other parameters follow the necessary 'Synapses' class of Brain2.
-         '''
-
-        self.pathway = Pathway(self.blocks, connect_matrix, model, on_pre, name = 'reservoir_', **kwargs)
-
-    def connect_blocks(self):
+    def connect(self):
         '''
          Connect blocks base on the synapses in the reservoir.
 
@@ -242,51 +272,9 @@ class Reservoir(BaseFunctions):
 
         self.pathway.connect()
 
-    def initialize_blocks_neurons(self, **kwargs):
-        '''
-         Initialize the parameters of the neurons of blocks in the reservoir.
-
-         Parameters
-         ----------
-         kwargs: dict{key:str(name), value:np.array[n*1]}, extensible dict of parameters.
-         '''
-
-        for block_reservoir in self.blocks:
-            block_reservoir.initialize_neurons(**kwargs)
-
-    def initialize_blocks_synapses(self, **kwargs):
-        '''
-         Initialize the parameters of the synapses of blocks in the reservoir.
-
-         Parameters
-         ----------
-         kwargs: dict{key:str(name), value:np.array[n*n]}, extensible dict of parameters.
-         '''
-
-        for block_reservoir in self.blocks:
-            block_reservoir.initialize_synapses(**kwargs)
-
-    def initialize_reservoir_synapses(self, **kwargs):
-        '''
-         Initialize the parameters of the synapses between blocks in the reservoir.
-
-         Parameters
-         ----------
-         kwargs: dict{key:str(name), value:np.array[n*n]}, extensible dict of parameters.
-         '''
-
-        for index, synapse in enumerate(self.synapses):
-            for key, value in zip(kwargs.keys(), kwargs.values()):
-                connect_matrix = [list(synapse.i), list(synapse.j)]
-
-                parameter_synapse = np.zeros(synapse.N_pre[0], synapse.N_post[0])
-                parameter = value[self.output[index]][self.input[index]]
-                parameter_ = np.random.rand(synapse.N[0] * synapse.N[0]) * parameter
-                for index, (index_i, index_j) in enumerate(zip(connect_matrix)):
-                    parameter_synapse[index_i][index_j] = parameter_[index]
-
-                converted_value = self.get_parameters(connect_matrix, parameter_synapse)
-                self.initialize_parameters(synapse, key, converted_value)
+    def initialize(self, parameter_block_neurons, parameter_block_synapses, parameter_pathway):
+        self.block_group.initialize(parameter_block_neurons,parameter_block_synapses)
+        self.pathway.initialize(parameter_pathway)
 
     def join_network(self, net):
         '''
@@ -297,18 +285,28 @@ class Reservoir(BaseFunctions):
          net: Brian2.Network, the existing neural network.
          '''
 
-        for block in self.blocks:
-            block.join_network(net)
-        net.add(*self.synapses)
+        self.block_group.join_network(net)
+        self.pathway.join_network(net)
 
-    def determine_input(self, reservoir_input):
+    def determine_input_output(self, reservoir_input):
         '''
          Determine the index of input and output neurons.
 
          Parameters
          ----------
          '''
+
         self.input = [1, 2]
+
+
+class Encoding():
+    def __init__(self):
+        pass
+
+
+class Readout():
+    def __init__(self):
+        pass
 
 
 class LSM_Network(Network, BaseFunctions):
@@ -416,6 +414,7 @@ class LSM_Network(Network, BaseFunctions):
          ----------
          kwargs: dict{key:str(name), value:np.array[n*1]}, extensible dict of parameters.
          '''
+
         for index, synapse in enumerate(self.synapses_encoding):
             for key, value in zip(kwargs.keys(), kwargs.values()):
                 connect_matrix = [list(synapse.i), list(synapse.j)]

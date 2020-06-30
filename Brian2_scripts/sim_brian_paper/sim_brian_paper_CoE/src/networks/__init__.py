@@ -11,6 +11,8 @@ from .components import *
 
 __all__ = [
     "Block",
+    "BlockGroup",
+    "Pathway",
     "Reservoir",
     "LSM_Network",
 ]
