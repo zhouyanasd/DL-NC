@@ -16,53 +16,61 @@ from brian2 import *
 
 
 class Generator():
-    def __init__(self, parameter):
-        self.parameter = parameter
+    '''
+     Initialize the parameters of the neurons or synapses.
 
-    def generate_block(self, N, ratio):
-        block = Block(N, ratio)
+     Parameters
+     ----------
+     # some public used such as random_state.
+     '''
 
-    def generate_synapse(self):
+    def __init__(self, random_state):
+        self.random_state = random_state
+
+    def generate_block(self):
         pass
 
-    def generate_reservoir(self):
+    def generate_pathway(self):
         pass
 
-    def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
-                      dynamics_synapse_pre, threshold, reset, refractory):
-        '''
-         Create blocks for the reservoir.
+    def generate_parameters(self):
+        pass
 
-         Parameters
-         ----------
-         neurons_block: int, the number of neurons in each block.
-         connect_matrix_blocks: list, a list of connect_matrix for the block.
-         Other parameters follow the necessary 'Synapses' class of Brain2.
-         '''
-
-        for index, connect_matrix in zip(range(self.N), connect_matrix_blocks):
-            block_reservoir = Block(neurons_block)
-            block_reservoir.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
-                                           refractory = refractory, name='block_' + str(index))
-            block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                                           name='block_block_' + str(index))
-            block_reservoir.connect(connect_matrix)
-            self.add_block(block_reservoir)
-
-    def create_synapse(self, connect_matrix, model, on_pre, **kwargs):
-        '''
-         Create synapses between blocks.
-
-         Parameters
-         ----------
-         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse between blocks.
-                        The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
-         Other parameters follow the necessary 'Synapses' class of Brain2.
-         '''
-
-        self.pathway = Pathway(self.blocks, connect_matrix, model, on_pre, name = 'reservoir_', **kwargs)
-
-
+    # def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
+    #                   dynamics_synapse_pre, threshold, reset, refractory):
+    #     '''
+    #      Create blocks for the reservoir.
+    #
+    #      Parameters
+    #      ----------
+    #      neurons_block: int, the number of neurons in each block.
+    #      connect_matrix_blocks: list, a list of connect_matrix for the block.
+    #      Other parameters follow the necessary 'Synapses' class of Brain2.
+    #      '''
+    #
+    #     for index, connect_matrix in zip(range(self.N), connect_matrix_blocks):
+    #         block_reservoir = Block(neurons_block)
+    #         block_reservoir.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
+    #                                        refractory = refractory, name='block_' + str(index))
+    #         block_reservoir.create_synapse(dynamics_synapse, dynamics_synapse_pre,
+    #                                        name='block_block_' + str(index))
+    #         block_reservoir.connect(connect_matrix)
+    #         self.add_block(block_reservoir)
+    #
+    # def create_synapse(self, connect_matrix, model, on_pre, **kwargs):
+    #     '''
+    #      Create synapses between blocks.
+    #
+    #      Parameters
+    #      ----------
+    #      connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse between blocks.
+    #                     The first list is the pre-synapse blocks and the second list is the post-synapse blocks.
+    #      Other parameters follow the necessary 'Synapses' class of Brain2.
+    #      '''
+    #
+    #     self.pathway = Pathway(self.blocks, connect_matrix, model, on_pre, name = 'reservoir_', **kwargs)
+    #
+    #
     # def initialize_blocks_neurons(self, **kwargs):
     #     '''
     #      Initialize the parameters of the neurons of blocks in the reservoir.
@@ -108,8 +116,8 @@ class Generator():
     #
     #             converted_value = self.get_parameters(connect_matrix, parameter_synapse)
     #             self.initialize_parameters(synapse, key, converted_value)
-
-
+    #
+    #
     # def create_synapse_encoding(self, dynamics_synapse, dynamics_synapse_pre, reservoir_input):
     #     '''
     #      Create synapses between encoding and blocks.
@@ -142,7 +150,7 @@ class Generator():
     #         synapse_reservoir_readout = Synapses(block_reservoir.neurons, self.layers['readout'], 'w = 1 : 1',
     #                                              on_pre = dynamics_synapse_pre, name='readout_' + str(index))
     #         self.synapses_readout.append(synapse_reservoir_readout)
-
+    #
     #
     # def connect_encoding(self):
     #     '''
@@ -196,10 +204,10 @@ class Generator():
     #             converted_value = self.get_parameters(connect_matrix, parameter_synapse)
     #             self.initialize_parameters(synapse, key, converted_value)
     #
-
-    def create_encoding(self, dynamics_encoding):
-        self.neurons = NeuronGroup(self.N, dynamics_encoding, threshold='I > 0', method='euler',
-                               refractory=0 * ms, name='encoding')
-
-    def create_readout(self, dynamics_readout):
-        self.neurons = NeuronGroup(self.N, dynamics_readout, method='euler', name='readout')
+    #
+    # def create_encoding(self, dynamics_encoding):
+    #     self.neurons = NeuronGroup(self.N, dynamics_encoding, threshold='I > 0', method='euler',
+    #                            refractory=0 * ms, name='encoding')
+    #
+    # def create_readout(self, dynamics_readout):
+    #     self.neurons = NeuronGroup(self.N, dynamics_readout, method='euler', name='readout')
