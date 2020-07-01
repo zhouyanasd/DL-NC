@@ -8,6 +8,8 @@
 """
 
 from .components import *
+from .decoder import *
+from .generator import *
 
 __all__ = [
     "Block",
@@ -15,4 +17,6 @@ __all__ = [
     "Pathway",
     "Reservoir",
     "LSM_Network",
+    "Decoder",
+    "Generator",
 ]
