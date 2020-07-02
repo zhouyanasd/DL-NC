@@ -194,3 +194,49 @@ class CoE_surrgate():
         print('时间已过 %s 秒' % (times))
         # 返回进化记录器、变量记录器以及执行时间
         return [pop_trace, var_trace, times]
+
+
+class Coe_surrogate_mixgentype(CoE_surrgate):
+    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, keys, ranges_, borders_, precisions_,
+                 codes, scales, acq, kappa=2.576, xi=0.0,
+                     opt='cma', **gp_params):
+        super.__init__(f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
+                     opt='cma', **gp_params)
+        self.FieldD = ga.crtfld(ranges_, borders_, precisions_, codes, scales)
+
+    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
+                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
+                                   selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
+
+        """==========================初始化配置==========================="""
+        # GGAP = 0.5  # 因为父子合并后选择，因此要将代沟设为0.5以维持种群规模
+        NVAR = self.FieldDR.shape[1]  # 得到控制变量的个数
+        # 定义进化记录器，初始值为nan
+        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+        # 定义变量记录器，记录控制变量值，初始值为nan
+        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
+        repnum = [0] * len(self.SubCom)  # 初始化重复个体数为0
+        self.surrogate.initial_model(init_points = init_points, LHS_path = None, is_LHS = True, lazy = False)
+        ax = None  # 存储上一帧图形
+        """=========================开始遗传算法进化======================="""
+        if problem == 'R':
+            B = ga.crtrp(1, self.FieldDR)  # 定义初始contex vector
+        elif problem == 'I':
+            B = ga.crtip(1, self.FieldDR)
+        [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))  # 求初代contex vector 的 fitness
+
+
+        Lind = np.sum(FieldD[0, :])  # 种群染色体长度
+        Chrom = ga.crtbp(NIND, Lind)  # 生成初始种
+        LegV = np.ones((NIND, 1))  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
+        # 初代种群的解码
+        if problem == 'R':
+            variable = ga.bs2rv(Chrom, FieldD)  # 解码
+        #         print(variable)
+        elif problem == 'I':
+            if np.any(FieldD >= sys.maxsize):
+                variable = ga.bs2int(Chrom, FieldD).astype('object')  # 解码
+            else:
+                variable = ga.bs2int(Chrom, FieldD).astype('int64')
+
+
