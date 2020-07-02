@@ -42,7 +42,7 @@ class CoE_surrgate():
             return self.f_p(LegV, FitnV)
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
-                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True,
+                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
                                    selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
 
         """==========================初始化配置==========================="""
@@ -85,9 +85,11 @@ class CoE_surrgate():
 
         # 开始进化！！
         start_time = time.time()  # 开始计时
+        estimation = interval-1  # counter and make sure the first time could be evaluated
         while gen < MAXGEN:
             if badCounter >= 10 * MAXGEN:  # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
                 break
+            estimation += 1
             for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, P, ObjV, LegV)):
                 # 进行遗传算子，生成子代
                 FieldDR_i = self.FieldDR[:, SubCom_i]
@@ -106,25 +108,28 @@ class CoE_surrgate():
 
                 guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的acquisition function value
 
-                Chrom_ = np.array(Chrom)[guess.argsort()[0:int(1)]]  # 找到估计最好的1个基因
-                LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
-                [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
-                if online :
-                    self.surrogate.update_model()  # update the BO model
+                if estimation >= interval: # 设置一个更新间隔
+                    best_guess = guess.argsort()[0:int(eva)] # 找到估计最好的eva个基因序号
 
-                ObjVSel[guess.argsort()[0:int(1)]] = ObjVSel_  # replace the estimated value by real value
-                LegVSel[guess.argsort()[0:int(1)]] = LegVSel_
+                    Chrom_ = np.array(Chrom)[best_guess]  # 找到估计最好的eva个基因
+                    LegVSel_ = np.ones((Chrom_.shape[0], 1))  # 初始化实际评估种群的可行性列向量
+                    [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)  # 求育种种群的目标函数值
+                    if online :
+                        self.surrogate.update_model()  # update the BO model
 
-                # 更新context vector 及其fitness （已经考虑排除不可行解）
-                for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
-                    if maxormin == 1:
-                        if ObjVSel_j < F_B and LegVSel_j == 1:
-                            F_B = ObjVSel_j
-                            B[0] = Chrom[j, :]
-                    if maxormin == -1 and LegVSel_j == 1:
-                        if ObjVSel_j > F_B:
-                            F_B = ObjVSel_j
-                            B[0] = Chrom[j, :]
+                    ObjVSel[best_guess] = ObjVSel_  # replace the estimated value by real value
+                    LegVSel[best_guess] = LegVSel_
+
+                    # 更新context vector 及其fitness （已经考虑排除不可行解）
+                    for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
+                        if maxormin == 1:
+                            if ObjVSel_j < F_B and LegVSel_j == 1:
+                                F_B = ObjVSel_j
+                                B[0] = Chrom[j, :]
+                        if maxormin == -1 and LegVSel_j == 1:
+                            if ObjVSel_j > F_B:
+                                F_B = ObjVSel_j
+                                B[0] = Chrom[j, :]
 
                 # 父子合并
                 P_i = np.vstack([P_i, SelCh])
@@ -152,6 +157,9 @@ class CoE_surrgate():
                 [P_i, ObjV_i, LegV_i] = ga.selecting(selectStyle, P_i, FitnV, GGAP, SUBPOP, ObjV_i,
                                                      LegV_i)  # 选择个体生成新一代种群
                 P[index], ObjV[index], LegV[index] = P_i, ObjV_i, LegV_i
+
+            if estimation >= interval:
+                estimation = 0  # initilize the counter
 
             # 记录进化过程
             pop_trace[gen, 0] = F_B  # 记录当代目标函数的最优值
