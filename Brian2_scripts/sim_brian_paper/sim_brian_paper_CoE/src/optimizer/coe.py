@@ -197,12 +197,10 @@ class CoE_surrgate():
 
 
 class Coe_surrogate_mixgentype(CoE_surrgate):
-    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, keys, ranges_, borders_, precisions_,
-                 codes, scales, acq, kappa=2.576, xi=0.0,
+    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
                      opt='cma', **gp_params):
         super.__init__(f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
                      opt='cma', **gp_params)
-        self.FieldD = ga.crtfld(ranges_, borders_, precisions_, codes, scales)
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -232,7 +230,6 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         # 初代种群的解码
         if problem == 'R':
             variable = ga.bs2rv(Chrom, FieldD)  # 解码
-        #         print(variable)
         elif problem == 'I':
             if np.any(FieldD >= sys.maxsize):
                 variable = ga.bs2int(Chrom, FieldD).astype('object')  # 解码
