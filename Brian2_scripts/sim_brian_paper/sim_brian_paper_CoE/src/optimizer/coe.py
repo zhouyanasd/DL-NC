@@ -198,7 +198,7 @@ class CoE_surrgate():
 
 class Coe_surrogate_mixgentype(CoE_surrgate):
     '''
-    codes和scales中不需要编码的部分用None来代替。
+    codes和scales中不需要编码的部分用None来代替, 这是按照子种群来划分的，即不同编码要分成不同的子种群中去。
     '''
     def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, acq, kappa=2.576, xi=0.0,
                      opt='cma', **gp_params):
@@ -206,6 +206,12 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
                      opt=opt, **gp_params)
         self.codes = codes
         self.scales = scales
+
+    def b_coding(self, Chrom, ranges, borders, precisions, codes, scales):
+        pass
+
+    def b_decoding(self):
+        pass
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -231,6 +237,9 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         LegV = []
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
+            codes_i = self.codes[SubCom_i]
+            scales_i = self.scales[SubCom_i]
+
             P_i = ga.crtrp(NIND, FieldDR_i)  # 生成初始种群
 
             Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
