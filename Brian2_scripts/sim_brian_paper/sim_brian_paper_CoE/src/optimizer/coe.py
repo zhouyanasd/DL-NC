@@ -198,20 +198,77 @@ class CoE_surrgate():
 
 class Coe_surrogate_mixgentype(CoE_surrgate):
     '''
-    codes和scales中不需要编码的部分用None来代替, 这是按照子种群来划分的，即不同编码要分成不同的子种群中去。
+    codes和scales中不需要编码的部分用None来代替。
     '''
     def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, acq, kappa=2.576, xi=0.0,
                      opt='cma', **gp_params):
         super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=kappa, xi=xi,
                      opt=opt, **gp_params)
+        self.ranges = ranges
+        self.borders = borders
+        self.precisions = precisions
         self.codes = codes
         self.scales = scales
 
-    def b_coding(self, Chrom, ranges, borders, precisions, codes, scales):
-        pass
+    def get_codes(self, codes):
+        return  np.where(np.array(codes) != None)
 
-    def b_decoding(self):
-        pass
+    def get_FieldD(self,codes):
+        index_ib = self.get_codes(codes_i)
+        codes_ib = codes[index_ib]
+        scales_ib = self.scales[SubCom_i][index_ib]
+        ranges_ib = self.ranges[SubCom_i][index_ib]
+        borders_ib = self.borders[SubCom_i][index_ib]
+        precisions_ib = self.precisions[SubCom_i][index_ib]
+        FieldD = ga.crtfld(ranges_ib, borders_ib, precisions_ib, codes_ib, scales_ib)
+        return FieldD
+
+    def b_coding(self, NIND, P_i, codes):
+        if (np.array(codes) != None).any():
+            FieldD = self.get_FieldD(codes)
+            Lind = np.sum(FieldD[0, :])  # 种群染色体长度
+            P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
+            variable = ga.bs2rv(P_ib, FieldD)  # 解码
+            P_i[:, index_ib] = variable
+            return P_i
+        else:
+            return P_i
+
+    def binToDec(self, binary):
+        result = 0
+        for i in range(len(binary)):
+            result += int(binary[-(i + 1)]) * pow(2, i)
+        return result
+
+    def graytobin(self, gray):
+        result = []
+        result.append(gray[0])
+        for i, g in enumerate(gray[1:]):
+            result.append(g ^ result[i])
+        return result
+
+    def dec2bin(num):
+        l = []
+        if num < 0:
+            return '-' + dec2bin(abs(num))
+        while True:
+            num, remainder = divmod(num, 2)
+            l.append(str(remainder))
+            if num == 0:
+                return int(''.join(l[::-1]))
+
+    def bintogary(binary):
+        result = []
+        result.append(binary[0])
+        for i, b in enumerate(binary[1:]):
+            result.append(b ^ binary[i])
+        return result
+
+    # def rv2bs(self, gen, FieldD): TODO
+    #     gen_b = []
+    #     for g in gen:
+
+
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -237,10 +294,10 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         LegV = []
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
-            codes_i = self.codes[SubCom_i]
-            scales_i = self.scales[SubCom_i]
 
             P_i = ga.crtrp(NIND, FieldDR_i)  # 生成初始种群
+
+            P_i = self.b_coding(NIND, P_i, self.codes_i[SubCom_i])
 
             Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
             Chrom[:, SubCom_i] = P_i
@@ -263,6 +320,12 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, P, ObjV, LegV)):
                 # 进行遗传算子，生成子代
                 FieldDR_i = self.FieldDR[:, SubCom_i]
+
+                codes_id = self.codes_i[SubCom_i]
+                if (np.array(codes_id) != None).any():
+                    FieldD = self.get_FieldD(codes_id)#TODO
+
+
                 SelCh = ga.recombin(recombinStyle, P_i, recopt, SUBPOP)  # 重组
                 SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
                 if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
