@@ -210,22 +210,20 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         self.codes = codes
         self.scales = scales
 
-    def get_codes(self, codes):
-        return  np.where(np.array(codes) != None)
-
     def get_FieldD(self,codes):
-        index_ib = self.get_codes(codes_i)
+        index_ib = np.where(np.array(codes) != None)
         codes_ib = codes[index_ib]
         scales_ib = self.scales[SubCom_i][index_ib]
         ranges_ib = self.ranges[SubCom_i][index_ib]
         borders_ib = self.borders[SubCom_i][index_ib]
         precisions_ib = self.precisions[SubCom_i][index_ib]
         FieldD = ga.crtfld(ranges_ib, borders_ib, precisions_ib, codes_ib, scales_ib)
-        return FieldD
+        return index_ib, FieldD
 
-    def b_coding(self, NIND, P_i, codes):
+    def b_coding(self, P_i, codes):
+        NIND = len(P_i)
         if (np.array(codes) != None).any():
-            FieldD = self.get_FieldD(codes)
+            index_ib, FieldD = self.get_FieldD(codes)
             Lind = np.sum(FieldD[0, :])  # 种群染色体长度
             P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
             variable = ga.bs2rv(P_ib, FieldD)  # 解码
@@ -234,41 +232,77 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         else:
             return P_i
 
-    def binToDec(self, binary):
+    def remu(self, P_i, codes):
+        if (np.array(codes) != None).any():
+            index_ib, FieldD = self.get_FieldD(codes)
+            P_ib = P_i[:, index_ib]
+            SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
+            SelCh_ib = ga.mutbin(SelCh, pm)  # 变异
+            variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
+
+            index_ir = np.where(np.array(codes) == None)
+            P_ir = P_i[:, index_ir]
+            SelCh_ir = ga.recombin(recombinStyle, P_ir, recopt, SUBPOP)  # 重组
+            SelCh_ir = ga.mutbga(SelCh_ir, FieldDR_i, pm)  # 变异
+            if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+                SelCh_ir = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
+
+            SelCh = np.zeros(P_i.shape)
+            SelCh[:, index_ib] = variable
+            SelCh[:, index_ir] = SelCh_ir
+        else:
+            SelCh = ga.recombin(recombinStyle, P_i, recopt, SUBPOP)  # 重组
+            SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
+            if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+                SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
+        return SelCh
+
+    def bin2Dec(self, binary):
         result = 0
         for i in range(len(binary)):
             result += int(binary[-(i + 1)]) * pow(2, i)
         return result
 
-    def graytobin(self, gray):
+    def gray2bin(self, gray):
         result = []
         result.append(gray[0])
         for i, g in enumerate(gray[1:]):
             result.append(g ^ result[i])
         return result
 
-    def dec2bin(num):
-        l = []
+    def dec2bin(self,num, l):
+        result = []
         if num < 0:
             return '-' + dec2bin(abs(num))
         while True:
             num, remainder = divmod(num, 2)
-            l.append(str(remainder))
+            result.append(int(remainder))
             if num == 0:
-                return int(''.join(l[::-1]))
+                break
+        if len(result) < l:
+            result.extend([0] * (l - len(result)))
+        return result[::-1]
 
-    def bintogary(binary):
+    def bin2gary(self, binary):
         result = []
         result.append(binary[0])
         for i, b in enumerate(binary[1:]):
             result.append(b ^ binary[i])
         return result
 
-    # def rv2bs(self, gen, FieldD): TODO
-    #     gen_b = []
-    #     for g in gen:
-
-
+    def rv2bs(self, gen, FieldD):
+        result = []
+        for individual in gen:
+            gen_i = []
+            for g, c, l in zip(individual, FieldD[3, :], FieldD[0, :]):
+                g_b = dec2bin(g, l)
+                if c == 1:
+                    g_g = bin2gary(g_b)
+                    gen_i.extend(g_g)
+                elif c == 0:
+                    gen_i.extend(g_b)
+            result.append(gen_i)
+        return np.array(result)
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -297,7 +331,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
 
             P_i = ga.crtrp(NIND, FieldDR_i)  # 生成初始种群
 
-            P_i = self.b_coding(NIND, P_i, self.codes_i[SubCom_i])
+            P_i = self.b_coding(P_i, self.codes_i[SubCom_i])
 
             Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
             Chrom[:, SubCom_i] = P_i
@@ -321,16 +355,9 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
                 # 进行遗传算子，生成子代
                 FieldDR_i = self.FieldDR[:, SubCom_i]
 
-                codes_id = self.codes_i[SubCom_i]
-                if (np.array(codes_id) != None).any():
-                    FieldD = self.get_FieldD(codes_id)#TODO
+                codes_ij = self.codes_i[SubCom_i]
 
-
-                SelCh = ga.recombin(recombinStyle, P_i, recopt, SUBPOP)  # 重组
-                SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
-                if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
-                    SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
-
+                SelCh = self.remu(P_i, codes_ij)
 
                 Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
                 Chrom[:, SubCom_i] = SelCh
@@ -424,18 +451,5 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         print('时间已过 %s 秒' % (times))
         # 返回进化记录器、变量记录器以及执行时间
         return [pop_trace, var_trace, times]
-
-
-        # Lind = np.sum(FieldD[0, :])  # 种群染色体长度
-        # Chrom = ga.crtbp(NIND, Lind)  # 生成初始种
-        # LegV = np.ones((NIND, 1))  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
-        # # 初代种群的解码
-        # if problem == 'R':
-        #     variable = ga.bs2rv(Chrom, FieldD)  # 解码
-        # elif problem == 'I':
-        #     if np.any(FieldD >= sys.maxsize):
-        #         variable = ga.bs2int(Chrom, FieldD).astype('object')  # 解码
-        #     else:
-        #         variable = ga.bs2int(Chrom, FieldD).astype('int64')
 
 
