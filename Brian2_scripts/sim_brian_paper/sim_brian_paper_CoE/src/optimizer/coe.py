@@ -20,7 +20,7 @@ class CoE_surrgate():
         self.f = f # for BO with dict input
         self.f_p = f_p
         self.SubCom = SubCom
-        self.FieldDR = ga.crtfld(ranges, borders, precisions)
+        self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
         self.surrogate = BayesianOptimization(
             f=f,
@@ -210,20 +210,16 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         self.codes = codes
         self.scales = scales
 
-    def get_FieldD(self,codes):
-        index_ib = np.where(np.array(codes) != None)
-        codes_ib = codes[index_ib]
-        scales_ib = self.scales[SubCom_i][index_ib]
-        ranges_ib = self.ranges[SubCom_i][index_ib]
-        borders_ib = self.borders[SubCom_i][index_ib]
-        precisions_ib = self.precisions[SubCom_i][index_ib]
-        FieldD = ga.crtfld(ranges_ib, borders_ib, precisions_ib, codes_ib, scales_ib)
-        return index_ib, FieldD
-
-    def b_coding(self, P_i, codes):
+    def b_coding(self, P_i, SubCom_i):
         NIND = len(P_i)
-        if (np.array(codes) != None).any():
-            index_ib, FieldD = self.get_FieldD(codes)
+        if (np.array(self.codes[SubCom_i]) != None).any():
+            index_ib = np.where(np.array(self.codes[SubCom_i]) != None)[0]
+            codes_ib = self.codes[SubCom_i][index_ib]
+            scales_ib = self.scales[SubCom_i][index_ib]
+            ranges_ib = self.ranges[:,SubCom_i][:,index_ib]
+            borders_ib = self.borders[:,SubCom_i][:,index_ib]
+            precisions_ib = self.precisions[SubCom_i][index_ib]
+            FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
             Lind = np.sum(FieldD[0, :])  # 种群染色体长度
             P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
             variable = ga.bs2rv(P_ib, FieldD)  # 解码
@@ -232,22 +228,30 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         else:
             return P_i
 
-    def remu(self, P_i, codes):
-        if (np.array(codes) != None).any():
-            index_ib, FieldD = self.get_FieldD(codes)
-            P_ib = P_i[:, index_ib]
+    def remu(self, P_i, SubCom_i,recombinStyle,recopt,SUBPOP,pm,distribute,repnum,index):
+        FieldDR_i = self.FieldDR[:, SubCom_i]
+        SelCh = np.zeros(P_i.shape)
+        if (np.array(self.codes[SubCom_i]) != None).any():
+            index_ib = np.where(np.array(self.codes[SubCom_i]) != None)[0]
+            codes_ib = self.codes[SubCom_i][index_ib]
+            scales_ib = self.scales[SubCom_i][index_ib]
+            ranges_ib = self.ranges[:,SubCom_i][:,index_ib]
+            borders_ib = self.borders[:,SubCom_i][:,index_ib]
+            precisions_ib = self.precisions[SubCom_i][index_ib]
+            FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
+            P_ib = self.rv2bs(P_i[:, index_ib],FieldD)
             SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
-            SelCh_ib = ga.mutbin(SelCh, pm)  # 变异
+            SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
             variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
 
-            index_ir = np.where(np.array(codes) == None)
+            index_ir = np.where(np.array(self.codes[SubCom_i]) == None)[0]
             P_ir = P_i[:, index_ir]
+            FieldDR_ir = FieldDR_i[:, index_ir]
             SelCh_ir = ga.recombin(recombinStyle, P_ir, recopt, SUBPOP)  # 重组
-            SelCh_ir = ga.mutbga(SelCh_ir, FieldDR_i, pm)  # 变异
+            SelCh_ir = ga.mutbga(SelCh_ir, FieldDR_ir, pm)  # 变异
             if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
-                SelCh_ir = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
+                SelCh_ir = ga.mutgau(SelCh_ir, FieldDR_ir, pm)  # 高斯变异
 
-            SelCh = np.zeros(P_i.shape)
             SelCh[:, index_ib] = variable
             SelCh[:, index_ir] = SelCh_ir
         else:
@@ -295,9 +299,9 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         for individual in gen:
             gen_i = []
             for g, c, l in zip(individual, FieldD[3, :], FieldD[0, :]):
-                g_b = dec2bin(g, l)
+                g_b = self.dec2bin(g, l)
                 if c == 1:
-                    g_g = bin2gary(g_b)
+                    g_g =self.bin2gary(g_b)
                     gen_i.extend(g_g)
                 elif c == 0:
                     gen_i.extend(g_b)
@@ -331,7 +335,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
 
             P_i = ga.crtrp(NIND, FieldDR_i)  # 生成初始种群
 
-            P_i = self.b_coding(P_i, self.codes_i[SubCom_i])
+            P_i = self.b_coding(P_i, SubCom_i)
 
             Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
             Chrom[:, SubCom_i] = P_i
@@ -353,11 +357,8 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             estimation += 1
             for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, P, ObjV, LegV)):
                 # 进行遗传算子，生成子代
-                FieldDR_i = self.FieldDR[:, SubCom_i]
 
-                codes_ij = self.codes_i[SubCom_i]
-
-                SelCh = self.remu(P_i, codes_ij)
+                SelCh = self.remu(P_i, SubCom_i,recombinStyle,recopt,SUBPOP,pm,distribute,index)
 
                 Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
                 Chrom[:, SubCom_i] = SelCh
