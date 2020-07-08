@@ -277,7 +277,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
     def dec2bin(self,num, l):
         result = []
         if num < 0:
-            return '-' + dec2bin(abs(num))
+            return '-' + self.dec2bin(abs(num))
         while True:
             num, remainder = divmod(num, 2)
             result.append(int(remainder))
