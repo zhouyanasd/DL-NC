@@ -303,7 +303,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             LegV.append(LegV_i)
         return P, ObjV, LegV
 
-    def update_context_vector(self,maxormin, Chrom, B, ObjVSel_, LegVSel_):
+    def update_context_vector(self,maxormin, Chrom, B, F_B, ObjVSel_, LegVSel_):
         for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
             if maxormin == 1:
                 if ObjVSel_j < F_B and LegVSel_j == 1:
@@ -387,7 +387,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             # 每一轮进化轮流进化各个子种群
             for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, P, ObjV, LegV)):
                 # 进行遗传算子的重组和变异，生成子代
-                SelCh = self.remu(P_i, SubCom_i, recombinStyle, recopt, SUBPOP, pm, distribute, index)
+                SelCh = self.remu(P_i, SubCom_i, recombinStyle, recopt, SUBPOP, pm, distribute, repnum, index)
                 # 替换context vector中个体基因
                 Chrom = B.copy().repeat(NIND, axis=0)
                 Chrom[:, SubCom_i] = SelCh
@@ -415,7 +415,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
                     ObjVSel[best_guess] = ObjVSel_
                     LegVSel[best_guess] = LegVSel_
                     # 更新context vector 及其fitness （已经考虑排除不可行解）
-                    self.update_context_vector(maxormin, Chrom, B, ObjVSel_, LegVSel_)
+                    self.update_context_vector(maxormin, Chrom, B, F_B, ObjVSel_, LegVSel_)
 
                 # 父子合并
                 P_i = np.vstack([P_i, SelCh])
@@ -450,12 +450,12 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             # 如果估计次数大于间隔则清零计数
             if estimation >= interval:
                 estimation = 0
-            # 增加代数
-            gen += 1
             # 记录当代目标函数的最优值
             pop_trace[gen, 0] = F_B
             # 记录当代最优的控制变量值
             var_trace[gen, :] = B[0]
+            # 增加代数
+            gen += 1
         # 结束计时
         end_time = time.time()
         times = end_time - start_time
