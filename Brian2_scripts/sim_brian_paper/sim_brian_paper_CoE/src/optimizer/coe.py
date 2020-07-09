@@ -489,8 +489,7 @@ if __name__ == "__main__":
     codes = np.array([None, None, None, None, None, 1, None, 1])
     scales = np.array([0] * dim)
     FieldDR = ga.crtfld(ranges, borders, list(precisions))
-    SubCom = np.array(
-        [[0, 1], [2, 3], [4, 5, 6, 7]])
+    SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
 
     coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys,
                                    acq='ucb', kappa=2.576, xi=0.0, opt='de')
