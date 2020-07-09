@@ -485,7 +485,7 @@ if __name__ == "__main__":
     keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
     ranges = np.vstack([[0, 1]] * dim).T
     borders = np.vstack([[0, 0]] * dim).T
-    precisions = np.array([4, 4, 4, 4, 4, 4, 1, 1])
+    precisions = np.array([4, 4, 4, 4, 4, 1, 4, 1])
     codes = np.array([None, None, None, None, None, 1, None, 1])
     scales = np.array([0] * dim)
     FieldDR = ga.crtfld(ranges, borders, list(precisions))
