@@ -127,11 +127,11 @@ class CoE_surrgate(BaseFunctions):
                         if maxormin == 1:
                             if ObjVSel_j < F_B and LegVSel_j == 1:
                                 F_B = ObjVSel_j
-                                B[0] = Chrom[j, :]
+                                B[0] = Chrom_[j, :]
                         if maxormin == -1 and LegVSel_j == 1:
                             if ObjVSel_j > F_B:
                                 F_B = ObjVSel_j
-                                B[0] = Chrom[j, :]
+                                B[0] = Chrom_[j, :]
 
                 # 父子合并
                 P_i = np.vstack([P_i, SelCh])
@@ -303,16 +303,18 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             LegV.append(LegV_i)
         return P, ObjV, LegV
 
-    def update_context_vector(self,maxormin, Chrom, B, F_B, ObjVSel_, LegVSel_):
+    def update_context_vector(self,maxormin, Chrom_, B, F_B, ObjVSel_, LegVSel_):
+        _B, _F_B= B, F_B
         for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
             if maxormin == 1:
                 if ObjVSel_j < F_B and LegVSel_j == 1:
-                    F_B = ObjVSel_j
-                    B[0] = Chrom[j, :]
-            if maxormin == -1 and LegVSel_j == 1:
-                if ObjVSel_j > F_B:
-                    F_B = ObjVSel_j
-                    B[0] = Chrom[j, :]
+                    _F_B = ObjVSel_j
+                    _B[0] = Chrom_[j, :]
+            if maxormin == -1:
+                if ObjVSel_j > F_B and LegVSel_j == 1:
+                    _F_B = ObjVSel_j
+                    _B[0] = Chrom_[j, :]
+        return _B, _F_B
 
     def draw(self, NVAR, pop_trace, var_trace, best_ObjV, best_gen, times):
         ga.trcplot(pop_trace, [['种群最优个体目标函数值']])
@@ -415,7 +417,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
                     ObjVSel[best_guess] = ObjVSel_
                     LegVSel[best_guess] = LegVSel_
                     # 更新context vector 及其fitness （已经考虑排除不可行解）
-                    self.update_context_vector(maxormin, Chrom, B, F_B, ObjVSel_, LegVSel_)
+                    B, F_B = self.update_context_vector(maxormin, Chrom_, B, F_B, ObjVSel_, LegVSel_)
 
                 # 父子合并
                 P_i = np.vstack([P_i, SelCh])
@@ -497,6 +499,6 @@ if __name__ == "__main__":
                                                                    maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
                                                                    interval=1,
                                                                    selectStyle='sus', recombinStyle='xovdp',
-                                                                   distribute=True, drawing=1)
+                                                                   distribute=True, drawing=True)
 
 
