@@ -121,7 +121,7 @@ class EntropySearch(object):
                     / float(self.n_gp_samples)
                 # Determing entropy of distr. p_max and compare to base entropy
                 a_ES[i - self.n_candidates, j] = \
-                    self.base_entropy - entropy(p_min)
+                    - self.base_entropy + entropy(p_min)
 
          # Average entropy change over the different  assumed outcomes y_i[j]
         return a_ES.mean(1)
