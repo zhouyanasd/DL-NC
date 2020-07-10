@@ -79,8 +79,6 @@ class BaseFunctions():
 
     def dec2bin(self,num, l):
         result = []
-        if num < 0:
-            return '-' + self.dec2bin(abs(num))
         while True:
             num, remainder = divmod(num, 2)
             result.append(int(remainder))
