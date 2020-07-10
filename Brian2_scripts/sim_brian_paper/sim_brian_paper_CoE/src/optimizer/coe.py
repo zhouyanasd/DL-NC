@@ -267,8 +267,8 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         result = []
         for individual in gen:
             gen_i = []
-            for g, c, l in zip(individual, FieldD[3, :], FieldD[0, :]):
-                g_b = self.dec2bin(g, l)
+            for g, u, c, l in zip(individual, FieldD[1,:], FieldD[3, :], FieldD[0, :]):
+                g_b = self.dec2bin(g-u, l)
                 if c == 1:
                     g_g =self.bin2gary(g_b)
                     gen_i.extend(g_g)
@@ -276,15 +276,6 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
                     gen_i.extend(g_b)
             result.append(gen_i)
         return np.array(result)
-
-    def initilize_B(self):
-        B = []
-        for SubCom_i in self.SubCom:
-            FieldDR_i = self.FieldDR[:, SubCom_i]
-            B_i = ga.crtrp(1, FieldDR_i)
-            B_i = self.b_coding(B_i, SubCom_i)
-            B.extend(list(B_i[0]))
-        return np.array(B).reshape(1,-1)
 
     def initialize_offspring(self, NIND, B):
         P = []
@@ -373,7 +364,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
         # 初始化代理模型
         self.surrogate.initial_model(init_points = init_points, LHS_path = None, is_LHS = True, lazy = False)
         # 定义初始context vector
-        B = self.initilize_B()
+        B = ga.crtrp(1, self.FieldDR)
         # 求初代context vector 的 fitness
         [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
         # 初始化各个子种群
@@ -483,7 +474,7 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
 
 if __name__ == "__main__":
     def rosen(alpha=1e2, **X):
-        x = [X[key] for key in X.keys()]
+        x = [X[key]/10 for key in X.keys()]
         """Rosenbrock test objective function"""
         x = [x] if np.isscalar(x[0]) else x  # scalar into list
         x = np.asarray(x)
@@ -492,9 +483,9 @@ if __name__ == "__main__":
 
     dim = 8
     keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
-    ranges = np.vstack([[0, 1]] * dim).T
+    ranges = np.vstack([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 9], [0, 10], [0, 9]]).T
     borders = np.vstack([[0, 0]] * dim).T
-    precisions = np.array([4, 4, 4, 4, 4, 1, 4, 1])
+    precisions = np.array([4, 4, 4, 4, 4, 0, 4, 0])
     codes = np.array([None, None, None, None, None, 1, None, 1])
     scales = np.array([0] * dim)
     FieldDR = ga.crtfld(ranges, borders, list(precisions))
