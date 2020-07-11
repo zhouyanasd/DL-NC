@@ -7,9 +7,12 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-import numpy as np
 from enum import Enum
 from collections import OrderedDict
+
+import numpy as np
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
 
 
 class TraversalState(Enum):
@@ -178,3 +181,24 @@ class Topological_sorting_tarjan(Tarjan):
                 np.random.shuffle(_c_sub)
                 outgoing.append(_c_sub[0])
         return incoming, outgoing
+
+
+class Evaluation():
+    """
+    Some basic function for evaluate the output of LSM.
+
+    This class offers evaluation functions for learning tasks.
+    """
+
+    def __init__(self):
+        pass
+
+    def readout_sk(self, X_train, X_validation, X_test, y_train, y_validation, y_test, **kwargs):
+        lr = LogisticRegression(**kwargs)
+        lr.fit(X_train.T, y_train.T)
+        y_train_predictions = lr.predict(X_train.T)
+        y_validation_predictions = lr.predict(X_validation.T)
+        y_test_predictions = lr.predict(X_test.T)
+        return accuracy_score(y_train_predictions, y_train.T), \
+               accuracy_score(y_validation_predictions, y_validation.T), \
+               accuracy_score(y_test_predictions, y_test.T)

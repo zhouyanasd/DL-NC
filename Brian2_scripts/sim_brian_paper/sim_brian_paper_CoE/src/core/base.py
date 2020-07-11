@@ -1,7 +1,5 @@
 import numpy as np
 import scipy as sp
-from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression
 
 from brian2 import NeuronGroup, Synapses
 
@@ -108,24 +106,3 @@ class BaseFunctions():
         if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
-
-
-class Evaluation():
-    """
-    Some basic function for evaluate the output of LSM.
-
-    This class offers evaluation functions for learning tasks.
-    """
-
-    def __init__(self):
-        pass
-
-    def readout_sk(self, X_train, X_validation, X_test, y_train, y_validation, y_test, **kwargs):
-        lr = LogisticRegression(**kwargs)
-        lr.fit(X_train.T, y_train.T)
-        y_train_predictions = lr.predict(X_train.T)
-        y_validation_predictions = lr.predict(X_validation.T)
-        y_test_predictions = lr.predict(X_test.T)
-        return accuracy_score(y_train_predictions, y_train.T), \
-               accuracy_score(y_validation_predictions, y_validation.T), \
-               accuracy_score(y_test_predictions, y_test.T)

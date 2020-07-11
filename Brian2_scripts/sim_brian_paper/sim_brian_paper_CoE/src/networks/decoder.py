@@ -8,7 +8,9 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-class Decoder():
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+
+class Decoder(BaseFunctions):
     def __init__(self, gen):
         self.gen = gen
 
