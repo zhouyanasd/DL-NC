@@ -222,6 +222,8 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             borders_ib = self.borders[:,SubCom_i][:,index_ib]
             precisions_ib = self.precisions[SubCom_i][index_ib]
             FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
+            if not self.is2(FieldD):
+                raise Exception('worng range of binary coding')
             Lind = np.sum(FieldD[0, :])  # 种群染色体长度
             P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
             variable = ga.bs2rv(P_ib, FieldD)  # 解码
@@ -241,6 +243,8 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             borders_ib = self.borders[:,SubCom_i][:,index_ib]
             precisions_ib = self.precisions[SubCom_i][index_ib]
             FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
+            if not self.is2(FieldD):
+                raise Exception('worng range of binary coding')
             P_ib = self.rv2bs(P_i[:, index_ib],FieldD)
             SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
             SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
@@ -262,6 +266,14 @@ class Coe_surrogate_mixgentype(CoE_surrgate):
             if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
                 SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
         return SelCh
+
+    def is2(self, FieldD):
+        r = FieldD[2, :] - FieldD[1, :]
+        result = [self.dec2bin(x, l) for x, l in zip(r, FieldD[0, :])]
+        if (np.array(result) == 1).all():
+            return True
+        else:
+            return False
 
     def rv2bs(self, gen, FieldD):
         result = []
@@ -502,11 +514,11 @@ if __name__ == "__main__":
 
     coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys,
                                    acq='ucb', kappa=2.576, xi=0.0, opt='de')
-    [pop_trace, var_trace, times] = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+    best_gen, best_ObjV = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                                    init_points=50, problem='R',
                                                                    maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
                                                                    interval=1,
                                                                    selectStyle='sus', recombinStyle='xovdp',
-                                                                   distribute=True, drawing=True)
+                                                                   distribute=False, drawing=False)
 
 
