@@ -12,19 +12,24 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunc
 import numpy as np
 import geatpy as ga
 
-class Decoder(BaseFunctions):
-    def __init__(self, gen):
-        self.gen = gen
-        self.dim = 8
-        self.keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
-        self.ranges = np.vstack([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 9], [0, 10], [0, 9]]).T
-        self.borders = np.vstack([[0, 0]] * self.dim).T
-        self.precisions = np.array([4, 4, 4, 4, 4, 0, 4, 0])
-        self.codes = np.array([None, None, None, None, None, 1, None, 1])
-        self.scales = np.array([0] * self.dim)
-        self.FieldDR = ga.crtfld(self.ranges, self.borders, self.precisions)
-        self.SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
+Encoding = {}
+Readout = {}
+Reservoir = {'N','L_1','L_2'}
+Block_random = ['N','tau','threshold','type','strength','plasticity','P']
+Block_scale_free= {'N','tau','threshold','type','strength','plasticity','C'}
+Block_circle = {'N','tau','threshold','type','strength','plasticity','P_f','P_b','P_d','D_c'}
+Block_hierarchy = {'N','tau','threshold','type','strength','plasticity','P_f','P_b','P_d','D_c','L',''}
 
-    def decode(self):
-        parameter = self.gen
-        return parameter
+class Decoder(BaseFunctions):
+    def __init__(self, **kwargs):
+        self.keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
+        self.codes = np.array([None, None, None, None, None, 1, None, 1])
+        self.SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
+        self.gen_group = kwargs
+
+    def separator(self, gen):
+        pass
+
+    def gen_reader(self):
+        pass
+
