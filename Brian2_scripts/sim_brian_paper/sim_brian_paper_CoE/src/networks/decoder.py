@@ -18,6 +18,38 @@ class Decoder(BaseFunctions):
         self.config_SubCom = config_SubCom
         self.config_key = config_key
 
+    @property
+    def get_SubCom(self):
+        return list(self.config_SubCom.values())
+
+    @property
+    def get_keys(self):
+        keys = []
+        for group_name in self.config_key.keys():
+            for key in self.config_key[group_name]:
+                keys.append(group_name+'_'+key)
+        return keys
+
+    @property
+    def get_dim(self):
+        return len(self.get_keys)
+
+    def get_codes(self):
+        pass
+
+    def get_ranges(self):
+        pass
+
+    def get_borders(self):
+        pass
+
+    def get_precisions(self):
+        pass
+
+    def get_scales(self):
+        pass
+
+
     def register(self, Gen):
         self.Gen = Gen
 
@@ -34,9 +66,7 @@ class Decoder(BaseFunctions):
 
 
 if __name__ == "__main__":
-    # keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
     codes = np.array([None, None, None, None, None, 1, None, 1])
-    # SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
     # Encoding = {}
     # Readout = {}
     Reservoir = ['N', 'L_1', 'L_2']
