@@ -18,11 +18,16 @@ class Decoder(BaseFunctions):
         self.config_SubCom = config_SubCom
         self.config_key = config_key
 
-    def separator(self, Gen, target):
+    def register(self, Gen):
+        self.Gen = Gen
+
+    def separator(self, target):
         key = self.config_key[target]
         SubCom = self.config_SubCom[target]
         parameter = {}
-        for p,k in zip(Gen[SubCom],key):
+        for p,k,c in zip(self.Gen[SubCom],key, self.codes):
+            if c != None:
+                p = self.dec2bin(p)
             parameter[k] = p
         return parameter
 
