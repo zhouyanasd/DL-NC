@@ -24,17 +24,29 @@ class Generator():
      # some public used such as random_state.
      '''
 
-    def __init__(self, random_state):
+    def __init__(self, decoder, random_state):
+        self.decoder = decoder
         self.random_state = random_state
 
-    def generate_block(self):
-        pass
+    def generate_connect_matrix(self, p):
+        return 1
 
-    def generate_pathway(self):
-        pass
+    def generate_block_random(self):
+        N, P = self.decoder.decode_block_random()
+        connect_matrix = self.generate_connect_matrix(P)
+        block = Block(N, connect_matrix)
+        block.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
+                             refractory = refractory, name='block_' + str(index))
+        block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
+                             name='block_block_' + str(index))
+        block.connect()
+        block.determine_input_output()
+        return block
 
-    def generate_parameters(self):
-        pass
+
+
+    # def generate_pathway(self):
+    #     pass
 
     # def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
     #                   dynamics_synapse_pre, threshold, reset, refractory):

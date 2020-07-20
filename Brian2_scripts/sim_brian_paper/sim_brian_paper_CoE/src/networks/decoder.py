@@ -10,7 +10,6 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 import numpy as np
-import geatpy as ga
 
 class Decoder(BaseFunctions):
     def __init__(self, config_group, config_key, config_SubCom, config_codes, config_ranges, config_borders,
@@ -90,6 +89,9 @@ class Decoder(BaseFunctions):
                 p = self.dec2bin(p)
             parameter[k] = p
         return parameter
+
+    def decode_block_random(self):
+        pass
 
 
 
