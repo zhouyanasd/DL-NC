@@ -10,7 +10,7 @@
 
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.networks.components import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.networks.decoder import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
 from brian2 import *
 
@@ -24,29 +24,80 @@ class Generator():
      # some public used such as random_state.
      '''
 
-    def __init__(self, decoder, random_state):
-        self.decoder = decoder
+    def __init__(self, random_state):
         self.random_state = random_state
+
+    def register_decoder(self, decoder,):
+        self.decoder = decoder
 
     def generate_connect_matrix(self, p):
         return 1
 
-    def generate_block_random(self):
+    def generate_block_random(self, index):
         N, P = self.decoder.decode_block_random()
         connect_matrix = self.generate_connect_matrix(P)
         block = Block(N, connect_matrix)
-        block.create_neurons(dynamics_neurons, threshold = threshold, reset = reset,
-                             refractory = refractory, name='block_' + str(index))
+        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
+                             refractory = refractory_reservoir, name='block_' + 'random' + str(index))
         block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + str(index))
+                             name='block_block_' + 'random' + str(index))
+        block.separate_ex_inh()
         block.connect()
         block.determine_input_output()
         return block
 
+    def generate_block_scale_free(self, index):
+        pass
 
+    def generate_block_circle(self, index):
+        pass
 
-    # def generate_pathway(self):
-    #     pass
+    def generate_block_hierarchy(self, index):
+        pass
+
+    def generate_blocks(self, N1, N2, N3, N4):
+        block_group = BlockGroup()
+        for index in range(N1):
+            block = self.generate_block_random(index)
+            block_group.add_block(block)
+        for index in range(N2):
+            block = self.generate_block_scale_free(index + N1)
+            block_group.add_block(block)
+        for index in range(N3):
+            block = self.generate_block_circle(index + N1 + N2)
+            block_group.add_block(block)
+        for index in range(N4):
+            block = self.generate_block_hierarchy(index + N1 + N2 + N3)
+            block_group.add_block(block)
+
+    def generate_pathway_reservoir(self):
+        pass
+
+    def generate_reservoir(self, block_group, pathway):
+        reservoir = Reservoir()
+        reservoir.register_blocks(block_group)
+        reservoir.register_pathway(pathway)
+        reservoir.determine_input_output()
+        reservoir.connect()
+
+    def generate_encoding(self):
+        pass
+
+    def generate_readout(self):
+        pass
+
+    def generate_pathway_encoding_reservoir(self):
+        pass
+
+    def generate_pathway_reservoir_readout(self):
+        pass
+
+    def generate_network(self):
+        pass
+
+    def initialize(self):
+        pass
+
 
     # def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
     #                   dynamics_synapse_pre, threshold, reset, refractory):

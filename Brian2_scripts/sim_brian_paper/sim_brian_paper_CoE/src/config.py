@@ -1,3 +1,5 @@
+from brian2 import *
+
 # --- dynamic models ---
 dynamics_encoding = '''
 property = 1 : 1
@@ -26,6 +28,14 @@ w : 1
 dynamics_synapse_pre = '''
 g += w * property_pre 
 '''
+
+threshold_encoding = 'I > 0'
+
+threshold_reservoir = 'v > 15'
+
+reset_reservoir = 'v = 13.5'
+
+refractory_reservoir = 3 * ms
 
 
 # --- parameter settings ---
