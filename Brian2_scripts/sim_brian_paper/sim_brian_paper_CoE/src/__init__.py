@@ -11,6 +11,9 @@ __all__ = [
     "Block",
     "Reservoir",
     "LSM_Network",
+    "Decoder",
+    "Generator",
+    "Coe_surrogate_mixgentype",
 ]
 
 __doc__ = """

@@ -14,5 +14,6 @@ from .de import *
 __all__ = [
     "DiffEvol",
     "BayesianOptimization",
-    "CoE_surrgate",
+    "CoE_surrogate",
+    "Coe_surrogate_mixgentype",
 ]

@@ -27,15 +27,24 @@ class Generator():
     def __init__(self, random_state):
         self.random_state = random_state
 
-    def register_decoder(self, decoder,):
+    def register_decoder(self, decoder):
         self.decoder = decoder
 
-    def generate_connect_matrix(self, p):
+    def generate_connect_matrix_random(self, p):
+        return 1
+
+    def generate_connect_matrix_scale_free(self, p):
+        return 1
+
+    def generate_connect_matrix_circle(self, p):
+        return 1
+
+    def generate_connect_matrix_hierarchy(self, p):
         return 1
 
     def generate_block_random(self, index):
         N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connect_matrix(P)
+        connect_matrix = self.generate_connect_matrix_random(P)
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + 'random' + str(index))

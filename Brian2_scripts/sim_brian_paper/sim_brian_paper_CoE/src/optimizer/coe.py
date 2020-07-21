@@ -15,7 +15,7 @@ import numpy as np
 import geatpy as ga
 
 
-class CoE_surrgate(BaseFunctions):
+class CoE_surrogate(BaseFunctions):
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
                  opt='cma', **gp_params):
         super().__init__()
@@ -198,7 +198,7 @@ class CoE_surrgate(BaseFunctions):
         return [pop_trace, var_trace, times]
 
 
-class Coe_surrogate_mixgentype(CoE_surrgate):
+class Coe_surrogate_mixgentype(CoE_surrogate):
     '''
     codes和scales中不需要编码的部分用None来代替。
     '''
