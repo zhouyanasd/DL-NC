@@ -97,7 +97,13 @@ LSM_Network.join_netowrk(net)
 
 generator.initialize(LSM_Network)
 
+# ---------------------------------------
+net.store('init')
 
+inputs = zip(data_train_s, label_train)[0]
+stimulus = TimedArray(inputs[0], dt=Dt)
+duration = inputs[0].shape[0]
+net.run(duration * Dt)
 
 
 
@@ -170,10 +176,3 @@ generator.initialize(LSM_Network)
 # net.initialize_parameters_encoding_synapses(w = strength_synapse_encoding_reservoir)
 
 
-# ---------------------------------------
-net.store('init')
-
-inputs = zip(data_train_s, label_train)[0]
-stimulus = TimedArray(inputs[0], dt=Dt)
-duration = inputs[0].shape[0]
-net.run(duration * Dt)
