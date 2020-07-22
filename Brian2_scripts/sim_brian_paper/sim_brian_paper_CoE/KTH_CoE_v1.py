@@ -86,8 +86,7 @@ neurons_block = 10
 gen = 'for example'
 
 ##-----------------------------------------------------
-#--- create network ---
-net = LSM_Network()
+#--- create generator ---
 decoder = Decoder(config_group, config_key, config_SubCom, config_codes, config_ranges, config_borders,
                   config_precisions, config_scales)
 generator = Generator(np_state)
@@ -95,10 +94,10 @@ generator.register_decoder(decoder)
 
 generator.decoder.register(gen)
 
-LSM_Network = generator.generate_network()
-LSM_Network.join_netowrk(net)
+#--- create network ---
+net = LSM_Network()
+LSM_Network = generator.generate_and_initialize(net)
 
-generator.initialize(LSM_Network)
 
 # ---------------------------------------
 #--- run network ---

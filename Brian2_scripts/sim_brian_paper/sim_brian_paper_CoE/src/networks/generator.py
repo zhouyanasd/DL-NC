@@ -122,12 +122,28 @@ class Generator():
         network = LSM_Network()
         return network
 
+    def generate_and_initialize(self, net):
+        encoding = self.generate_encoding()
+        reservoir = self.generate_reservoir()
+        readout = self.generate_readout()
+        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir()
+        pathway_reservoir_readout = self.generate_pathway_reservoir_readout()
 
+        LSM_network = self.generate_network()
 
-    def
+        LSM_network.register_layer(encoding, 'encoding')
+        LSM_network.register_layer(reservoir, 'reservoir')
+        LSM_network.register_layer(readout, 'readout')
+        LSM_network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
+        LSM_network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
 
-    def initialize(self):
-        pass
+        LSM_network.join_network(net)
+
+        parameters = self.decoder.get_parameters()
+        LSM_network.initialize(parameters)
+
+        return LSM_network
+
 
 
     # def create_blocks(self, neurons_block, connect_matrix_blocks, dynamics_neurons, dynamics_synapse,
