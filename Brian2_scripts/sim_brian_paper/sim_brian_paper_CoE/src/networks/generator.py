@@ -56,13 +56,22 @@ class Generator():
         return block
 
     def generate_block_scale_free(self, index):
-        pass
+        N, P = self.decoder.decode_block_random()
+        connect_matrix = self.generate_connect_matrix_random(P)
+        block = Block(N, connect_matrix)
+        return block
 
     def generate_block_circle(self, index):
-        pass
+        N, P = self.decoder.decode_block_random()
+        connect_matrix = self.generate_connect_matrix_random(P)
+        block = Block(N, connect_matrix)
+        return block
 
     def generate_block_hierarchy(self, index):
-        pass
+        N, P = self.decoder.decode_block_random()
+        connect_matrix = self.generate_connect_matrix_random(P)
+        block = Block(N, connect_matrix)
+        return block
 
     def generate_blocks(self, N1, N2, N3, N4):
         block_group = BlockGroup()
@@ -78,9 +87,11 @@ class Generator():
         for index in range(N4):
             block = self.generate_block_hierarchy(index + N1 + N2 + N3)
             block_group.add_block(block)
+        return block_group
 
     def generate_pathway_reservoir(self):
-        pass
+        pathway = Pathway()
+        return pathway
 
     def generate_reservoir(self, block_group, pathway):
         reservoir = Reservoir()
@@ -88,21 +99,32 @@ class Generator():
         reservoir.register_pathway(pathway)
         reservoir.determine_input_output()
         reservoir.connect()
+        return reservoir
 
     def generate_encoding(self):
-        pass
+        block_group = BlockGroup()
+        return block_group
 
     def generate_readout(self):
-        pass
+        block_group = BlockGroup()
+        return block_group
+
 
     def generate_pathway_encoding_reservoir(self):
-        pass
+        pathway = Pathway()
+        return pathway
 
     def generate_pathway_reservoir_readout(self):
-        pass
+        pathway = Pathway()
+        return pathway
 
     def generate_network(self):
-        pass
+        network = LSM_Network()
+        return network
+
+
+
+    def
 
     def initialize(self):
         pass

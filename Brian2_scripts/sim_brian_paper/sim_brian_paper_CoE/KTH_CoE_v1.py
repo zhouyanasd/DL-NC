@@ -25,6 +25,9 @@ Citation
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
+from functools import partial
+from multiprocessing import Pool
+
 from brian2 import *
 
 warnings.filterwarnings("ignore")
@@ -50,9 +53,9 @@ Dt = defaultclock.dt = 1 * ms
 standard_tau = 100
 
 # -------class initialization----------------------
-math_function = MathFunctions()
-base_function = BaseFunctions()
-evaluate = Evaluation()
+# math_function = MathFunctions()
+# base_function = BaseFunctions()
+# evaluate = Evaluation()
 KTH = KTH_classification()
 
 # -------data initialization----------------------
@@ -98,6 +101,7 @@ LSM_Network.join_netowrk(net)
 generator.initialize(LSM_Network)
 
 # ---------------------------------------
+#--- run network ---
 net.store('init')
 
 inputs = zip(data_train_s, label_train)[0]
@@ -105,7 +109,11 @@ stimulus = TimedArray(inputs[0], dt=Dt)
 duration = inputs[0].shape[0]
 net.run(duration * Dt)
 
-
+##########################################
+# -------optimizer settings---------------
+if __name__ == '__main__':
+    core = 8
+    pool = Pool(core)
 
 
 # --- parameters needs to be update by optimizer ---
