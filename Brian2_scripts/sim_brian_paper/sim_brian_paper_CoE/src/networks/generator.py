@@ -41,10 +41,11 @@ class Generator():
                     connection_matrix_in.append(j)
                 else:
                     continue
-        return connection_matrix_out, connection_matrix_in
+        return np.array([connection_matrix_out, connection_matrix_in)
 
-    def generate_connection_matrix_scale_free(self, p):
-        return 1
+    def generate_connection_matrix_scale_free(self, N, c):
+        connection_matrix_out, connection_matrix_in = [], []
+
 
     def generate_connection_matrix_circle(self, p):
         return 1
