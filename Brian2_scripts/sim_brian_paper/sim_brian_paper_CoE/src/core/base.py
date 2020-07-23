@@ -62,6 +62,9 @@ class BaseFunctions():
             adjacent_matrix[a][b] = 1
         return adjacent_matrix
 
+    def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
+        pass
+
     def bin2Dec(self, binary):
         result = 0
         for i in range(len(binary)):

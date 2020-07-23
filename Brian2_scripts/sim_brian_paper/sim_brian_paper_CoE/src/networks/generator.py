@@ -30,21 +30,31 @@ class Generator():
     def register_decoder(self, decoder):
         self.decoder = decoder
 
-    def generate_connect_matrix_random(self, p):
+    def generate_connection_matrix_random(self, N, p):
+        connection_matrix_out, connection_matrix_in = [], []
+        for i in range(N):
+            for j in range(N):
+                if i == j:
+                    continue
+                elif np.random.rand()<=p:
+                    connection_matrix_out.append(i)
+                    connection_matrix_in.append(j)
+                else:
+                    continue
+        return connection_matrix_out, connection_matrix_in
+
+    def generate_connection_matrix_scale_free(self, p):
         return 1
 
-    def generate_connect_matrix_scale_free(self, p):
+    def generate_connection_matrix_circle(self, p):
         return 1
 
-    def generate_connect_matrix_circle(self, p):
-        return 1
-
-    def generate_connect_matrix_hierarchy(self, p):
+    def generate_connection_matrix_hierarchy(self, p):
         return 1
 
     def generate_block_random(self, index):
         N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connect_matrix_random(P)
+        connect_matrix = self.generate_connection_matrix_random(P)
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + 'random' + str(index))
@@ -57,19 +67,19 @@ class Generator():
 
     def generate_block_scale_free(self, index):
         N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connect_matrix_random(P)
+        connect_matrix = self.generate_connection_matrix_scale_free(P)
         block = Block(N, connect_matrix)
         return block
 
     def generate_block_circle(self, index):
         N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connect_matrix_random(P)
+        connect_matrix = self.generate_cconnection_matrix_circle(P)
         block = Block(N, connect_matrix)
         return block
 
     def generate_block_hierarchy(self, index):
         N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connect_matrix_random(P)
+        connect_matrix = self.generate_connection_matrix_hierarchy(P)
         block = Block(N, connect_matrix)
         return block
 
