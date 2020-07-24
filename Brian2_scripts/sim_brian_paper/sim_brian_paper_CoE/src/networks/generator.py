@@ -41,10 +41,11 @@ class Generator():
                     connection_matrix_in.append(j)
                 else:
                     continue
-        return np.array([connection_matrix_out, connection_matrix_in)
+        return np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_scale_free(self, N, c):
         connection_matrix_out, connection_matrix_in = [], []
+
 
 
     def generate_connection_matrix_circle(self, p):
@@ -119,7 +120,6 @@ class Generator():
     def generate_readout(self):
         block_group = BlockGroup()
         return block_group
-
 
     def generate_pathway_encoding_reservoir(self):
         pathway = Pathway()
