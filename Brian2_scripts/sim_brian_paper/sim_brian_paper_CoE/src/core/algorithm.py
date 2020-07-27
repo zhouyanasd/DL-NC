@@ -183,6 +183,90 @@ class Topological_sorting_tarjan(Tarjan):
         return incoming, outgoing
 
 
+class Direct_scale_free():
+    def __init__(self, init_nodes, final_nodes, alpha=0.4, beta=0.2,
+                 gama=0.4, delta_in=1, delta_out=1):
+        self.init_nodes = init_nodes
+        self.final_nodes = final_nodes
+        self.alpha = alpha
+        self.beta = beta
+        self.gama = gama
+        self.delta_in = delta_in
+        self.delta_out = delta_out
+        self.nodes, self.i, self.o = list(np.arange(self.init_nodes)), [], []
+        for node_pre in self.nodes:
+            for node_post in self.nodes:
+                if node_pre == node_post:
+                    continue
+                else:
+                    self.i.append(node_post)
+                    self.o.append(node_pre)
+        self.new_node = self.nodes[-1] + 1
+
+    @property
+    def edges(self):
+        return list(zip(self.o, self.i))
+
+    @property
+    def num_nodes(self):
+        return len(self.nodes)
+
+    @property
+    def num_edges(self):
+        return len(self.edges)
+
+    def get_degree_in(self, node):
+        return sum(np.array(self.i) == node)
+
+    def get_degree_out(self, node):
+        return sum(np.array(self.o) == node)
+
+    def rand_prob_node(self):
+        node_probe_in = []
+        node_probe_out = []
+        for node in self.nodes:
+            degree_in = self.get_degree_in(node)
+            degree_out = self.get_degree_out(node)
+            node_probe_in.append((degree_in + self.delta_in) / (self.num_edges + self.delta_in * self.num_nodes))
+            node_probe_out.append(
+                (degree_out + self.delta_out) / (self.num_edges + self.delta_out * self.num_nodes))
+        random_probe_node_in = np.random.choice(self.nodes, p=node_probe_in)
+        random_probe_node_out = np.random.choice(self.nodes, p=node_probe_out)
+        return random_probe_node_in, random_probe_node_out
+
+    def add_edge(self):
+        random_probe_node_in, random_probe_node_out = self.rand_prob_node()
+        r = np.random.rand()
+        if r > 0 and r <= self.alpha:
+            self.i.append(random_probe_node_in)
+            self.o.append(self.new_node)
+        if r > self.alpha and r <= self.beta + self.alpha:
+            self.i.append(random_probe_node_in)
+            self.o.append(random_probe_node_out)
+        if r > self.beta + self.alpha and r <= 1:
+            self.i.append(self.new_node)
+            self.o.append(random_probe_node_out)
+
+    def generate_graph(self):
+        for count in range(self.final_nodes - self.init_nodes):
+            self.nodes.append(self.init_nodes + count)
+            self.add_edge()
+            self.new_node += 1
+
+    def vis(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        G = nx.DiGraph()
+        G.add_edges_from(self.edges)
+        values = [node * 0.1 for node in G.nodes()]
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'),
+                               node_color=values, node_size=500)
+        nx.draw_networkx_labels(G, pos)
+        nx.draw_networkx_edges(G, pos, edgelist=G.edges(), arrows=True)
+        plt.show()
+
+
 class Evaluation():
     """
     Some basic function for evaluate the output of LSM.
