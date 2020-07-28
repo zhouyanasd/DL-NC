@@ -6,6 +6,7 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 from enum import Enum
 from collections import OrderedDict
@@ -183,9 +184,10 @@ class Topological_sorting_tarjan(Tarjan):
         return incoming, outgoing
 
 
-class Direct_scale_free():
+class Direct_scale_free(BaseFunctions):
     def __init__(self, init_nodes, final_nodes, alpha=0.4, beta=0.2,
                  gama=0.4, delta_in=1, delta_out=1):
+        super().__init__()
         self.init_nodes = init_nodes
         self.final_nodes = final_nodes
         self.alpha = alpha
@@ -193,14 +195,8 @@ class Direct_scale_free():
         self.gama = gama
         self.delta_in = delta_in
         self.delta_out = delta_out
-        self.nodes, self.i, self.o = list(np.arange(self.init_nodes)), [], []
-        for node_pre in self.nodes:
-            for node_post in self.nodes:
-                if node_pre == node_post:
-                    continue
-                else:
-                    self.i.append(node_post)
-                    self.o.append(node_pre)
+        self.nodes = list(np.arange(self.init_nodes))
+        self.o, self.i =self.full_connected(self.init_nodes)
         self.new_node = self.nodes[-1] + 1
 
     @property
@@ -252,19 +248,6 @@ class Direct_scale_free():
             self.nodes.append(self.init_nodes + count)
             self.add_edge()
             self.new_node += 1
-
-    def vis(self):
-        import networkx as nx
-        import matplotlib.pyplot as plt
-        G = nx.DiGraph()
-        G.add_edges_from(self.edges)
-        values = [node * 0.1 for node in G.nodes()]
-        pos = nx.spring_layout(G)
-        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'),
-                               node_color=values, node_size=500)
-        nx.draw_networkx_labels(G, pos)
-        nx.draw_networkx_edges(G, pos, edgelist=G.edges(), arrows=True)
-        plt.show()
 
 
 class Evaluation():

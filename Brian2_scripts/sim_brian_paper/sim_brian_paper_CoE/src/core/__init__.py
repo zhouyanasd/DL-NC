@@ -19,4 +19,5 @@ __all__ = [
     "BaseFunctions",
     "Evaluation",
     "Topological_sorting_tarjan",
+    "Direct_scale_free",
 ]

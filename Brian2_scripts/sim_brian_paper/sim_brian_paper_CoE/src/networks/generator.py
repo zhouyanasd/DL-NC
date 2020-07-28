@@ -11,11 +11,12 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.networks.components import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 
 from brian2 import *
 
 
-class Generator():
+class Generator(BaseFunctions):
     '''
      Initialize the parameters of the neurons or synapses.
 
@@ -25,28 +26,25 @@ class Generator():
      '''
 
     def __init__(self, random_state):
+        super().__init__()
         self.random_state = random_state
 
     def register_decoder(self, decoder):
         self.decoder = decoder
 
     def generate_connection_matrix_random(self, N, p):
-        connection_matrix_out, connection_matrix_in = [], []
-        for i in range(N):
-            for j in range(N):
-                if i == j:
-                    continue
-                elif np.random.rand()<=p:
-                    connection_matrix_out.append(i)
-                    connection_matrix_in.append(j)
-                else:
-                    continue
+        connection_matrix_out, connection_matrix_in = self.full_connected(N, p)
         return np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_scale_free(self, N, c):
-        connection_matrix_out, connection_matrix_in = [], []
-
-
+    def generate_connection_matrix_scale_free(self, N, alpha, beta, gama):
+        alpha_ = alpha/sum(alpha+beta+gama)
+        beta_ = beta/sum(alpha+beta+gama)
+        gama_ = gama/sum(alpha+beta+gama)
+        DSF = Direct_scale_free(final_nodes = N,  alpha = alpha_, beta = beta_ , gama = gama_,
+                                init_nodes = 1, detla_in=1, detla_out = 1)
+        DSF.generate_gaph()
+        connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
+        return np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_circle(self, p):
         return 1
