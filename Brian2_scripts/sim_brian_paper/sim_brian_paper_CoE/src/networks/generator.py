@@ -36,18 +36,39 @@ class Generator(BaseFunctions):
         connection_matrix_out, connection_matrix_in = self.full_connected(N, p)
         return np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_scale_free(self, N, alpha, beta, gama):
-        alpha_ = alpha/sum(alpha+beta+gama)
-        beta_ = beta/sum(alpha+beta+gama)
-        gama_ = gama/sum(alpha+beta+gama)
-        DSF = Direct_scale_free(final_nodes = N,  alpha = alpha_, beta = beta_ , gama = gama_,
+    def generate_connection_matrix_scale_free(self, N, p_alpha, p_beta, p_gama):
+        alpha = p_alpha/sum(p_alpha+p_beta+p_gama)
+        beta = p_beta/sum(p_alpha+p_beta+p_gama)
+        gama = p_gama/sum(p_alpha+p_beta+p_gama)
+        DSF = Direct_scale_free(final_nodes = N,  alpha = alpha, beta = beta, gama = gama,
                                 init_nodes = 1, detla_in=1, detla_out = 1)
         DSF.generate_gaph()
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_circle(self, p):
-        return 1
+    def generate_connection_matrix_circle(self, N, p_forward, p_backward):
+        connection_matrix_out, connection_matrix_in = [], []
+        nodes = np.arange(N)
+        start = np.random.randint(0, N)
+        circle = []
+        for i in range(N):
+            try:
+                circle.append(nodes[start + i])
+            except IndexError:
+                circle.append(nodes[start + i -N])
+        circle = circle + circle
+
+        for index_pre, node_pre in circle[:N]:
+            for index_post, node_post in circle[index_pre:N+index_pre]:
+                distance = index_post
+                if np.random.rand() <= p_forward * (distance/(N-1)):
+                    connection_matrix_out.append(node_pre)
+                    connection_matrix_in.append(node_post)
+                if np.random.rand() <= p_backward * (distance/(N-1)):
+                    connection_matrix_out.append(node_post)
+                    connection_matrix_in.append(node_pre)
+        return np.array(connection_matrix_out, connection_matrix_in)
+
 
     def generate_connection_matrix_hierarchy(self, p):
         return 1
