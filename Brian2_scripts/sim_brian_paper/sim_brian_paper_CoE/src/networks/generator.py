@@ -46,7 +46,7 @@ class Generator(BaseFunctions):
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_circle(self, N, p_forward, p_backward):
+    def generate_connection_matrix_circle(self, N, p_forward, p_backward, threshold):
         connection_matrix_out, connection_matrix_in = [], []
         nodes = np.arange(N)
         start = np.random.randint(0, N)
@@ -58,20 +58,20 @@ class Generator(BaseFunctions):
                 circle.append(nodes[start + i -N])
         circle = circle + circle
 
-        for index_pre, node_pre in circle[:N]:
-            for index_post, node_post in circle[index_pre:N+index_pre]:
+        for index_pre, node_pre in enumerate(circle[:N]):
+            for index_post, node_post in enumerate(circle[index_pre+1:N+index_pre+1]):
                 distance = index_post
-                if np.random.rand() <= p_forward * (distance/(N-1)):
+                decay = (N-distance-1)/(N-1)
+                if np.random.rand() <= p_forward * (decay - threshold):
                     connection_matrix_out.append(node_pre)
                     connection_matrix_in.append(node_post)
-                if np.random.rand() <= p_backward * (distance/(N-1)):
+                if np.random.rand() <= p_backward * (decay - threshold):
                     connection_matrix_out.append(node_post)
                     connection_matrix_in.append(node_pre)
         return np.array(connection_matrix_out, connection_matrix_in)
 
-
-    def generate_connection_matrix_hierarchy(self, p):
-        return 1
+    def generate_connection_matrix_hierarchy(self, N_i, N_h, N_o, p_forward, p_backward, p_out, p_in):
+        pass
 
     def generate_block_random(self, index):
         N, P = self.decoder.decode_block_random()
