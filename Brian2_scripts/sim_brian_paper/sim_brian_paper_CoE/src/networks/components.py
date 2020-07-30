@@ -51,7 +51,7 @@ class Block(BaseFunctions):
          The input and output are list, e.g. [1,2], [3,4].
          '''
 
-        adjacent_matrix = self.connection_matrix_to_adjacent_matrix(self.connect_matrix)
+        adjacent_matrix = self.connection_matrix_to_adjacent_matrix(self.N, self.connect_matrix)
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
         self.input, self.output = topological_sorting_tarjan.suggest_inout()
