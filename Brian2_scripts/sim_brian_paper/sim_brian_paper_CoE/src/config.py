@@ -29,6 +29,24 @@ dynamics_synapse_pre = '''
 g += w * property_pre 
 '''
 
+dynamics_synapse_STDP = '''
+w : 1
+dapre/dt = -apre/taupre : 1 (clock-driven)
+dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+dynamics_synapse_pre_STDP = '''
+h+=w
+g+=w
+apre += Apre
+w = clip(w+apost, wmin, wmax)
+'''
+
+dynamics_synapse_post_STDP = '''
+apost += Apost
+w = clip(w+apre, wmin, wmax)
+'''
+
 threshold_encoding = 'I > 0'
 
 threshold_reservoir = 'v > 15'

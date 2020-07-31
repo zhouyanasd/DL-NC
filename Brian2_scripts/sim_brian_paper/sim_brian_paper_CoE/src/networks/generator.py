@@ -70,7 +70,7 @@ class Generator(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    def generate_connection_matrix_hierarchy(self, N_i, N_h, N_o, p_forward, p_backward, p_out, p_in, decay):
+    def generate_connection_matrix_hierarchy(self, N_i, N_h, N_o, p_out, p_in, decay):
         connection_matrix_out, connection_matrix_in = [], []
         nodes = np.arange(N_i + N_h + N_o)
         nodes_ = [nodes[:N_i], nodes[N_i:N_h + N_i], nodes[N_h + N_i:N_i + N_h + N_o]]
@@ -84,13 +84,13 @@ class Generator(BaseFunctions):
             for out_mid_index, node in enumerate(nodes_mid):
                 in_post, in_pre = p_in_post.argsort()[::-1], p_in_pre.argsort()[::-1]
                 for in_post_index, in_pre_index in zip(in_post, in_pre):
-                    if np.random.rand() <= p_out_mid[out_mid_index] and np.random.rand() <= p_forward \
+                    if np.random.rand() <= p_out_mid[out_mid_index]  \
                             and np.random.rand() <= p_out_post[in_post_index]:
                         connection_matrix_out.append(node)
                         connection_matrix_in.append(nodes_post[in_post_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
                         p_in_post[in_post_index] = p_in_post[in_post_index] * decay
-                    if np.random.rand() <= p_out_mid[out_mid_index] and np.random.rand() <= p_backward \
+                    if np.random.rand() <= p_out_mid[out_mid_index] \
                             and np.random.rand() <= p_out_pre[in_pre_index]:
                         connection_matrix_out.append(node)
                         connection_matrix_in.append(nodes_pre[in_pre_index])
