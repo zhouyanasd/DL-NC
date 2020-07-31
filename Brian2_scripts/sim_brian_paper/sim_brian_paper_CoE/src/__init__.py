@@ -4,15 +4,20 @@ from .networks import *
 from .optimizer import *
 
 __all__ = [
+    "Timelog",
+    "AddParaName",
     "KTH_classification",
     "BaseFunctions",
     "MathFunctions",
     "Evaluation",
     "Block",
+    "BlockGroup",
+    "Pathway",
     "Reservoir",
     "LSM_Network",
     "Decoder",
     "Generator",
+    "BayesianOptimization",
     "Coe_surrogate_mixgentype",
 ]
 

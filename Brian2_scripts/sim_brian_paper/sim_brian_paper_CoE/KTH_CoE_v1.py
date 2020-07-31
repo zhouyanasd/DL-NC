@@ -86,33 +86,55 @@ neurons_block = 10
 gen = 'for example'
 
 ##-----------------------------------------------------
-#--- create generator ---
+#--- create generator and decoder ---
 decoder = Decoder(config_group, config_key, config_SubCom, config_codes, config_ranges, config_borders,
                   config_precisions, config_scales)
 generator = Generator(np_state)
 generator.register_decoder(decoder)
 
-generator.decoder.register(gen)
+#--- define network run function ---
+def run_net(inputs, gen):
+    generator.decoder.register(gen)
 
-#--- create network ---
-net = LSM_Network()
-LSM_Network = generator.generate_and_initialize(net)
+    #--- create network ---
+    net = Network()
+    LSM_Network = generator.generate_and_initialize(net)
+    net.store('init')
 
 
-# ---------------------------------------
-#--- run network ---
-net.store('init')
+    #--- run network ---
+    inputs = zip(data_train_s, label_train)[0]
+    stimulus = TimedArray(inputs[0], dt=Dt)
+    duration = inputs[0].shape[0]
+    net.run(duration * Dt)
+    states = net.get_states()['neurongroup_read']['v']
+    net.restore('init')
+    return (states, inputs[1])
 
-inputs = zip(data_train_s, label_train)[0]
-stimulus = TimedArray(inputs[0], dt=Dt)
-duration = inputs[0].shape[0]
-net.run(duration * Dt)
+@Timelog
+@AddParaName
+def parameters_search(**parameter):
+    pass
 
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
     core = 8
     pool = Pool(core)
+
+    method = 'CoE'
+
+# -------parameters search---------------
+    if method == 'BO':
+        optimizer = BayesianOptimization(
+            f=parameters_search,
+            # pbounds=bounds,
+            random_state=np.random.RandomState(),
+        )
+
+    elif method == 'CoE':
+        optimizer = Coe_surrogate_mixgentype()
+
 
 
 # --- parameters needs to be update by optimizer ---
