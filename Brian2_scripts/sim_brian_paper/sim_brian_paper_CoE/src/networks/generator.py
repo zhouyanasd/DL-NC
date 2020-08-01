@@ -102,53 +102,15 @@ class Generator(BaseFunctions):
         connection_matrix_out, connection_matrix_in = [], []
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    def generate_block_random(self, index):
-        N, P = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connection_matrix_random(P)
-        block = Block(N, connect_matrix)
-        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + 'random' + str(index))
-        block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + 'random' + str(index))
-        block.separate_ex_inh()
-        block.connect()
-        block.determine_input_output()
-        return block
 
-    def generate_block_scale_free(self, index):
-        N, p_alpha, p_beta, p_gama = self.decoder.decode_block_scale_free()
-        connect_matrix = self.generate_connection_matrix_scale_free(N, p_alpha, p_beta, p_gama)
-        block = Block(N, connect_matrix)
+    def generate_block(self, name, get_parameter_structure, get_matrix):
+        parameter_structure = get_parameter_structure()
+        connect_matrix = get_matrix(parameter_structure)
+        block = Block(parameter_structure['N'], connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + 'random' + str(index))
+                             refractory = refractory_reservoir, name='block_' + name)
         block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + 'random' + str(index))
-        block.separate_ex_inh()
-        block.connect()
-        block.determine_input_output()
-        return block
-
-    def generate_block_circle(self, index):
-        N, p_forward, p_backward, threshold = self.decoder.decode_block_random()
-        connect_matrix = self.generate_cconnection_matrix_circle(N, p_forward, p_backward, threshold)
-        block = Block(N, connect_matrix)
-        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + 'random' + str(index))
-        block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + 'random' + str(index))
-        block.separate_ex_inh()
-        block.connect()
-        block.determine_input_output()
-        return block
-
-    def generate_block_hierarchy(self, index):
-        N_i, N_h, N_o, p_out, p_in, decay = self.decoder.decode_block_random()
-        connect_matrix = self.generate_connection_matrix_hierarchy(N_i, N_h, N_o, p_out, p_in, decay)
-        block = Block(N_i+ N_h+ N_o, connect_matrix)
-        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + 'random' + str(index))
-        block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + 'random' + str(index))
+                             name='block_block_' + name)
         block.separate_ex_inh()
         block.connect()
         block.determine_input_output()
@@ -157,16 +119,20 @@ class Generator(BaseFunctions):
     def generate_blocks(self, N1, N2, N3, N4):
         block_group = BlockGroup()
         for index in range(N1):
-            block = self.generate_block_random(index)
+            block = self.generate_block('random_' + str(index), self.decoder.decode_block_random,
+                            self.generate_connection_matrix_random)
             block_group.add_block(block)
         for index in range(N2):
-            block = self.generate_block_scale_free(index + N1)
+            block = self.generate_block('scale_free_' + str(index + N1), self.decoder.decode_block_scale_free,
+                            self.generate_connection_matrix_scale_free)
             block_group.add_block(block)
         for index in range(N3):
-            block = self.generate_block_circle(index + N1 + N2)
+            block = self.generate_block('circle_' + str(index + N1 + N2), self.decoder.decode_block_circle,
+                            self.generate_connection_matrix_circle)
             block_group.add_block(block)
         for index in range(N4):
-            block = self.generate_block_hierarchy(index + N1 + N2 + N3)
+            block = self.generate_block('hierarchy_' + str(index + N1 + N2 + N3), self.decoder.decode_block_hierachy,
+                            self.generate_connection_matrix_hierarchy)
             block_group.add_block(block)
         return block_group
 
@@ -199,15 +165,15 @@ class Generator(BaseFunctions):
     def generate_pathway_encoding_reservoir(self, encoding, reservoir):
         connection_matrix = [[0], reservoir.input]
         pathway = Pathway(encoding.blocks, reservoir.block_group.blocks, connection_matrix)
-        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
-                               dynamics_synapse_post_STDP,  name = 'pathway_encoding_')
+        pathway.create_synapse(dynamics_synapse, dynamics_synapse_pre,
+                               None,  name = 'pathway_encoding_')
         return pathway
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
         connection_matrix = [reservoir.output, [0]]
         pathway = Pathway(reservoir.block_group.blocks, readout.blocks, connection_matrix)
-        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
-                               dynamics_synapse_post_STDP,  name = 'pathway_readout_')
+        pathway.create_synapse('w = 1 : 1', dynamics_synapse_pre,
+                               None,  name = 'pathway_readout_')
         return pathway
 
     def generate_network(self):
