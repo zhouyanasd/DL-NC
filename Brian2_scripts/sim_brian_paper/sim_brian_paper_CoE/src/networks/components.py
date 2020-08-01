@@ -311,7 +311,7 @@ class Reservoir(BaseFunctions):
         self.pathway.join_network(net)
 
 
-class LSM_Network(Network, BaseFunctions):
+class LSM_Network(BaseFunctions):
     """
     This class offers a basic property and functions of network
     containing reservoir, encoding and readout.
@@ -385,7 +385,6 @@ class LSM_Network(Network, BaseFunctions):
          Parameters
          ----------
          '''
-
         for layer in self.layers.values():
             layer.join_network(net)
         for pathway in self.pathways:

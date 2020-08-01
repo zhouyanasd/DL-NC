@@ -82,8 +82,8 @@ blocks_output = 1
 blocks_reservoir = 10
 neurons_block = 10
 
-# --- parameters needs to be update by optimizer ---
-gen = 'for example'
+# # --- parameters needs to be update by optimizer ---
+# gen = 'for example'
 
 ##-----------------------------------------------------
 #--- create generator and decoder ---
@@ -98,9 +98,9 @@ def run_net(inputs, gen):
 
     #--- create network ---
     net = Network()
-    LSM_Network = generator.generate_and_initialize(net)
+    LSM_network = generator.generate_and_initialize()
+    LSM_network.join_network(net)
     net.store('init')
-
 
     #--- run network ---
     inputs = zip(data_train_s, label_train)[0]

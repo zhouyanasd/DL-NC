@@ -98,6 +98,9 @@ class Generator(BaseFunctions):
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
         return np.array(connection_matrix_out, connection_matrix_in)
 
+    def generate_connection_matrix_reservoir(self):
+        connection_matrix_out, connection_matrix_in = [], []
+        return np.array(connection_matrix_out, connection_matrix_in)
 
     def generate_block_random(self, index):
         N, P = self.decoder.decode_block_random()
@@ -167,12 +170,18 @@ class Generator(BaseFunctions):
             block_group.add_block(block)
         return block_group
 
-    def generate_pathway_reservoir(self):
-        pathway = Pathway()
+    def generate_pathway_reservoir(self, Block_group):
+        connection_matrix = self.generate_connection_matrix_reservoir()
+        pathway = Pathway(Block_group.blocks, BaseFunctions.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+                               dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
         return pathway
 
-    def generate_reservoir(self, block_group, pathway):
+    def generate_reservoir(self):
         reservoir = Reservoir()
+        N1, N2, N3, N4 = self.decoder.get_reservoir()
+        block_group = self.generate_blocks(N1, N2, N3, N4)
+        pathway = self.generate_pathway_reservoir(block_group)
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.determine_input_output()
@@ -187,39 +196,39 @@ class Generator(BaseFunctions):
         block_group = BlockGroup()
         return block_group
 
-    def generate_pathway_encoding_reservoir(self):
-        pathway = Pathway()
+    def generate_pathway_encoding_reservoir(self, encoding, reservoir):
+        connection_matrix = [[0], reservoir.input]
+        pathway = Pathway(encoding.blocks, reservoir.block_group.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+                               dynamics_synapse_post_STDP,  name = 'pathway_encoding_')
         return pathway
 
-    def generate_pathway_reservoir_readout(self):
-        pathway = Pathway()
+    def generate_pathway_reservoir_readout(self, reservoir, readout):
+        connection_matrix = [reservoir.output, [0]]
+        pathway = Pathway(reservoir.block_group.blocks, readout.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+                               dynamics_synapse_post_STDP,  name = 'pathway_readout_')
         return pathway
 
     def generate_network(self):
         network = LSM_Network()
-        return network
-
-    def generate_and_initialize(self, net):
         encoding = self.generate_encoding()
         reservoir = self.generate_reservoir()
         readout = self.generate_readout()
         pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir()
         pathway_reservoir_readout = self.generate_pathway_reservoir_readout()
 
-        LSM_network = self.generate_network()
-
-        LSM_network.register_layer(encoding, 'encoding')
-        LSM_network.register_layer(reservoir, 'reservoir')
-        LSM_network.register_layer(readout, 'readout')
-        LSM_network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
-        LSM_network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
-
-        LSM_network.join_network(net)
+        network.register_layer(encoding, 'encoding')
+        network.register_layer(reservoir, 'reservoir')
+        network.register_layer(readout, 'readout')
+        network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
+        network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
+        network.connect()
 
         parameters = self.decoder.get_parameters()
-        LSM_network.initialize(parameters)
+        network.initialize(parameters)
 
-        return LSM_network
+        return network
 
 
 
