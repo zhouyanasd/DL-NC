@@ -131,8 +131,8 @@ class Generator(BaseFunctions):
                             self.generate_connection_matrix_circle)
             block_group.add_block(block)
         for index in range(N4):
-            block = self.generate_block('hierarchy_' + str(index + N1 + N2 + N3), self.decoder.decode_block_hierachy,
-                            self.generate_connection_matrix_hierarchy)
+            block = self.generate_block('hierarchy_' + str(index + N1 + N2 + N3), self.decoder.decode_block_hierarchy,
+                                        self.generate_connection_matrix_hierarchy)
             block_group.add_block(block)
         return block_group
 
@@ -191,7 +191,7 @@ class Generator(BaseFunctions):
         network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
         network.connect()
 
-        parameters = self.decoder.get_parameters()
+        parameters = self.decoder.get_parameters_network()
         network.initialize(parameters)
 
         return network

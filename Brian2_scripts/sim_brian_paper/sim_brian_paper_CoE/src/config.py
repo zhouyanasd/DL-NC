@@ -60,10 +60,10 @@ refractory_reservoir = 3 * ms
 Encoding = ['N']
 Readout = ['N']
 Reservoir = ['N', 'L_1', 'L_2']
-Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'P']
-Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'C']
-Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'P_f', 'P_b', 'P_d', 'D_c']
-Block_hierarchy = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'P_f', 'P_b', 'P_d', 'D_c', 'L']
+Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p']
+Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
+Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'threshold']
+Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
 
 config_group = ['Encoding', 'Reservoir', 'Block_random', 'Block_scale_free',
                 'Block_circle', 'Block_hierarchy', 'Readout']

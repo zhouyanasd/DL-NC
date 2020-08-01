@@ -92,3 +92,18 @@ class Decoder(BaseFunctions):
 
     def decode_block_random(self):
         pass
+
+    def decode_block_scale_free(self):
+        pass
+
+    def decode_block_circle(self):
+        pass
+
+    def decode_block_hierarchy(self):
+        pass
+
+    def get_reservoir(self):
+        pass
+
+    def get_parameters_network(self):
+        pass
