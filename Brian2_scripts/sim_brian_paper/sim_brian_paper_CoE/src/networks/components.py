@@ -236,6 +236,10 @@ class Pathway(BaseFunctions):
             net.add(synapse)
 
 
+class Layer(BaseFunctions):
+    pass
+
+
 class Reservoir(BaseFunctions):
     """
     This class offers a basic property and functions of reservoir containing blocks.

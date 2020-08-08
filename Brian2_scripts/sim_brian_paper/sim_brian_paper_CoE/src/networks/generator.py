@@ -99,6 +99,7 @@ class Generator(BaseFunctions):
         return np.array(connection_matrix_out, connection_matrix_in)
 
     def generate_connection_matrix_reservoir(self):
+
         connection_matrix_out, connection_matrix_in = [], []
         return np.array(connection_matrix_out, connection_matrix_in)
 
