@@ -55,6 +55,11 @@ reset_reservoir = 'v = 13.5'
 
 refractory_reservoir = 3 * ms
 
+# --- reservoir layer structure ---
+structure = {'components_1': [[1,1,2,3],[2,3,4,4]],
+            'components_2': [[1,1,1,2,3],[2,3,4,4,4]],
+            'components_3': [[1,1,2,2,3],[2,3,4,4,4]],
+            'components_4': [[1,1,1,2,2,3],[2,3,4,4,4,4]]}
 
 # --- parameter settings ---
 Encoding = ['N']

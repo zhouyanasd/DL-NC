@@ -98,9 +98,14 @@ class Generator(BaseFunctions):
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    def generate_connection_matrix_reservoir(self):
+    def generate_connection_matrix_layer(self, layer_class):
+        connection_matrix_out, connection_matrix_in = structure[layer_class][0], structure[layer_class][1]
 
+        return np.array(connection_matrix_out, connection_matrix_in)
+
+    def generate_connection_matrix_reservoir(self, N):
         connection_matrix_out, connection_matrix_in = [], []
+
         return np.array(connection_matrix_out, connection_matrix_in)
 
 
@@ -139,7 +144,7 @@ class Generator(BaseFunctions):
 
     def generate_pathway_reservoir(self, Block_group):
         connection_matrix = self.generate_connection_matrix_reservoir()
-        pathway = Pathway(Block_group.blocks, BaseFunctions.blocks, connection_matrix)
+        pathway = Pathway(Block_group.blocks, Block_group.blocks, connection_matrix)
         pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
                                dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
         return pathway
