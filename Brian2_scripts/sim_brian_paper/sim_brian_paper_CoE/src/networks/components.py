@@ -237,7 +237,55 @@ class Pathway(BaseFunctions):
 
 
 class Layer(BaseFunctions):
-    pass
+    """
+    This class offers a basic property and functions of reservoir containing blocks.
+
+    Parameters
+    ----------
+    block_group: BlockGroup, the block group in this reservoir.
+    pathway: Pathway, the pathway between blocks.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.level = None
+        self.sub_layer = None
+        self.pathway = None
+
+    @property
+    def _is_sub_layer_blocks(self):
+        return isinstance(self.sub_layer, BlockGroup)
+
+    def register_sub_layer(self, sub_layer):
+        '''
+         Register block group to the reservoir.
+
+         Parameters
+         ----------
+         block_group: BlockGroup, the object of BlockGroup.
+         '''
+
+        self.sub_layer = sub_layer
+
+    def register_pathway(self, pathway):
+        '''
+         Register pathway to the reservoir.
+
+         Parameters
+         ----------
+         pathway: Pathway, the object of Pathway.
+         '''
+
+        self.pathway = pathway
+
+    def get_blocks(self):
+        block_groups = []
+        if not self._is_sub_layer_blocks:
+            for sl in self.sub_layer:
+                block_groups.append(sl.get_blocks())
+        else:
+            block_groups.append(self.sub_layer)
+        return block_groups
 
 
 class Reservoir(BaseFunctions):
