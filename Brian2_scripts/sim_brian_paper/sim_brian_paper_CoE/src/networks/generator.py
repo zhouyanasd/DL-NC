@@ -98,21 +98,36 @@ class Generator(BaseFunctions):
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    # def generate_connection_matrix_layer(self, layer_class):
-        # connection_matrix_out, connection_matrix_in = structure[layer_class][0], structure[layer_class][1]
-        #
-        # return np.array(connection_matrix_out, connection_matrix_in)
-
-    def generate_connection_matrix_reservoir(self, layer, structure_type, n=4):
-        connection_matrix_out, connection_matrix_in = [], []
-        nodes = np.arange(4^layer)
-        count = 0
-        for l in range(layer):
-            for name in structure_type[l]:
-                cmo, cmi = structure_layer[name]['structure'][0] * n * l, \
-                           structure_layer[name]['structure'][1] * n * l
-                connection_matrix_out = connection_matrix_out + cmo
-                connection_matrix_in = connection_matrix_in + cmi
+    #
+    #
+    #
+    # def generate_connection_matrix_layer(self, layer, structure_type, cmo, cmi):
+    #     if layer > 1 :
+    #         cmo, cmi = self.generate_connection_matrix_layer(layer-1, structure_type, cmo, cmi)
+    #     else:
+    #         for name in structure_type[layer]:
+    #             cmo.append(structure_layer[name]['structure'][0])
+    #             cmi.append(structure_layer[name]['structure'][1])
+    #     return cmo, cmi
+    #
+    #
+    #
+    #
+    #
+    # def generate_connection_matrix_reservoir(self, layer, structure_type, n=4):
+    #     connection_matrix_out, connection_matrix_in = [], []
+    #     # nodes = np.arange(n^layer)
+    #     # count = 0
+    #     for l in range(layer):
+    #         for name in structure_type[l]:
+    #             cmo, cmi = structure_layer[name]['structure'][0], \
+    #                        structure_layer[name]['structure'][1]
+    #
+    #
+    #             # cmo, cmi = structure_layer[name]['structure'][0] * n * l, \
+    #             #            structure_layer[name]['structure'][1] * n * l
+    #             # connection_matrix_out = connection_matrix_out + cmo
+    #             # connection_matrix_in = connection_matrix_in + cmi
 
 
 
