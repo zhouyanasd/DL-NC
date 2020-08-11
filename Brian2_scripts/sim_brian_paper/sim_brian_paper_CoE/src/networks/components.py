@@ -236,48 +236,6 @@ class Pathway(BaseFunctions):
             net.add(synapse)
 
 
-# class Layer(BaseFunctions):
-#     """
-#     This class offers a basic property and functions of reservoir containing blocks.
-#
-#     Parameters
-#     ----------
-#     block_group: BlockGroup, the block group in this reservoir.
-#     pathway: Pathway, the pathway between blocks.
-#     """
-#
-#     def __init__(self):
-#         super().__init__()
-#         self.level = None
-#         self.sub_layer = None
-#         self.sub_pathway = None
-#
-#     @property
-#     def _is_sub_layer_blocks(self):
-#         return isinstance(self.sub_layer, Block)
-#
-#     def register_sub_layer(self, sub_layer):
-#         '''
-#          Register block group to the reservoir.
-#
-#          Parameters
-#          ----------
-#          block_group: BlockGroup, the object of BlockGroup.
-#          '''
-#
-#         self.sub_layer = sub_layer
-#
-#
-#     def get_blocks(self):
-#         blocks = []
-#         if not self._is_sub_layer_blocks:
-#             for sl in self.sub_layer:
-#                 blocks.append(sl.get_blocks())
-#         else:
-#             blocks.append(self.sub_layer)
-#         return blocks
-
-
 class Reservoir(BaseFunctions):
     """
     This class offers a basic property and functions of reservoir containing blocks.
