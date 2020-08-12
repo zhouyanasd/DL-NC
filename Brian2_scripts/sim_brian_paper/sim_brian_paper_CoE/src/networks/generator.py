@@ -149,8 +149,9 @@ class Generator(BaseFunctions):
         block.determine_input_output()
         return block
 
-    def generate_blocks(self, N1, N2, N3, N4):
+    def generate_blocks(self, block_group):
         block_group = BlockGroup()
+        N1, N2, N3, N4 = 1,1,1,1 #TODO
         for index in range(N1):
             block = self.generate_block('random_' + str(index), self.decoder.decode_block_random,
                             self.generate_connection_matrix_random)
@@ -170,7 +171,8 @@ class Generator(BaseFunctions):
         return block_group
 
     def generate_pathway_reservoir(self, Block_group):
-        connection_matrix = self.generate_connection_matrix_reservoir()
+        structure_type = self.decoder.structure_type()
+        connection_matrix = self.generate_connection_matrix_reservoir(structure_type)
         pathway = Pathway(Block_group.blocks, Block_group.blocks, connection_matrix)
         pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
                                dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
@@ -178,8 +180,9 @@ class Generator(BaseFunctions):
 
     def generate_reservoir(self):
         reservoir = Reservoir()
-        N1, N2, N3, N4 = self.decoder.get_reservoir()
-        block_group = self.generate_blocks(N1, N2, N3, N4)
+        block_type = self.decoder.get_block_type()
+        #  = self.decoder.get_reservoir()
+        block_group = self.generate_blocks(block_type)
         pathway = self.generate_pathway_reservoir(block_group)
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
