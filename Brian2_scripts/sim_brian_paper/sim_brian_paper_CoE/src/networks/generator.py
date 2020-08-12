@@ -101,34 +101,38 @@ class Generator(BaseFunctions):
     def generate_connection_matrix_layer(self, count, layer, structure_type, cmo, cmi):
         cmo_, cmi_ = cmo, cmi
         count_ = count
-        if layer > 1 :
+        if layer > 0 :
             o, i = [],[]
             for name in structure_type[layer]:
-                count_, cmo_, cmi_, o_, i_ = self.generate_connection_matrix_layer(count_, layer-1, structure_type, cmo_, cmi_)
-                cmo_.extend(list(np.array(o_)[structure_layer[name]['structure'][0]]))
-                cmi_.extend(list(np.array(i_)[structure_layer[name]['structure'][1]]))
-                o.append(o_[structure_layer[name]['output_input'][0]])
-                i.append(i_[structure_layer[name]['output_input'][1]])
+                count_, cmo_, cmi_, o_, i_ = \
+                    self.generate_connection_matrix_layer(count_, layer-1, structure_type, cmo_, cmi_)
+                cmo_.extend(list(np.array(o_)[structure_layer[name]['structure'][0]].reshape(-1)))
+                cmi_.extend(list(np.array(i_)[structure_layer[name]['structure'][1]].reshape(-1)))
+                o.append(list(np.array(o_)[structure_layer[name]['output_input'][0]].reshape(-1)))
+                i.append(list(np.array(i_)[structure_layer[name]['output_input'][1]].reshape(-1)))
             return count_, cmo_, cmi_, o, i
         else:
             o,i = [],[]
             for name in structure_type[layer]:
-                cmo_.extend(structure_layer[name]['structure'][0]+count)
-                cmi_.extend(structure_layer[name]['structure'][1]+count)
-                count_ = count + max(structure_layer[name]['structure'][0] + structure_layer[name]['structure'][1])
-                o.append(structure_layer[name]['output_input'][0])
-                i.append(structure_layer[name]['output_input'][1])
+                cmo_.extend(list(np.array(structure_layer[name]['structure'][0]) + count_))
+                cmi_.extend(list(np.array(structure_layer[name]['structure'][1]) + count_))
+                o.append(list(np.array(structure_layer[name]['output_input'][0]) + count_))
+                i.append(list(np.array(structure_layer[name]['output_input'][1]) + count_))
+                count_ = count_ + max(structure_layer[name]['structure'][0] + structure_layer[name]['structure'][1]) + 1
             return count_, cmo_, cmi_, o, i
 
 
-    def generate_connection_matrix_reservoir(self, layer, structure_type):
+    def generate_connection_matrix_reservoir(self, structure_type):
+        # structure_type = [['components_1','components_2','components_1','components_2'],
+        # ['components_3','components_4','components_3','components_4']]
         connection_matrix_out, connection_matrix_in = [], []
+        layer = len(structure_type)-1
         count = 0
         count, connection_matrix_out, connection_matrix_in, o, i = \
             self.generate_connection_matrix_layer(count, layer, structure_type,
                                                   connection_matrix_out, connection_matrix_in)
-        connection_matrix_out.extend(list(np.array(o)[structure_reservoir['components']['structure'][0]]))
-        connection_matrix_in.extend(list(np.array(i)[structure_reservoir['components']['structure'][1]]))
+        connection_matrix_out.extend(list(np.array(o)[structure_reservoir['components']['structure'][0]].reshape(-1)))
+        connection_matrix_in.extend(list(np.array(i)[structure_reservoir['components']['structure'][1]].reshape(-1)))
         return np.array(connection_matrix_out, connection_matrix_in)
 
 
