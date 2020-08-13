@@ -106,7 +106,28 @@ class Decoder(BaseFunctions):
     def decode_block_hierarchy(self):
         pass
 
-    def get_reservoir(self):
+    def get_reservoir_block_type(self):
+        pass
+
+    def get_reservoir_structure_type(self):
+        pass
+
+    def get_encoding_structure(self):
+        pass
+
+    def get_encoding_structure(self):
+        pass
+
+    def get_parameters_blocks(self):
+        pass
+
+    def get_parameters_reservoir(self):
+        pass
+
+    def get_parameters_encoding(self):
+        pass
+
+    def get_parameters_readout(self):
         pass
 
     def get_parameters_network(self):
