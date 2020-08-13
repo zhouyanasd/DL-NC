@@ -23,6 +23,10 @@ class Decoder(BaseFunctions):
         self.config_borders = config_borders
         self.config_precisions = config_precisions
         self.config_scales = config_scales
+        self.block_decoder_type = {'random':self.decode_block_random,
+                                   'scale_free':self.decode_block_scale_free,
+                                   'circle':self.decode_block_circle,
+                                   'hierarchy':self.decode_block_hierarchy}
 
     @property
     def get_keys(self):
