@@ -98,19 +98,20 @@ class Generator(BaseFunctions):
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    def generate_connection_matrix_layer(self, count, layer, structure_type, cmo, cmi):
+    def generate_connection_matrix_layer(self, nodes_type, count, layer, structure_type, cmo, cmi):
         cmo_, cmi_ = cmo, cmi
         count_ = count
+        nodes_type_ = nodes_type
         if layer > 0 :
             o, i = [],[]
             for name in structure_type[layer]:
-                count_, cmo_, cmi_, o_, i_ = \
+                nodes_type_, count_, cmo_, cmi_, o_, i_ = \
                     self.generate_connection_matrix_layer(count_, layer-1, structure_type, cmo_, cmi_)
                 cmo_.extend(list(np.array(o_)[structure_layer[name]['structure'][0]].reshape(-1)))
                 cmi_.extend(list(np.array(i_)[structure_layer[name]['structure'][1]].reshape(-1)))
                 o.append(list(np.array(o_)[structure_layer[name]['output_input'][0]].reshape(-1)))
                 i.append(list(np.array(i_)[structure_layer[name]['output_input'][1]].reshape(-1)))
-            return count_, cmo_, cmi_, o, i
+            return nodes_type_, count_, cmo_, cmi_, o, i
         else:
             o,i = [],[]
             for name in structure_type[layer]:
@@ -118,8 +119,10 @@ class Generator(BaseFunctions):
                 cmi_.extend(list(np.array(structure_layer[name]['structure'][1]) + count_))
                 o.append(list(np.array(structure_layer[name]['output_input'][0]) + count_))
                 i.append(list(np.array(structure_layer[name]['output_input'][1]) + count_))
-                count_ = count_ + max(structure_layer[name]['structure'][0] + structure_layer[name]['structure'][1]) + 1
-            return count_, cmo_, cmi_, o, i
+                n = max(structure_layer[name]['structure'][0] + structure_layer[name]['structure'][1]) + 1
+                count_ = count_ + n
+                nodes_type_.extend(list(np.arange(n)))
+            return nodes_type_, count_, cmo_, cmi_, o, i
 
 
     def generate_connection_matrix_reservoir(self, structure_type):
@@ -128,12 +131,13 @@ class Generator(BaseFunctions):
         connection_matrix_out, connection_matrix_in = [], []
         layer = len(structure_type)-1
         count = 0
-        count, connection_matrix_out, connection_matrix_in, o, i = \
-            self.generate_connection_matrix_layer(count, layer, structure_type,
+        nodes_type = []
+        nodes_type, count, connection_matrix_out, connection_matrix_in, o, i = \
+            self.generate_connection_matrix_layer(nodes_type, count, layer, structure_type,
                                                   connection_matrix_out, connection_matrix_in)
         connection_matrix_out.extend(list(np.array(o)[structure_reservoir['components']['structure'][0]].reshape(-1)))
         connection_matrix_in.extend(list(np.array(i)[structure_reservoir['components']['structure'][1]].reshape(-1)))
-        return np.array(connection_matrix_out, connection_matrix_in)
+        return nodes_type, np.array(connection_matrix_out, connection_matrix_in)
 
 
     def generate_block(self, name, get_parameter_structure, get_matrix):
@@ -170,20 +174,23 @@ class Generator(BaseFunctions):
             block_group.add_block(block)
         return block_group
 
-    def generate_pathway_reservoir(self, Block_group):
-        structure_type = self.decoder.structure_type()
-        connection_matrix = self.generate_connection_matrix_reservoir(structure_type)
-        pathway = Pathway(Block_group.blocks, Block_group.blocks, connection_matrix)
-        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
-                               dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
-        return pathway
+    # def generate_pathway_reservoir(self, Block_group):
+    #     structure_type = self.decoder.structure_type()
+    #     connection_matrix = self.generate_connection_matrix_reservoir(structure_type)
+    #     pathway = Pathway(Block_group.blocks, Block_group.blocks, connection_matrix)
+    #     pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+    #                            dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
+    #     return pathway
 
     def generate_reservoir(self):
         reservoir = Reservoir()
         block_type = self.decoder.get_block_type()
-        #  = self.decoder.get_reservoir()
-        block_group = self.generate_blocks(block_type)
-        pathway = self.generate_pathway_reservoir(block_group)
+        structure_type = self.decoder.structure_type()
+        nodes_type, connection_matrix = self.generate_connection_matrix_reservoir(structure_type)
+        block_group = self.generate_blocks(block_type, nodes_type)
+        pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+                               dynamics_synapse_post_STDP,  name = 'pathway_reservoir_')
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.determine_input_output()
