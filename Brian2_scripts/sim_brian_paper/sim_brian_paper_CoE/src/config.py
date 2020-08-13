@@ -61,7 +61,7 @@ structure_layer = {'components_1':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_i
                     'components_3': {'structure':[[0,0,1,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},
                     'components_4': {'structure':[[0,0,1,3],[1,2,3,2]], 'output_input':[[2],[0]]}}
 
-structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'input_output':[[0,1,2,3],[0,1,2,3]]}}
+structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
 Encoding = ['N']

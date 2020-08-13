@@ -251,7 +251,7 @@ class Reservoir(BaseFunctions):
         self.block_group = None
         self.pathway = None
 
-    def determine_input_output(self):
+    def register_input_output(self, o, i):
         '''
          Determine the index of input and output neurons.
 
@@ -259,9 +259,8 @@ class Reservoir(BaseFunctions):
          ----------
          '''
 
-        #TODO
-        self.input = [1, 2]
-        self.output = [3, 4]
+        self.input = o
+        self.output = i
 
     def register_blocks(self, block_group):
         '''
