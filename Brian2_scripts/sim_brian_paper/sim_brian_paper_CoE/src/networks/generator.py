@@ -190,20 +190,30 @@ class Generator(BaseFunctions):
 
     def generate_encoding(self):
         block_group = BlockGroup()
+        N = self.decoder.parameter_structure_encoding()
+        block = Block(N, np.array([],[]))
+        block.create_neurons(dynamics_encoding, threshold='I > 0', reset = '0',
+                             refractory = 0 * ms , name='block_encoding')
+        block_group.add_block(block)
         return block_group
 
     def generate_readout(self):
         block_group = BlockGroup()
+        N = self.decoder.parameter_structure_readout()
+        block = Block(N, np.array([],[]))
+        block.create_neurons(dynamics_readout, threshold=None, reset = None,
+                             refractory = None, name='block_readout')
+        block_group.add_block(block)
         return block_group
 
     def generate_pathway_encoding_reservoir(self, encoding, reservoir):
-        connection_matrix = [[0], reservoir.input]
+        connection_matrix = [[0]*len(reservoir.input), reservoir.input]
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_synapse, dynamics_synapse_pre, None)
         return pathway
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
-        connection_matrix = [reservoir.output, [0]]
+        connection_matrix = [reservoir.output, [0]*len(reservoir.output)]
         pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
                                         'w = 1 : 1', dynamics_synapse_pre, None)
         return pathway
@@ -213,8 +223,8 @@ class Generator(BaseFunctions):
         encoding = self.generate_encoding()
         reservoir = self.generate_reservoir()
         readout = self.generate_readout()
-        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir()
-        pathway_reservoir_readout = self.generate_pathway_reservoir_readout()
+        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
+        pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
 
         network.register_layer(encoding, 'encoding')
         network.register_layer(reservoir, 'reservoir')
