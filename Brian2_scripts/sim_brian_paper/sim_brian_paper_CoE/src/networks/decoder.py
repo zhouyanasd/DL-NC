@@ -95,27 +95,33 @@ class Decoder(BaseFunctions):
         return parameter
 
     def decode_block_random(self):
-        pass
+        parameter = self.decode('Block_random')
+        return parameter
 
     def decode_block_scale_free(self):
-        pass
+        parameter = self.decode('Block_scale_free')
+        return parameter
 
     def decode_block_circle(self):
-        pass
+        parameter = self.decode('Block_circle')
+        return parameter
 
     def decode_block_hierarchy(self):
-        pass
+        parameter = self.decode('Block_hierarchy')
+        return parameter
 
     def get_reservoir_block_type(self):
-        pass
+        parameter = self.decode('Reservoir')
+        return parameter['block']
 
     def get_reservoir_structure_type(self):
-        pass
+        parameter = self.decode('Reservoir')
+        return parameter['layer_1', 'layer_2'].values()
 
     def get_encoding_structure(self):
         pass
 
-    def get_encoding_structure(self):
+    def get_readout_structure(self):
         pass
 
     def get_parameters_blocks(self):

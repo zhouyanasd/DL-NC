@@ -64,9 +64,9 @@ structure_layer = {'components_1':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_i
 structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
-Encoding = ['N']
+Encoding = ['N', 'strength', 'plasticity']
 Readout = ['N']
-Reservoir = ['N', 'L_1', 'L_2']
+Reservoir = ['block', 'layer_1', 'layer_2', 'strength', 'plasticity']
 Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p']
 Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
 Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'threshold']
