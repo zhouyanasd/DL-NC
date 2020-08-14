@@ -12,11 +12,11 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunc
 import numpy as np
 
 class Decoder(BaseFunctions):
-    def __init__(self, config_group, config_key, config_SubCom, config_codes, config_ranges, config_borders,
+    def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
                       config_precisions, config_scales):
         super.__init__()
         self.config_group = config_group
-        self.config_key = config_key
+        self.config_keys = config_keys
         self.config_codes = config_codes
         self.config_SubCom = config_SubCom
         self.config_ranges = config_ranges
@@ -32,7 +32,7 @@ class Decoder(BaseFunctions):
     def get_keys(self):
         keys = []
         for index, group_name in enumerate(self.config_group):
-            for key in self.config_key[index]:
+            for key in self.config_keys[index]:
                 keys.append(group_name+'_'+key)
         return keys
 
@@ -84,7 +84,7 @@ class Decoder(BaseFunctions):
 
     def decode(self, target):
         group = np.where(self.config_group == target)[0]
-        key = self.config_key[group]
+        key = self.config_keys[group]
         SubCom = self.config_SubCom[group]
         codes = self.config_codes[group]
         parameter = {}

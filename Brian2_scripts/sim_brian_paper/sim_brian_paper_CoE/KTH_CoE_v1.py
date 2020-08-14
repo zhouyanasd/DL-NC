@@ -87,7 +87,7 @@ neurons_block = 10
 
 ##-----------------------------------------------------
 #--- create generator and decoder ---
-decoder = Decoder(config_group, config_key, config_SubCom, config_codes, config_ranges, config_borders,
+decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
                   config_precisions, config_scales)
 generator = Generator(np_state)
 generator.register_decoder(decoder)
