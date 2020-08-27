@@ -7,7 +7,6 @@
 @Version: V1.2
 """
 
-import pandas as pd
 import numpy as np
 import random
 import math
@@ -74,39 +73,35 @@ class RandomForestRegression(object):
         self.trees = None
         self.feature_importances_ = dict()
 
-    def fit(self, dataset, targets):
+    def fit(self, data, targets):
         """模型训练入口"""
-        targets = targets.to_frame(name='label')
-        from IPython.core.debugger import set_trace
-        set_trace()
-
         if self.random_state:
             random.seed(self.random_state)
         random_state_stages = random.sample(range(self.n_estimators), self.n_estimators)
 
         # 两种列采样方式
         if self.colsample_bytree == "sqrt":
-            self.colsample_bytree = int(len(dataset.columns) ** 0.5)
+            self.colsample_bytree = int(len(data) ** 0.5)
         elif self.colsample_bytree == "log2":
-            self.colsample_bytree = int(math.log(len(dataset.columns)))
+            self.colsample_bytree = int(math.log(len(data)))
         else:
-            self.colsample_bytree = len(dataset.columns)
+            self.colsample_bytree = len(data)
 
         # 并行建立多棵决策树
         self.trees = Parallel(n_jobs=-1, verbose=0, backend="threading")(
-            delayed(self._parallel_build_trees)(dataset, targets, random_state)
+            delayed(self._parallel_build_trees)(data, targets, random_state)
             for random_state in random_state_stages)
 
-    def _parallel_build_trees(self, dataset, targets, random_state):
+    def _parallel_build_trees(self, data, targets, random_state):
         """bootstrap有放回抽样生成训练样本集，建立决策树"""
-        subcol_index = random.sample(dataset.columns.tolist(), self.colsample_bytree)
-        dataset_stage = dataset.sample(n=int(self.subsample * len(dataset)), replace=True,
+        subcol_index = random.sample(data, self.colsample_bytree)
+        data_stage = data.sample(n=int(self.subsample * len(data)), replace=True,
                                        random_state=random_state).reset_index(drop=True)
-        dataset_stage = dataset_stage.loc[:, subcol_index]
-        targets_stage = targets.sample(n=int(self.subsample * len(dataset)), replace=True,
+        data_stage = data_stage[:, subcol_index]
+        targets_stage = targets.sample(n=int(self.subsample * len(data)), replace=True,
                                        random_state=random_state).reset_index(drop=True)
 
-        tree = self._build_single_tree(dataset_stage, targets_stage, depth=0)
+        tree = self._build_single_tree(data_stage, targets_stage, depth=0)
         print(tree.describe_tree())
         return tree
 
