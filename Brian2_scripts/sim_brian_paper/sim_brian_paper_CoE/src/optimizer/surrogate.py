@@ -460,7 +460,9 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
 
     def guess(self, X):
-        pass
+        y_predict = self.model.predict(X)
+        y_all_tree = self.model.y_hat_
+
 
 
 class GaussianProcess_surrgate(Surrogate):
@@ -484,5 +486,5 @@ class GaussianProcess_surrgate(Surrogate):
         )
 
     def guess(self, X):
-        gauss =self.utility_function.utility(X, self.model, self._space.target.min())
-        return gauss
+        y =self.utility_function.utility(X, self.model, self._space.target.min())
+        return y
