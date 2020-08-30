@@ -102,11 +102,6 @@ class RandomForestRegressor_(RandomForestRegressor):
 
 class RandomForestRegressor_surrgate(Surrogate):
     def __init__(self, f, pbounds, random_state, **rf_params):
-        super(RandomForestRegressor_surrgate, self).__init__(
-            f = f,
-            pbounds = pbounds,
-            random_state=random_state
-        )
 
         self._rf = RandomForestRegressor_(
             n_estimators=10,
@@ -128,6 +123,9 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
         self._rf.set_params(**rf_params)
 
-    def guess_fixedpoint(self, X):
-        gauss = self._rf.predict(X)
-        return gauss
+        super(RandomForestRegressor_surrgate, self).__init__(
+            f = f,
+            pbounds = pbounds,
+            random_state=random_state,
+            model = self._rf
+        )

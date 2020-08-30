@@ -1,4 +1,4 @@
-import re
+import re, warnings
 
 import numpy as np
 
@@ -296,7 +296,7 @@ class Queue():
 
 
 class Surrogate():
-    def __init__(self, f, pbounds, random_state):
+    def __init__(self, f, pbounds, random_state, model):
         self._random_state = ensure_rng(random_state)
 
         # Data structure containing the function to be optimized, the bounds of
@@ -305,6 +305,9 @@ class Surrogate():
 
         # queue
         self._queue = Queue()
+
+        # define used model e.g. gp or rf
+        self.model = model
 
     @property
     def space(self):
@@ -407,3 +410,12 @@ class Surrogate():
                     self.update_model()
                     break
                 self.probe(x_probe, lazy=False)
+
+    def guess_fixedpoint(self, X):
+        gauss = self.model.predict(X)
+        return gauss
+
+    def update_model(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.model.fit(self._space.params, self._space.target)

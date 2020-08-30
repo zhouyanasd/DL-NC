@@ -1,8 +1,6 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.de import DiffEvol
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
 
-import warnings
-
 import numpy as np
 from scipy.stats import norm, entropy
 from sklearn.gaussian_process.kernels import Matern
@@ -206,12 +204,6 @@ class UtilityFunction():
 class BayesianOptimization(Surrogate):
     def __init__(self, f, pbounds, random_state=None, acq='ucb', opt='de', kappa=2.576, xi=0.0,
                   verbose=0, **gp_params):
-        super(BayesianOptimization, self).__init__(
-            f = f,
-            pbounds = pbounds,
-            random_state=random_state
-        )
-
         # Internal GP regressor
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
@@ -221,6 +213,13 @@ class BayesianOptimization(Surrogate):
             random_state=self._random_state,
         )
         self._gp.set_params(**gp_params)
+
+        super(BayesianOptimization, self).__init__(
+            f = f,
+            pbounds = pbounds,
+            random_state=random_state,
+            model = self._gp
+        )
 
         if opt == 'cma':
             self.opt_function = self.acq_min_CMA
@@ -249,11 +248,6 @@ class BayesianOptimization(Surrogate):
         x_min = de.minimum_location
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
-    def update_model(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self._gp.fit(self._space.params, self._space.target)
-
     def suggest(self):
         if len(self._space) == 0:
             return self._space.array_to_params(self._space.random_sample())
@@ -265,10 +259,6 @@ class BayesianOptimization(Surrogate):
             random_state=self._random_state.randint(100000)
         )
         return self._space.array_to_params(suggestion)
-
-    def guess_fixedpoint(self, X):
-        gauss =self.utility_function.utility(X, self._gp, self._space.target.min())
-        return gauss
 
     def minimize(self,
                  LHS_path=None,
@@ -289,3 +279,7 @@ class BayesianOptimization(Surrogate):
                 x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
+
+    def guess_fixedpoint(self, X):
+        gauss =self.utility_function.utility(X, self.model, self._space.target.min())
+        return gauss
