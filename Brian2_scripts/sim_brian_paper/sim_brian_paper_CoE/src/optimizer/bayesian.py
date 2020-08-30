@@ -279,7 +279,3 @@ class BayesianOptimization(Surrogate):
                 x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
-
-    def guess_fixedpoint(self, X):
-        gauss =self.utility_function.utility(X, self.model, self._space.target.min())
-        return gauss

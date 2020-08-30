@@ -1,5 +1,3 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
-
 import threading
 
 import numpy as np
@@ -99,33 +97,3 @@ class RandomForestRegressor_(RandomForestRegressor):
         y_hat /= len(self.estimators_)
 
         return y_hat
-
-class RandomForestRegressor_surrgate(Surrogate):
-    def __init__(self, f, pbounds, random_state, **rf_params):
-
-        self._rf = RandomForestRegressor_(
-            n_estimators=10,
-            criterion="mse",
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            min_weight_fraction_leaf=0.,
-            max_features="auto",
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.,
-            min_impurity_split=None,
-            bootstrap=True,
-            oob_score=False,
-            n_jobs=1,
-            random_state=None,
-            verbose=0,
-            warm_start=False
-        )
-        self._rf.set_params(**rf_params)
-
-        super(RandomForestRegressor_surrgate, self).__init__(
-            f = f,
-            pbounds = pbounds,
-            random_state=random_state,
-            model = self._rf
-        )

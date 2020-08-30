@@ -1,3 +1,8 @@
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.random_forest import RandomForestRegressor_
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import UtilityFunction
+from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process import GaussianProcessRegressor
+
 import re, warnings
 
 import numpy as np
@@ -411,11 +416,73 @@ class Surrogate():
                     break
                 self.probe(x_probe, lazy=False)
 
-    def guess_fixedpoint(self, X):
-        gauss = self.model.predict(X)
-        return gauss
+    def guess(self, X):
+        gauss_value = self.model.guess_fixedpoint(X)
+        return gauss_value
+
+    def predict(self, X):
+        predict_value = self.model.predict(X)
+        return predict_value
 
     def update_model(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.model.fit(self._space.params, self._space.target)
+
+
+class RandomForestRegressor_surrgate(Surrogate):
+    def __init__(self, f, pbounds, random_state, **rf_params):
+        self._rf = RandomForestRegressor_(
+            n_estimators=10,
+            criterion="mse",
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.,
+            max_features="auto",
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.,
+            min_impurity_split=None,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=1,
+            random_state=None,
+            verbose=0,
+            warm_start=False
+        )
+        self._rf.set_params(**rf_params)
+
+        super(RandomForestRegressor_surrgate, self).__init__(
+            f=f,
+            pbounds=pbounds,
+            random_state=random_state,
+            model=self._rf
+        )
+
+    def guess(self, X):
+        pass
+
+
+class GaussianProcess_surrgate(Surrogate):
+    def __init__(self, f, pbounds, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
+        self._gp = GaussianProcessRegressor(
+            kernel=Matern(nu=2.5),
+            alpha=1e-6,
+            normalize_y=True,
+            n_restarts_optimizer=25,
+            random_state=self._random_state,
+        )
+        self._gp.set_params(**gp_params)
+
+        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds=self._space.bounds)
+
+        super(GaussianProcess_surrgate, self).__init__(
+            f=f,
+            pbounds=pbounds,
+            random_state=random_state,
+            model=self._gp
+        )
+
+    def guess(self, X):
+        gauss =self.utility_function.utility(X, self.model, self._space.target.min())
+        return gauss
