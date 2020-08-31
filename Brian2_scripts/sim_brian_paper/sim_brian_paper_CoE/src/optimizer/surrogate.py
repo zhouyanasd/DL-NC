@@ -431,7 +431,7 @@ class Surrogate():
 
 
 class RandomForestRegressor_surrgate(Surrogate):
-    def __init__(self, f, pbounds, random_state, **rf_params):
+    def __init__(self, f, pbounds, random_state, n_I , n_Q, **rf_params):
         self._rf = RandomForestRegressor_(
             n_estimators=10,
             criterion="mse",
@@ -452,6 +452,9 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
         self._rf.set_params(**rf_params)
 
+        self.n_I = n_I
+        self.n_Q = n_Q
+
         super(RandomForestRegressor_surrgate, self).__init__(
             f=f,
             pbounds=pbounds,
@@ -461,7 +464,19 @@ class RandomForestRegressor_surrgate(Surrogate):
 
     def guess(self, X):
         y_predict = self.model.predict(X)
-        y_all_tree = self.model.y_hat_
+        y_all_tree = np.array(self.model.y_hat_)
+        y_useful_index = y_all_tree.argsort()[0:self.n_I]
+        # tree_useful = [self.model.estimators_[x] for x in y_useful_index]
+        y_useful = y_all_tree[y_useful_index]
+        y_selected_index = self.uniform_select(y_useful.argsort())
+        y_selected = y_useful[y_selected_index]
+        y_predict = y_selected.mean()
+        return y_predict
+
+    def uniform_select(self, index):
+        n = len(index)
+        idx = np.round(np.linspace(0, n - 1, self.n_Q)).astype(int)
+        return idx
 
 
 
