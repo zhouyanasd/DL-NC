@@ -16,8 +16,8 @@ import geatpy as ga
 
 
 class CoE_surrogate(BaseFunctions):
-    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=2.576, xi=0.0,
-                 opt='cma', **gp_params):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys,
+                 surrogate_type = 'rf' , **surrogate_parameters):
         super().__init__()
         self.f = f # for BO with dict input
         self.f_p = f_p

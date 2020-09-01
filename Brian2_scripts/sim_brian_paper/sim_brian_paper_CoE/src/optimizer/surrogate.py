@@ -503,3 +503,12 @@ class GaussianProcess_surrgate(Surrogate):
     def guess(self, X):
         y =self.utility_function.utility(X, self.model, self._space.target.min())
         return y
+
+
+def create_surrogate(surrogate_type, **surrogate_parameters):
+    if surrogate_type == 'gp':
+        pass
+    elif surrogate_type == 'rf':
+        pass
+    else:
+        raise ('Wrong surrogate type, only "gp" or "rl"')
