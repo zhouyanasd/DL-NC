@@ -8,7 +8,7 @@
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import BayesianOptimization
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import create_surrogate
 
 import time
 
@@ -25,12 +25,9 @@ class CoE_surrogate(BaseFunctions):
         self.SubCom = SubCom
         self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
-        self.surrogate = Surrogate(
-            f=f,
-            pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])), # 此处需要修改到和borders匹配的形式
-            random_state=1,
-            acq=acq, opt=opt, kappa = kappa, xi =xi, **gp_params
-        )
+        self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f,
+                                          pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])),
+                                          **surrogate_parameters)
 
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and output
         res = []
@@ -46,7 +43,7 @@ class CoE_surrogate(BaseFunctions):
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
-                                   selectStyle='sus', recombinStyle='xovdp', distribute=True, drawing=0):
+                                   selectStyle='sus', recombinStyle='xovdp', distribute=True, LHS_path = None, drawing=0):
 
         """==========================初始化配置==========================="""
         # GGAP = 0.5  # 因为父子合并后选择，因此要将代沟设为0.5以维持种群规模
@@ -56,7 +53,7 @@ class CoE_surrogate(BaseFunctions):
         # 定义变量记录器，记录控制变量值，初始值为nan
         var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
         repnum = [0] * len(self.SubCom)  # 初始化重复个体数为0
-        self.surrogate.initial_model(init_points = init_points, LHS_path = None, is_LHS = True, lazy = False)
+        self.surrogate.initial_model(init_points = init_points, LHS_path = LHS_path, is_LHS = True, lazy = False)
         ax = None  # 存储上一帧图形
         """=========================开始遗传算法进化======================="""
         if problem == 'R':
@@ -79,7 +76,7 @@ class CoE_surrogate(BaseFunctions):
             Chrom[:, SubCom_i] = P_i
             LegV_i = np.ones((NIND, 1))
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)  # 求子问题的目标函数值
-            self.surrogate.update_model()  # update the BO model
+            self.surrogate.update_model()  # update the surrogate model
             P.append(P_i)
             ObjV.append(ObjV_i)
             LegV.append(LegV_i)  # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
@@ -107,9 +104,9 @@ class CoE_surrogate(BaseFunctions):
                 Chrom = B.copy().repeat(NIND, axis=0)  # 替换contex vector中个体基因
                 Chrom[:, SubCom_i] = SelCh
                 LegVSel = np.ones((Chrom.shape[0], 1))  # 初始化育种种群的可行性列向量
-                ObjVSel = self.surrogate._gp.predict(Chrom).reshape(-1, 1)  # get the estimated value
+                ObjVSel = self.surrogate.predict(Chrom).reshape(-1, 1)  # get the estimated value
 
-                guess = self.surrogate.guess_fixedpoint(Chrom)  # 估计子种群的acquisition function value
+                guess = self.surrogate.guess(Chrom)  # 估计子种群的(acquisition) function value
 
                 if estimation >= interval: # 设置一个更新间隔
                     best_guess = guess.argsort()[0:int(eva)] # 找到估计最好的eva个基因序号
@@ -203,10 +200,10 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
     '''
     codes和scales中不需要编码的部分用None来代替。
     '''
-    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, acq, kappa=2.576, xi=0.0,
-                     opt='cma', **gp_params):
-        super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys, acq, kappa=kappa, xi=xi,
-                     opt=opt, **gp_params)
+    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys,
+                 surrogate_type = 'rf', **surrogate_parameters):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys,
+                         surrogate_type = surrogate_type, **surrogate_parameters)
         self.ranges = ranges
         self.borders = borders
         self.precisions = precisions
@@ -372,7 +369,7 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
-                                   selectStyle='sus', recombinStyle='xovdp', distribute = False, drawing= False):
+                                   selectStyle='sus', recombinStyle='xovdp', distribute = False, LHS_path = None, drawing= False):
 
         # ==========================初始化配置===========================
         # 得到控制变量的个数
@@ -384,7 +381,7 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
         # 初始化重复个体数为0
         repnum = [0] * len(self.SubCom)
         # 初始化代理模型
-        self.surrogate.initial_model(init_points = init_points, LHS_path = None, is_LHS = True, lazy = False)
+        self.surrogate.initial_model(init_points = init_points, LHS_path = LHS_path, is_LHS = True, lazy = False)
         # 定义初始context vector
         B = self.initilize_B()
         # 求初代context vector 的 fitness
@@ -418,9 +415,9 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
                 # 初始化育种种群的可行性列向量
                 LegVSel = np.ones((Chrom.shape[0], 1))
                 # get the estimated value thought the surrogate
-                ObjVSel = self.surrogate.model.predict(Chrom).reshape(-1, 1)
+                ObjVSel = self.surrogate.predict(Chrom).reshape(-1, 1)
                 # 估计子种群的acquisition function value
-                guess = self.surrogate.guess_fixedpoint(Chrom)
+                guess = self.surrogate.guess(Chrom)
                 # 如果评估次数大于代数间隔就进行原函数评估
                 if estimation >= interval:
                     # 找到估计最好的eva个基因序号
@@ -514,6 +511,7 @@ if __name__ == "__main__":
     SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
 
     coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys,
+                                   surrogate_type = 'gp', radom_state = 1,
                                    acq='ucb', kappa=2.576, xi=0.0, opt='de')
     best_gen, best_ObjV = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                                    init_points=50, problem='R',

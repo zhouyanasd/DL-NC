@@ -416,6 +416,11 @@ class Surrogate():
                     break
                 self.probe(x_probe, lazy=False)
 
+    def update_model(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.model.fit(self._space.params, self._space.target)
+
     def guess(self, X):
         gauss_value = self.model.guess_fixedpoint(X)
         return gauss_value
@@ -423,11 +428,6 @@ class Surrogate():
     def predict(self, X):
         predict_value = self.model.predict(X)
         return predict_value
-
-    def update_model(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.model.fit(self._space.params, self._space.target)
 
 
 class RandomForestRegressor_surrgate(Surrogate):
@@ -463,17 +463,21 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
 
     def guess(self, X):
-        y_predict = self.model.predict(X)
+        y_predict_ = self.model.predict(X)
         y_all_tree = np.array(self.model.y_hat_)
         y_useful_index = y_all_tree.argsort()[0:self.n_I]
         # tree_useful = [self.model.estimators_[x] for x in y_useful_index]
         y_useful = y_all_tree[y_useful_index]
-        y_selected_index = self.uniform_select(y_useful.argsort())
+        y_selected_index = self._uniform_select(y_useful.argsort())
         y_selected = y_useful[y_selected_index]
         y_predict = y_selected.mean()
         return y_predict
 
-    def uniform_select(self, index):
+    def predict(self, X):
+        predict_value = self.guess(X)
+        return predict_value
+
+    def _uniform_select(self, index):
         n = len(index)
         idx = np.round(np.linspace(0, n - 1, self.n_Q)).astype(int)
         return idx
@@ -505,10 +509,21 @@ class GaussianProcess_surrgate(Surrogate):
         return y
 
 
-def create_surrogate(surrogate_type, **surrogate_parameters):
+def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_parameters):
     if surrogate_type == 'gp':
-        pass
+        acq = surrogate_parameters.pop('acq')
+        kappa = surrogate_parameters.pop('kappa'),
+        xi = surrogate_parameters.pop('xi'),
+        surrogate = GaussianProcess_surrgate(f = f, pbounds = pbounds, random_state = random_state,
+                                             acq = acq, kappa = kappa, xi = xi,
+                                             **surrogate_parameters)
+        return surrogate
     elif surrogate_type == 'rf':
-        pass
+        n_I = surrogate_parameters.pop('n_I')
+        n_Q = surrogate_parameters.pop('n_Q'),
+        surrogate = RandomForestRegressor_surrgate(f = f, pbounds = pbounds, random_state = random_state,
+                                                   n_I = n_I, kappa = n_Q, xi = n_Q,
+                                                   **surrogate_parameters)
+        return surrogate
     else:
         raise ('Wrong surrogate type, only "gp" or "rl"')
