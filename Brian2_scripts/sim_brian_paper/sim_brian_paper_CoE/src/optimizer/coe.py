@@ -8,6 +8,7 @@
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import BayesianOptimization
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
 
 import time
 
@@ -24,7 +25,7 @@ class CoE_surrogate(BaseFunctions):
         self.SubCom = SubCom
         self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
-        self.surrogate = BayesianOptimization(
+        self.surrogate = Surrogate(
             f=f,
             pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])), # 此处需要修改到和borders匹配的形式
             random_state=1,
@@ -417,7 +418,7 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
                 # 初始化育种种群的可行性列向量
                 LegVSel = np.ones((Chrom.shape[0], 1))
                 # get the estimated value thought the surrogate
-                ObjVSel = self.surrogate._gp.predict(Chrom).reshape(-1, 1)
+                ObjVSel = self.surrogate.model.predict(Chrom).reshape(-1, 1)
                 # 估计子种群的acquisition function value
                 guess = self.surrogate.guess_fixedpoint(Chrom)
                 # 如果评估次数大于代数间隔就进行原函数评估
