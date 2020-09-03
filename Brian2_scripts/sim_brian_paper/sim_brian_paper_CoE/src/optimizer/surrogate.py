@@ -431,7 +431,7 @@ class Surrogate():
 
 
 class RandomForestRegressor_surrgate(Surrogate):
-    def __init__(self, f, pbounds, random_state, n_I , n_Q, **rf_params):
+    def __init__(self, f, pbounds, random_state, n_Q, **rf_params):
         self._rf = RandomForestRegressor_(
             n_estimators=10,
             criterion="mse",
@@ -452,7 +452,6 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
         self._rf.set_params(**rf_params)
 
-        self.n_I = n_I
         self.n_Q = n_Q
 
         super(RandomForestRegressor_surrgate, self).__init__(
@@ -463,14 +462,16 @@ class RandomForestRegressor_surrgate(Surrogate):
         )
 
     def guess(self, X):
-        y_predict_ = self.model.predict(X)
-        y_all_tree = np.array(self.model.y_hat_)
-        y_useful_index = y_all_tree.argsort()[0:self.n_I]
-        # tree_useful = [self.model.estimators_[x] for x in y_useful_index]
-        y_useful = y_all_tree[y_useful_index]
-        y_selected_index = self._uniform_select(y_useful.argsort())
-        y_selected = y_useful[y_selected_index]
-        y_predict = y_selected.mean()
+        y_predict = self.model.predict(X)
+        y_all_tree = np.array(self.model.y_hat_).T
+        y_order_index = y_all_tree.argsort()
+        y_selected_index = []
+        y_selected = []
+        for i in range(len(y_all_tree)):
+            y_selected_index.append(self.uniform_select(y_order_index[i]))
+            y_selected.append(y_all_tree[i][y_selected_index[i]])
+        y_selected = np.array(y_selected).T
+        y_predict = y_selected.mean(axis=0)
         return y_predict
 
     def predict(self, X):
@@ -480,7 +481,7 @@ class RandomForestRegressor_surrgate(Surrogate):
     def _uniform_select(self, index):
         n = len(index)
         idx = np.round(np.linspace(0, n - 1, self.n_Q)).astype(int)
-        return idx
+        return index[idx]
 
 
 
@@ -522,7 +523,7 @@ def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_param
         n_I = surrogate_parameters.pop('n_I')
         n_Q = surrogate_parameters.pop('n_Q'),
         surrogate = RandomForestRegressor_surrgate(f = f, pbounds = pbounds, random_state = random_state,
-                                                   n_I = n_I, kappa = n_Q, xi = n_Q,
+                                                   n_Q = n_Q,
                                                    **surrogate_parameters)
         return surrogate
     else:
