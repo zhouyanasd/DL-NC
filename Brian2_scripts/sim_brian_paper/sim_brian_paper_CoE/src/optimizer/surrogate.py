@@ -430,7 +430,7 @@ class Surrogate():
         return predict_value
 
 
-class RandomForestRegressor_surrgate(Surrogate):
+class RandomForestRegressor_surrogate(Surrogate):
     def __init__(self, f, pbounds, random_state, n_Q, **rf_params):
         self._rf = RandomForestRegressor_(
             n_estimators=10,
@@ -454,7 +454,7 @@ class RandomForestRegressor_surrgate(Surrogate):
 
         self.n_Q = n_Q
 
-        super(RandomForestRegressor_surrgate, self).__init__(
+        super(RandomForestRegressor_surrogate, self).__init__(
             f=f,
             pbounds=pbounds,
             random_state=random_state,
@@ -485,7 +485,7 @@ class RandomForestRegressor_surrgate(Surrogate):
 
 
 
-class GaussianProcess_surrgate(Surrogate):
+class GaussianProcess_surrogate(Surrogate):
     def __init__(self, f, pbounds, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
@@ -496,7 +496,7 @@ class GaussianProcess_surrgate(Surrogate):
         )
         self._gp.set_params(**gp_params)
 
-        super(GaussianProcess_surrgate, self).__init__(
+        super(GaussianProcess_surrogate, self).__init__(
             f=f,
             pbounds=pbounds,
             random_state=random_state,
@@ -515,13 +515,13 @@ def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_param
         acq = surrogate_parameters.pop('acq')
         kappa = surrogate_parameters.pop('kappa'),
         xi = surrogate_parameters.pop('xi'),
-        surrogate = GaussianProcess_surrgate(f = f, pbounds = pbounds, random_state = random_state,
+        surrogate = GaussianProcess_surrogate(f = f, pbounds = pbounds, random_state = random_state,
                                              acq = acq, kappa = kappa, xi = xi,
                                              **surrogate_parameters)
         return surrogate
     elif surrogate_type == 'rf':
         n_Q = surrogate_parameters.pop('n_Q')
-        surrogate = RandomForestRegressor_surrgate(f = f, pbounds = pbounds, random_state = random_state,
+        surrogate = RandomForestRegressor_surrogate(f = f, pbounds = pbounds, random_state = random_state,
                                                    n_Q = n_Q,
                                                    **surrogate_parameters)
         return surrogate

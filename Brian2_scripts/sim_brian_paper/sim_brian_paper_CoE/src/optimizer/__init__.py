@@ -10,10 +10,14 @@
 from .bayesian import *
 from .coe import *
 from .de import *
+from .surrogate import *
 
 __all__ = [
     "DiffEvol",
     "BayesianOptimization",
+    "RandomForestRegressor_surrogate",
+    "GaussianProcess_surrogate",
     "CoE_surrogate",
     "Coe_surrogate_mixgentype",
+    ""
 ]

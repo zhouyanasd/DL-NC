@@ -19,6 +19,8 @@ __all__ = [
     "Generator",
     "BayesianOptimization",
     "Coe_surrogate_mixgentype",
+    "RandomForestRegressor_surrogate",
+    "GaussianProcess_surrogate",
 ]
 
 __doc__ = """
