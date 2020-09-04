@@ -468,7 +468,7 @@ class RandomForestRegressor_surrgate(Surrogate):
         y_selected_index = []
         y_selected = []
         for i in range(len(y_all_tree)):
-            y_selected_index.append(self.uniform_select(y_order_index[i]))
+            y_selected_index.append(self._uniform_select(y_order_index[i]))
             y_selected.append(y_all_tree[i][y_selected_index[i]])
         y_selected = np.array(y_selected).T
         y_predict = y_selected.mean(axis=0)
@@ -492,11 +492,9 @@ class GaussianProcess_surrgate(Surrogate):
             alpha=1e-6,
             normalize_y=True,
             n_restarts_optimizer=25,
-            random_state=self._random_state,
+            random_state=random_state,
         )
         self._gp.set_params(**gp_params)
-
-        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds=self._space.bounds)
 
         super(GaussianProcess_surrgate, self).__init__(
             f=f,
@@ -504,6 +502,8 @@ class GaussianProcess_surrgate(Surrogate):
             random_state=random_state,
             model=self._gp
         )
+
+        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds=self._space.bounds)
 
     def guess(self, X):
         y =self.utility_function.utility(X, self.model, self._space.target.min())
@@ -520,8 +520,7 @@ def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_param
                                              **surrogate_parameters)
         return surrogate
     elif surrogate_type == 'rf':
-        n_I = surrogate_parameters.pop('n_I')
-        n_Q = surrogate_parameters.pop('n_Q'),
+        n_Q = surrogate_parameters.pop('n_Q')
         surrogate = RandomForestRegressor_surrgate(f = f, pbounds = pbounds, random_state = random_state,
                                                    n_Q = n_Q,
                                                    **surrogate_parameters)

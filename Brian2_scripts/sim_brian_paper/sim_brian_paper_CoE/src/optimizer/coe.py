@@ -17,7 +17,7 @@ import geatpy as ga
 
 
 class CoE_surrogate(BaseFunctions):
-    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys,
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys, random_state,
                  surrogate_type = 'rf' , **surrogate_parameters):
         super().__init__()
         self.f = f # for BO with dict input
@@ -25,7 +25,7 @@ class CoE_surrogate(BaseFunctions):
         self.SubCom = SubCom
         self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
-        self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f,
+        self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f, random_state= random_state,
                                           pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])),
                                           **surrogate_parameters)
 
@@ -200,9 +200,9 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
     '''
     codes和scales中不需要编码的部分用None来代替。
     '''
-    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys,
+    def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state,
                  surrogate_type = 'rf', **surrogate_parameters):
-        super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys,
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys, random_state,
                          surrogate_type = surrogate_type, **surrogate_parameters)
         self.ranges = ranges
         self.borders = borders
@@ -509,9 +509,10 @@ if __name__ == "__main__":
     scales = np.array([0] * dim)
     FieldDR = ga.crtfld(ranges, borders, list(precisions))
     SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
+    radom_state = 1
 
-    coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys,
-                                   surrogate_type = 'gp', radom_state = 1,
+    coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state,
+                                   surrogate_type = 'gp',
                                    acq='ucb', kappa=2.576, xi=0.0, opt='de')
     best_gen, best_ObjV = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                                    init_points=50, problem='R',
