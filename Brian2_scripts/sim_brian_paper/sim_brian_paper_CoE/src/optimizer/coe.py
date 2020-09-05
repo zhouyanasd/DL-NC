@@ -513,7 +513,7 @@ if __name__ == "__main__":
 
     coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state,
                                    surrogate_type = 'gp',
-                                   acq='ucb', kappa=2.576, xi=0.0, opt='de')
+                                   acq='ucb', kappa=2.576, xi=0.0)
     best_gen, best_ObjV = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                                    init_points=50, problem='R',
                                                                    maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
