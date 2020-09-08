@@ -232,8 +232,10 @@ class Generator(BaseFunctions):
         network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
         network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
         network.connect()
+        return network
 
+    def generate_and_initialize(self):
+        network = self.generate_network()
         parameters = self.decoder.get_parameters_network()
         network.initialize(parameters)
-
         return network
