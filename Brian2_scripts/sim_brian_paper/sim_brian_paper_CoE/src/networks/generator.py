@@ -16,15 +16,7 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 from brian2 import *
 
 
-class Generator(BaseFunctions):
-    '''
-     Initialize the parameters of the neurons or synapses.
-
-     Parameters
-     ----------
-     # some public used such as random_state.
-     '''
-
+class Generator_connection_matrix(BaseFunctions):
     def __init__(self, random_state):
         super().__init__()
         self.random_state = random_state
@@ -32,9 +24,6 @@ class Generator(BaseFunctions):
                                    'scale_free':self.generate_connection_matrix_scale_free,
                                    'circle':self.generate_connection_matrix_circle,
                                    'hierarchy':self.generate_connection_matrix_hierarchy}
-
-    def register_decoder(self, decoder):
-        self.decoder = decoder
 
     def generate_connection_matrix_random(self, N, p):
         connection_matrix_out, connection_matrix_in = self.full_connected(N, p)
@@ -102,7 +91,7 @@ class Generator(BaseFunctions):
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
         return np.array(connection_matrix_out, connection_matrix_in)
 
-    def generate_connection_matrix_layer(self, blocks_type, count, layer, structure_type, cmo, cmi):
+    def generate_connection_matrix_reservoir_layer(self, blocks_type, count, layer, structure_type, cmo, cmi):
         cmo_, cmi_ = cmo, cmi
         count_ = count
         blocks_type_ = blocks_type
@@ -110,7 +99,7 @@ class Generator(BaseFunctions):
             o, i = [],[]
             for name in structure_type[layer]:
                 blocks_type_, count_, cmo_, cmi_, o_, i_ = \
-                    self.generate_connection_matrix_layer(blocks_type_, count_, layer-1, structure_type, cmo_, cmi_)
+                    self.generate_connection_matrix_reservoir_layer(blocks_type_, count_, layer-1, structure_type, cmo_, cmi_)
                 cmo_.extend(list(np.array(o_)[structure_layer[name]['structure'][0]].reshape(-1)))
                 cmi_.extend(list(np.array(i_)[structure_layer[name]['structure'][1]].reshape(-1)))
                 o.append(list(np.array(o_)[structure_layer[name]['output_input'][0]].reshape(-1)))
@@ -137,13 +126,29 @@ class Generator(BaseFunctions):
         blocks_type = []
         o, i = [], []
         blocks_type, count, connection_matrix_out, connection_matrix_in, o_, i_ = \
-            self.generate_connection_matrix_layer(blocks_type, count, layer, structure_type,
+            self.generate_connection_matrix_reservoir_layer(blocks_type, count, layer, structure_type,
                                                   connection_matrix_out, connection_matrix_in)
         connection_matrix_out.extend(list(np.array(o_)[structure_reservoir['components']['structure'][0]].reshape(-1)))
         connection_matrix_in.extend(list(np.array(i_)[structure_reservoir['components']['structure'][1]].reshape(-1)))
         o.append(list(np.array(o_)[structure_reservoir['components']['output_input'][0]].reshape(-1)))
         i.append(list(np.array(i_)[structure_reservoir['components']['output_input'][1]].reshape(-1)))
         return blocks_type, np.array(connection_matrix_out, connection_matrix_in), o, i
+
+
+class Generator(Generator_connection_matrix):
+    '''
+     Initialize the parameters of the neurons or synapses.
+
+     Parameters
+     ----------
+     # some public used such as random_state.
+     '''
+
+    def __init__(self, random_state):
+        super().__init__(random_state)
+
+    def register_decoder(self, decoder):
+        self.decoder = decoder
 
     def generate_block(self, name, get_parameter_structure, get_matrix):
         parameter_structure = get_parameter_structure()
@@ -175,8 +180,8 @@ class Generator(BaseFunctions):
 
     def generate_reservoir(self):
         reservoir = Reservoir()
-        block_type = self.decoder.get_block_type()
-        structure_type = self.decoder.structure_type()
+        block_type = self.decoder.get_reservoir_block_type()
+        structure_type = self.decoder.get_reservoir_structure_type()
         nodes_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
         block_group = self.generate_blocks(block_type, nodes_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
