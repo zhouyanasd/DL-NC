@@ -14,7 +14,7 @@ import numpy as np
 class Decoder(BaseFunctions):
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
                       config_precisions, config_scales):
-        super.__init__()
+        super(Decoder).__init__()
         self.config_group = config_group
         self.config_keys = config_keys
         self.config_codes = config_codes
