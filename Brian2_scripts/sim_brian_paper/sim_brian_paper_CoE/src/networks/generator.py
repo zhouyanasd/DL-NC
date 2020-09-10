@@ -195,7 +195,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_encoding(self):
         block_group = BlockGroup()
-        N = self.decoder.get_encoding_structure()
+        # N = self.decoder.get_encoding_structure()
         block = Block(N, np.array([],[]))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = '0',
                              refractory = 0 * ms , name='block_encoding')
@@ -204,7 +204,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_readout(self):
         block_group = BlockGroup()
-        N = self.decoder.get_encoding_structure()
+        # N = self.decoder.get_encoding_structure()
         block = Block(N, np.array([],[]))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = None, name='block_readout')

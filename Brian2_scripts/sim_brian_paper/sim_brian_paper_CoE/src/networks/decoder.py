@@ -83,14 +83,16 @@ class Decoder(BaseFunctions):
         self.Gen = Gen
 
     def decode(self, target):
-        group = np.where(self.config_group == target)[0]
+        group = np.where(np.array(self.config_group) == target)[0][0]
         key = self.config_keys[group]
         SubCom = self.config_SubCom[group]
         codes = self.config_codes[group]
+        ranges = self.config_ranges[group]
         parameter = {}
-        for p,k,c in zip(self.Gen[SubCom], key, codes):
+        for p,k,c,r in zip(np.array(self.Gen)[SubCom], key, codes, ranges):
             if c != None:
-                p = self.dec2bin(p)
+                l = len(self.dec2bin((r[1]-r[0]), 0))
+                p = self.dec2bin(p, l)
             parameter[k] = p
         return parameter
 
@@ -116,25 +118,21 @@ class Decoder(BaseFunctions):
 
     def get_reservoir_structure_type(self):
         parameter = self.decode('Reservoir')
-        return parameter['layer_1', 'layer_2'].values()
+        return parameter['layer_1'], parameter['layer_2']
 
-    def get_encoding_structure(self):
-        pass
-
-    def get_readout_structure(self):
-        pass
-
-    def get_parameters_blocks(self):
-        pass
+    # def get_encoding_structure(self):
+    #     pass
+    #
+    # def get_readout_structure(self):
+    #     pass
 
     def get_parameters_reservoir(self):
-        pass
+        parameter = self.decode('Reservoir')
+        parameter.pop('layer_1')
+        parameter.pop('layer_2')
+        parameter.pop('block')
+        return parameter
 
-    def get_parameters_encoding(self):
-        pass
-
-    def get_parameters_readout(self):
-        pass
-
-    def get_parameters_network(self):
-        pass
+    def get_parameters_encoding_readout(self):
+        parameter = self.decode('Encoding_Readout')
+        return parameter
