@@ -140,8 +140,9 @@ class BlockGroup(BaseFunctions):
         super().__init__()
         self.N = 0
         self.blocks = []
+        self.blocks_type = []
 
-    def add_block(self, block):
+    def add_block(self, block, type):
         '''
          Add block to the block group.
 
@@ -151,6 +152,7 @@ class BlockGroup(BaseFunctions):
          '''
 
         self.blocks.append(block)
+        self.blocks_type.append(type)
         self.N += 1
 
     def initialize(self, parameter_neuron = None, parameter_synapse  = None):

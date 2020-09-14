@@ -120,11 +120,11 @@ class Decoder(BaseFunctions):
         parameter = self.decode('Reservoir')
         return parameter['layer_1'], parameter['layer_2']
 
-    # def get_encoding_structure(self):
-    #     pass
-    #
-    # def get_readout_structure(self):
-    #     pass
+    def get_encoding_structure(self):
+        pass
+
+    def get_readout_structure(self):
+        pass
 
     def get_parameters_reservoir(self):
         parameter = self.decode('Reservoir')
@@ -136,3 +136,6 @@ class Decoder(BaseFunctions):
     def get_parameters_encoding_readout(self):
         parameter = self.decode('Encoding_Readout')
         return parameter
+
+    def get_parameters_initialization(self):
+        pass

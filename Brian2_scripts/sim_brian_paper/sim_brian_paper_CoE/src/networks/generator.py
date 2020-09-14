@@ -170,7 +170,7 @@ class Generator(Generator_connection_matrix):
             block_decoder = self.block_decoder_type[type]
             block_generator = self.block_generator_type[type]
             block = self.generate_block(type + '_' + str(index), block_decoder, block_generator)
-            block_group.add_block(block)
+            block_group.add_block(block, type)
         return block_group
 
     def generate_pathway(self, name, pre_group, post_group, connection_matrix, model, model_pre, model_post):
@@ -182,8 +182,8 @@ class Generator(Generator_connection_matrix):
         reservoir = Reservoir()
         block_type = self.decoder.get_reservoir_block_type()
         structure_type = self.decoder.get_reservoir_structure_type()
-        nodes_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
-        block_group = self.generate_blocks(block_type, nodes_type)
+        blocks_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
+        block_group = self.generate_blocks(block_type, blocks_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
                                         dynamics_synapse_post_STDP)
@@ -195,7 +195,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_encoding(self):
         block_group = BlockGroup()
-        # N = self.decoder.get_encoding_structure() 还是需要N的，但是这里的N由输入决定。
+        N = self.decoder.get_encoding_structure() #还是需要N的，但是这里的N由输入决定。
         block = Block(N, np.array([],[]))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = '0',
                              refractory = 0 * ms , name='block_encoding')
@@ -204,7 +204,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_readout(self):
         block_group = BlockGroup()
-        # N = self.decoder.get_encoding_structure()
+        N = self.decoder.get_encoding_structure()
         block = Block(N, np.array([],[]))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = None, name='block_readout')
@@ -239,8 +239,11 @@ class Generator(Generator_connection_matrix):
         network.connect()
         return network
 
+    def initialize(self, network):
+        parameters = self.decoder.get_parameters_initialization()
+        network.initialize(parameters)
+
     def generate_and_initialize(self):
         network = self.generate_network()
-        parameters = self.decoder.get_parameters_network()
-        network.initialize(parameters)
+        self.initialize(network)
         return network
