@@ -3,6 +3,8 @@ import scipy as sp
 
 from brian2 import NeuronGroup, Synapses
 
+from operator import itemgetter
+
 
 class MathFunctions():
     """
@@ -21,6 +23,11 @@ class BaseFunctions():
     Some basic functions for the simulations
 
     """
+
+    def get_sub_dict(self, _dict, *keys):
+        values = itemgetter(*keys)(_dict)
+        _sub_dict = dict(zip(keys, values))
+        return _sub_dict
 
     def initialize_parameters(self, object, parameter_name, parameter_value):
         '''

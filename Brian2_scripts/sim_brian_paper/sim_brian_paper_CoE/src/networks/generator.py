@@ -39,7 +39,7 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_circle(self, N, p_forward, p_backward, threshold):
+    def generate_connection_matrix_circle(self, N, p_forward, p_backward, p_threshold):
         connection_matrix_out, connection_matrix_in = [], []
         nodes = np.arange(N)
         start = np.random.randint(0, N)
@@ -55,10 +55,10 @@ class Generator_connection_matrix(BaseFunctions):
             for index_post, node_post in enumerate(circle[index_pre+1:N+index_pre+1]):
                 distance = index_post
                 decay = (N-distance-1)/(N-1)
-                if np.random.rand() <= p_forward * (decay - threshold):
+                if np.random.rand() <= p_forward * (decay - p_threshold):
                     connection_matrix_out.append(node_pre)
                     connection_matrix_in.append(node_post)
-                if np.random.rand() <= p_backward * (decay - threshold):
+                if np.random.rand() <= p_backward * (decay - p_threshold):
                     connection_matrix_out.append(node_post)
                     connection_matrix_in.append(node_pre)
         return np.array(connection_matrix_out, connection_matrix_in)
@@ -152,7 +152,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_block(self, name, get_parameter_structure, get_matrix):
         parameter_structure = get_parameter_structure()
-        connect_matrix = get_matrix(parameter_structure)
+        connect_matrix = get_matrix('structure', parameter_structure)
         block = Block(parameter_structure['N'], connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + name)

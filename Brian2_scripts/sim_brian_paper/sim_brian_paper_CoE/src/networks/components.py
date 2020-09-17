@@ -367,6 +367,18 @@ class LSM_Network(BaseFunctions):
         for pathway in self.pathways:
             pathway.connect()
 
+    def _initialize(self, components, **parameter):
+        '''
+         Initialize all the parameters in the network.
+
+         Parameters
+         ----------
+         **parameter: dict{key:str, value:list}
+         '''
+        for key, component in zip(components.keys(), components.values()):
+            if parameter[key] != None:
+                component.initialize(parameter[key])
+
     def initialize(self, **parameter):
         '''
          Initialize all the parameters in the network.
@@ -375,10 +387,8 @@ class LSM_Network(BaseFunctions):
          ----------
          **parameter: dict{key:str, value:list}
          '''
-        for key, layer in zip(self.layers.keys(), self.layers.values()):
-            layer.initialize(parameter[key])
-        for key, pathway in zip(self.pathway.keys(), self.pathway.values()):
-            pathway.initialize(parameter[key])
+        self._initialize(self.layers, **parameter)
+        self._initialize(self.pathways, **parameter)
 
     def join_network(self, net):
         '''

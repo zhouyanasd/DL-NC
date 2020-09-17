@@ -72,7 +72,7 @@ structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_inpu
 Reservoir = ['block', 'layer_1', 'layer_2', 'strength', 'plasticity']
 Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p']
 Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
-Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'threshold']
+Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
 Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
 Encoding_Readout = ['strength', 'plasticity']
 
