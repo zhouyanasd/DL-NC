@@ -165,11 +165,11 @@ class BlockGroup(BaseFunctions):
          neuron and synapse.
          '''
 
-        for block, p_n, p_s in zip(self.blocks, parameter_neuron, parameter_synapse):
+        for block, block_type in zip(self.blocks, self.blocks_type):
             if parameter_neuron != None:
-                block.initialize(block.neurons, **p_n)
+                block.initialize(block.neurons, **parameter_neuron[block_type])
             if parameter_synapse != None:
-                block.initialize(block.synapses, **p_s)
+                block.initialize(block.synapses, **parameter_synapse[block_type])
 
     def join_network(self, net):
         '''
@@ -222,8 +222,8 @@ class Pathway(BaseFunctions):
             self.initialize_parameters(synapses, key, converted_value)
 
     def initialize(self, parameter_synapse):
-        for synapses, p_s in zip(self.synapse, parameter_synapse):
-            self._initialize(synapses, **p_s)
+        for synapses in self.synapse:
+            self._initialize(synapses, **parameter_synapse)
 
     def join_network(self, net):
         '''
@@ -377,7 +377,7 @@ class LSM_Network(BaseFunctions):
          '''
         for key, layer in zip(self.layers.keys(), self.layers.values()):
             layer.initialize(parameter[key])
-        for pathway in self.pathways:
+        for key, pathway in zip(self.pathway.keys(), self.pathway.values()):
             pathway.initialize(parameter[key])
 
     def join_network(self, net):

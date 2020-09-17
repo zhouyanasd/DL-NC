@@ -7,7 +7,6 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import BayesianOptimization
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import create_surrogate
 
 import time

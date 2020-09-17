@@ -140,5 +140,6 @@ class Decoder(BaseFunctions):
     def get_parameters_initialization(self):
         parameters = {}
         parameters['Reservoir'] = self.get_parameters_reservoir()
-        parameters['Encoding_Readout'] = self.get_parameters_encoding_readout()
+        parameters['Encoding'] = self.get_parameters_encoding_readout()
+        parameters['']
         return parameters
