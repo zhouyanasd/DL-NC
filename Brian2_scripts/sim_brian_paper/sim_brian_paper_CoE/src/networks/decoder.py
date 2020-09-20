@@ -137,11 +137,31 @@ class Decoder(BaseFunctions):
 
     def get_reservoir_block_type(self):
         parameter = self.decode('Reservoir')
-        return parameter['block']
+        type_b = parameter['block']
+        type_d = [self.bin2dec(type_b[0:2]), self.bin2dec(type_b[2:4]),
+                  self.bin2dec(type_b[4:6]), self.bin2dec(type_b[6:])]
+        type_s = [self.structure_settings['structure_blocks']['components' + str(type_d[0])],
+                  self.structure_settings['structure_blocks']['components' + str(type_d[1])],
+                  self.structure_settings['structure_blocks']['components' + str(type_d[2])],
+                  self.structure_settings['structure_blocks']['components' + str(type_d[3])]]
+        return type_s
 
     def get_reservoir_structure_type(self):
         parameter = self.decode('Reservoir')
-        return parameter['layer_1'], parameter['layer_2']
+        type_b = parameter['layer_1'], parameter['layer_2']
+        type_d = [self.bin2dec(type_b[0][0:2]), self.bin2dec(type_b[0][2:4]),
+                  self.bin2dec(type_b[0][4:6]), self.bin2dec(type_b[0][6:])],\
+                 [self.bin2dec(type_b[1][0:2]), self.bin2dec(type_b[1][2:4]),
+                  self.bin2dec(type_b[1][4:6]), self.bin2dec(type_b[1][6:])]
+        type_s = [self.structure_settings['structure_layer']['components' + str(type_d[0][0])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[0][1])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[0][2])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[0][3])]],\
+                 [self.structure_settings['structure_layer']['components' + str(type_d[1][0])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[1][1])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[1][2])],
+                  self.structure_settings['structure_layer']['components' + str(type_d[1][3])]]
+        return type_s
 
     def get_encoding_structure(self):
         pass
@@ -150,10 +170,7 @@ class Decoder(BaseFunctions):
         pass
 
     def get_parameters_reservoir(self):
-        parameter = self.decode('Reservoir')
-        parameter.pop('layer_1')
-        parameter.pop('layer_2')
-        parameter.pop('block')
+        parameter = self.get_sub_dict(self.decode('Reservoir'), 'plasticity', 'strength')
         return parameter
 
     def get_parameters_encoding_readout(self):
@@ -166,8 +183,11 @@ class Decoder(BaseFunctions):
         parameters_block_synapses = {}
         block_types = self.get_reservoir_block_type()
         for block_type in block_types:
-            # self.structure_settings['structure_blocks']
-            pass
+            parameters_block_neurons[block_type] = self.get_sub_dict(self.block_decoder_type[block_type]('parameter'),
+                                                                     'tau', 'threshold')
+            parameters_block_synapses[block_type] = self.get_sub_dict(self.block_decoder_type[block_type]('parameter'),
+                                                                      'plasticity', 'strength', 'type')
+
         parameters['reservoir'] = {'parameter_block_neurons':parameters_block_neurons,
                                    'parameter_block_synapses':parameters_block_synapses,
                                    'parameter_pathway': self.get_parameters_reservoir()}

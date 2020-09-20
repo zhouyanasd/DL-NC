@@ -56,10 +56,10 @@ reset_reservoir = 'v = 13.5'
 refractory_reservoir = 3 * ms
 
 # --- reservoir layer structure ---
-structure_blocks = {'components_1':'Block_random',
-                    'components_2':'Block_scale_free',
-                    'components_3':'Block_circle',
-                    'components_4':'Block_hierarchy'}
+structure_blocks = {'components_1':'random',
+                    'components_2':'scale_free',
+                    'components_3':'circle',
+                    'components_4':'hierarchy'}
 
 structure_layer = {'components_1':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
                     'components_2': {'structure':[[0,0,0,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},

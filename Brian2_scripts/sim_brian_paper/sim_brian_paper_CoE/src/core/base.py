@@ -71,7 +71,7 @@ class BaseFunctions():
     def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
         pass
 
-    def bin2Dec(self, binary):
+    def bin2dec(self, binary):
         result = 0
         for i in range(len(binary)):
             result += int(binary[-(i + 1)]) * pow(2, i)
