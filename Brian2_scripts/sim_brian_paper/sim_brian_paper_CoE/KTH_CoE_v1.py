@@ -76,11 +76,6 @@ np_state = np.random.get_state()
 
 # --- basic settings ---
 neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
-reservoir_input = 1
-blocks_input = 1
-blocks_output = 1
-blocks_reservoir = 10
-neurons_block = 10
 
 # # --- parameters needs to be update by optimizer ---
 # gen = 'for example'
@@ -91,7 +86,9 @@ decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config
                   config_precisions, config_scales)
 decoder.set_structure_settings(structure_blocks = structure_blocks,
                                structure_layer = structure_layer,
-                               structure_reservoir = structure_reservoir)
+                               structure_reservoir = structure_reservoir,
+                               neurons_encoding = neurons_encoding)
+
 generator = Generator(np_state)
 generator.register_decoder(decoder)
 

@@ -164,7 +164,7 @@ class Decoder(BaseFunctions):
         return type_s
 
     def get_encoding_structure(self):
-        pass
+        return self.structure_settings['neurons_encoding']
 
     def get_readout_structure(self):
         pass
