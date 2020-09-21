@@ -377,7 +377,7 @@ class LSM_Network(BaseFunctions):
          '''
         for key, component in zip(components.keys(), components.values()):
             if parameter[key] != None:
-                component.initialize(parameter[key])
+                component.initialize(**parameter[key])
 
     def initialize(self, **parameter):
         '''

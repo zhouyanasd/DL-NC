@@ -56,15 +56,15 @@ reset_reservoir = 'v = 13.5'
 refractory_reservoir = 3 * ms
 
 # --- reservoir layer structure ---
-structure_blocks = {'components_1':'random',
-                    'components_2':'scale_free',
-                    'components_3':'circle',
-                    'components_4':'hierarchy'}
+structure_blocks = {'components_0':'random',
+                    'components_1':'scale_free',
+                    'components_2':'circle',
+                    'components_3':'hierarchy'}
 
-structure_layer = {'components_1':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
-                    'components_2': {'structure':[[0,0,0,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},
-                    'components_3': {'structure':[[0,0,1,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},
-                    'components_4': {'structure':[[0,0,1,3],[1,2,3,2]], 'output_input':[[2],[0]]}}
+structure_layer = {'components_0':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
+                    'components_1': {'structure':[[0,0,0,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},
+                    'components_2': {'structure':[[0,0,1,1,2],[1,2,3,3,3]], 'output_input':[[3],[0]]},
+                    'components_3': {'structure':[[0,0,1,3],[1,2,3,2]], 'output_input':[[2],[0]]}}
 
 structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 

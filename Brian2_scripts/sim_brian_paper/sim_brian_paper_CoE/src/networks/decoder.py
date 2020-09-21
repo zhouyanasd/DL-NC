@@ -140,10 +140,10 @@ class Decoder(BaseFunctions):
         type_b = parameter['block']
         type_d = [self.bin2dec(type_b[0:2]), self.bin2dec(type_b[2:4]),
                   self.bin2dec(type_b[4:6]), self.bin2dec(type_b[6:])]
-        type_s = [self.structure_settings['structure_blocks']['components' + str(type_d[0])],
-                  self.structure_settings['structure_blocks']['components' + str(type_d[1])],
-                  self.structure_settings['structure_blocks']['components' + str(type_d[2])],
-                  self.structure_settings['structure_blocks']['components' + str(type_d[3])]]
+        type_s = [self.structure_settings['structure_blocks']['components_' + str(type_d[0])],
+                  self.structure_settings['structure_blocks']['components_' + str(type_d[1])],
+                  self.structure_settings['structure_blocks']['components_' + str(type_d[2])],
+                  self.structure_settings['structure_blocks']['components_' + str(type_d[3])]]
         return type_s
 
     def get_reservoir_structure_type(self):
@@ -153,14 +153,14 @@ class Decoder(BaseFunctions):
                   self.bin2dec(type_b[0][4:6]), self.bin2dec(type_b[0][6:])],\
                  [self.bin2dec(type_b[1][0:2]), self.bin2dec(type_b[1][2:4]),
                   self.bin2dec(type_b[1][4:6]), self.bin2dec(type_b[1][6:])]
-        type_s = [self.structure_settings['structure_layer']['components' + str(type_d[0][0])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[0][1])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[0][2])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[0][3])]],\
-                 [self.structure_settings['structure_layer']['components' + str(type_d[1][0])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[1][1])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[1][2])],
-                  self.structure_settings['structure_layer']['components' + str(type_d[1][3])]]
+        type_s = [self.structure_settings['structure_layer']['components_' + str(type_d[0][0])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[0][1])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[0][2])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[0][3])]],\
+                 [self.structure_settings['structure_layer']['components_' + str(type_d[1][0])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[1][1])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[1][2])],
+                  self.structure_settings['structure_layer']['components_' + str(type_d[1][3])]]
         return type_s
 
     def get_encoding_structure(self):
