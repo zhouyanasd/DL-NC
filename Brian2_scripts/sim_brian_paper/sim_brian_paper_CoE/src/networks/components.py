@@ -210,6 +210,7 @@ class Pathway(BaseFunctions):
         self.blocks_pre = blocks_pre
         self.blocks_post = blocks_post
         self.synapses_group = []
+        self.connect_type = 'full'
 
     def create_synapse(self, model, on_pre, on_post,  name = name, **kwargs):
         for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
@@ -218,14 +219,20 @@ class Pathway(BaseFunctions):
             self.synapses_group.append(synapses)
 
     def connect(self):
-        for index, synapses in enumerate(self.synapses_group):
-            block_pre = self.blocks_pre[self.pre[index]]
-            block_post = self.blocks_post[self.post[index]]
-            connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
-            synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
+        if self.connect_type == 'full':
+            for index, synapses in enumerate(self.synapses_group):
+                block_pre = self.blocks_pre[self.pre[index]]
+                block_post = self.blocks_post[self.post[index]]
+                connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
+                synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
+        elif self.connect_type == 'one_by_one':
+            count = 0
+            for index, synapses in enumerate(self.synapses_group):
+                block_pre = self.blocks_pre[self.pre[index]]
+                block_post = self.blocks_post[self.post[index]]
+                connect_matrix = self.np_one_combination(block_pre.output, block_post.input)
+                synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
 
-    def connect_readout(self):
-        pass
 
     def _initialize(self, synapses, **kwargs):
         for key, value in zip(kwargs.keys(), kwargs.values()):
@@ -383,7 +390,7 @@ class LSM_Network(BaseFunctions):
          Parameters
          ----------
          '''
-        for pathway in self.pathways:
+        for pathway in self.pathways.values():
             pathway.connect()
 
     def _initialize(self, components, **parameter):

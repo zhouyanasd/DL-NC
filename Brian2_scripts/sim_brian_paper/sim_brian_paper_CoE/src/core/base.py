@@ -62,6 +62,9 @@ class BaseFunctions():
                 y.append(j)
         return np.array[x, y]
 
+    def np_one_combination(self,a , b):
+        pass
+
     def connection_matrix_to_adjacent_matrix(self, n, connection_matrix):
         adjacent_matrix = np.zeros(shape=(n, n), dtype='int')
         for a,b in zip(connection_matrix[0],connection_matrix[1]):
