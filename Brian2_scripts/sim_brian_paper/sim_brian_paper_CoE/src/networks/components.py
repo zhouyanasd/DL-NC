@@ -141,6 +141,15 @@ class BlockGroup(BaseFunctions):
         self.blocks = []
         self.blocks_type = []
 
+    def get_neurons_count(self, blocks = None):
+        if blocks == None:
+            blocks_ = self.blocks
+        else:
+            blocks_= blocks
+        N_neurons = 0
+        for block in blocks_:
+            N_neurons += block.N
+
     def add_block(self, block, type):
         '''
          Add block to the block group.
@@ -215,6 +224,9 @@ class Pathway(BaseFunctions):
             connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
             synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
 
+    def connect_readout(self):
+        pass
+
     def _initialize(self, synapses, **kwargs):
         for key, value in zip(kwargs.keys(), kwargs.values()):
             converted_value = self.get_parameters(self.connect_matrix, value)
@@ -251,6 +263,14 @@ class Reservoir(BaseFunctions):
         super().__init__()
         self.block_group = None
         self.pathway = None
+
+    @property
+    def input_neurons_count(self):
+        return self.block_group.get_neurons_count(self.input)
+
+    @property
+    def output_neurons_count(self):
+        return self.block_group.get_neurons_count(self.output)
 
     def register_input_output(self, o, i):
         '''

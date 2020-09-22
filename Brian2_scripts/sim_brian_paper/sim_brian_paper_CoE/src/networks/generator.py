@@ -203,9 +203,9 @@ class Generator(Generator_connection_matrix):
         block_group.add_block(block)
         return block_group
 
-    def generate_readout(self):
+    def generate_readout(self, reservoir):
         block_group = BlockGroup()
-        N = self.decoder.get_encoding_structure()
+        N = reservoir.output_neurons_count
         block = Block(N, np.array([],[]))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = None, name='block_readout')
@@ -229,7 +229,7 @@ class Generator(Generator_connection_matrix):
         network = LSM_Network()
         encoding = self.generate_encoding()
         reservoir = self.generate_reservoir()
-        readout = self.generate_readout()
+        readout = self.generate_readout(reservoir)
         pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
         pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
 

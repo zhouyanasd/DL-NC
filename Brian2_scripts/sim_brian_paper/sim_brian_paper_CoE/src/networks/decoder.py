@@ -166,9 +166,6 @@ class Decoder(BaseFunctions):
     def get_encoding_structure(self):
         return self.structure_settings['neurons_encoding']
 
-    def get_readout_structure(self):
-        pass
-
     def get_parameters_reservoir(self):
         parameter = self.get_sub_dict(self.decode('Reservoir'), 'plasticity', 'strength')
         return parameter
