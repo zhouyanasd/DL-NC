@@ -13,7 +13,7 @@ import numpy as np
 
 class Decoder(BaseFunctions):
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales):
+                      config_precisions, config_scales, neurons_encoding):
         super(Decoder).__init__()
         self.config_group = config_group
         self.config_keys = config_keys
@@ -27,6 +27,7 @@ class Decoder(BaseFunctions):
                                    'scale_free':self.decode_block_scale_free,
                                    'circle':self.decode_block_circle,
                                    'hierarchy':self.decode_block_hierarchy}
+        self.neurons_encoding = neurons_encoding
 
     @property
     def get_keys(self):
@@ -78,9 +79,6 @@ class Decoder(BaseFunctions):
         for group_scales in self.config_scales:
             scales.extend(group_scales)
         return np.array(scales)
-
-    def set_structure_settings(self, **structure):
-        self.structure_settings = structure
 
     def register(self, Gen):
         self.Gen = Gen
@@ -140,31 +138,19 @@ class Decoder(BaseFunctions):
         type_b = parameter['block']
         type_d = [self.bin2dec(type_b[0:2]), self.bin2dec(type_b[2:4]),
                   self.bin2dec(type_b[4:6]), self.bin2dec(type_b[6:])]
-        type_s = [self.structure_settings['structure_blocks']['components_' + str(type_d[0])],
-                  self.structure_settings['structure_blocks']['components_' + str(type_d[1])],
-                  self.structure_settings['structure_blocks']['components_' + str(type_d[2])],
-                  self.structure_settings['structure_blocks']['components_' + str(type_d[3])]]
-        return type_s
+        return type_d
 
-    def get_reservoir_structure_type(self):
+    def get_reservoir_structure_type_(self):
         parameter = self.decode('Reservoir')
         type_b = parameter['layer_1'], parameter['layer_2']
         type_d = [self.bin2dec(type_b[0][0:2]), self.bin2dec(type_b[0][2:4]),
                   self.bin2dec(type_b[0][4:6]), self.bin2dec(type_b[0][6:])],\
                  [self.bin2dec(type_b[1][0:2]), self.bin2dec(type_b[1][2:4]),
                   self.bin2dec(type_b[1][4:6]), self.bin2dec(type_b[1][6:])]
-        type_s = [self.structure_settings['structure_layer']['components_' + str(type_d[0][0])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[0][1])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[0][2])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[0][3])]],\
-                 [self.structure_settings['structure_layer']['components_' + str(type_d[1][0])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[1][1])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[1][2])],
-                  self.structure_settings['structure_layer']['components_' + str(type_d[1][3])]]
-        return type_s
+        return type_d
 
     def get_encoding_structure(self):
-        return self.structure_settings['neurons_encoding']
+        return self.neurons_encoding
 
     def get_parameters_reservoir(self):
         parameter = self.get_sub_dict(self.decode('Reservoir'), 'plasticity', 'strength')

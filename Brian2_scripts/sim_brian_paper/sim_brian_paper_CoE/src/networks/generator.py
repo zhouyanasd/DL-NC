@@ -97,29 +97,30 @@ class Generator_connection_matrix(BaseFunctions):
         blocks_type_ = blocks_type
         if layer > 0 :
             o, i = [],[]
-            for name in structure_type[layer]:
+            for gen in structure_type[layer]:
+                component = structure_layer['components_' + str(gen)]
                 blocks_type_, count_, cmo_, cmi_, o_, i_ = \
                     self.generate_connection_matrix_reservoir_layer(blocks_type_, count_, layer-1, structure_type, cmo_, cmi_)
-                cmo_.extend(list(np.array(o_)[structure_layer[name]['structure'][0]].reshape(-1)))
-                cmi_.extend(list(np.array(i_)[structure_layer[name]['structure'][1]].reshape(-1)))
-                o.append(list(np.array(o_)[structure_layer[name]['output_input'][0]].reshape(-1)))
-                i.append(list(np.array(i_)[structure_layer[name]['output_input'][1]].reshape(-1)))
+                cmo_.extend(list(np.array(o_)[component['structure'][0]].reshape(-1)))
+                cmi_.extend(list(np.array(i_)[component['structure'][1]].reshape(-1)))
+                o.append(list(np.array(o_)[component['output_input'][0]].reshape(-1)))
+                i.append(list(np.array(i_)[component['output_input'][1]].reshape(-1)))
             return blocks_type_, count_, cmo_, cmi_, o, i
         else:
             o, i = [],[]
-            for name in structure_type[layer]:
-                cmo_.extend(list(np.array(structure_layer[name]['structure'][0]) + count_))
-                cmi_.extend(list(np.array(structure_layer[name]['structure'][1]) + count_))
-                o.append(list(np.array(structure_layer[name]['output_input'][0]) + count_))
-                i.append(list(np.array(structure_layer[name]['output_input'][1]) + count_))
-                n = max(structure_layer[name]['structure'][0] + structure_layer[name]['structure'][1]) + 1
+            for gen in structure_type[layer]:
+                component = structure_layer['components_' + str(gen)]
+                cmo_.extend(list(np.array(component['structure'][0]) + count_))
+                cmi_.extend(list(np.array(component['structure'][1]) + count_))
+                o.append(list(np.array(component['output_input'][0]) + count_))
+                i.append(list(np.array(component['output_input'][1]) + count_))
+                n = max(component['structure'][0] + component['structure'][1]) + 1
                 count_ = count_ + n
                 blocks_type_.extend(list(np.arange(n)))
             return blocks_type_, count_, cmo_, cmi_, o, i
 
     def generate_connection_matrix_reservoir(self, structure_type):
-        # structure_type = [['components_1','components_2','components_1','components_2'],
-        # ['components_3','components_4','components_3','components_4']]
+        # structure_type = ([2, 0, 0, 1], [3, 3, 2, 3])
         connection_matrix_out, connection_matrix_in = [], []
         layer = len(structure_type)-1
         count = 0
@@ -172,10 +173,11 @@ class Generator(Generator_connection_matrix):
         block_group = BlockGroup()
         for index, block in enumerate(blocks_type):
             type = block_type[block]
-            block_decoder = self.block_decoder_type[type]
-            block_generator = self.block_generator_type[type]
-            block = self.generate_block(type + '_' + str(index), block_decoder, block_generator)
-            block_group.add_block(block, type)
+            component = structure_blocks['components_' + str(type)]
+            block_decoder = self.block_decoder_type[component]
+            block_generator = self.block_generator_type[component]
+            block = self.generate_block(component + '_' + str(index), block_decoder, block_generator)
+            block_group.add_block(block, component)
         return block_group
 
     def generate_reservoir(self):

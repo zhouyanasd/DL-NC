@@ -80,11 +80,7 @@ neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size
 ##-----------------------------------------------------
 #--- create generator and decoder ---
 decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                  config_precisions, config_scales)
-decoder.set_structure_settings(structure_blocks = structure_blocks,
-                               structure_layer = structure_layer,
-                               structure_reservoir = structure_reservoir,
-                               neurons_encoding = neurons_encoding)
+                  config_precisions, config_scales, neurons_encoding)
 
 generator = Generator(np_state)
 generator.register_decoder(decoder)
