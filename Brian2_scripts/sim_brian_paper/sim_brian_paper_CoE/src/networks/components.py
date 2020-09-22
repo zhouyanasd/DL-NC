@@ -96,7 +96,6 @@ class Block(BaseFunctions):
          '''
 
         self.synapse.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
-        self.determine_input_output()
 
     def initialize(self, NorS, **kwargs):
         '''

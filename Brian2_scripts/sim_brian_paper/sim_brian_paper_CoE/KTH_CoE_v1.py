@@ -53,9 +53,6 @@ Dt = defaultclock.dt = 1 * ms
 standard_tau = 100
 
 # -------class initialization----------------------
-# math_function = MathFunctions()
-# base_function = BaseFunctions()
-# evaluate = Evaluation()
 KTH = KTH_classification()
 
 # -------data initialization----------------------
@@ -98,8 +95,9 @@ def run_net(inputs, gen):
 
     #--- create network ---
     net = Network()
-    LSM_network = generator.generate_and_initialize()
-    LSM_network.join_network(net)
+    LSM_network = generator.generate_network()
+    generator.initialize(LSM_network)
+    generator.join(net, LSM_Network)
     net.store('init')
 
     #--- run network ---

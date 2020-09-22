@@ -163,6 +163,11 @@ class Generator(Generator_connection_matrix):
         block.determine_input_output()
         return block
 
+    def generate_pathway(self, name, pre_group, post_group, connection_matrix, model, model_pre, model_post):
+        pathway = Pathway(pre_group.blocks, post_group.blocks, connection_matrix)
+        pathway.create_synapse(model, model_pre, model_post,  name = name)
+        return pathway
+
     def generate_blocks(self, block_type, blocks_type):
         block_group = BlockGroup()
         for index, block in enumerate(blocks_type):
@@ -172,11 +177,6 @@ class Generator(Generator_connection_matrix):
             block = self.generate_block(type + '_' + str(index), block_decoder, block_generator)
             block_group.add_block(block, type)
         return block_group
-
-    def generate_pathway(self, name, pre_group, post_group, connection_matrix, model, model_pre, model_post):
-        pathway = Pathway(pre_group.blocks, post_group.blocks, connection_matrix)
-        pathway.create_synapse(model, model_pre, model_post,  name = name)
-        return pathway
 
     def generate_reservoir(self):
         reservoir = Reservoir()
@@ -245,7 +245,5 @@ class Generator(Generator_connection_matrix):
         parameters = self.decoder.get_parameters_initialization()
         network.initialize(parameters)
 
-    def generate_and_initialize(self):
-        network = self.generate_network()
-        self.initialize(network)
-        return network
+    def join(self, net, network):
+        network.join_network(net)
