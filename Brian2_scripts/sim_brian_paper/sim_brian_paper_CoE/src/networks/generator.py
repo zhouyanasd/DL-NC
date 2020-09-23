@@ -178,10 +178,9 @@ class Generator(Generator_connection_matrix):
         pathway.create_synapse(model, model_pre, model_post,  name = name)
         return pathway
 
-    def generate_blocks(self, block_type, blocks_type):
+    def generate_blocks(self, blocks_type):
         block_group = BlockGroup()
-        for index, block in enumerate(blocks_type):
-            type = block_type[block]
+        for index, type in enumerate(blocks_type):
             component = structure_blocks['components_' + str(type)]
             block_decoder = self.block_decoder_type[component]
             block_generator = self.block_generator_type[component]
@@ -194,7 +193,8 @@ class Generator(Generator_connection_matrix):
         block_type = self.decoder.get_reservoir_block_type()
         structure_type = self.decoder.get_reservoir_structure_type()
         blocks_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
-        block_group = self.generate_blocks(block_type, blocks_type)
+        blocks_type = np.array(block_type)(blocks_type)
+        block_group = self.generate_blocks(blocks_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
                                         dynamics_synapse_post_STDP)

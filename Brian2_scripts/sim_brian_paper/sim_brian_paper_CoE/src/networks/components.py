@@ -44,6 +44,7 @@ class Block(BaseFunctions):
         if random_state != None:
             np.random.seed(random_state)
         np.random.shuffle(self.neuron_property)
+        self.initialize_parameters(self.neurons, 'property', self.neuron_property)
 
     def determine_input_output(self):
         '''
@@ -55,7 +56,6 @@ class Block(BaseFunctions):
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
         self.input, self.output = topological_sorting_tarjan.suggest_inout()
-        self.initialize_parameters(self.neurons, 'property', self.neuron_property)
 
     def create_neurons(self, model, threshold, reset,refractory, name, **kwargs):
         '''
@@ -133,6 +133,7 @@ class BlockGroup(BaseFunctions):
     ----------
     N: int, the number of neurons.
     blocks: list[Block], the contained block list.
+    blocks_type: list[int], the block type order according to the basic blocks structure.
     """
 
     def __init__(self):
@@ -157,6 +158,7 @@ class BlockGroup(BaseFunctions):
          Parameters
          ----------
          block: Block, the object of Block.
+         type: int, the block type order according to the basic blocks structure.
          '''
 
         self.blocks.append(block)
@@ -240,8 +242,8 @@ class Pathway(BaseFunctions):
             for index, synapses in enumerate(self.synapses_group):
                 block_pre = self.blocks_pre[self.pre[index]]
                 block_post = self.blocks_post[self.post[index]]
-                synapses.connect(i = block_pre.output, j = block_post.input[count:count+block_post.input])
-                count = count + len(block_post.input)
+                synapses.connect(i = block_pre.output, j = block_post.input[count:count+len(block_pre.output)])
+                count = count + len(block_pre.output)
 
 
     def _initialize(self, synapses, **kwargs):
