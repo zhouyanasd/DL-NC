@@ -53,18 +53,6 @@ class BaseFunctions():
             parameter_list.append(parameter[index_i][index_j])
         return parameter_list
 
-    def np_two_combination(self, a, b):
-        x = []
-        y = []
-        for i in a:
-            for j in b:
-                x.append(i)
-                y.append(j)
-        return np.array[x, y]
-
-    def np_one_combination(self,a , b):
-        pass
-
     def connection_matrix_to_adjacent_matrix(self, n, connection_matrix):
         adjacent_matrix = np.zeros(shape=(n, n), dtype='int')
         for a,b in zip(connection_matrix[0],connection_matrix[1]):
@@ -118,19 +106,6 @@ class BaseFunctions():
         if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
-
-    def full_connected(self, n, p=1):
-        o,i = [],[]
-        for node_pre in np.arange(n):
-            for node_post in np.arange(n):
-                if node_pre == node_post:
-                    continue
-                elif np.random.rand()<=p:
-                    o.append(node_pre)
-                    i.append(node_post)
-                else:
-                    continue
-        return o,i
 
     def vis_block(self, edges):
         import networkx as nx

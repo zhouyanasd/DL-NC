@@ -97,19 +97,19 @@ class Block(BaseFunctions):
 
         self.synapse.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
 
-    def initialize(self, NorS, **kwargs):
+    def initialize(self, component, **kwargs):
         '''
          Initialize the parameters of the neurons or synapses.
 
          Parameters
          ----------
-         NorS: self.synapse or self.neurons.
+         component: self.synapse or self.neurons.
          kwargs: dict{key:str(name), value:np.array[n*1] or np.array[n*n]},
          extensible dict of parameters.
          '''
 
         for key, value in zip(kwargs.keys(), kwargs.values()):
-            self.initialize_parameters(NorS, key, value)
+            self.initialize_parameters(component, key, value)
 
     def join_network(self, net):
         '''
@@ -212,6 +212,12 @@ class Pathway(BaseFunctions):
         self.synapses_group = []
         self.connect_type = 'full'
 
+    def _set_connect_type(self, type):
+        if type in ['full', 'one_to_one']:
+            self.connect_type = type
+        else:
+            raise ("wrong connection type, only 'full' or 'one_to_one'.")
+
     def create_synapse(self, model, on_pre, on_post,  name = name, **kwargs):
         for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
             synapses = Synapses(self.blocks_pre[index_i].neurons, self.blocks_post[index_j].neurons, model, on_pre = on_pre,
@@ -223,15 +229,19 @@ class Pathway(BaseFunctions):
             for index, synapses in enumerate(self.synapses_group):
                 block_pre = self.blocks_pre[self.pre[index]]
                 block_post = self.blocks_post[self.post[index]]
-                connect_matrix = self.np_two_combination(block_pre.output, block_post.input)
+                connect_matrix = [[],[]]
+                for i in block_pre.output:
+                    for j in block_post.input:
+                        connect_matrix[0].append(i)
+                        connect_matrix[1].append(j)
                 synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
-        elif self.connect_type == 'one_by_one':
+        elif self.connect_type == 'one_to_one':
             count = 0
             for index, synapses in enumerate(self.synapses_group):
                 block_pre = self.blocks_pre[self.pre[index]]
                 block_post = self.blocks_post[self.post[index]]
-                connect_matrix = self.np_one_combination(block_pre.output, block_post.input)
-                synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
+                synapses.connect(i = block_pre.output, j = block_post.input[count:count+block_post.input])
+                count = count + len(block_post.input)
 
 
     def _initialize(self, synapses, **kwargs):

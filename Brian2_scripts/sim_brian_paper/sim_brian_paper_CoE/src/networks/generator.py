@@ -26,7 +26,16 @@ class Generator_connection_matrix(BaseFunctions):
                                    'hierarchy':self.generate_connection_matrix_hierarchy}
 
     def generate_connection_matrix_random(self, N, p):
-        connection_matrix_out, connection_matrix_in = self.full_connected(N, p)
+        connection_matrix_out, connection_matrix_in = [], []
+        for node_pre in np.arange(N):
+            for node_post in np.arange(N):
+                if node_pre == node_post:
+                    continue
+                elif np.random.rand() <= p:
+                    connection_matrix_out.append(node_pre)
+                    connection_matrix_in.append(node_post)
+                else:
+                    continue
         return np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_scale_free(self, N, p_alpha, p_beta, p_gama):
@@ -225,6 +234,7 @@ class Generator(Generator_connection_matrix):
         connection_matrix = [reservoir.output, [0]*len(reservoir.output)]
         pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
                                         'w = 1 : 1', dynamics_synapse_pre, None)
+        pathway._set_connect_type('one_to_one')
         return pathway
 
     def generate_network(self):

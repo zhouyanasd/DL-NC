@@ -74,9 +74,6 @@ np_state = np.random.get_state()
 # --- basic settings ---
 neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
 
-# # --- parameters needs to be update by optimizer ---
-# gen = 'for example'
-
 ##-----------------------------------------------------
 #--- create generator and decoder ---
 decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
