@@ -143,6 +143,14 @@ class BlockGroup(BaseFunctions):
         self.blocks_type = []
 
     def get_neurons_count(self, blocks = None):
+        '''
+         Count the total number of neurons int the blocks.
+
+         Parameters
+         ----------
+         blocks: list[Block], the block list for counting.
+         '''
+
         if blocks == None:
             blocks_ = self.blocks
         else:
@@ -329,10 +337,22 @@ class Reservoir(BaseFunctions):
 
     @property
     def input_neurons_count(self):
+        '''
+         Get the total number of neurons of the input.
+
+         Parameters
+         ----------
+         '''
         return self.block_group.get_neurons_count(self.input)
 
     @property
     def output_neurons_count(self):
+        '''
+         Get the total number of neurons of the output.
+
+         Parameters
+         ----------
+         '''
         return self.block_group.get_neurons_count(self.output)
 
     def register_input_output(self, o, i):
@@ -369,6 +389,15 @@ class Reservoir(BaseFunctions):
         self.pathway = pathway
 
     def initialize(self, parameter_block_neurons, parameter_block_synapses, parameter_pathway):
+        '''
+        Initialize the block group and pathway in the reservoir.
+
+         Parameters
+         ----------
+         parameter_block_neurons: dict{dict{dict}}, the parameters for neurons of blocks.
+         parameter_block_synapses: dict{dict{dict}}, the parameters for synapses of blocks.
+         parameter_pathway: dict, the parameters for pathway.
+         '''
         self.block_group.initialize(parameter_block_neurons,parameter_block_synapses)
         self.pathway.initialize(parameter_pathway)
 
@@ -448,6 +477,18 @@ class LSM_Network(BaseFunctions):
          Parameters
          ----------
          **parameter: dict{key:str, value:list}
+
+         Examples
+         ----------
+         {'encoding': None,
+          'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7},
+          'readout': None,
+          'reservoir_readout': None,
+          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6, 'threshold': 0.6},
+                                                    'random': {'tau': 0.3, 'threshold': 0.3}},
+                        'parameter_block_synapses': {'hierarchy': {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
+                                                     'random': {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
+                        'parameter_pathway': {'plasticity': 0.2, 'strength': 0.2}}}
          '''
         self._initialize(self.layers, **parameter)
         self._initialize(self.pathways, **parameter)
