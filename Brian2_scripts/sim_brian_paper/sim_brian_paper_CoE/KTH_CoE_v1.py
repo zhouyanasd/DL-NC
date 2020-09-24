@@ -29,6 +29,7 @@ from functools import partial
 from multiprocessing import Pool
 
 from brian2 import *
+from sklearn.preprocessing import MinMaxScaler
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
@@ -54,6 +55,7 @@ standard_tau = 100
 
 # -------class initialization----------------------
 KTH = KTH_classification()
+evaluator = Evaluation()
 
 # -------data initialization----------------------
 try:
@@ -94,7 +96,7 @@ def run_net(inputs, gen):
     net.store('init')
 
     #--- run network ---
-    inputs = zip(data_train_s, label_train)[0]
+    # inputs = zip(data_train_s, label_train)[0]
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
@@ -104,8 +106,39 @@ def run_net(inputs, gen):
 
 @Timelog
 @AddParaName
-def parameters_search(**parameter):
-    pass
+def parameters_search(gen):
+    # ------parallel run for train-------
+    states_train_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_train_s, label_train)])
+    # ------parallel run for validation-------
+    states_validation_list = pool.map(partial(run_net, gen),
+                                      [(x) for x in zip(data_validation_s, label_validation)])
+    # ----parallel run for test--------
+    states_test_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_test_s, label_test)])
+    # ------Readout---------------
+    states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
+    for train in states_train_list:
+        states_train.append(train[0])
+        _label_train.append(train[1])
+    for validation in states_validation_list:
+        states_validation.append(validation[0])
+        _label_validation.append(validation[1])
+    for test in states_test_list:
+        states_test.append(test[0])
+        _label_test.append(test[1])
+    states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
+    states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
+    states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
+    score_train, score_validation, score_test = evaluator.readout_sk(states_train, states_validation, states_test,
+                                                                   np.asarray(_label_train),
+                                                                   np.asarray(_label_validation),
+                                                                   np.asarray(_label_test), solver="lbfgs",
+                                                                   multi_class="multinomial")
+    # ----------show results-----------
+    print('gen %s' % gen)
+    print('Train score: ', score_train)
+    print('Validation score: ', score_validation)
+    print('Test score: ', score_test)
+    return 1 - score_validation, 1 - score_test, 1 - score_train, gen
 
 ##########################################
 # -------optimizer settings---------------

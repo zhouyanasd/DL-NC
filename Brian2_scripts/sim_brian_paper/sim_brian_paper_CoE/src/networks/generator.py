@@ -21,9 +21,9 @@ class Generator_connection_matrix(BaseFunctions):
         super().__init__()
         self.random_state = random_state
         self.block_generator_type = {'random':self.generate_connection_matrix_random,
-                                   'scale_free':self.generate_connection_matrix_scale_free,
-                                   'circle':self.generate_connection_matrix_circle,
-                                   'hierarchy':self.generate_connection_matrix_hierarchy}
+                                     'scale_free':self.generate_connection_matrix_scale_free,
+                                     'circle':self.generate_connection_matrix_circle,
+                                     'hierarchy':self.generate_connection_matrix_hierarchy}
 
     def generate_connection_matrix_random(self, N, p):
         connection_matrix_out, connection_matrix_in = [], []
@@ -176,6 +176,7 @@ class Generator(Generator_connection_matrix):
     def generate_pathway(self, name, pre_group, post_group, connection_matrix, model, model_pre, model_post):
         pathway = Pathway(pre_group.blocks, post_group.blocks, connection_matrix)
         pathway.create_synapse(model, model_pre, model_post,  name = name)
+        pathway.connect()
         return pathway
 
     def generate_blocks(self, blocks_type):
@@ -193,7 +194,7 @@ class Generator(Generator_connection_matrix):
         block_type = self.decoder.get_reservoir_block_type()
         structure_type = self.decoder.get_reservoir_structure_type()
         blocks_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
-        blocks_type = np.array(block_type)(blocks_type)
+        blocks_type = list(np.array(block_type)[blocks_type])
         block_group = self.generate_blocks(blocks_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
@@ -201,7 +202,6 @@ class Generator(Generator_connection_matrix):
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.register_input_output(o, i)
-        reservoir.connect()
         return reservoir
 
     def generate_encoding(self):
@@ -228,6 +228,7 @@ class Generator(Generator_connection_matrix):
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_synapse, dynamics_synapse_pre, None)
+        pathway.connect()
         return pathway
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
@@ -235,6 +236,7 @@ class Generator(Generator_connection_matrix):
         pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
                                         'w = 1 : 1', dynamics_synapse_pre, None)
         pathway._set_connect_type('one_to_one')
+        pathway.connect()
         return pathway
 
     def generate_network(self):
@@ -250,7 +252,6 @@ class Generator(Generator_connection_matrix):
         network.register_layer(readout, 'readout')
         network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
         network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
-        network.connect()
         return network
 
     def initialize(self, network):

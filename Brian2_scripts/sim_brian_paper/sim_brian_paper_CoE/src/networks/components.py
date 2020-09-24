@@ -21,6 +21,7 @@ class Block(BaseFunctions):
     ----------
     N: int, the number of neurons
     connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
+                    The first list is the pre-synapse neurons and the second list is the post-synapse neurons.
     """
 
     def __init__(self, N, connect_matrix):
@@ -92,7 +93,6 @@ class Block(BaseFunctions):
          Parameters
          ----------
         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
-                        The first list is the pre-synapse neurons and the second list is the post-synapse neurons.
          '''
 
         self.synapse.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
@@ -133,7 +133,7 @@ class BlockGroup(BaseFunctions):
     ----------
     N: int, the number of neurons.
     blocks: list[Block], the contained block list.
-    blocks_type: list[int], the block type order according to the basic blocks structure.
+    blocks_type: list[int], the block type order according to 'structure_blocks'.
     """
 
     def __init__(self):
@@ -158,7 +158,7 @@ class BlockGroup(BaseFunctions):
          Parameters
          ----------
          block: Block, the object of Block.
-         type: int, the block type order according to the basic blocks structure.
+         type: int, the block type order according to 'structure_blocks'.
          '''
 
         self.blocks.append(block)
@@ -202,7 +202,10 @@ class Pathway(BaseFunctions):
      ----------
      blocks_pre: list[Block], the blocks before pathway.
      blocks_post: list[Block], the blocks after pathway.
-     connect_matrix:
+     connect_matrix: list[list[int], list[int]], the fixed connection matrix between 'Block_group',
+                     int for 'Block'.
+     synapses_group: list[Brian.Synapse], the built 'Synapse'.
+     connect_type: str, the connection type for the synapses of the Pathway.
      '''
 
     def __init__(self, blocks_pre, blocks_post, connect_matrix):
@@ -215,18 +218,42 @@ class Pathway(BaseFunctions):
         self.connect_type = 'full'
 
     def _set_connect_type(self, type):
+        '''
+         Set the connection type of this pathway.
+
+         Parameters
+         ----------
+         type: str, the connection type for the synapses of the Pathway.
+         '''
+
         if type in ['full', 'one_to_one']:
             self.connect_type = type
         else:
             raise ("wrong connection type, only 'full' or 'one_to_one'.")
 
     def create_synapse(self, model, on_pre, on_post,  name = name, **kwargs):
+        '''
+         Create synapse between neurons for the Pathway.
+
+         Parameters
+         ----------
+         The parameters follow the necessary 'Synapses' class of Brain2.
+         '''
+
         for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
             synapses = Synapses(self.blocks_pre[index_i].neurons, self.blocks_post[index_j].neurons, model, on_pre = on_pre,
                                on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
             self.synapses_group.append(synapses)
 
     def connect(self):
+        '''
+         Connect neurons using synapse based on the fixed connection matrix and connection type.
+
+         Parameters
+         ----------
+         The parameters follow the necessary 'Synapses' class of Brain2.
+         '''
+
         if self.connect_type == 'full':
             for index, synapses in enumerate(self.synapses_group):
                 block_pre = self.blocks_pre[self.pre[index]]
@@ -247,11 +274,28 @@ class Pathway(BaseFunctions):
 
 
     def _initialize(self, synapses, **kwargs):
+        '''
+         Initialize the signal synapse.
+
+         Parameters
+         ----------
+         synapses: Brian2.Synapse, The 'Synapses' class of Brain2.
+         kwargs: dict, the parameters.
+         '''
+
         for key, value in zip(kwargs.keys(), kwargs.values()):
             converted_value = self.get_parameters(self.connect_matrix, value)
             self.initialize_parameters(synapses, key, converted_value)
 
-    def initialize(self, parameter_synapse):
+    def initialize(self, **parameter_synapse):
+        '''
+         Initialize the synapses of the Pathway.
+
+         Parameters
+         ----------
+         parameter_synapse: dict, the parameters.
+         '''
+
         for synapses in self.synapse:
             self._initialize(synapses, **parameter_synapse)
 
@@ -324,16 +368,6 @@ class Reservoir(BaseFunctions):
 
         self.pathway = pathway
 
-    def connect(self):
-        '''
-         Connect blocks base on the synapses in the reservoir.
-
-         Parameters
-         ----------
-         '''
-
-        self.pathway.connect()
-
     def initialize(self, parameter_block_neurons, parameter_block_synapses, parameter_pathway):
         self.block_group.initialize(parameter_block_neurons,parameter_block_synapses)
         self.pathway.initialize(parameter_pathway)
@@ -394,16 +428,6 @@ class LSM_Network(BaseFunctions):
          '''
 
         self.pathway[name] = pathway
-
-    def connect(self):
-        '''
-         Connect layers with the pathway between them.
-
-         Parameters
-         ----------
-         '''
-        for pathway in self.pathways.values():
-            pathway.connect()
 
     def _initialize(self, components, **parameter):
         '''

@@ -149,9 +149,6 @@ class Decoder(BaseFunctions):
                   self.bin2dec(type_b[1][4:6]), self.bin2dec(type_b[1][6:])]
         return type_d
 
-    def get_encoding_structure(self):
-        return self.neurons_encoding
-
     def get_parameters_reservoir(self):
         parameter = self.get_sub_dict(self.decode('Reservoir'), 'plasticity', 'strength')
         return parameter
@@ -159,6 +156,9 @@ class Decoder(BaseFunctions):
     def get_parameters_encoding_readout(self):
         parameter = self.decode('Encoding_Readout')
         return parameter
+
+    def get_encoding_structure(self):
+        return self.neurons_encoding
 
     def get_parameters_initialization(self):
         parameters = {}
