@@ -30,6 +30,7 @@ from multiprocessing import Pool
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
+import geatpy as ga
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
@@ -153,7 +154,8 @@ if __name__ == '__main__':
     if method == 'BO':
         optimizer = BayesianOptimization(
             f=parameters_search,
-            # pbounds=bounds,
+            pbounds=dict(zip(config_keys, [tuple(x) for x in
+                                           ga.crtfld(config_ranges, config_borders, list(config_precisions)).T])),
             random_state=np.random.RandomState(),
         )
 
