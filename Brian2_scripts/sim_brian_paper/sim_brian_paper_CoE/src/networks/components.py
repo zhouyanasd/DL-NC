@@ -26,8 +26,8 @@ class Block(BaseFunctions):
 
     def __init__(self, N, connect_matrix):
         super().__init__()
-        self.N = N
-        self.connect_matrix = connect_matrix
+        self.N = int(N)
+        self.connect_matrix = np.array(connect_matrix).astype(int)
 
     def separate_ex_inh(self, ratio = 4, random_state = None):
         '''
@@ -40,7 +40,7 @@ class Block(BaseFunctions):
          '''
         self.ex_inh_ratio = ratio
         self.ex_neurons = int(self.N * (1 / (self.ex_inh_ratio + 1)))
-        self.inh_neurons = self.N - self.ex_neurons
+        self.inh_neurons = int(self.N - self.ex_neurons)
         self.neuron_property = np.array(([-1] * self.ex_neurons) + ([1] * self.inh_neurons))
         if random_state != None:
             np.random.seed(random_state)
@@ -95,7 +95,7 @@ class Block(BaseFunctions):
         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
          '''
 
-        self.synapse.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
+        self.synapses.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
 
     def initialize(self, component, **kwargs):
         '''

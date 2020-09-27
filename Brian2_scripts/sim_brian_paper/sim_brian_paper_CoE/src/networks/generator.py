@@ -219,7 +219,7 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_in.extend(list(np.array(i_)[structure_reservoir['components']['structure'][1]].reshape(-1)))
         o.append(list(np.array(o_)[structure_reservoir['components']['output_input'][0]].reshape(-1)))
         i.append(list(np.array(i_)[structure_reservoir['components']['output_input'][1]].reshape(-1)))
-        return blocks_type, np.array(connection_matrix_out, connection_matrix_in), o, i
+        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o, i
 
 
 class Generator(Generator_connection_matrix):
@@ -256,8 +256,8 @@ class Generator(Generator_connection_matrix):
          get_parameter_structure: function, the function of generator.
          '''
 
-        parameter_structure = get_parameter_structure()
-        connect_matrix = get_matrix('structure', parameter_structure)
+        parameter_structure = get_parameter_structure('structure')
+        connect_matrix = get_matrix(**parameter_structure)
         block = Block(parameter_structure['N'], connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + name)
@@ -299,7 +299,7 @@ class Generator(Generator_connection_matrix):
         block_group = BlockGroup()
         for index, type in enumerate(blocks_type):
             component = structure_blocks['components_' + str(type)]
-            block_decoder = self.block_decoder_type[component]
+            block_decoder = self.decoder.block_decoder_type[component]
             block_generator = self.block_generator_type[component]
             block = self.generate_block(component + '_' + str(index), block_decoder, block_generator)
             block_group.add_block(block, component)
