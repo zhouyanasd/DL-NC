@@ -167,6 +167,7 @@ class BlockGroup(BaseFunctions):
          ----------
          block: Block, the object of Block.
          type: int, the block type order according to 'structure_blocks'.
+               -1 represents the encoding and readout.
          '''
 
         self.blocks.append(block)

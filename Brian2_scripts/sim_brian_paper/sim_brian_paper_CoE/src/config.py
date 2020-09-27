@@ -69,17 +69,17 @@ structure_layer = {'components_0':{'structure': [[0,0,1,2],[1,2,3,3]], 'output_i
 structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
-Reservoir = ['block', 'layer_1', 'layer_2', 'strength', 'plasticity']
+Reservoir_config = ['block', 'layer_1', 'layer_2', 'strength', 'plasticity']
 Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p']
 Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
 Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
 Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
 Encoding_Readout = ['strength', 'plasticity']
 
-config_keys = [Reservoir, Block_random, Block_scale_free,
+config_keys = [Reservoir_config, Block_random, Block_scale_free,
               Block_circle, Block_hierarchy, Encoding_Readout]
 
-config_group = ['Reservoir', 'Block_random', 'Block_scale_free',
+config_group = ['Reservoir_config', 'Block_random', 'Block_scale_free',
                 'Block_circle', 'Block_hierarchy', 'Encoding_Readout']
 
 config_SubCom = [[0, 1, 2, 3, 4],

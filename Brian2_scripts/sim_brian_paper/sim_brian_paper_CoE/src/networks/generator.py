@@ -337,11 +337,11 @@ class Generator(Generator_connection_matrix):
 
         block_group = BlockGroup()
         N = self.decoder.get_encoding_structure()
-        block = Block(N, np.array([],[]))
+        block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = '0',
                              refractory = 0 * ms , name='block_encoding')
         block.determine_input_output()
-        block_group.add_block(block)
+        block_group.add_block(block, -1)
         return block_group
 
     def generate_readout(self, reservoir):
@@ -356,11 +356,11 @@ class Generator(Generator_connection_matrix):
 
         block_group = BlockGroup()
         N = reservoir.output_neurons_count
-        block = Block(N, np.array([],[]))
+        block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = None, name='block_readout')
         block.determine_input_output()
-        block_group.add_block(block)
+        block_group.add_block(block, -1)
         return block_group
 
     def generate_pathway_encoding_reservoir(self, encoding, reservoir):

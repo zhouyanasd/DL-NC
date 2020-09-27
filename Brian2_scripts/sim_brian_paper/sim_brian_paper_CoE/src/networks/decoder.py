@@ -256,7 +256,7 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.decode('Reservoir')
+        parameter = self.decode('Reservoir_config')
         type_b = parameter['block']
         type_d = [self.bin2dec(type_b[0:2]), self.bin2dec(type_b[2:4]),
                   self.bin2dec(type_b[4:6]), self.bin2dec(type_b[6:])]
@@ -270,7 +270,7 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.decode('Reservoir')
+        parameter = self.decode('Reservoir_config')
         type_b = parameter['layer_1'], parameter['layer_2']
         type_d = [self.bin2dec(type_b[0][0:2]), self.bin2dec(type_b[0][2:4]),
                   self.bin2dec(type_b[0][4:6]), self.bin2dec(type_b[0][6:])],\
@@ -286,7 +286,7 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.get_sub_dict(self.decode('Reservoir'), 'plasticity', 'strength')
+        parameter = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength')
         return parameter
 
     def get_parameters_encoding_readout(self):
