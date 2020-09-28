@@ -26,8 +26,8 @@ class Block(BaseFunctions):
 
     def __init__(self, N, connect_matrix):
         super().__init__()
-        self.N = int(N)
-        self.connect_matrix = np.array(connect_matrix).astype(int)
+        self.N = N
+        self.connect_matrix = connect_matrix
 
     def separate_ex_inh(self, ratio = 4, random_state = None):
         '''

@@ -54,7 +54,7 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_post)
                 else:
                     continue
-        return np.array([connection_matrix_out, connection_matrix_in])
+        return N, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_scale_free(self, N, p_alpha, p_beta, p_gama):
         '''
@@ -73,7 +73,7 @@ class Generator_connection_matrix(BaseFunctions):
                                 init_nodes = 1, detla_in=1, detla_out = 1)
         DSF.generate_gaph()
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
-        return np.array([connection_matrix_out, connection_matrix_in])
+        return N, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_circle(self, N, p_forward, p_backward, p_threshold):
         '''
@@ -108,7 +108,7 @@ class Generator_connection_matrix(BaseFunctions):
                 if np.random.rand() <= p_backward * (decay - p_threshold):
                     connection_matrix_out.append(node_post)
                     connection_matrix_in.append(node_pre)
-        return np.array(connection_matrix_out, connection_matrix_in)
+        return N, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_hierarchy(self, N_i, N_h, N_o, p_out, p_in, decay):
         '''
@@ -147,7 +147,7 @@ class Generator_connection_matrix(BaseFunctions):
                         connection_matrix_in.append(nodes_pre[in_pre_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
-        return np.array(connection_matrix_out, connection_matrix_in)
+        return N_i + N_h + N_o, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_reservoir_layer(self, blocks_type, count, layer, structure_type, cmo, cmi):
         '''
@@ -257,8 +257,8 @@ class Generator(Generator_connection_matrix):
          '''
 
         parameter_structure = get_parameter_structure('structure')
-        connect_matrix = get_matrix(**parameter_structure)
-        block = Block(parameter_structure['N'], connect_matrix)
+        N, connect_matrix = get_matrix(**parameter_structure)
+        block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + name)
         block.create_synapse(dynamics_synapse, dynamics_synapse_pre,

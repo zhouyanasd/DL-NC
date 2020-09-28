@@ -173,7 +173,7 @@ class Decoder(BaseFunctions):
         codes = self.config_codes[group]
         ranges = self.config_ranges[group]
         parameter = {}
-        for p,k,c,r in zip(np.array(self.Gen)[SubCom], key, codes, ranges):
+        for p,k,c,r in zip(self.sub_list(self.Gen, SubCom), key, codes, ranges):
             if c != None:
                 l = len(self.dec2bin((r[1]-r[0]), 0))
                 p = self.dec2bin(p, l)

@@ -24,6 +24,9 @@ class BaseFunctions():
 
     """
 
+    def sub_list(self, l, s):
+        return [l[x] for x in s]
+
     def get_sub_dict(self, _dict, *keys):
         values = itemgetter(*keys)(_dict)
         _sub_dict = dict(zip(keys, values))
