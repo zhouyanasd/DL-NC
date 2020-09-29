@@ -157,7 +157,8 @@ class BlockGroup(BaseFunctions):
             blocks_= blocks
         N_neurons = 0
         for block in blocks_:
-            N_neurons += block.N
+            N_neurons += self.blocks[block].N
+        return N_neurons
 
     def add_block(self, block, type):
         '''
@@ -442,10 +443,6 @@ class LSM_Network(BaseFunctions):
          '''
 
         self.layers[name] = layer
-        try:
-            self.add(layer)
-        except TypeError:
-            layer.join_network(self)
 
     def register_pathway(self, pathway, name):
         '''
@@ -457,7 +454,7 @@ class LSM_Network(BaseFunctions):
          name: str, the name for the dict.
          '''
 
-        self.pathway[name] = pathway
+        self.pathways[name] = pathway
 
     def _initialize(self, components, **parameter):
         '''

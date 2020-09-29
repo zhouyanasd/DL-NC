@@ -219,7 +219,7 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_in.extend(list(np.array(i_)[structure_reservoir['components']['structure'][1]].reshape(-1)))
         o.append(list(np.array(o_)[structure_reservoir['components']['output_input'][0]].reshape(-1)))
         i.append(list(np.array(i_)[structure_reservoir['components']['output_input'][1]].reshape(-1)))
-        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o, i
+        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o[0], i[0]
 
 
 class Generator(Generator_connection_matrix):
