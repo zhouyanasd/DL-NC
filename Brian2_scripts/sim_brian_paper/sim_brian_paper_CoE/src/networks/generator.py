@@ -261,8 +261,8 @@ class Generator(Generator_connection_matrix):
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + name)
-        block.create_synapse(dynamics_synapse, dynamics_synapse_pre,
-                             name='block_block_' + name)
+        block.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
+                            dynamics_synapse_post_STDP, name='block_block_' + name)
         block.separate_ex_inh()
         block.connect()
         block.determine_input_output()

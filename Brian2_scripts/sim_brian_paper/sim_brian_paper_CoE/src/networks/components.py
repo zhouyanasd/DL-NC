@@ -74,7 +74,7 @@ class Block(BaseFunctions):
         # except KeyError:
         #     self.separate_ex_inh()
 
-    def create_synapse(self, model, on_pre, name, **kwargs):
+    def create_synapse(self, model, on_pre, on_post, name, **kwargs):
         '''
          Create synapse between neurons for the block.
 
@@ -83,7 +83,7 @@ class Block(BaseFunctions):
          The parameters follow the necessary 'Synapses' class of Brain2.
          '''
 
-        self.synapses = Synapses(self.neurons, self.neurons, model, on_pre = on_pre,
+        self.synapses = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, on_post = on_post,
                                 method='euler', name = name, **kwargs)
 
     def connect(self):

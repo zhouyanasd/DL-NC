@@ -9,6 +9,7 @@ I = stimulus(t,i) : 1
 dynamics_reservoir = '''
 property : 1
 tau : 1
+threshold : 1
 dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
 I = g + 13.5 : 1
@@ -22,34 +23,35 @@ I = g : 1
 '''
 
 dynamics_synapse = '''
-w : 1
+strength : 1
 '''
 
 dynamics_synapse_pre = '''
-g += w * property_pre 
+g += strength * property_pre 
 '''
 
 dynamics_synapse_STDP = '''
-w : 1
+strength : 1
+plasticity : 1
 dapre/dt = -apre/taupre : 1 (clock-driven)
 dapost/dt = -apost/taupost : 1 (clock-driven)
 '''
 
 dynamics_synapse_pre_STDP = '''
-h+=w
-g+=w
-apre += Apre
-w = clip(w+apost, wmin, wmax)
+h+=strength
+g+=strength
+apre += Apre * plasticity
+strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_synapse_post_STDP = '''
 apost += Apost
-w = clip(w+apre, wmin, wmax)
+strength = clip(strength+apre, wmin, wmax)
 '''
 
 threshold_encoding = 'I > 0'
 
-threshold_reservoir = 'v > 15'
+threshold_reservoir = 'v > 15 * threshold'
 
 reset_reservoir = 'v = 13.5'
 
