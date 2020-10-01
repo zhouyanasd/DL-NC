@@ -9,6 +9,7 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import structure_blocks
 import numpy as np
 
 class Decoder(BaseFunctions):
@@ -324,9 +325,10 @@ class Decoder(BaseFunctions):
         parameters_block_synapses = {}
         block_types = self.get_reservoir_block_type()
         for block_type in block_types:
-            parameters_block_neurons[block_type] = self.get_sub_dict(self.block_decoder_type[block_type]('parameter'),
+            name = structure_blocks['components_'+str(block_type)]
+            parameters_block_neurons[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
                                                                      'tau', 'threshold')
-            parameters_block_synapses[block_type] = self.get_sub_dict(self.block_decoder_type[block_type]('parameter'),
+            parameters_block_synapses[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
                                                                       'plasticity', 'strength', 'type')
 
         parameters['reservoir'] = {'parameter_block_neurons':parameters_block_neurons,

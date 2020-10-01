@@ -429,7 +429,7 @@ class Generator(Generator_connection_matrix):
          '''
 
         parameters = self.decoder.get_parameters_initialization()
-        network.initialize(parameters)
+        network.initialize(**parameters)
 
     def join(self, net, network):
         '''
