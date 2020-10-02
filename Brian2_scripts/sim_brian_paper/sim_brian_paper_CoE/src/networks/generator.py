@@ -340,6 +340,8 @@ class Generator(Generator_connection_matrix):
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = '0',
                              refractory = 0 * ms , name='block_encoding')
+        block.create_synapse(dynamics_synapse, None,
+                            None, name='block_encoding_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
         return block_group
@@ -359,6 +361,8 @@ class Generator(Generator_connection_matrix):
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = None, name='block_readout')
+        block.create_synapse(dynamics_synapse, None,
+                            None, name='block_readout_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
         return block_group

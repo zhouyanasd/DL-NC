@@ -120,7 +120,7 @@ class Block(BaseFunctions):
          net: Brian2.Network, the existing neural network.
          '''
 
-        net.add(self.neurons, self.synapse)
+        net.add(self.neurons, self.synapses)
 
 
 class BlockGroup(BaseFunctions):
@@ -295,8 +295,7 @@ class Pathway(BaseFunctions):
          '''
 
         for key, value in zip(kwargs.keys(), kwargs.values()):
-            converted_value = self.get_parameters(self.connect_matrix, value)
-            self.initialize_parameters(synapses, key, converted_value)
+            self.initialize_parameters(synapses, key, value)
 
     def initialize(self, **parameter_synapse):
         '''
@@ -319,7 +318,7 @@ class Pathway(BaseFunctions):
          net: Brian2.Network, the existing neural network.
          '''
 
-        for synapse in self.synapse:
+        for synapse in self.synapses_group:
             net.add(synapse)
 
 
@@ -501,5 +500,5 @@ class LSM_Network(BaseFunctions):
          '''
         for layer in self.layers.values():
             layer.join_network(net)
-        for pathway in self.pathways:
+        for pathway in self.pathways.values():
             pathway.join_network(net)

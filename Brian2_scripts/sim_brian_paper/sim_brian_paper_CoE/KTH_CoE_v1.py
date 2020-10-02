@@ -93,7 +93,7 @@ def run_net(inputs, gen):
     net = Network()
     LSM_network = generator.generate_network()
     generator.initialize(LSM_network)
-    generator.join(net, LSM_Network)
+    generator.join(net, LSM_network)
     net.store('init')
 
     #--- run network ---

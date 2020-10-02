@@ -50,9 +50,9 @@ class BaseFunctions():
         else:
             print('wrong object type')
 
-    def get_parameters(self, connection_matrix, parameter):
+    def get_parameters_synapse(self, connection_matrix, parameter):
         parameter_list = []
-        for index_i, index_j in connection_matrix[0], connection_matrix[1]:
+        for index_i, index_j in zip(connection_matrix[0], connection_matrix[1]):
             parameter_list.append(parameter[index_i][index_j])
         return parameter_list
 
