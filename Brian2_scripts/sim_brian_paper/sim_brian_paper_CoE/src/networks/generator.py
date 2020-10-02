@@ -375,7 +375,7 @@ class Generator(Generator_connection_matrix):
 
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
-                                        dynamics_synapse, dynamics_synapse_pre, None)
+                                        dynamics_synapse_STDP, dynamics_synapse_pre_STDP, dynamics_synapse_post_STDP)
         pathway.connect()
         return pathway
 

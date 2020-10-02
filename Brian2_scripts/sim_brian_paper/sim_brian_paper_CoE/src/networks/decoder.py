@@ -287,7 +287,7 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength')
+        parameter = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength', 'type')
         return parameter
 
     def get_parameters_encoding_readout(self):

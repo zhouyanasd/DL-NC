@@ -220,6 +220,7 @@ class Pathway(BaseFunctions):
 
     def __init__(self, blocks_pre, blocks_post, connect_matrix):
         super().__init__()
+        self.connect_matrix = connect_matrix
         self.pre = connect_matrix[0]
         self.post = connect_matrix[1]
         self.blocks_pre = blocks_pre
@@ -306,7 +307,7 @@ class Pathway(BaseFunctions):
          parameter_synapse: dict, the parameters.
          '''
 
-        for synapses in self.synapse:
+        for synapses in self.synapses_group:
             self._initialize(synapses, **parameter_synapse)
 
     def join_network(self, net):
@@ -401,7 +402,7 @@ class Reservoir(BaseFunctions):
          parameter_pathway: dict, the parameters for pathway.
          '''
         self.block_group.initialize(parameter_block_neurons,parameter_block_synapses)
-        self.pathway.initialize(parameter_pathway)
+        self.pathway.initialize(**parameter_pathway)
 
     def join_network(self, net):
         '''
@@ -479,14 +480,14 @@ class LSM_Network(BaseFunctions):
          Examples
          ----------
          {'encoding': None,
-          'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7},
+          'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
           'readout': None,
           'reservoir_readout': None,
           'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6, 'threshold': 0.6},
                                                     'random': {'tau': 0.3, 'threshold': 0.3}},
                         'parameter_block_synapses': {'hierarchy': {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
                                                      'random': {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
-                        'parameter_pathway': {'plasticity': 0.2, 'strength': 0.2}}}
+                        'parameter_pathway': {'type: 1.0', 'plasticity': 0.2, 'strength': 0.2}}}
          '''
         self._initialize(self.layers, **parameter)
         self._initialize(self.pathways, **parameter)
