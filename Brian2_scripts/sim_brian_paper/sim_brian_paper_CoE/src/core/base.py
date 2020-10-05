@@ -46,7 +46,9 @@ class BaseFunctions():
         if isinstance(object, NeuronGroup):
             object.variables[parameter_name].set_value(parameter_value)
         elif isinstance(object, Synapses):
-            object.pre.variables[parameter_name].set_value(parameter_value)
+            parameter_value_ = np.random.rand(
+                    object.pre.variables[parameter_name].get_value().shape[0]) * parameter_value
+            object.pre.variables[parameter_name].set_value(parameter_value_)
         else:
             print('wrong object type')
 

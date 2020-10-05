@@ -1,6 +1,12 @@
 from brian2 import *
 
 # --- dynamic models ---
+taupre = taupost = 20*ms
+wmin = 0
+wmax = 1
+Apre = 1
+Apost = -Apre*taupre/taupost*1.05
+
 dynamics_encoding = '''
 property = 1 : 1
 I = stimulus(t,i) : 1
@@ -39,8 +45,7 @@ dapost/dt = -apost/taupost : 1 (clock-driven)
 '''
 
 dynamics_synapse_pre_STDP = '''
-h+=strength
-g+=strength
+g+=strength * property_pre 
 apre += Apre * plasticity * type
 strength = clip(strength+apost, wmin, wmax)
 '''
