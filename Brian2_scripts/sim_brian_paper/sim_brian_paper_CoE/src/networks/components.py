@@ -365,8 +365,8 @@ class Reservoir(BaseFunctions):
          ----------
          '''
 
-        self.input = o
-        self.output = i
+        self.input = i
+        self.output = o
 
     def register_blocks(self, block_group):
         '''

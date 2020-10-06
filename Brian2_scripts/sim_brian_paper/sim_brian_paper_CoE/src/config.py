@@ -7,6 +7,8 @@ wmax = 1
 Apre = 1
 Apost = -Apre*taupre/taupost*1.05
 
+tau_read = 30
+
 dynamics_encoding = '''
 property = 1 : 1
 I = stimulus(t,i) : 1
@@ -22,7 +24,7 @@ I = g + 13.5 : 1
 '''
 
 dynamics_readout = '''
-tau : 1
+tau = tau_read : 1
 dv/dt = (I-v) / (tau*ms) : 1
 dg/dt = (-g)/(3*ms) : 1
 I = g : 1
@@ -57,7 +59,7 @@ strength = clip(strength+apre, wmin, wmax)
 
 threshold_encoding = 'I > 0'
 
-threshold_reservoir = 'v > 15 * threshold'
+threshold_reservoir = 'v > 13.5 + 1.5 * threshold'
 
 reset_reservoir = 'v = 13.5'
 

@@ -101,7 +101,7 @@ def run_net(inputs, gen):
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
-    states = net.get_states()['neurongroup_read']['v']
+    states = net.get_states()['block_readout']['v']
     net.restore('init')
     return (states, inputs[1])
 
