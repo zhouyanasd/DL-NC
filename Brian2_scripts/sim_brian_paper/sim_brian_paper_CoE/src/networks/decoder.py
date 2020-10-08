@@ -9,7 +9,7 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import structure_blocks
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import structure_blocks, voltage_reset
 import numpy as np
 
 class Decoder(BaseFunctions):
@@ -328,6 +328,7 @@ class Decoder(BaseFunctions):
             name = structure_blocks['components_'+str(block_type)]
             parameters_block_neurons[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
                                                                      'tau', 'threshold')
+            parameters_block_neurons[name]['v'] = voltage_reset
             parameters_block_synapses[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
                                                                       'plasticity', 'strength', 'type')
 

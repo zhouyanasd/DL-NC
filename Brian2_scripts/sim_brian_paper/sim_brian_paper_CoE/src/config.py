@@ -4,10 +4,20 @@ from brian2 import *
 taupre = taupost = 20*ms
 wmin = 0
 wmax = 1
-Apre = 1
+Apre = 0.2
 Apost = -Apre*taupre/taupost*1.05
 
+A_strength = 60
+
+threshold_solid = 0.5
+A_threshold = 1.5
+
+standard_tau = 100
 tau_read = 30
+
+voltage_reset = 13.5
+
+refractory_reservoir = 3 * ms
 
 dynamics_encoding = '''
 property = 1 : 1
@@ -18,9 +28,9 @@ dynamics_reservoir = '''
 property : 1
 tau : 1
 threshold : 1
-dv/dt = (I-v) / (tau*ms) : 1 (unless refractory)
+dv/dt = (I-v) / (tau * standard_tau * ms) : 1 (unless refractory)
 dg/dt = (-g)/(3*ms) : 1
-I = g + 13.5 : 1
+I = g + voltage_reset : 1
 '''
 
 dynamics_readout = '''
@@ -35,7 +45,7 @@ strength : 1
 '''
 
 dynamics_synapse_pre = '''
-g += strength * property_pre 
+g += A_strength * strength * property_pre 
 '''
 
 dynamics_synapse_STDP = '''
@@ -47,23 +57,21 @@ dapost/dt = -apost/taupost : 1 (clock-driven)
 '''
 
 dynamics_synapse_pre_STDP = '''
-g+=strength * property_pre 
+g += A_strength * strength * property_pre 
 apre += Apre * plasticity * type
 strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_synapse_post_STDP = '''
-apost += Apost
+apost += Apost * plasticity * type
 strength = clip(strength+apre, wmin, wmax)
 '''
 
 threshold_encoding = 'I > 0'
 
-threshold_reservoir = 'v > 13.5 + 1.5 * threshold'
+threshold_reservoir = 'v > voltage_reset + threshold_solid + A_threshold * threshold'
 
-reset_reservoir = 'v = 13.5'
-
-refractory_reservoir = 3 * ms
+reset_reservoir = 'v = voltage_reset'
 
 # --- reservoir layer structure ---
 structure_blocks = {'components_0':'random',
