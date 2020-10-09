@@ -320,8 +320,8 @@ class Generator(Generator_connection_matrix):
         blocks_type = list(np.array(block_type)[blocks_type])
         block_group = self.generate_blocks(blocks_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
-                                        dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
-                                        dynamics_synapse_post_STDP)
+                                        dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
+                                        dynamics_reservoir_synapse_post_STDP)
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.register_input_output(o, i)
