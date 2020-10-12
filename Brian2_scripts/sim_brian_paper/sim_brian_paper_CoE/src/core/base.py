@@ -32,6 +32,9 @@ class BaseFunctions():
         _sub_dict = dict(zip(keys, values))
         return _sub_dict
 
+    def change_dict_key(self, _dict, key1, key2):
+        _dict[key2] = _dict.pop(key1)
+
     def initialize_parameters(self, object, parameter_name, parameter_value):
         '''
          Set the initial parameters of the objects in the block.
@@ -42,15 +45,17 @@ class BaseFunctions():
          parameter_name: str, the name of the parameter.
          parameter_value: np.array, the value of the parameter.
          '''
-
-        if isinstance(object, NeuronGroup):
-            object.variables[parameter_name].set_value(parameter_value)
-        elif isinstance(object, Synapses):
+        if '_need_random' in parameter_name:
+            parameter_name_ = parameter_name.replace('_need_random','')
             parameter_value_ = np.random.rand(
-                    object.pre.variables[parameter_name].get_value().shape[0]) * parameter_value
-            object.pre.variables[parameter_name].set_value(parameter_value_)
+                    object.pre.variables[parameter_name_].get_value().shape[0]) * parameter_value
         else:
-            print('wrong object type')
+            parameter_name_ = parameter_name
+            parameter_value_ = parameter_value
+        if isinstance(object, NeuronGroup):
+            object.variables[parameter_name_].set_value(parameter_value_)
+        elif isinstance(object, Synapses):
+            object.pre.variables[parameter_name_].set_value(parameter_value_)
 
     def get_parameters_synapse(self, connection_matrix, parameter):
         parameter_list = []

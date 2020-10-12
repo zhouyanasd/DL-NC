@@ -331,12 +331,15 @@ class Decoder(BaseFunctions):
             parameters_block_neurons[name]['v'] = voltage_reset
             parameters_block_synapses[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
                                                                       'plasticity', 'strength', 'type')
+            self.change_dict_key(parameters_block_synapses[name],'strength','strength_need_random')
 
         parameters['reservoir'] = {'parameter_block_neurons':parameters_block_neurons,
                                    'parameter_block_synapses':parameters_block_synapses,
                                    'parameter_pathway': self.get_parameters_reservoir()}
+        self.change_dict_key(parameters['reservoir']['parameter_pathway'], 'strength', 'strength_need_random')
         parameters['encoding'] = None
         parameters['readout'] = None
         parameters['encoding_reservoir'] = self.get_parameters_encoding_readout()
+        self.change_dict_key(parameters['encoding_reservoir'], 'strength', 'strength_need_random')
         parameters['reservoir_readout'] = None
         return parameters

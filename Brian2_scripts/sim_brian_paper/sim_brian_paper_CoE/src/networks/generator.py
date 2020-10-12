@@ -283,7 +283,6 @@ class Generator(Generator_connection_matrix):
 
         pathway = Pathway(pre_group.blocks, post_group.blocks, connection_matrix)
         pathway.create_synapse(model, model_pre, model_post,  name = name)
-        pathway.connect()
         return pathway
 
     def generate_blocks(self, blocks_type):
@@ -322,6 +321,7 @@ class Generator(Generator_connection_matrix):
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
                                         dynamics_reservoir_synapse_post_STDP)
+        pathway.connect()
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.register_input_output(o, i)
@@ -369,7 +369,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_pathway_encoding_reservoir(self, encoding, reservoir):
         '''
-         Generate pathway between the block group between encoding and the block group of reservoir.
+         Generate pathway between the block group of encoding and the block group of reservoir.
 
          Parameters
          ----------
@@ -385,7 +385,7 @@ class Generator(Generator_connection_matrix):
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
         '''
-         Generate pathway between the block group between readout and the block group of reservoir.
+         Generate pathway between the block group of readout and the block group of reservoir.
 
          Parameters
          ----------

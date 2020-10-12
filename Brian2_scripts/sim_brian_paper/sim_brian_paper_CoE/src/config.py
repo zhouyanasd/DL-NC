@@ -9,6 +9,7 @@ Apost = -Apre*taupre/taupost*1.05
 
 A_strength = 60
 A_strength_reservoir = 120
+A_strength_encoding = 200
 
 threshold_solid = 0.5
 A_threshold = 1.5
@@ -83,6 +84,25 @@ strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_reservoir_synapse_post_STDP = '''
+apost += Apost * plasticity * type
+strength = clip(strength+apre, wmin, wmax)
+'''
+
+dynamics_encoding_synapse_STDP = '''
+strength : 1
+plasticity : 1
+type : 1
+dapre/dt = -apre/taupre : 1 (clock-driven)
+dapost/dt = -apost/taupost : 1 (clock-driven)
+'''
+
+dynamics_encoding_synapse_pre_STDP = '''
+g += A_strength_encoding * strength * property_pre 
+apre += Apre * plasticity * type
+strength = clip(strength+apost, wmin, wmax)
+'''
+
+dynamics_encoding_synapse_post_STDP = '''
 apost += Apost * plasticity * type
 strength = clip(strength+apre, wmin, wmax)
 '''
