@@ -54,18 +54,18 @@ dynamics_synapse_STDP = '''
 strength : 1
 plasticity : 1
 type : 1
-dapre/dt = -apre/taupre : 1 (clock-driven)
-dapost/dt = -apost/taupost : 1 (clock-driven)
+dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_synapse_pre_STDP = '''
-g += A_strength * strength * property_pre 
-apre += Apre * plasticity * type
+g += A_strength * strength
+apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_synapse_post_STDP = '''
-apost += Apost * plasticity * type
+apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre, wmin, wmax)
 '''
 
@@ -73,18 +73,18 @@ dynamics_reservoir_synapse_STDP = '''
 strength : 1
 plasticity : 1
 type : 1
-dapre/dt = -apre/taupre : 1 (clock-driven)
-dapost/dt = -apost/taupost : 1 (clock-driven)
+dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_reservoir_synapse_pre_STDP = '''
-g += A_strength_reservoir * strength * property_pre 
-apre += Apre * plasticity * type
+g += A_strength * strength
+apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_reservoir_synapse_post_STDP = '''
-apost += Apost * plasticity * type
+apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre, wmin, wmax)
 '''
 
@@ -92,18 +92,18 @@ dynamics_encoding_synapse_STDP = '''
 strength : 1
 plasticity : 1
 type : 1
-dapre/dt = -apre/taupre : 1 (clock-driven)
-dapost/dt = -apost/taupost : 1 (clock-driven)
+dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_encoding_synapse_pre_STDP = '''
-g += A_strength_encoding * strength * property_pre 
-apre += Apre * plasticity * type
+g += A_strength * strength
+apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost, wmin, wmax)
 '''
 
 dynamics_encoding_synapse_post_STDP = '''
-apost += Apost * plasticity * type
+apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre, wmin, wmax)
 '''
 
