@@ -86,7 +86,11 @@ generator = Generator(np_state)
 generator.register_decoder(decoder)
 
 #--- define network run function ---
-def run_net(inputs, gen):
+def init_net(gen):
+    # ---- set numpy random state for each run----
+    np.random.set_state(np_state)
+
+    # ---- register the gen to the decoder ----
     generator.decoder.register(gen)
 
     #--- create network ---
@@ -95,8 +99,19 @@ def run_net(inputs, gen):
     generator.initialize(LSM_network)
     generator.join(net, LSM_network)
     net.store('init')
+    return net
 
+def pre_run_net(inputs, net):
     #--- run network ---
+    Switch = 1
+    stimulus = TimedArray(inputs[0], dt=Dt)
+    duration = inputs[0].shape[0]
+    net.run(duration * Dt)
+    net.store('pre_run')
+
+def run_net(inputs, net):
+    #--- run network ---
+    Switch = 0
     # inputs = zip(data_train_s, label_train)[0]
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
@@ -108,13 +123,16 @@ def run_net(inputs, gen):
 @Timelog
 @AddParaName
 def parameters_search(gen):
+    # ------init net and run for pre_train-------
+    net = init_net(gen)
+    pre_run_net(net)
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, net), [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, gen),
+    states_validation_list = pool.map(partial(run_net, net),
                                       [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(partial(run_net, net), [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for train in states_train_list:

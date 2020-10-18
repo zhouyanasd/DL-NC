@@ -1,6 +1,8 @@
 from brian2 import *
 
 # --- dynamic models ---
+Switch = 1
+
 taupre = taupost = 20*ms
 wmin = 0
 wmax = 1
@@ -99,12 +101,12 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 dynamics_encoding_synapse_pre_STDP = '''
 g += A_strength * strength
 apre += Apre * (wmax-strength)**type
-strength = clip(strength+apost, wmin, wmax)
+strength = clip(strength+apost*Switch, wmin, wmax)
 '''
 
 dynamics_encoding_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
-strength = clip(strength+apre, wmin, wmax)
+strength = clip(strength+apre*Switch, wmin, wmax)
 '''
 
 threshold_encoding = 'I > 0'
