@@ -1,6 +1,7 @@
 from brian2 import *
 
 # --- dynamic models ---
+Dt = defaultclock.dt = 1 * ms
 Switch = 1
 
 taupre = taupost = 20*ms
@@ -63,12 +64,12 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 dynamics_synapse_pre_STDP = '''
 g += A_strength * strength
 apre += Apre * (wmax-strength)**type
-strength = clip(strength+apost, wmin, wmax)
+strength = clip(strength+apost*Switch, wmin, wmax)
 '''
 
 dynamics_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
-strength = clip(strength+apre, wmin, wmax)
+strength = clip(strength+apre*Switch, wmin, wmax)
 '''
 
 dynamics_reservoir_synapse_STDP = '''
@@ -82,12 +83,12 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 dynamics_reservoir_synapse_pre_STDP = '''
 g += A_strength * strength
 apre += Apre * (wmax-strength)**type
-strength = clip(strength+apost, wmin, wmax)
+strength = clip(strength+apost*Switch, wmin, wmax)
 '''
 
 dynamics_reservoir_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
-strength = clip(strength+apre, wmin, wmax)
+strength = clip(strength+apre*Switch, wmin, wmax)
 '''
 
 dynamics_encoding_synapse_STDP = '''
