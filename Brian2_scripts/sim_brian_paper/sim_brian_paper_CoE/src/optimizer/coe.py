@@ -195,7 +195,7 @@ class CoE_surrogate(BaseFunctions):
         return [pop_trace, var_trace, times]
 
 
-class Coe_surrogate_mixgentype(CoE_surrogate):
+class CoE_surrogate_mixgentype(CoE_surrogate):
     '''
     codes和scales中不需要编码的部分用None来代替。
     '''
@@ -366,9 +366,9 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
         dis = dis + np.min(dis)  # 修正偏移量+最小量=修正绝对量
         FitnV[idx, 0] *= np.exp(dis)  # 根据相邻距离修改适应度，突出相邻距离大的个体，以增加种群的多样性
 
-    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
-                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
-                                   selectStyle='sus', recombinStyle='xovdp', distribute = False, LHS_path = None, drawing= False):
+    def coe_surrogate(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
+                      maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
+                      selectStyle='sus', recombinStyle='xovdp', distribute = False, LHS_path = None, drawing= False):
 
         # ==========================初始化配置===========================
         # 得到控制变量的个数
@@ -489,6 +489,102 @@ class Coe_surrogate_mixgentype(CoE_surrogate):
         # 返回最优个体及目标函数值
         return best_gen, best_ObjV
 
+    def coe(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+            maxormin=1, SUBPOP=1, GGAP=0.5,
+            selectStyle='sus', recombinStyle='xovdp', distribute = False, drawing= False):
+
+        # ==========================初始化配置===========================
+        # 得到控制变量的个数
+        NVAR = self.FieldDR.shape[1]
+        # 定义进化记录器，初始值为nan
+        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+        # 定义变量记录器，记录控制变量值，初始值为nan
+        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
+        # 初始化重复个体数为0
+        repnum = [0] * len(self.SubCom)
+        # 定义初始context vector
+        B = self.initilize_B()
+        # 求初代context vector 的 fitness
+        [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
+        # 初始化各个子种群
+        P, ObjV, LegV = self.initialize_offspring(NIND,B)
+        # 初始代数
+        gen = 0
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
+        # 开始计时
+        start_time = time.time()
+        while gen < MAXGEN:
+            # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
+            if badCounter >= 10 * MAXGEN:
+                break
+            # 每一轮进化轮流进化各个子种群
+            for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, P, ObjV, LegV)):
+                # 进行遗传算子的重组和变异，生成子代
+                SelCh = self.remu(P_i, SubCom_i, recombinStyle, recopt, SUBPOP, pm, distribute, repnum, index)
+                # 替换context vector中个体基因
+                Chrom = B.copy().repeat(NIND, axis=0)
+                Chrom[:, SubCom_i] = SelCh
+                # 初始化育种种群的可行性列向量
+                LegVSel = np.ones((Chrom.shape[0], 1))
+                # get the estimated value thought the surrogate
+                ObjVSel = self.surrogate.predict(Chrom).reshape(-1, 1)
+                # 求育种种群的目标函数值
+                [ObjVSel, LegVSel] = self.aimfunc(Chrom, LegVSel)
+                # 更新context vector 及其fitness （已经考虑排除不可行解）
+                B, F_B = self.update_context_vector(maxormin, Chrom, B, F_B, ObjVSel, LegVSel)
+                # 父子合并
+                P_i = np.vstack([P_i, SelCh])
+                ObjV_i = np.vstack([ObjV_i, ObjVSel])
+                LegV_i = np.vstack([LegV_i, LegVSel])
+                # 对合并的种群进行适应度评价
+                FitnV = ga.ranking(maxormin * ObjV_i, LegV_i, None, SUBPOP)
+                # 调用罚函数
+                FitnV = self.punfunc(LegV_i, FitnV)
+                # 获取最优个体的下标
+                bestIdx = np.argmax(FitnV)
+                # 排除非可行解
+                if LegV_i[bestIdx] != 0:
+                    # feasible = np.where(LegV_i != 0)[0]
+                    # 计算最优个体重复数
+                    repnum[index] = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])
+                    # badCounter计数器清零
+                    badCounter = 0
+                else:
+                    # 忽略这一代
+                    gen -= 1
+                    badCounter += 1
+                # 若要增强种群的分布性（可能会造成收敛慢）
+                if distribute == True:
+                    self.add_distribute(ObjV_i, FitnV)
+                # 选择个体生成新一代种群
+                [P_i, ObjV_i, LegV_i] = ga.selecting(selectStyle, P_i, FitnV, GGAP, SUBPOP, ObjV_i,
+                                                     LegV_i)
+                # 将子种群情况更新到总种群中去
+                P[index], ObjV[index], LegV[index] = P_i, ObjV_i, LegV_i
+
+            # 记录当代目标函数的最优值
+            pop_trace[gen, 0] = F_B
+            # 记录当代最优的控制变量值
+            var_trace[gen, :] = B[0]
+            # 增加代数
+            gen += 1
+        # 结束计时
+        end_time = time.time()
+        times = end_time - start_time
+
+        # ====================处理进化记录==================================
+        # 处理进化记录并获取最佳结果
+        pop_trace, var_trace, best_gen, best_ObjV = self.deal_records(maxormin, pop_trace, var_trace)
+        # 绘图&输出结果
+        if drawing:
+            self.draw(NVAR, pop_trace, var_trace, best_ObjV, best_gen, times)
+        # 返回最优个体及目标函数值
+        return best_gen, best_ObjV
+
 
 if __name__ == "__main__":
     def rosen(alpha=1e2, **X):
@@ -510,14 +606,14 @@ if __name__ == "__main__":
     SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
     radom_state = 1
 
-    coe = Coe_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state,
+    coe = CoE_surrogate_mixgentype(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state,
                                    surrogate_type = 'gp',
                                    acq='ucb', kappa=2.576, xi=0.0)
-    best_gen, best_ObjV = coe.coe_surrogate_real_templet(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
-                                                                   init_points=50, problem='R',
-                                                                   maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
-                                                                   interval=1,
-                                                                   selectStyle='sus', recombinStyle='xovdp',
-                                                                   distribute=False, drawing=False)
+    best_gen, best_ObjV = coe.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+                                            init_points=50,
+                                            maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
+                                            interval=1,
+                                            selectStyle='sus', recombinStyle='xovdp',
+                                            distribute=False, drawing=False)
 
 
