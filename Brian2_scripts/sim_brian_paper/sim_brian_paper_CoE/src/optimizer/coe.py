@@ -17,7 +17,7 @@ import geatpy as ga
 
 class CoE_surrogate(BaseFunctions):
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, keys, random_state,
-                 surrogate_type = 'rf' , **surrogate_parameters):
+                 surrogate_type = None , **surrogate_parameters):
         super().__init__()
         self.f = f # for BO with dict input
         self.f_p = f_p
@@ -200,7 +200,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
     codes和scales中不需要编码的部分用None来代替。
     '''
     def __init__(self,f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state,
-                 surrogate_type = 'rf', **surrogate_parameters):
+                 surrogate_type = None, **surrogate_parameters):
         super().__init__(f, f_p, SubCom, ranges, borders, precisions, keys, random_state,
                          surrogate_type = surrogate_type, **surrogate_parameters)
         self.ranges = ranges
@@ -507,7 +507,27 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 求初代context vector 的 fitness
         [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
         # 初始化各个子种群
-        P, ObjV, LegV = self.initialize_offspring(NIND,B)
+        P = []
+        ObjV = []
+        LegV = []
+        for SubCom_i in self.SubCom:
+            FieldDR_i = self.FieldDR[:, SubCom_i]
+            # 生成初始种群
+            P_i = ga.crtrp(NIND, FieldDR_i)
+            # 进行必要的二进制编码
+            P_i = self.b_coding(P_i, SubCom_i)
+            # 替换context vector中个体基因
+            Chrom = B.copy().repeat(NIND, axis=0)
+            Chrom[:, SubCom_i] = P_i
+            LegV_i = np.ones((NIND, 1))
+            # 求子问题的目标函数值
+            [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
+            # 各个种群的初始基因
+            P.append(P_i)
+            # 各个种群的初始函数值
+            ObjV.append(ObjV_i)
+            # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
+            LegV.append(LegV_i)
         # 初始代数
         gen = 0
         # 用于记录在“遗忘策略下”被忽略的代数
@@ -530,8 +550,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
                 Chrom[:, SubCom_i] = SelCh
                 # 初始化育种种群的可行性列向量
                 LegVSel = np.ones((Chrom.shape[0], 1))
-                # get the estimated value thought the surrogate
-                ObjVSel = self.surrogate.predict(Chrom).reshape(-1, 1)
                 # 求育种种群的目标函数值
                 [ObjVSel, LegVSel] = self.aimfunc(Chrom, LegVSel)
                 # 更新context vector 及其fitness （已经考虑排除不可行解）

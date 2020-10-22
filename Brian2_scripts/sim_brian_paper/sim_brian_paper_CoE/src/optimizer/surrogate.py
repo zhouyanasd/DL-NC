@@ -525,5 +525,8 @@ def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_param
                                                    n_Q = n_Q,
                                                    **surrogate_parameters)
         return surrogate
+    elif surrogate_type == None:
+        surrogate = Surrogate(f=f, pbounds=pbounds, random_state=random_state, model=None)
+        return surrogate
     else:
-        raise ('Wrong surrogate type, only "gp" or "rl"')
+        raise ('Wrong surrogate type, only "gp" or "rl" or None')

@@ -18,6 +18,6 @@ __all__ = [
     "RandomForestRegressor_surrogate",
     "GaussianProcess_surrogate",
     "CoE_surrogate",
-    "Coe_surrogate_mixgentype",
+    "CoE_surrogate_mixgentype",
     ""
 ]
