@@ -39,6 +39,10 @@ np.random.seed(100)
 data_path = '../../../Data/KTH/'
 
 ###################################
+#------------------------------------------
+# -------get numpy random state------------
+np_state = np.random.get_state()
+
 # -----simulation parameter setting-------
 GenerateData = False
 DataName = 'temp'
@@ -53,9 +57,19 @@ F_pre_train = 0.2
 F_validation = 1
 F_test = 1
 
-# -------class initialization----------------------
+neurons_encoding = int((origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1]))
+
+##-----------------------------------------------------
+# --- data and classifier ----------------------
 KTH = KTH_classification()
 evaluator = Evaluation()
+
+#--- create generator and decoder ---
+decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                  config_precisions, config_scales, neurons_encoding)
+
+generator = Generator(np_state)
+generator.register_decoder(decoder)
 
 # -------data initialization----------------------
 try:
@@ -70,21 +84,6 @@ try:
     data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 except FileNotFoundError:
     GenerateData = True
-
-#------------------------------------------
-# -------get numpy random state------------
-np_state = np.random.get_state()
-
-# --- basic settings ---
-neurons_encoding = (origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1])
-
-##-----------------------------------------------------
-#--- create generator and decoder ---
-decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                  config_precisions, config_scales, neurons_encoding)
-
-generator = Generator(np_state)
-generator.register_decoder(decoder)
 
 #--- define network run function ---
 def init_net(gen):
@@ -184,10 +183,10 @@ if __name__ == '__main__':
         df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, threshold)
         df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, threshold)
 
-        KTH.dump_data(data_path + 'train_' + DataName, df_en_train)
-        KTH.dump_data(data_path + 'pre_train_' + DataName, df_en_pre_train)
-        KTH.dump_data(data_path + 'validation_' + DataName, df_en_validation)
-        KTH.dump_data(data_path + 'test_' + DataName, df_en_test)
+        KTH.dump_data(data_path + 'train_' + DataName+'.p', df_en_train)
+        KTH.dump_data(data_path + 'pre_train_' + DataName+'.p', df_en_pre_train)
+        KTH.dump_data(data_path + 'validation_' + DataName+'.p', df_en_validation)
+        KTH.dump_data(data_path + 'test_' + DataName+'.p', df_en_test)
 
 # -------parameters search---------------
     if method == 'BO':

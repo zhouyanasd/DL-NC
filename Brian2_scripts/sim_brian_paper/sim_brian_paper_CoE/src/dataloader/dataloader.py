@@ -11,6 +11,7 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 
 import os
 import re
+import pickle
 
 import cv2
 import numpy as np
