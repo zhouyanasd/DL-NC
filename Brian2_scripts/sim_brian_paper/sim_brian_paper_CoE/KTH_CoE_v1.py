@@ -114,12 +114,11 @@ def run_net(inputs, net):
     #--- run network ---
     global Switch, stimulus
     Switch = 0
-    # inputs = zip(data_train_s, label_train)[0]
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
     states = net.get_states()['block_readout']['v']
-    net.restore('init')
+    net.restore('pre_run')
     return (states, inputs[1])
 
 @Timelog
