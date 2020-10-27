@@ -6,18 +6,6 @@ from brian2 import NeuronGroup, Synapses
 from operator import itemgetter
 
 
-class MathFunctions():
-    """
-    Some math functions for the simulations
-    """
-
-    def __init__(self):
-        pass
-
-    def gamma(self, a, size):
-        return sp.stats.gamma.rvs(a, size=size)
-
-
 class BaseFunctions():
     """
     Some basic functions for the simulations

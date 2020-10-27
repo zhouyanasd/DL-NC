@@ -1,5 +1,5 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.random_forest import RandomForestRegressor_
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.bayesian import UtilityFunction
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.utility_functions import UtilityFunction
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 
