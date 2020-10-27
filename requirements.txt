@@ -99,3 +99,4 @@ widgetsnbextension==3.0.3
 opencv-python==3.3.0.10
 bayesian-optimization==1.0.0
 cma==2.6.0
+geatpy==1.1.5
