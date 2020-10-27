@@ -42,17 +42,30 @@ class Timelog():
                     + str(test) + ' ' + str(train) + ' ' + str(parameters) + ' ' + '\n')
 
 
-class AddParaName():
+class ProgressBar():
+    """
+    Example
+    -------
+    @ProgressBar
+    def aa(**kwargs):
+        time.sleep(0.05)
+
+    n = aa.total = 100
+
+    for i in range(n):
+        aa()
+
+    """
     def __init__(self, func):
         self.func = func
-        self.keys = []
+        self.total = 0
+        self.now = 0
 
     def __call__(self, *arg, **kwargs):
-        if kwargs:
-            return self.func(**kwargs)
-        if arg:
-            kwargs = dict(zip(self.keys, *arg))
-            return self.func(**kwargs)
+        self.now += 1
+        print("\r", end="")
+        print("Runing progress: {:^3.0f}%: ".format((self.now)/self.total*100), "▋" * (int(self.now/self.total*100) // 2), end="")
+        return self.func(**kwargs)
 
 
 

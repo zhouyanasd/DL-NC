@@ -5,7 +5,7 @@ from .optimizer import *
 
 __all__ = [
     "Timelog",
-    "AddParaName",
+    "ProgressBar",
     "KTH_classification",
     "BaseFunctions",
     "MathFunctions",

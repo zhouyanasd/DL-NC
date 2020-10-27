@@ -122,7 +122,6 @@ def run_net(inputs, net):
     return (states, inputs[1])
 
 @Timelog
-@AddParaName
 def parameters_search(gen):
     # ------init net and run for pre_train-------
     net = init_net(gen)

@@ -13,7 +13,7 @@ from .algorithm import *
 
 __all__ = [
     "Timelog",
-    "AddParaName",
+    "ProgressBar",
     "Result",
     "MathFunctions",
     "BaseFunctions",
