@@ -77,7 +77,7 @@ class Result():
     def __init__(self):
         pass
 
-    def result_save(self, path, *arg, **kwarg):
+    def result_save(self, path, **kwarg):
         if os.path.exists(path):
             os.remove(path)
         fw = open(path, 'wb')
