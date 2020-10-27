@@ -15,7 +15,6 @@ __all__ = [
     "Timelog",
     "ProgressBar",
     "Result",
-    "MathFunctions",
     "BaseFunctions",
     "Evaluation",
     "Topological_sorting_tarjan",
