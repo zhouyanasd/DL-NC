@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
     elif method == 'CoE':
         optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, np_state,
+                                             config_precisions, config_codes, config_scales, config_keys, None,
                                              )
         best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=15, NIND=10,
                                             maxormin=1, SUBPOP=1, GGAP=0.5,
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
     elif method == 'CoE_rf':
         optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, np_state,
+                                             config_precisions, config_codes, config_scales, config_keys, None,
                                              surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                       init_points=300,
@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     elif method == 'CoE_gp':
         optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, np_state,
+                                             config_precisions, config_codes, config_scales, config_keys, None,
                                              surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                       init_points=300,
