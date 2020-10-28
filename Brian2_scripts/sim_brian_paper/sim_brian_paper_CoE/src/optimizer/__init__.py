@@ -19,5 +19,4 @@ __all__ = [
     "GaussianProcess_surrogate",
     "CoE_surrogate",
     "CoE_surrogate_mixgentype",
-    ""
 ]
