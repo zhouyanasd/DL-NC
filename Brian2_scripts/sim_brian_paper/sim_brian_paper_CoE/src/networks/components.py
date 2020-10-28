@@ -242,7 +242,7 @@ class Pathway(BaseFunctions):
         else:
             raise ("wrong connection type, only 'full' or 'one_to_one'.")
 
-    def create_synapse(self, model, on_pre, on_post,  name = name, **kwargs):
+    def create_synapse(self, model, on_pre, on_post,  name, **kwargs):
         '''
          Create synapse between neurons for the Pathway.
 
