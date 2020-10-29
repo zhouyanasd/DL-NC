@@ -122,7 +122,10 @@ def run_net(inputs, net):
     return (states, inputs[1])
 
 @Timelog
-def parameters_search(gen):
+def parameters_search(**parameter):
+    # ------convert the parameter to gen-------
+    gen = [parameter[key] for key in decoder.get_keys]
+    print('gen:',gen)
     # ------init net and run for pre_train-------
     net = init_net(gen)
     pre_run_net([(x) for x in zip(data_pre_train_s, label_pre_train)], net)
@@ -190,8 +193,9 @@ if __name__ == '__main__':
     if method == 'BO':
         optimizer = BayesianOptimization(
             f=parameters_search,
-            pbounds=dict(zip(config_keys, [tuple(x) for x in
-                                           ga.crtfld(config_ranges, config_borders, list(config_precisions)).T])),
+            pbounds=dict(zip(decoder.get_keys, [tuple(x) for x in
+                                           ga.crtfld(decoder.get_ranges, decoder.get_borders,
+                                                     list(decoder.get_precisions)).T])),
             random_state=np.random.RandomState(),
         )
         optimizer.minimize(
@@ -202,8 +206,9 @@ if __name__ == '__main__':
         )
 
     elif method == 'CoE':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, None,
+        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
+                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
+                                             decoder.get_scales, decoder.get_keys, None,
                                              )
         best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=15, NIND=10,
                                             maxormin=1, SUBPOP=1, GGAP=0.5,
@@ -211,8 +216,9 @@ if __name__ == '__main__':
                                             distribute=False, LHS_path = LHS_path, drawing=False)
 
     elif method == 'CoE_rf':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, None,
+        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
+                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
+                                             decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                       init_points=300,
@@ -222,8 +228,9 @@ if __name__ == '__main__':
                                                       distribute=False, LHS_path = LHS_path, drawing=False)
 
     elif method == 'CoE_gp':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, config_SubCom, config_ranges, config_borders,
-                                             config_precisions, config_codes, config_scales, config_keys, None,
+        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
+                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
+                                             decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
                                                       init_points=300,

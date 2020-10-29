@@ -121,9 +121,6 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        precisions = []
-        for group_precisions in self.config_precisions:
-            precisions.extend(group_precisions)
         return self.config_precisions
 
     @property
