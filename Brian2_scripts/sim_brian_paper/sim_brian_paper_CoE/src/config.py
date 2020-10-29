@@ -140,55 +140,51 @@ Encoding_Readout = ['type', 'strength', 'plasticity']
 config_group = ['Reservoir_config', 'Block_random', 'Block_scale_free',
                 'Block_circle', 'Block_hierarchy', 'Encoding_Readout']
 
+config_keys = [Reservoir_config, Block_random, Block_scale_free,
+              Block_circle, Block_hierarchy, Encoding_Readout]
 
-config_SubCom =[[0, 1, 2, 3, 4, 5],
+
+config_SubCom = [[0, 1, 2, 3, 4, 5],
                  [6, 7, 8, 9, 10, 11, 12],
                  [13, 14, 15, 16, 17, 18, 19, 20, 21],
                  [22, 23, 24, 25, 26, 27, 28, 29, 22],
                  [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
                  [42, 43, 44]]
 
-config_keys = np.array(Reservoir_config + Block_random + Block_scale_free+\
-              Block_circle + Block_hierarchy + Encoding_Readout)
+config_codes = [[1, 1, 1, None, None, None],
+                [None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None, None, None],
+                [None, None, None]]
 
-config_codes = np.array(
-                [1, 1, 1, None, None, None,
-                None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None, None, None, None,
-                None, None, None])
+config_ranges = [[[0, 255], [0, 255], [0, 255], [0, 1], [0, 1], [0, 1]],
+                 [[10, 90]] + [[0, 1]] * 6,
+                 [[10, 90]] +[[0, 1]] * 8,
+                 [[10, 90]] +[[0, 1]] * 8,
+                 [[10, 30]] + [[10, 30]] + [[10, 30]] + [[0, 1]] * 8,
+                 [[0, 1]] * 3]
 
-config_ranges = np.vstack([[0, 255], [0, 255], [0, 255], [0, 1], [0, 1], [0, 1],
-                           [10, 90], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                           [10, 90], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                           [10, 90], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                           [10, 30], [10, 30], [10, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                           [0, 1], [0, 1], [0, 1]]).T
+config_borders = [[[1, 1], [1, 1], [1, 1], [1, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[1, 1], [0, 1], [0, 1]]]
 
-config_borders = np.vstack(
-                 [[1, 1], [1, 1], [1, 1], [1, 1], [0, 1], [0, 1],
-                  [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1],
-                  [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                  [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                  [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1],
-                  [1, 1], [0, 1], [0, 1]]).T
+config_precisions = [[0, 0, 0, 0, 4, 4],
+                     [4, 4, 4, 0, 4, 4, 4],
+                     [4, 4, 4, 0, 4, 4, 4, 4, 4],
+                     [4, 4, 4, 0, 4, 4, 4, 4, 4],
+                     [4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4],
+                     [0, 4, 4]]
 
-config_precisions = np.array(
-                    [0, 0, 0, 0, 4, 4,
-                     4, 4, 4, 0, 4, 4, 4,
-                     4, 4, 4, 0, 4, 4, 4, 4, 4,
-                     4, 4, 4, 0, 4, 4, 4, 4, 4,
-                     4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4,
-                     0, 4, 4])
-
-config_scales =  np.array(
-                 [0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0])
+config_scales = [[0] * 6,
+                 [0] * 7,
+                 [0] * 9,
+                 [0] * 9,
+                 [0] * 11,
+                 [0] * 3]
 
 '''
 Example:

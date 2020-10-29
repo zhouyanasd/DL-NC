@@ -52,8 +52,7 @@ class Decoder(BaseFunctions):
 
         keys = []
         for index, group_name in enumerate(self.config_group):
-            key_index = self.config_SubCom[index]
-            for key in self.config_keys[key_index]:
+            for key in self.config_keys[index]:
                 keys.append(group_name+'_'+key)
         return keys
 
@@ -88,7 +87,10 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        return self.config_codes
+        codes = []
+        for group_codes in self.config_codes:
+            codes.extend(group_codes)
+        return np.array(codes)
 
     @property
     def get_ranges(self):
@@ -99,7 +101,10 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        return self.config_ranges
+        ranges = []
+        for group_ranges in self.config_ranges:
+            ranges.extend(group_ranges)
+        return np.array(ranges).T
 
     @property
     def get_borders(self):
@@ -110,7 +115,10 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        return self.config_borders
+        borders = []
+        for group_borders in self.config_borders:
+            borders.extend(group_borders)
+        return np.array(borders).T
 
     @property
     def get_precisions(self):
@@ -121,7 +129,10 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        return self.config_precisions
+        precisions = []
+        for group_precisions in self.config_precisions:
+            precisions.extend(group_precisions)
+        return np.array(precisions)
 
     @property
     def get_scales(self):
@@ -131,8 +142,10 @@ class Decoder(BaseFunctions):
          Parameters
          ----------
          '''
-
-        return self.config_scales
+        scales = []
+        for group_scales in self.config_scales:
+            scales.extend(group_scales)
+        return np.array(scales)
 
     def register(self, Gen):
         '''
@@ -155,10 +168,10 @@ class Decoder(BaseFunctions):
          '''
 
         group = np.where(np.array(self.config_group) == target)[0][0]
+        key = self.config_keys[group]
         SubCom = self.config_SubCom[group]
-        key = self.config_keys[SubCom]
-        codes = self.config_codes[SubCom]
-        ranges = self.config_ranges[SubCom]
+        codes = self.config_codes[group]
+        ranges = self.config_ranges[group]
         parameter = {}
         for p,k,c,r in zip(self.sub_list(self.Gen, SubCom), key, codes, ranges):
             if c != None:
