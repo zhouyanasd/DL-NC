@@ -119,13 +119,12 @@ class TargetSpace(object):
         shape = ranges.shape
         bounds = np.zeros(shape).T
         for index, (r, b, p) in enumerate(zip(ranges.T, borders.T, precisions.T)):
-            bound_ = np.round(r, p)
-            bound = np.array([0.0, 0.0])
+            bound_ = np.round(r, p).astype(float)
             if b[0] == 0:
-                bound[0] = bound_[0] + 1 / (10 ** p)
+                bound_[0] = bound_[0] + 1 / (10 ** p)
             if b[1] == 0:
-                bound[1] -= 1 / (10 ** p)
-            bounds[index] = bound
+                bound_[1] = bound_[1] - 1 / (10 ** p)
+            bounds[index] = bound_
         return bounds.T
 
     def params_to_array(self, params):
