@@ -25,7 +25,7 @@ class CoE_surrogate(BaseFunctions):
         self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
         self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f, random_state= random_state,
-                                          pbounds= dict(zip(self.keys, [tuple(x) for x in self.FieldDR.T])),
+                                          keys=keys, ranges=ranges, borders=borders, precisions=precisions,
                                           **surrogate_parameters)
 
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and output

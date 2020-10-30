@@ -1,5 +1,6 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.de import DiffEvol
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.utility_functions import UtilityFunction
 
 import numpy as np
 from sklearn.gaussian_process.kernels import Matern
@@ -8,7 +9,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 import cma
 
 class BayesianOptimization(Surrogate):
-    def __init__(self, f, pbounds, random_state=None, acq='ucb', opt='de', kappa=2.576, xi=0.0,
+    def __init__(self, f, keys, ranges, borders, precisions, random_state=None, acq='ucb', opt='de', kappa=2.576, xi=0.0,
                   verbose=0, **gp_params):
         # Internal GP regressor
         self._gp = GaussianProcessRegressor(
@@ -22,7 +23,10 @@ class BayesianOptimization(Surrogate):
 
         super(BayesianOptimization, self).__init__(
             f = f,
-            pbounds = pbounds,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
             random_state=random_state,
             model = self._gp
         )

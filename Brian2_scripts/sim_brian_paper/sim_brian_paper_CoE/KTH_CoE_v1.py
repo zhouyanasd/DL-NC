@@ -193,9 +193,10 @@ if __name__ == '__main__':
     if method == 'BO':
         optimizer = BayesianOptimization(
             f=parameters_search,
-            pbounds=dict(zip(decoder.get_keys, [tuple(x) for x in
-                                           ga.crtfld(decoder.get_ranges, decoder.get_borders,
-                                                     list(decoder.get_precisions)).T])),
+            keys = decoder.get_keys,
+            ranges = decoder.get_ranges,
+            borders = decoder.get_borders,
+            precisions = decoder.get_precisions,
             random_state=np.random.RandomState(),
         )
         optimizer.minimize(

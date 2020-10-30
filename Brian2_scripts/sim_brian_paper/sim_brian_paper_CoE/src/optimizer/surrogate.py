@@ -42,7 +42,7 @@ class TargetSpace(object):
     # >>> y = space.register_point(x)
     # >>> assert self.max_point()['max_val'] == y
     """
-    def __init__(self, target_func, pbounds, random_state=None):
+    def __init__(self, target_func, keys, ranges, borders, precisions, random_state=None):
         """
         Parameters
         ----------
@@ -56,18 +56,26 @@ class TargetSpace(object):
         random_state : int, RandomState, or None
             optionally specify a seed for a random number generator
         """
+        self.FieldDR = self.crtfld(ranges, borders, precisions)
+
+        self.pbounds = dict(zip(keys, [tuple(x) for x in self.FieldDR.T]))
+
+        self.pprecisions = dict(zip(keys, precisions))
+
         self.random_state = ensure_rng(random_state)
 
         # The function to be optimized
         self.target_func = target_func
 
         # Get the name of the parameters
-        self._keys = sorted(pbounds)
+        self._keys = sorted(self.pbounds)
         # Create an array with parameters bounds
         self._bounds = np.array(
-            [item[1] for item in sorted(pbounds.items(), key=lambda x: x[0])],
+            [item[1] for item in sorted(self.pbounds.items(), key=lambda x: x[0])],
             dtype=np.float
         )
+
+        self._precisions = [self.pprecisions[x] for x in self._keys]
 
         # preallocated memory for X and Y points
         self._params = np.empty(shape=(0, self.dim))
@@ -106,6 +114,19 @@ class TargetSpace(object):
     @property
     def bounds(self):
         return self._bounds
+
+    def crtfld(self, ranges, borders, precisions):
+        shape = ranges.shape
+        bounds = np.zeros(shape).T
+        for index, (r, b, p) in enumerate(zip(ranges.T, borders.T, precisions.T)):
+            bound_ = np.round(r, p)
+            bound = np.array([0.0, 0.0])
+            if b[0] == 0:
+                bound[0] = bound_[0] + 1 / (10 ** p)
+            if b[1] == 0:
+                bound[1] -= 1 / (10 ** p)
+            bounds[index] = bound
+        return bounds.T
 
     def params_to_array(self, params):
         try:
@@ -301,12 +322,12 @@ class Queue():
 
 
 class Surrogate():
-    def __init__(self, f, pbounds, random_state, model):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, model):
         self._random_state = ensure_rng(random_state)
 
         # Data structure containing the function to be optimized, the bounds of
         # its domain, and a record of the evaluations we have done so far
-        self._space = TargetSpace(f, pbounds, random_state)
+        self._space = TargetSpace(f, keys, ranges, borders, precisions, random_state)
 
         # queue
         self._queue = Queue()
@@ -348,9 +369,16 @@ class Surrogate():
         """Make sure there's something in the queue at the very beginning."""
         if self._queue.empty and self._space.empty:
             init_points = max(init_points, 1)
-        LHS_points = self.LHSample(init_points, self._space.bounds)
+        LHS_points = self.add_precision(self.LHSample(init_points, self._space.bounds), self._space._precisions)
         for point in LHS_points:
             self._queue.add(point)
+
+    def add_precision(self, x, precisions):
+        shape = x.shape
+        result = np.zeros(shape)
+        for i in range(shape[1]):
+            result[:, i] = np.round(x[:, i], precisions[i])
+        return result
 
     def LHSample(self, N, bounds, D=None):
         if D == None:
@@ -431,7 +459,7 @@ class Surrogate():
 
 
 class RandomForestRegressor_surrogate(Surrogate):
-    def __init__(self, f, pbounds, random_state, n_Q, **rf_params):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, n_Q, **rf_params):
         self._rf = RandomForestRegressor_(
             n_estimators=10,
             criterion="mse",
@@ -456,7 +484,10 @@ class RandomForestRegressor_surrogate(Surrogate):
 
         super(RandomForestRegressor_surrogate, self).__init__(
             f=f,
-            pbounds=pbounds,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
             random_state=random_state,
             model=self._rf
         )
@@ -486,7 +517,7 @@ class RandomForestRegressor_surrogate(Surrogate):
 
 
 class GaussianProcess_surrogate(Surrogate):
-    def __init__(self, f, pbounds, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
             alpha=1e-6,
@@ -498,7 +529,10 @@ class GaussianProcess_surrogate(Surrogate):
 
         super(GaussianProcess_surrogate, self).__init__(
             f=f,
-            pbounds=pbounds,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
             random_state=random_state,
             model=self._gp
         )
@@ -510,23 +544,26 @@ class GaussianProcess_surrogate(Surrogate):
         return y
 
 
-def create_surrogate(surrogate_type, f, pbounds, random_state, **surrogate_parameters):
+def create_surrogate(surrogate_type, f, keys, ranges, borders, precisions, random_state, **surrogate_parameters):
     if surrogate_type == 'gp':
         acq = surrogate_parameters.pop('acq')
         kappa = surrogate_parameters.pop('kappa'),
         xi = surrogate_parameters.pop('xi'),
-        surrogate = GaussianProcess_surrogate(f = f, pbounds = pbounds, random_state = random_state,
-                                             acq = acq, kappa = kappa, xi = xi,
-                                             **surrogate_parameters)
+        surrogate = GaussianProcess_surrogate(f = f, keys=keys, ranges=ranges, borders=borders,
+                                              precisions=precisions, random_state = random_state,
+                                              acq = acq, kappa = kappa, xi = xi,
+                                              **surrogate_parameters)
         return surrogate
     elif surrogate_type == 'rf':
         n_Q = surrogate_parameters.pop('n_Q')
-        surrogate = RandomForestRegressor_surrogate(f = f, pbounds = pbounds, random_state = random_state,
-                                                   n_Q = n_Q,
-                                                   **surrogate_parameters)
+        surrogate = RandomForestRegressor_surrogate(f = f, keys=keys, ranges=ranges, borders=borders,
+                                                    precisions=precisions, random_state = random_state,
+                                                    n_Q = n_Q,
+                                                    **surrogate_parameters)
         return surrogate
     elif surrogate_type == None:
-        surrogate = Surrogate(f=f, pbounds=pbounds, random_state=random_state, model=None)
+        surrogate = Surrogate(f=f, keys=keys, ranges=ranges, borders=borders,
+                              precisions=precisions, random_state=random_state, model=None)
         return surrogate
     else:
         raise ('Wrong surrogate type, only "gp" or "rl" or None')
