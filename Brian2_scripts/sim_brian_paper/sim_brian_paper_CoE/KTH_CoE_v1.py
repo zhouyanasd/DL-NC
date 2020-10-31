@@ -105,9 +105,10 @@ def pre_run_net(inputs, net):
     #--- run network ---
     global Switch, stimulus
     Switch = 1
-    stimulus = TimedArray(inputs[0], dt=Dt)
-    duration = inputs[0].shape[0]
-    net.run(duration * Dt)
+    for input in inputs:
+        stimulus = TimedArray(input[0], dt=Dt)
+        duration = input[0].shape[0]
+        net.run(duration * Dt)
     net.store('pre_run')
 
 def run_net(inputs, net):
