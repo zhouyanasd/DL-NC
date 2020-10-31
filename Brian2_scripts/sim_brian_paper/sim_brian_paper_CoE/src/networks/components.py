@@ -27,7 +27,7 @@ class Block(BaseFunctions):
     def __init__(self, N, connect_matrix):
         super().__init__()
         self.N = N
-        self.connect_matrix = connect_matrix.astype(int)
+        self.connect_matrix = connect_matrix
 
     def separate_ex_inh(self, ratio = 4, random_state = None):
         '''
@@ -220,7 +220,7 @@ class Pathway(BaseFunctions):
 
     def __init__(self, blocks_pre, blocks_post, connect_matrix):
         super().__init__()
-        self.connect_matrix = connect_matrix.astype(int)
+        self.connect_matrix = connect_matrix
         self.pre = connect_matrix[0]
         self.post = connect_matrix[1]
         self.blocks_pre = blocks_pre
