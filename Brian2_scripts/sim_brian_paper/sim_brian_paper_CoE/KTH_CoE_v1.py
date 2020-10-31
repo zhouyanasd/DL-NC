@@ -125,7 +125,6 @@ def run_net(inputs, net):
 def parameters_search(**parameter):
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
-    print('gen:',gen)
     # ------init net and run for pre_train-------
     net = init_net(gen)
     pre_run_net([(x) for x in zip(data_pre_train_s, label_pre_train)], net)
@@ -156,7 +155,7 @@ def parameters_search(**parameter):
                                                                    np.asarray(_label_test), solver="lbfgs",
                                                                    multi_class="multinomial")
     # ----------show results-----------
-    print('gen %s' % gen)
+    print('parameter %s' % parameter)
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
     print('Test score: ', score_test)
