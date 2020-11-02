@@ -30,7 +30,6 @@ from multiprocessing import Pool
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
-import geatpy as ga
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
@@ -94,16 +93,16 @@ def init_net(gen):
     generator.decoder.register(gen)
 
     #--- create network ---
+    global net
     net = Network()
     LSM_network = generator.generate_network()
     generator.initialize(LSM_network)
     generator.join(net, LSM_network)
     net.store('init')
-    return net
 
-def pre_run_net(inputs, net):
+def pre_run_net(inputs):
     #--- run network ---
-    global Switch, stimulus
+    global Switch, stimulus, net
     Switch = 1
     for input in inputs:
         stimulus = TimedArray(input[0], dt=Dt)
@@ -111,9 +110,9 @@ def pre_run_net(inputs, net):
         net.run(duration * Dt)
     net.store('pre_run')
 
-def run_net(inputs, net):
+def run_net(inputs):
     #--- run network ---
-    global Switch, stimulus
+    global Switch, stimulus, net
     Switch = 0
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
@@ -127,15 +126,14 @@ def parameters_search(**parameter):
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    net = init_net(gen)
+    init_net(gen)
     pre_run_net([(x) for x in zip(data_pre_train_s, label_pre_train)], net)
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, net), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(run_net, [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, net),
-                                      [(x) for x in zip(data_validation_s, label_validation)])
+    states_validation_list = pool.map(run_net, [(x) for x in zip(data_validation_s, label_validation)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, net), [(x) for x in zip(data_test_s, label_test)])
+    states_test_list = pool.map(run_net, [(x) for x in zip(data_test_s, label_test)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for train in states_train_list:
