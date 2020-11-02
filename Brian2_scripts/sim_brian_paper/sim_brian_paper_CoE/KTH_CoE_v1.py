@@ -127,7 +127,7 @@ def parameters_search(**parameter):
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
     init_net(gen)
-    pre_run_net([(x) for x in zip(data_pre_train_s, label_pre_train)], net)
+    pre_run_net([(x) for x in zip(data_pre_train_s, label_pre_train)])
     # ------parallel run for train-------
     states_train_list = pool.map(run_net, [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
