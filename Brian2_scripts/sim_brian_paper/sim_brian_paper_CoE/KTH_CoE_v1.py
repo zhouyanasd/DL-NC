@@ -123,6 +123,7 @@ def run_net(gen, inputs):
     states = net.get_states()['block_readout']['v']
     return (states, inputs[1])
 
+@ProgressBar
 @Timelog
 def parameters_search(**parameter):
     # ------convert the parameter to gen-------
@@ -166,6 +167,7 @@ def parameters_search(**parameter):
 if __name__ == '__main__':
     core = 8
     pool = Pool(core)
+    parameters_search.total = 900
 
     method = 'CoE_rf'
     LHS_path = './LHS_KTH.dat'

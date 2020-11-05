@@ -64,7 +64,7 @@ class ProgressBar():
     def __call__(self, *arg, **kwargs):
         self.now += 1
         print("\r", end="")
-        print("Runing progress: {:^3.0f}%: ".format((self.now)/self.total*100), "▋" * (int(self.now/self.total*100) // 2), end="")
+        print("Runing progress: {:^3.0f}%: ".format((self.now)/self.total*100), "▋" * (int(self.now/self.total*100) // 2), end="\n")
         return self.func(**kwargs)
 
 
