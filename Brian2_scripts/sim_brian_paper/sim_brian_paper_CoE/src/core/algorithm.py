@@ -196,8 +196,20 @@ class Direct_scale_free(BaseFunctions):
         self.delta_in = delta_in
         self.delta_out = delta_out
         self.nodes = list(np.arange(self.init_nodes))
-        self.o, self.i =self.full_connected(self.init_nodes)
+        self.o, self.i =self._full_connected(self.init_nodes)
         self.new_node = self.nodes[-1] + 1
+
+    def _full_connected(self, init_nodes):
+        nodes = list(np.arange(init_nodes))
+        o, i = [], []
+        for node_pre in nodes:
+            for node_post in nodes:
+                if node_pre == node_post:
+                    continue
+                else:
+                    i.append(node_post)
+                    o.append(node_pre)
+        return o, i
 
     @property
     def edges(self):

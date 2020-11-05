@@ -70,8 +70,8 @@ class Generator_connection_matrix(BaseFunctions):
         beta = p_beta/sum(p_alpha+p_beta+p_gama)
         gama = p_gama/sum(p_alpha+p_beta+p_gama)
         DSF = Direct_scale_free(final_nodes = N,  alpha = alpha, beta = beta, gama = gama,
-                                init_nodes = 1, detla_in=1, detla_out = 1)
-        DSF.generate_gaph()
+                                init_nodes = 1, delta_in=1, delta_out = 1)
+        DSF.generate_graph()
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
