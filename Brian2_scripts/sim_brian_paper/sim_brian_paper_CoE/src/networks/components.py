@@ -94,8 +94,8 @@ class Block(BaseFunctions):
          ----------
         connect_matrix: list[list[int], list[int]], the fixed connection matrix for inner synapse.
          '''
-
-        self.synapses.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
+        if self.connect_matrix.size != 0:
+            self.synapses.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
 
     def initialize(self, component, **kwargs):
         '''
