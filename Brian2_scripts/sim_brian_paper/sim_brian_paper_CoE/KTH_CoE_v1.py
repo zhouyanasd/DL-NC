@@ -159,7 +159,7 @@ def parameters_search(**parameter):
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
     print('Test score: ', score_test)
-    return 1 - score_validation, 1 - score_test, 1 - score_train, gen
+    return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
 ##########################################
 # -------optimizer settings---------------
