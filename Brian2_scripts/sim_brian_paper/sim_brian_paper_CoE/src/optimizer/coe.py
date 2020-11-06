@@ -308,8 +308,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             P_i = self.b_coding(P_i, SubCom_i)
             # 替换context vector中个体基因
             Chrom = B.copy().repeat(NIND, axis=0)
-            Chrom = self._space.add_precision(Chrom,self._space._precisions)
             Chrom[:, SubCom_i] = P_i
+            Chrom = self._space.add_precision(Chrom,self._space._precisions)
             LegV_i = np.ones((NIND, 1))
             # 求子问题的目标函数值
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
