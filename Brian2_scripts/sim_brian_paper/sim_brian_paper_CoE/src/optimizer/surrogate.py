@@ -129,8 +129,7 @@ class TargetSpace(object):
         shape = x.shape
         result = np.zeros(shape)
         for i in range(shape[1]):
-            if precisions[i] == 0:
-                result[:, i] = np.round(x[:, i], precisions[i])
+            result[:, i] = np.round(x[:, i], precisions[i])
         return result
 
     def params_to_array(self, params):

@@ -294,8 +294,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             B_i = ga.crtrp(1, FieldDR_i)
             B_i = self.b_coding(B_i, SubCom_i)
             B.extend(list(B_i[0]))
-        B = self._space.add_precision(B, self._space._precisions)
-        return np.array(B).reshape(1,-1)
+        return self._space.add_precision(np.array(B).reshape(1,-1), self._space._precisions)
 
     def initialize_offspring(self, NIND, B):
         P = []
