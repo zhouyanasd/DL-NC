@@ -68,14 +68,12 @@ class TargetSpace(object):
         self.target_func = target_func
 
         # Get the name of the parameters
-        self._keys = sorted(self.pbounds)
-        # Create an array with parameters bounds
-        self._bounds = np.array(
-            [item[1] for item in sorted(self.pbounds.items(), key=lambda x: x[0])],
-            dtype=np.float
-        )
+        self._keys = keys
 
-        self._precisions = [self.pprecisions[x] for x in self._keys]
+        # Create an array with parameters bounds
+        self._bounds = self.FieldDR.T
+
+        self._precisions = precisions
 
         # preallocated memory for X and Y points
         self._params = np.empty(shape=(0, self.dim))
@@ -126,6 +124,14 @@ class TargetSpace(object):
                 bound_[1] = bound_[1] - 1 / (10 ** p)
             bounds[index] = bound_
         return bounds.T
+
+    def add_precision(self, x, precisions):
+        shape = x.shape
+        result = np.zeros(shape)
+        for i in range(shape[1]):
+            if precisions[i] == 0:
+                result[:, i] = np.round(x[:, i], precisions[i])
+        return result
 
     def params_to_array(self, params):
         try:
@@ -368,16 +374,10 @@ class Surrogate():
         """Make sure there's something in the queue at the very beginning."""
         if self._queue.empty and self._space.empty:
             init_points = max(init_points, 1)
-        LHS_points = self.add_precision(self.LHSample(init_points, self._space.bounds), self._space._precisions)
+        LHS_points = self._space.add_precision(self.LHSample(init_points, self._space.bounds),
+                                        self._space._precisions)
         for point in LHS_points:
             self._queue.add(point)
-
-    def add_precision(self, x, precisions):
-        shape = x.shape
-        result = np.zeros(shape)
-        for i in range(shape[1]):
-            result[:, i] = np.round(x[:, i], precisions[i])
-        return result
 
     def LHSample(self, N, bounds, D=None):
         if D == None:

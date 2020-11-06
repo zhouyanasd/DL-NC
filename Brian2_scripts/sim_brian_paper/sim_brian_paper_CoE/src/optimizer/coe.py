@@ -27,6 +27,7 @@ class CoE_surrogate(BaseFunctions):
         self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f, random_state= random_state,
                                           keys=keys, ranges=ranges, borders=borders, precisions=precisions,
                                           **surrogate_parameters)
+        self._space = self.surrogate._space
 
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and output
         res = []
@@ -262,7 +263,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
             if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
                 SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
-        return SelCh
+        return self._space.add_precision(SelCh,self._space._precisions)
 
     def is2(self, FieldD):
         r = FieldD[2, :] - FieldD[1, :]
@@ -293,6 +294,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             B_i = ga.crtrp(1, FieldDR_i)
             B_i = self.b_coding(B_i, SubCom_i)
             B.extend(list(B_i[0]))
+        B = self._space.add_precision(B, self._space._precisions)
         return np.array(B).reshape(1,-1)
 
     def initialize_offspring(self, NIND, B):
@@ -307,6 +309,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             P_i = self.b_coding(P_i, SubCom_i)
             # 替换context vector中个体基因
             Chrom = B.copy().repeat(NIND, axis=0)
+            Chrom = self._space.add_precision(Chrom,self._space._precisions)
             Chrom[:, SubCom_i] = P_i
             LegV_i = np.ones((NIND, 1))
             # 求子问题的目标函数值
@@ -519,6 +522,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             # 替换context vector中个体基因
             Chrom = B.copy().repeat(NIND, axis=0)
             Chrom[:, SubCom_i] = P_i
+            Chrom = self._space.add_precision(Chrom,self._space._precisions)
             LegV_i = np.ones((NIND, 1))
             # 求子问题的目标函数值
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
