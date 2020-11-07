@@ -387,6 +387,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         repnum = [0] * len(self.SubCom)
         # 初始化代理模型
         self.surrogate.initial_model(init_points = init_points, LHS_path = LHS_path, is_LHS = True, lazy = False)
+        # 从代理模型初始化的数据中找到最好的点
         B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
         F_B = self._space.target.min()
         # 初始化各个子种群
