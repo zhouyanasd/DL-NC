@@ -387,10 +387,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         repnum = [0] * len(self.SubCom)
         # 初始化代理模型
         self.surrogate.initial_model(init_points = init_points, LHS_path = LHS_path, is_LHS = True, lazy = False)
-        # 定义初始context vector
-        B = self.initilize_B()
-        # 求初代context vector 的 fitness
-        [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
+        B = self._space.params[coe._space.target.argmin()]
+        F_B = self._space.target.min()
         # 初始化各个子种群
         P, ObjV, LegV = self.initialize_offspring(NIND,B)
         # 初始代数

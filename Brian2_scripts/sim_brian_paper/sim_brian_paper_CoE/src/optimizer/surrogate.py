@@ -276,6 +276,19 @@ class TargetSpace(object):
             res = {}
         return res
 
+    def min(self):
+        """Get maximum target value found and corresponding parametes."""
+        try:
+            res = {
+                'target': self.target.min(),
+                'params': dict(
+                    zip(self.keys, self.params[self.target.argmin()])
+                )
+            }
+        except ValueError:
+            res = {}
+        return res
+
     def res(self):
         """Get all target values found and corresponding parametes."""
         params = [dict(zip(self.keys, p)) for p in self.params]
