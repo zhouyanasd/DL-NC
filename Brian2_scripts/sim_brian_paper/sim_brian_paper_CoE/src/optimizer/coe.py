@@ -296,7 +296,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             B.extend(list(B_i[0]))
         return self._space.add_precision(np.array(B).reshape(1,-1), self._space._precisions)
 
-    def initialize_offspring(self, NIND, B):
+    def initialize_offspring(self, NIND, B, is_eva = False):
         P = []
         ObjV = []
         LegV = []
@@ -311,10 +311,14 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             Chrom[:, SubCom_i] = P_i
             Chrom = self._space.add_precision(Chrom,self._space._precisions)
             LegV_i = np.ones((NIND, 1))
-            # 求子问题的目标函数值
-            [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
-            # update the BO model
-            self.surrogate.update_model()
+            if is_eva:
+                # 求子问题的目标函数值
+                [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
+                # update the BO model
+                self.surrogate.update_model()
+            else:
+                # 初代中确直接用代理评估出来
+                ObjV_i = self.surrogate.predict(Chrom).reshape(-1, 1)
             # 各个种群的初始基因
             P.append(P_i)
             # 各个种群的初始函数值
