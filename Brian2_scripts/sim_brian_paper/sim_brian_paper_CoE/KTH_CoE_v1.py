@@ -151,6 +151,9 @@ def parameters_search(**parameter):
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
+    net = init_net(gen)
+    for i in range(core):
+        q.put(net._full_state())
     pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s, label_pre_train)])
     sum_strength(gen, q)
     # ------parallel run for train-------
@@ -190,7 +193,7 @@ def parameters_search(**parameter):
 if __name__ == '__main__':
     core = 8
     pool = Pool(core)
-    q = Manager().Queue()
+    q = Manager().Queue(core)
     parameters_search.total = 900
 
     method = 'CoE_rf'
