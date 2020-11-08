@@ -127,7 +127,6 @@ def sum_strength(gen, queue):
                 for state in states:
                     np.add(state_init[com]['strength'][0], state[com]['strength'][0]/l,
                             out = state_init[com]['strength'][0])
-                    print(com, state_init[com]['strength'][0])
             except:
                 continue
     net._stored_state['pre_run'] = state_init
