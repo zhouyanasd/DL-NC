@@ -238,7 +238,7 @@ if __name__ == '__main__':
                                              decoder.get_borders, decoder.get_precisions, decoder.get_codes,
                                              decoder.get_scales, decoder.get_keys, None,
                                              )
-        best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=15, NIND=10,
+        best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=14, NIND=10,
                                             maxormin=1, SUBPOP=1, GGAP=0.5,
                                             selectStyle='sus', recombinStyle='xovdp',
                                             distribute=False, LHS_path = LHS_path, drawing=False)
