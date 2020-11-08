@@ -21,12 +21,11 @@ Citation
 =======
 
 """
-
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
 from functools import partial
-from multiprocessing import Pool
+from multiprocessing import Manager, Pool
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
@@ -100,15 +99,38 @@ def init_net(gen):
     net.store('init')
     return net
 
-def pre_run_net(gen, inputs):
+def pre_run_net(gen, inputs, queue):
     #--- run network ---
     global Switch, stimulus
     net = init_net(gen)
     Switch = 1
-    for input in inputs:
-        stimulus = TimedArray(input[0], dt=Dt)
-        duration = input[0].shape[0]
-        net.run(duration * Dt)
+    state = queue.get()
+    net._stored_state['temp'] = state
+    net.restore('temp')
+    stimulus = TimedArray(inputs[0], dt=Dt)
+    duration = inputs[0].shape[0]
+    net.run(duration * Dt)
+    q.put(net._full_state())
+
+def sum_strength(gen, queue):
+    net = init_net(gen)
+    state_init = net._full_state()
+    l = queue.qsize()
+    states = []
+    while not queue.empty():
+        states.append(queue.get())
+    for com in list(state_init.keys()):
+        if 'block_block_' in com or 'pathway_' in com and '_pre' not in com and '_post' not in com:
+            try:
+                np.subtract(state_init[com]['strength'][0], state_init[com]['strength'][0],
+                       out=state_init[com]['strength'][0])
+                for state in states:
+                    np.add(state_init[com]['strength'][0], state[com]['strength'][0]/l,
+                            out = state_init[com]['strength'][0])
+                    print(com, state_init[com]['strength'][0])
+            except:
+                continue
+    net._stored_state['pre_run'] = state_init
     net.store('pre_run', 'pre_run_state.txt')
 
 def run_net(gen, inputs):
@@ -129,7 +151,8 @@ def parameters_search(**parameter):
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    pre_run_net(gen, [(x) for x in zip(data_pre_train_s, label_pre_train)])
+    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s, label_pre_train)])
+    sum_strength(gen, q)
     # ------parallel run for train-------
     states_train_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_train_s, label_train)])
     # ------parallel run for validation-------
@@ -167,6 +190,7 @@ def parameters_search(**parameter):
 if __name__ == '__main__':
     core = 8
     pool = Pool(core)
+    q = Manager().Queue()
     parameters_search.total = 900
 
     method = 'CoE_rf'
