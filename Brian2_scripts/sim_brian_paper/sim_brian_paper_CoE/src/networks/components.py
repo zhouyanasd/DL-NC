@@ -96,6 +96,8 @@ class Block(BaseFunctions):
          '''
         if self.connect_matrix.size != 0:
             self.synapses.connect(i = self.connect_matrix[0], j = self.connect_matrix[1])
+        else:
+            self.synapses.active = False
 
     def initialize(self, component, **kwargs):
         '''
