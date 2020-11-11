@@ -7,7 +7,8 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .dataloader import *
+from .KTH_dataloader import *
+from .UCI_phone_dataloader import *
 
 __all__ = [
     "KTH_classification",
