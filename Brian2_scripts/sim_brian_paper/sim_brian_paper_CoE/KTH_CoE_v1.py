@@ -104,13 +104,13 @@ def pre_run_net(gen, inputs, queue):
     global Switch, stimulus
     net = init_net(gen)
     Switch = 1
-    state = queue.get()
+    state = queue.get(False)
     net._stored_state['temp'] = state
     net.restore('temp')
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
-    queue.put(net._full_state())
+    queue.put(net._full_state(), False)
 
 def sum_strength(gen, queue):
     net = init_net(gen)
