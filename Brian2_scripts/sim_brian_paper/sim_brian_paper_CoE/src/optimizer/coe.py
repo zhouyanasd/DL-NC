@@ -85,6 +85,8 @@ class CoE_surrogate(BaseFunctions):
 
         # 开始进化！！
         start_time = time.time()  # 开始计时
+        # 根据时间改变随机数
+        np.random.seed(int(start_time))
         estimation = interval-1  # counter and make sure the first time could be evaluated
         while gen < MAXGEN:
             if badCounter >= 10 * MAXGEN:  # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
@@ -401,6 +403,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 开始进化！！
         # 开始计时
         start_time = time.time()
+        # 根据时间改变随机数
+        np.random.seed(int(start_time))
         # 设置一个用原函数评估的代数间隔
         estimation = interval - 1
         while gen < MAXGEN:
@@ -543,6 +547,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 开始进化！！
         # 开始计时
         start_time = time.time()
+        # 根据时间改变随机数
+        np.random.seed(int(start_time))
         while gen < MAXGEN:
             # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
             if badCounter >= 10 * MAXGEN:
