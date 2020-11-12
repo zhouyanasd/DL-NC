@@ -9,7 +9,7 @@
 
 import numpy as np
 
-class KTH_classification():
+class UCI_classification():
     def __init__(self):
         pass
 

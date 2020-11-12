@@ -193,7 +193,7 @@ if __name__ == '__main__':
     core = 8
     pool = Pool(core)
     q = Manager().Queue(core)
-    parameters_search.total = 900
+    parameters_search.total = 600
 
     method = 'CoE_rf'
     LHS_path = './LHS_KTH.dat'
