@@ -230,7 +230,7 @@ if __name__ == '__main__':
             LHS_path=LHS_path,
             init_points=300,
             is_LHS=True,
-            n_iter=600,
+            n_iter=300,
         )
 
     elif method == 'CoE':
@@ -238,7 +238,7 @@ if __name__ == '__main__':
                                              decoder.get_borders, decoder.get_precisions, decoder.get_codes,
                                              decoder.get_scales, decoder.get_keys, None,
                                              )
-        best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=14, NIND=10,
+        best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=9, NIND=10,
                                             maxormin=1, SUBPOP=1, GGAP=0.5,
                                             selectStyle='sus', recombinStyle='xovdp',
                                             distribute=False, LHS_path = LHS_path, drawing=False)
@@ -248,7 +248,7 @@ if __name__ == '__main__':
                                              decoder.get_borders, decoder.get_precisions, decoder.get_codes,
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
-        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
                                                       init_points=300,
                                                       maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
                                                       interval=2,
@@ -260,7 +260,7 @@ if __name__ == '__main__':
                                              decoder.get_borders, decoder.get_precisions, decoder.get_codes,
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
-        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
+        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
                                                       init_points=300,
                                                       maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
                                                       interval=2,
