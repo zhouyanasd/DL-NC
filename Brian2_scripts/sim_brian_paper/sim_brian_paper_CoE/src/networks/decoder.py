@@ -275,9 +275,14 @@ class Decoder(BaseFunctions):
 
         parameter = self.decode('Reservoir_config')
         type_b = parameter['block']
-        type_d = [self.bin2dec(type_b[0:2]), self.bin2dec(type_b[2:4]),
-                  self.bin2dec(type_b[4:6]), self.bin2dec(type_b[6:])]
-        return type_d
+        type_d, i = [], 0
+        while True:
+            temp = type_b[i:i + 2]
+            i += 2
+            if len(temp) == 2:
+                type_d.append(self.bin2dec(temp))
+            else:
+                return type_d
 
     def get_reservoir_structure_type(self):
         '''
@@ -288,12 +293,22 @@ class Decoder(BaseFunctions):
          '''
 
         parameter = self.decode('Reservoir_config')
-        type_b = parameter['layer_1'], parameter['layer_2']
-        type_d = [self.bin2dec(type_b[0][0:2]), self.bin2dec(type_b[0][2:4]),
-                  self.bin2dec(type_b[0][4:6]), self.bin2dec(type_b[0][6:])],\
-                 [self.bin2dec(type_b[1][0:2]), self.bin2dec(type_b[1][2:4]),
-                  self.bin2dec(type_b[1][4:6]), self.bin2dec(type_b[1][6:])]
-        return type_d
+        type_d, layer = [], 1
+        while True:
+            try:
+                type_b = parameter['layer_' + str(layer)]
+                type_d_i, i = [], 0
+                while True:
+                    temp = type_b[i:i + 2]
+                    i += 2
+                    if len(temp) == 2:
+                        type_d_i.append(self.bin2dec(temp))
+                    else:
+                        type_d.append(type_d_i)
+                        break
+                layer += 1
+            except KeyError:
+                return type_d
 
     def get_parameters_reservoir(self):
         '''
