@@ -35,8 +35,63 @@ class UCI_classification():
         self.sampling_freq = 50
         self.dt = 0.02  # dt=1/50=0.02s time duration between two rows
 
-    def convert(self, data, label):
-        pass
+    # it add '0's to the left of the input until the new lenght is equal to 5
+    def normalize5(self, number):
+        stre = str(number)
+        if len(stre) < 5:
+            l = len(stre)
+            for i in range(0, 5 - l):
+                stre = "0" + stre
+        return stre
+
+        # it add '0's to the left of the input until the new lenght is equal to 2
+
+    def normalize2(self, number):
+        stre = str(number)
+        if len(stre) < 2:
+            stre = "0" + stre
+        return stre
+
+    def Dataset_Generation_PipeLine(self, data_dic):
+        # t_dic is a dic contains time domain windows
+        # f_dic is a dic contains frequency domain windows
+        # f_dic should be the result of applying fft to t_dic
+        all_columns = data_dic[list(data_dic.keys())[0]].columns + ['activity_Id','user_Id']
+
+        final_Dataset = pd.DataFrame(data=[], columns=all_columns)  # build an empty dataframe to append rows
+
+        # for i in range(len(t_dic)):  # iterate throw each window
+        #
+        #     # t_window and f_window should have the same window id included in their keys
+        #     t_key = sorted(t_dic.keys())[i]  # extract the key of t_window
+        #     f_key = sorted(f_dic.keys())[i]  # extract the key of f_window
+        #
+        #     t_window = t_dic[t_key]  # extract the t_window
+        #     f_window = f_dic[f_key]  # extract the f_window
+        #
+        #     window_user_id = int(t_key[-8:-6])  # extract the user id from window's key
+        #     window_activity_id = int(t_key[-2:])  # extract the activity id from the windows key
+        #
+        #     # generate all time features from t_window
+        #     time_features = t_axial_features_generation(t_window) + t_mag_features_generation(t_window)
+        #
+        #     # generate all frequency features from f_window
+        #     frequency_features = f_axial_features_generation(f_window) + f_mag_features_generation(f_window)
+        #
+        #     # Generate addtional features from t_window
+        #     additional_features = angle_features(t_window)
+        #     # concatenate all features and append the activity id and the user id
+        #     row = time_features + frequency_features + additional_features + [int(window_activity_id),
+        #                                                                       int(window_user_id)]
+        #
+        #     # go to the first free index in the dataframe
+        #     free_index = len(final_Dataset)
+        #
+        #     # append the row
+        #     final_Dataset.loc[free_index] = row
+
+        return final_Dataset  # return the final dataset
+
 
     def loadData(self, path):
         # Scraping RawData files paths
