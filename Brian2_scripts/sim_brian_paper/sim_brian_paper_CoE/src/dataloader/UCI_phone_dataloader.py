@@ -32,11 +32,15 @@ class UCI_classification():
             7: 'STAND_TO_SIT', 8: 'SIT_TO_STAND', 9: 'SIT_TO_LIE', 10: 'LIE_TO_SIT',
             11: 'STAND_TO_LIE', 12: 'LIE_TO_STAND',  # 6 postural Transitions
         }
+        # volunteersids used for training
+        self.train_users = [1, 3, 5, 6, 7, 8, 10, 11, 14, 15, 27, 17, 21, 29, 30, 16, 19, 20, 22, 23, 25, ]
+        # volunteers ids used for testing
+        self.test_users = [2, 4, 9, 12, 13, 26, 18, 28, 24, ]
         self.sampling_freq = 50
         self.dt = 0.02  # dt=1/50=0.02s time duration between two rows
 
-    # it add '0's to the left of the input until the new lenght is equal to 5
     def normalize5(self, number):
+        # it add '0's to the left of the input until the new lenght is equal to 5
         stre = str(number)
         if len(stre) < 5:
             l = len(stre)
@@ -44,24 +48,36 @@ class UCI_classification():
                 stre = "0" + stre
         return stre
 
-        # it add '0's to the left of the input until the new lenght is equal to 2
-
     def normalize2(self, number):
+        # it add '0's to the left of the input until the new lenght is equal to 2
         stre = str(number)
         if len(stre) < 2:
             stre = "0" + stre
         return stre
 
-    def Dataset_Generation_PipeLine(self, data_dic):
-        # t_dic is a dic contains time domain windows
-        # f_dic is a dic contains frequency domain windows
-        # f_dic should be the result of applying fft to t_dic
-        all_columns = data_dic[list(data_dic.keys())[0]].columns + ['activity_Id','user_Id']
+    def Dataset_Generation_PipeLine(self, data_dic, label, select_act = 'basic',
+                                    additional_start_point = 0, additional_end_point = 0):
+        all_columns = list(data_dic[list(data_dic.keys())[0]].columns + ['activity_Id','user_Id'])
 
         final_Dataset = pd.DataFrame(data=[], columns=all_columns)  # build an empty dataframe to append rows
 
-        # for i in range(len(t_dic)):  # iterate throw each window
-        #
+        if select_act == 'basic':
+            BA_array = np.array(label[(label["activity_number_ID"] < 7)])  # Just Basic activities
+        elif select_act == 'all':
+            BA_array = np.array(label)  # Just Basic activities
+
+        # for i in range(len(data_dic)):  # iterate throw each window
+        for line in BA_array:
+            # extracting the dataframe key that contains rows related to this activity [expID,userID]
+            exp_ID = line[0]
+            user_ID = line[1]
+            # extract the activity id in this line
+            act_ID = line[2]  # The activity identifier from 1 to 6 (6 included)
+            # starting point index of an activity
+            start_point = line[3] + additional_start_point
+            end_point = line[4] + additional_end_point
+            file_key = 'exp' + self.normalize2(int(exp_ID)) + '_user' + self.normalize2(int(user_ID))
+
         #     # t_window and f_window should have the same window id included in their keys
         #     t_key = sorted(t_dic.keys())[i]  # extract the key of t_window
         #     f_key = sorted(f_dic.keys())[i]  # extract the key of f_window
