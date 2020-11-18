@@ -6,6 +6,8 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
+import os
+import pickle
 
 import numpy as np
 import scipy as sp
@@ -16,8 +18,9 @@ from glob import glob
 
 from scipy.signal import medfilt
 from scipy.fftpack import fft
-from scipy.fftpack import fftfreq
 from scipy.fftpack import ifft
+
+from sklearn.model_selection import train_test_split
 
 
 class UCI_classification():
@@ -25,19 +28,143 @@ class UCI_classification():
         # Creating a dictionary for all types of activities
         # The first 6 activities are called Basic Activities as(BAs) 3 dynamic and 3 static
         # The last 6 activities are called Postural Transitions Activities as (PTAs)
-        self.Acitivity_labels = self.AL = {
+        self.CATEGORIES = {
             1: 'WALKING', 2: 'WALKING_UPSTAIRS', 3: 'WALKING_DOWNSTAIRS',  # 3 dynamic activities
             4: 'SITTING', 5: 'STANDING', 6: 'LIYING',  # 3 static activities
-
             7: 'STAND_TO_SIT', 8: 'SIT_TO_STAND', 9: 'SIT_TO_LIE', 10: 'LIE_TO_SIT',
             11: 'STAND_TO_LIE', 12: 'LIE_TO_STAND',  # 6 postural Transitions
         }
-        # volunteersids used for training
-        self.train_users = [1, 3, 5, 6, 7, 8, 10, 11, 14, 15, 27, 17, 21, 29, 30, 16, 19, 20, 22, 23, 25, ]
-        # volunteers ids used for testing
-        self.test_users = [2, 4, 9, 12, 13, 26, 18, 28, 24, ]
         self.sampling_freq = 50
         self.dt = 0.02  # dt=1/50=0.02s time duration between two rows
+        self.w_long = 128
+        self.over_lap = 64
+
+    def spilt_data(self, split_type, **kwargs):
+        if split_type == 'random':
+            x = np.arange(30) + 1
+            np.random.shuffle(x)
+            s = kwargs['split']
+            self.TRAIN_PEOPLE_ID = x[:s[0]]
+            self.VALIDATION_PEOPLE_ID = x[s[0]:sum(s[:2])]
+            self.TEST_PEOPLE_ID = x[sum(s[:2]):sum(s)]
+        elif split_type == 'solid':
+            self.TRAIN_PEOPLE_ID = kwargs['train']
+            self.VALIDATION_PEOPLE_ID = kwargs['validation']
+            self.TEST_PEOPLE_ID = kwargs['test']
+        elif split_type == 'mixed':
+            self.TRAIN_PEOPLE_ID = np.arange(30) + 1
+        else:
+            print('worng type, use official instead')
+            self.TRAIN_PEOPLE_ID = [1, 3, 5, 6, 7, 8, 10, 11, 14, 15, 27, 17, 21, ]
+            self.VALIDATION_PEOPLE_ID = [29, 30, 16, 19, 20, 22, 23, 25, ]
+            self.TEST_PEOPLE_ID = [2, 4, 9, 12, 13, 26, 18, 28, 24, ]
+
+    def load_data_UCI_all(self, data_path, split_type, **kwargs):
+        data_frame = self.Dataset_Generation_PipeLine(data_path)
+        self.spilt_data(split_type, **kwargs)
+        if split_type == 'mixed':
+            self.train = self.load_data_UCI(data_frame, dataset="train")
+            self.train, self.test = train_test_split(self.train,
+                                                     test_size=kwargs['split'][-1] / sum(kwargs['split']),
+                                                     random_state=42)
+            self.train, self.validation = train_test_split(self.train,
+                                                           test_size=kwargs['split'][1] / sum(kwargs['split'][:2]),
+                                                           random_state=42)
+        else:
+            self.train = self.load_data_UCI(data_frame, dataset="train")
+            self.validation = self.load_data_UCI(data_frame, dataset="validation")
+            self.test = self.load_data_UCI(data_frame, dataset="test")
+
+    def load_data_UCI(self, data_frame, dataset):
+        if dataset == "train":
+            ID = self.TRAIN_PEOPLE_ID
+        elif dataset == "validation":
+            ID = self.VALIDATION_PEOPLE_ID
+        else:
+            ID = self.TEST_PEOPLE_ID
+
+        return data_frame(data_frame['user_Id'].isin(ID))
+
+
+    def encoding_latency_UCI(self, analog_data, pool_size = 4, types = 'max', threshold = 0.2):
+        data_diff = analog_data.frames.apply(self.frame_diff)
+        data_diff_pool = data_diff.apply(self.pooling, pool_size=pool_size, types=types)
+        data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
+        label = analog_data.category.map(self.CATEGORIES).astype('<i1')
+        data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
+        return data_frame
+
+    def get_series_data_list(self, data_frame, is_group=False):
+        data_frame_s = []
+        if not is_group:
+            for value in data_frame['value']:
+                data_frame_s.extend(value)
+        else:
+            for value in data_frame['value']:
+                data_frame_s.append(value)
+        label = data_frame['label']
+        return np.asarray(data_frame_s), label
+
+    def select_data_UCI(self, fraction, data_frame, is_order=True, **kwargs):
+        try:
+            selected = kwargs['selected']
+        except KeyError:
+            selected = self.CATEGORIES.keys()
+        if is_order:
+            data_frame_selected = data_frame[data_frame['activity_Id'].isin(selected)].sample(
+                frac=fraction).sort_index().reset_index(drop=True)
+        else:
+            data_frame_selected = data_frame[data_frame['activity_Id'].isin(selected)].sample(frac=fraction).reset_index(
+                drop=True)
+        return data_frame_selected
+
+    def frame_diff(self, frames):
+        frame_diff = []
+        it = frames.__iter__()
+        frame_pre = next(it)
+        while True:
+            try:
+                frame = next(it)
+                frame_diff.append((frame - frame_pre).reshape(-1))
+                frame_pre = frame
+            except StopIteration:
+                break
+        return np.asarray(frame_diff)
+
+    def block_array(self, matrix, size):
+        if int(matrix.shape[0] % size) == 0 :
+            X = int(matrix.shape[0] / size)
+            shape = (X, 1, size, 1)
+            strides = matrix.itemsize * np.array([1 * size, 1, 1, 1])
+            squares = np.lib.stride_tricks.as_strided(matrix, shape=shape, strides=strides)
+            return squares
+        else:
+            raise ValueError('matrix must be divided by size exactly')
+
+    def pooling(self, frames, pool_size = 4, types='max'):
+        data = []
+        for frame in frames:
+            pool = np.zeros(int(self.w_long / pool_size))
+            frame_block = self.block_array(frame.reshape(self.w_long), pool_size)
+            for i, row in enumerate(frame_block):
+                for j, block in enumerate(row):
+                    if types == 'max':
+                        pool[i][j] = block.max()
+                    elif types == 'average':
+                        pool[i][j] = block.mean()
+                    else:
+                        raise ValueError('I have not done that type yet..')
+            data.append(pool.reshape(-1))
+        return np.asarray(data)
+
+    def threshold_norm(self, frames, threshold):
+        frames = (frames - np.min(frames)) / (np.max(frames) - np.min(frames))
+        frames[frames < threshold] = 0
+        frames[frames > threshold] = 1
+        frames = frames.astype('<i1')
+        return frames
+
+    #---------------------------------------------------
 
     def normalize5(self, number):
         # it add '0's to the left of the input until the new lenght is equal to 5
@@ -55,16 +182,12 @@ class UCI_classification():
             stre = "0" + stre
         return stre
 
-    def Dataset_Generation_PipeLine(self, data_dic, label, select_act = 'basic',
-                                    additional_start_point = 0, additional_end_point = 0):
-        all_columns = list(data_dic[list(data_dic.keys())[0]].columns + ['activity_Id','user_Id'])
+    def Windowing_type_1(self, data_dic, label):
+        columns = data_dic[list(data_dic.keys())[0]].columns
+        window_ID = 0  # window unique id
+        t_dic_win_type_I = {}  # output dic
 
-        final_Dataset = pd.DataFrame(data=[], columns=all_columns)  # build an empty dataframe to append rows
-
-        if select_act == 'basic':
-            BA_array = np.array(label[(label["activity_number_ID"] < 7)])  # Just Basic activities
-        elif select_act == 'all':
-            BA_array = np.array(label)  # Just Basic activities
+        BA_array = np.array(label)  # Just Basic activities
 
         # for i in range(len(data_dic)):  # iterate throw each window
         for line in BA_array:
@@ -74,42 +197,58 @@ class UCI_classification():
             # extract the activity id in this line
             act_ID = line[2]  # The activity identifier from 1 to 6 (6 included)
             # starting point index of an activity
-            start_point = line[3] + additional_start_point
-            end_point = line[4] + additional_end_point
+            start_point = line[3]
+            end_point = line[4]
             file_key = 'exp' + self.normalize2(int(exp_ID)) + '_user' + self.normalize2(int(user_ID))
 
-        #     # t_window and f_window should have the same window id included in their keys
-        #     t_key = sorted(t_dic.keys())[i]  # extract the key of t_window
-        #     f_key = sorted(f_dic.keys())[i]  # extract the key of f_window
-        #
-        #     t_window = t_dic[t_key]  # extract the t_window
-        #     f_window = f_dic[f_key]  # extract the f_window
-        #
-        #     window_user_id = int(t_key[-8:-6])  # extract the user id from window's key
-        #     window_activity_id = int(t_key[-2:])  # extract the activity id from the windows key
-        #
-        #     # generate all time features from t_window
-        #     time_features = t_axial_features_generation(t_window) + t_mag_features_generation(t_window)
-        #
-        #     # generate all frequency features from f_window
-        #     frequency_features = f_axial_features_generation(f_window) + f_mag_features_generation(f_window)
-        #
-        #     # Generate addtional features from t_window
-        #     additional_features = angle_features(t_window)
-        #     # concatenate all features and append the activity id and the user id
-        #     row = time_features + frequency_features + additional_features + [int(window_activity_id),
-        #                                                                       int(window_user_id)]
-        #
-        #     # go to the first free index in the dataframe
-        #     free_index = len(final_Dataset)
-        #
-        #     # append the row
-        #     final_Dataset.loc[free_index] = row
+            # selecting window data points convert them to numpy array to delete rows index
+            # data=np.array(data_dic[file_key].iloc[start_point:end_point])
+            for cursor in range(start_point, end_point - self.w_long + 1, self.overlap):
+                # cursor(the first index in the window) + 128
+                # selecting window data points convert them to numpy array to delete rows index
+                data = np.array(data_dic[file_key].iloc[cursor:cursor + self.w_long])
+
+                # converting numpy array to a dataframe with the same column names
+                window = pd.DataFrame(data=data, columns=columns)
+
+                # creating the window
+                key = 't_W' + self.normalize5(window_ID) + '_' + file_key + '_act' + self.normalize2(act_ID)
+                t_dic_win_type_I[key] = window
+
+                # incrementing the windowID by 1
+                window_ID = window_ID + 1
+
+        return t_dic_win_type_I  # return a dictionary including time domain windows type I
+
+    def Dataset_Generation_PipeLine(self, path):
+
+        data_dic, label = self.loadData_path(path)
+
+        data_window_dic = self.Windowing_type_1(data_dic, label)
+
+        frames = []
+        activity_Id = []
+        user_Id = []
+
+        for i in range(len(data_window_dic)):  # iterate throw each window
+            # t_window and f_window should have the same window id included in their keys
+            t_key = sorted(data_window_dic.keys())[i]  # extract the key of t_window
+
+            t_window = data_window_dic[t_key]  # extract the t_window
+
+            window_user_id = int(t_key[-8:-6])  # extract the user id from window's key
+            window_activity_id = int(t_key[-2:])  # extract the activity id from the windows key
+
+            frames.append(t_window)
+            activity_Id.append(window_activity_id)
+            user_Id.append(window_user_id)
+
+            final_Dataset = pd.DataFrame({'value': frames, 'activity_Id': activity_Id, 'user_Id':user_Id})
 
         return final_Dataset  # return the final dataset
 
 
-    def loadData(self, path):
+    def loadData_path(self, path):
         # Scraping RawData files paths
         Raw_data_paths = sorted(glob(path))
 
@@ -402,14 +541,13 @@ class UCI_classification():
         # return the data frame
         return data_frame
 
-    def encoding_latency_UCI(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
-        pass
+    def dump_data(self, path, dataset):
+        if os.path.exists(path):
+            os.remove(path)
+        with open(path, 'wb') as file:
+            pickle.dump(dataset, file)
 
-    def get_series_data(self, data_frame, is_group=False):
-        pass
+    def load_data(self, path):
+        with open(path, 'rb') as file:
+            return pickle.load(file)
 
-    def get_series_data_list(self, data_frame, is_group=False):
-        pass
-
-    def select_data(self, fraction, data_frame, is_order=True, **kwargs):
-        pass

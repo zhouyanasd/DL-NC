@@ -35,7 +35,7 @@ class KTH_classification():
             self.VALIDATION_PEOPLE_ID = [19, 20, 21, 23, 24, 25, 1, 4]
             self.TEST_PEOPLE_ID = [22, 2, 3, 5, 6, 7, 8, 9, 10]
         elif split_type == 'random':
-            x = np.arange(25)
+            x = np.arange(25) + 1
             np.random.shuffle(x)
             s = kwargs['split']
             self.TRAIN_PEOPLE_ID = x[:s[0]]
@@ -46,7 +46,7 @@ class KTH_classification():
             self.VALIDATION_PEOPLE_ID = kwargs['validation']
             self.TEST_PEOPLE_ID = kwargs['test']
         elif split_type == 'mixed':
-            self.TRAIN_PEOPLE_ID = np.arange(25)
+            self.TRAIN_PEOPLE_ID = np.arange(25) + 1
         else:
             print('worng type, use official instead')
             self.TRAIN_PEOPLE_ID = [11, 12, 13, 14, 15, 16, 17, 18]
