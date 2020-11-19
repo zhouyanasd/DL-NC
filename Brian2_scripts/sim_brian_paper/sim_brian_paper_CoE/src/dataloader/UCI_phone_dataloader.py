@@ -37,7 +37,7 @@ class UCI_classification():
         self.sampling_freq = 50
         self.dt = 0.02  # dt=1/50=0.02s time duration between two rows
         self.w_long = 128
-        self.over_lap = 64
+        self.overlap = 64
 
     def spilt_data(self, split_type, **kwargs):
         if split_type == 'random':
@@ -82,8 +82,7 @@ class UCI_classification():
             ID = self.VALIDATION_PEOPLE_ID
         else:
             ID = self.TEST_PEOPLE_ID
-
-        return data_frame(data_frame['user_Id'].isin(ID))
+        return data_frame[data_frame['user_Id'].isin(ID)]
 
 
     def encoding_latency_UCI(self, analog_data, pool_size = 4, types = 'max', threshold = 0.2):
@@ -119,17 +118,8 @@ class UCI_classification():
         return data_frame_selected
 
     def frame_diff(self, frames):
-        frame_diff = []
-        it = frames.__iter__()
-        frame_pre = next(it)
-        while True:
-            try:
-                frame = next(it)
-                frame_diff.append((frame - frame_pre).reshape(-1))
-                frame_pre = frame
-            except StopIteration:
-                break
-        return np.asarray(frame_diff)
+        frame_diff = (frames - frames.shift(1)).dropna()
+        return frame_diff
 
     def block_array(self, matrix, size):
         if int(matrix.shape[0] % size) == 0 :
@@ -243,7 +233,7 @@ class UCI_classification():
             activity_Id.append(window_activity_id)
             user_Id.append(window_user_id)
 
-            final_Dataset = pd.DataFrame({'value': frames, 'activity_Id': activity_Id, 'user_Id':user_Id})
+            final_Dataset = pd.DataFrame({'frames': frames, 'activity_Id': activity_Id, 'user_Id':user_Id})
 
         return final_Dataset  # return the final dataset
 
