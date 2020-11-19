@@ -118,14 +118,14 @@ class UCI_classification():
         return data_frame_selected
 
     def frame_diff(self, frames):
-        frame_diff = (frames - frames.shift(1)).dropna()
+        frame_diff = (frames - frames.shift(1)).replace(np.nan,0)
         return frame_diff
 
     def block_array(self, matrix, size):
-        if int(matrix.shape[0] % size) == 0 :
+        if int(matrix.shape[0] % size) == 0:
             X = int(matrix.shape[0] / size)
-            shape = (X, 1, size, 1)
-            strides = matrix.itemsize * np.array([1 * size, 1, 1, 1])
+            shape = (X, size)
+            strides = matrix.itemsize * np.array([size, 1])
             squares = np.lib.stride_tricks.as_strided(matrix, shape=shape, strides=strides)
             return squares
         else:
@@ -133,19 +133,18 @@ class UCI_classification():
 
     def pooling(self, frames, pool_size = 4, types='max'):
         data = []
-        for frame in frames:
+        for frame in frames.values.T:
             pool = np.zeros(int(self.w_long / pool_size))
-            frame_block = self.block_array(frame.reshape(self.w_long), pool_size)
-            for i, row in enumerate(frame_block):
-                for j, block in enumerate(row):
-                    if types == 'max':
-                        pool[i][j] = block.max()
-                    elif types == 'average':
-                        pool[i][j] = block.mean()
-                    else:
-                        raise ValueError('I have not done that type yet..')
+            frame_block = self.block_array(frame, pool_size)
+            for i, block in enumerate(frame_block):
+                if types == 'max':
+                    pool[i] = block.max()
+                elif types == 'average':
+                    pool[i][j] = block.mean()
+                else:
+                    raise ValueError('I have not done that type yet..')
             data.append(pool.reshape(-1))
-        return np.asarray(data)
+        return np.asarray(data).T
 
     def threshold_norm(self, frames, threshold):
         frames = (frames - np.min(frames)) / (np.max(frames) - np.min(frames))
@@ -540,4 +539,3 @@ class UCI_classification():
     def load_data(self, path):
         with open(path, 'rb') as file:
             return pickle.load(file)
-
