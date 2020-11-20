@@ -85,7 +85,7 @@ class UCI_classification():
         return data_frame[data_frame['user_Id'].isin(ID)]
 
 
-    def encoding_latency_UCI(self, analog_data, pool_size = 4, types = 'max', threshold = 0.2):
+    def encoding_latency_UCI(self, analog_data, pool_size = 4, types = 'max', threshold = 0.7):
         data_diff = analog_data.frames.apply(self.frame_diff)
         data_diff_pool = data_diff.apply(self.pooling, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
@@ -140,19 +140,18 @@ class UCI_classification():
                 if types == 'max':
                     pool[i] = block.max()
                 elif types == 'average':
-                    pool[i][j] = block.mean()
+                    pool[i] = block.mean()
                 else:
                     raise ValueError('I have not done that type yet..')
             data.append(pool.reshape(-1))
         return np.asarray(data).T
 
     def threshold_norm(self, frames, threshold):
-        frames = (frames - np.min(frames)) / (np.max(frames) - np.min(frames))
-        frames[frames < threshold] = 0
-        frames[frames > threshold] = 1
-        frames = frames.astype('<i1')
-        return frames
-
+        frames_ = np.apply_along_axis(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)), 0, frames)
+        frames_[frames_ < threshold] = 0
+        frames_[frames_ > threshold] = 1
+        frames_ = frames_.astype('<i1')
+        return frames_
     #---------------------------------------------------
 
     def normalize5(self, number):
