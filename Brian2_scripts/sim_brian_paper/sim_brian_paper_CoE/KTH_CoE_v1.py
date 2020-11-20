@@ -42,7 +42,6 @@ data_path = '../../../Data/KTH/'
 np_state = np.random.get_state()
 
 # -----simulation parameter setting-------
-GenerateData = False
 DataName = 'coe_[15,5,4]'
 
 origin_size = (120, 160)
@@ -75,13 +74,28 @@ try:
     df_en_pre_train = KTH.load_data(data_path + 'pre_train_' + DataName + '.p')
     df_en_validation = KTH.load_data(data_path + 'validation_' + DataName+'.p')
     df_en_test = KTH.load_data(data_path + 'test_' + DataName+'.p')
-
-    data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
-    data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is_group=True)
-    data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-    data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 except FileNotFoundError:
-    GenerateData = True
+    KTH.load_data_KTH_all(data_path, split_type='mixed', split=[15, 5, 4])
+
+    df_train = KTH.select_data_KTH(F_train, KTH.train, False)
+    df_pre_train = KTH.select_data_KTH(F_pre_train, KTH.train, False)
+    df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
+    df_test = KTH.select_data_KTH(F_train, KTH.test, False)
+
+    df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, pool_threshold)
+    df_en_pre_train = KTH.encoding_latency_KTH(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
+    df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, pool_threshold)
+    df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, pool_threshold)
+
+    KTH.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
+    KTH.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
+    KTH.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
+    KTH.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
+
+data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
+data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is_group=True)
+data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
+data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 
 #--- define network run function ---
 def init_net(gen):
@@ -197,24 +211,6 @@ if __name__ == '__main__':
 
     method = 'CoE_rf'
     LHS_path = './LHS_KTH.dat'
-
-    if GenerateData:
-        KTH.load_data_KTH_all(data_path, split_type='mixed', split=[15, 5, 4])
-
-        df_train = KTH.select_data_KTH(F_train, KTH.train, False)
-        df_pre_train = KTH.select_data_KTH(F_pre_train, KTH.train, False)
-        df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
-        df_test = KTH.select_data_KTH(F_train, KTH.test, False)
-
-        df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, pool_threshold)
-        df_en_pre_train = KTH.encoding_latency_KTH(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
-        df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, pool_threshold)
-        df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, pool_threshold)
-
-        KTH.dump_data(data_path + 'train_' + DataName+'.p', df_en_train)
-        KTH.dump_data(data_path + 'pre_train_' + DataName+'.p', df_en_pre_train)
-        KTH.dump_data(data_path + 'validation_' + DataName+'.p', df_en_validation)
-        KTH.dump_data(data_path + 'test_' + DataName+'.p', df_en_test)
 
 # -------parameters search---------------
     if method == 'BO':
