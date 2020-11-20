@@ -89,7 +89,7 @@ class UCI_classification():
         data_diff = analog_data.frames.apply(self.frame_diff)
         data_diff_pool = data_diff.apply(self.pooling, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
-        label = analog_data.category.map(self.CATEGORIES).astype('<i1')
+        label = analog_data.activity_Id.astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
         return data_frame
 
