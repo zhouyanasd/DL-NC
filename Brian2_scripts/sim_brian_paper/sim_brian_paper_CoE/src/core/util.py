@@ -11,6 +11,8 @@ import os
 import pickle
 import time
 
+import matplotlib.pyplot as plt
+
 
 class Timelog():
     def __init__(self, func):
@@ -89,3 +91,20 @@ class Result():
         data = pickle.load(fr)
         fr.close()
         return data
+
+    def show_weights(self, f_init, gen):
+        net = f_init(gen)
+        net.restore('pre_run', 'pre_run_state.txt')
+        coms = net.get_states()
+        all_strength = []
+        for com in list(coms.keys()):
+            if 'block_block_' in com or 'pathway_' in com and '_pre' not in com and '_post' not in com:
+                try:
+                    all_strength.extend(list(net.get_states()[com]['strength']))
+                    # print(com)
+                except:
+                    continue
+        fig_distribution_w_EE = plt.figure(figsize=(5, 5))
+        plt.hist(np.array(all_strength), 100)
+        plt.xlabel('Weight')
+        plt.show()
