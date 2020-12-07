@@ -7,22 +7,23 @@ Switch = 1
 taupre = taupost = 20*ms
 wmin = 0
 wmax = 1
-Apre = 0.2
+Apre = 0.01
 Apost = -Apre*taupre/taupost*1.05
 
-A_strength = 60
-A_strength_reservoir = 120
-A_strength_encoding = 200
+A_strength = 1
+A_strength_reservoir = 1
+A_strength_encoding = 1
 
-threshold_solid = 0.5
-A_threshold = 1.5
+threshold_solid = 0.2
+threshold_max = 1
+A_threshold = 0.01
 
 standard_tau = 100
-tau_read = 30
+tau_I = 1
 
-voltage_reset = 13.5
+voltage_reset = 2
 
-refractory_reservoir = 3 * ms
+refractory_reservoir = 2 * ms
 
 dynamics_encoding = '''
 property = 1 : 1
@@ -32,28 +33,18 @@ I = stimulus(t,i) : 1
 dynamics_reservoir = '''
 property : 1
 tau : 1
-threshold : 1
-dv/dt = (I-v) / (tau * standard_tau * ms) : 1 (unless refractory)
-dg/dt = (-g)/(3*ms) : 1
-I = g + voltage_reset : 1
+dv/dt = (I-v+voltage_reset) / (tau * standard_tau * ms) : 1 (unless refractory)
+dI/dt = (-I)/(tau_I*ms) : 1
+dthreshold/dt = (threshold_solid-threshold)/(tau*ms) : 1
 '''
 
 dynamics_readout = '''
-tau = tau_read : 1
-dv/dt = (I-v) / (tau*ms) : 1
-dg/dt = (-g)/(3*ms) : 1
-I = g : 1
+count : 1
+dv/dt = (I-v) / (standard_tau*ms) : 1
+dI/dt = (-I)/(tau_I*ms) : 1
 '''
 
-dynamics_synapse = '''
-strength : 1
-'''
-
-dynamics_synapse_pre = '''
-g += A_strength * strength * property_pre 
-'''
-
-dynamics_synapse_STDP = '''
+dynamics_block_synapse_STDP = '''
 strength : 1
 plasticity : 1
 type : 1
@@ -61,15 +52,16 @@ dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
 dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
-dynamics_synapse_pre_STDP = '''
+dynamics_block_synapse_pre_STDP = '''
 g += A_strength * strength
 apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost*Switch, wmin, wmax)
 '''
 
-dynamics_synapse_post_STDP = '''
+dynamics_block_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
+threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
 '''
 
 dynamics_reservoir_synapse_STDP = '''
@@ -89,6 +81,7 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_reservoir_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
+threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
 '''
 
 dynamics_encoding_synapse_STDP = '''
@@ -108,11 +101,17 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_encoding_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
+threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
+'''
+
+dynamics_readout_synapse_pre = '''
+I += A_strength * strength * property_pre
+count += 1
 '''
 
 threshold_encoding = 'I > 0'
 
-threshold_reservoir = 'v > voltage_reset + threshold_solid + A_threshold * threshold'
+threshold_reservoir = 'v >= voltage_reset + A_threshold * (threshold + threshold_solid)'
 
 reset_reservoir = 'v = voltage_reset'
 

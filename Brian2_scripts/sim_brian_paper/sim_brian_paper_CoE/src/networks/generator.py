@@ -262,8 +262,8 @@ class Generator(Generator_connection_matrix):
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
                              refractory = refractory_reservoir, name='block_' + name)
-        block.create_synapse(dynamics_synapse_STDP, dynamics_synapse_pre_STDP,
-                            dynamics_synapse_post_STDP, name='block_block_' + name)
+        block.create_synapse(dynamics_block_synapse_STDP, dynamics_block_synapse_pre_STDP,
+                            dynamics_block_synapse_post_STDP, name='block_block_' + name)
         block.separate_ex_inh()
         block.connect()
         block.determine_input_output()
@@ -341,7 +341,7 @@ class Generator(Generator_connection_matrix):
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = None,
                              refractory = 0 * ms , name='block_encoding')
-        block.create_synapse(dynamics_synapse, None,
+        block.create_synapse('strength : 1', None,
                             None, name='block_block_encoding_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
@@ -362,7 +362,7 @@ class Generator(Generator_connection_matrix):
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = False, name='block_readout')
-        block.create_synapse(dynamics_synapse, None,
+        block.create_synapse('strength : 1', None,
                             None, name='block_block_readout_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
@@ -380,7 +380,8 @@ class Generator(Generator_connection_matrix):
 
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
-                                        dynamics_synapse_STDP, dynamics_synapse_pre_STDP, dynamics_synapse_post_STDP)
+                                        dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
+                                        dynamics_encoding_synapse_post_STDP)
         pathway.connect()
         return pathway
 
@@ -396,7 +397,7 @@ class Generator(Generator_connection_matrix):
 
         connection_matrix = [reservoir.output, [0]*len(reservoir.output)]
         pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
-                                        'strength = 1 : 1', dynamics_synapse_pre, None)
+                                        'strength = 1 : 1', dynamics_readout_synapse_pre, None)
         pathway._set_connect_type('one_to_one')
         pathway.connect()
         return pathway
