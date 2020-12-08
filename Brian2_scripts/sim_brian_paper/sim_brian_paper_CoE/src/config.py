@@ -16,6 +16,7 @@ A_strength_encoding = 1
 
 threshold_solid = 0.2
 threshold_max = 1
+a_threshold = 0.2
 A_threshold = 0.01
 
 standard_tau = 100
@@ -61,7 +62,7 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_block_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
+threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_reservoir_synapse_STDP = '''
@@ -81,7 +82,7 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_reservoir_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
+threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_encoding_synapse_STDP = '''
@@ -101,7 +102,7 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_encoding_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+threshold_solid, threshold_solid, threshold_max)
+threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_readout_synapse_pre = '''
@@ -111,7 +112,7 @@ count += 1
 
 threshold_encoding = 'I > 0'
 
-threshold_reservoir = 'v >= voltage_reset + A_threshold * (threshold + threshold_solid)'
+threshold_reservoir = 'v >= voltage_reset + A_threshold * threshold'
 
 reset_reservoir = 'v = voltage_reset'
 
@@ -129,11 +130,11 @@ structure_layer = {'components_0':{'structure': [[0,0,1],[1,2,2]], 'output_input
 structure_reservoir = {'components': {'structure':[[0,1,2],[1,2,3]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
-Reservoir_config = ['block', 'layer_1', 'layer_2', 'type', 'strength', 'plasticity']
-Block_random = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p']
-Block_scale_free = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
-Block_circle = ['N', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
-Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'threshold', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
+Reservoir_config = ['block', 'layer_1', 'type', 'strength', 'plasticity']
+Block_random = ['N', 'tau', 'type', 'strength', 'plasticity', 'p']
+Block_scale_free = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
+Block_circle = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
+Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
 Encoding_Readout = ['type', 'strength', 'plasticity']
 
 config_group = ['Reservoir_config', 'Block_random', 'Block_scale_free',
@@ -143,55 +144,55 @@ config_keys = [Reservoir_config, Block_random, Block_scale_free,
               Block_circle, Block_hierarchy, Encoding_Readout]
 
 
-config_SubCom = [[0, 1, 2, 3, 4, 5],
-                 [6, 7, 8, 9, 10, 11, 12],
-                 [13, 14, 15, 16, 17, 18, 19, 20, 21],
-                 [22, 23, 24, 25, 26, 27, 28, 29, 30],
-                 [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
-                 [42, 43, 44]]
+config_SubCom = [[0, 1, 2, 3, 4],
+                 [5, 6, 7, 8, 9, 10],
+                 [11, 12, 13, 14, 15, 16, 17, 18],
+                 [19, 20, 21, 22, 23, 24, 25, 26],
+                 [27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
+                 [37, 38, 39]]
 
-config_codes = [[1, 1, 1, None, None, None],
-                [None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None, None, None],
+config_codes = [[1, 1, None, None, None],
+                [None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None, None],
                 [None, None, None]]
 
-config_ranges = [[[0, 255], [0, 255], [0, 255], [0, 1], [0, 1], [0, 1]],
-                 [[15, 30]] + [[0, 1]] * 6,
-                 [[15, 30]] +[[0, 1]] * 8,
-                 [[15, 30]] +[[0, 1]] * 8,
-                 [[5, 10]] + [[5, 10]] + [[5, 10]] + [[0, 1]] * 8,
-                 [[0, 1]] * 3]
+config_ranges = [[[0, 255], [0, 255], [0, 1], [0, 1], [0, 1]],
+                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[5, 10], [5, 10], [5, 10], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                 [[0, 1], [0, 1], [0, 1]]]
 
-config_borders = [[[1, 1], [1, 1], [1, 1], [1, 1], [0, 1], [0, 1]],
-                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
-                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[1, 1], [0, 1], [0, 1]]]
 
-config_precisions = [[0, 0, 0, 0, 4, 4],
-                     [0, 4, 4, 0, 4, 4, 4],
-                     [0, 4, 4, 0, 4, 4, 4, 4, 4],
-                     [0, 4, 4, 0, 4, 4, 4, 4, 4],
-                     [0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 4],
+config_precisions = [[0, 0, 0, 4, 4],
+                     [0, 4, 0, 4, 4, 4],
+                     [0, 4, 0, 4, 4, 4, 4, 4],
+                     [0, 4, 0, 4, 4, 4, 4, 4],
+                     [0, 0, 0, 4, 0, 4, 4, 4, 4, 4],
                      [0, 4, 4]]
 
-config_scales = [[0] * 6,
-                 [0] * 7,
-                 [0] * 9,
-                 [0] * 9,
-                 [0] * 11,
+config_scales = [[0] * 5,
+                 [0] * 6,
+                 [0] * 8,
+                 [0] * 8,
+                 [0] * 10,
                  [0] * 3]
 
 '''
 All gen is in float.
 Example:
-gen = [15.0, 129.0, 251.0, 1.0, 0.9,0.2,
-      17.0, 0.3, 0.3, 1.0, 0.9, 0.3, 0.33,
-      20.0, 0.4, 0.4, 1.0, 0.4, 0.4, 0.44, 0.44, 0.44,
-      23.0, 0.5, 0.5, 1, 0.5, 0.5, 0.55, 0.55, 0.55,
-      6.0, 8.0, 9.0, 0.6, 0.6, 1.0, 0.6, 0.6, 0.16, 0.16, 0.16,
+gen = [15.0, 129.0, 1.0, 0.9,0.2,
+      17.0, 0.3, 1.0, 0.9, 0.3, 0.33,
+      20.0, 0.4, 1.0, 0.4, 0.4, 0.44, 0.44, 0.44,
+      23.0, 0.5, 1, 0.5, 0.5, 0.55, 0.55, 0.55,
+      6.0, 8.0, 9.0, 0.6, 1.0, 0.6, 0.6, 0.16, 0.16, 0.16,
       1.0, 0.7, 0.7]
 '''
