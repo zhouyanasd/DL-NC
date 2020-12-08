@@ -66,9 +66,9 @@ class Generator_connection_matrix(BaseFunctions):
          p_alpha, p_beta, p_gama: double, the connection probability between two neurons.
          '''
 
-        alpha = p_alpha/sum(p_alpha+p_beta+p_gama)
-        beta = p_beta/sum(p_alpha+p_beta+p_gama)
-        gama = p_gama/sum(p_alpha+p_beta+p_gama)
+        alpha = p_alpha/(p_alpha+p_beta+p_gama)
+        beta = p_beta/(p_alpha+p_beta+p_gama)
+        gama = p_gama/(p_alpha+p_beta+p_gama)
         DSF = Direct_scale_free(final_nodes = N,  alpha = alpha, beta = beta, gama = gama,
                                 init_nodes = 1, delta_in=1, delta_out = 1)
         DSF.generate_graph()
@@ -134,13 +134,14 @@ class Generator_connection_matrix(BaseFunctions):
             nodes_post, p_out_post, p_in_post = nodes_[circle[i + 1]], p_out_[circle[i + 1]], p_in_[circle[i + 1]]
             for out_mid_index, node in enumerate(nodes_mid):
                 in_post, in_pre = p_in_post.argsort()[::-1], p_in_pre.argsort()[::-1]
-                for in_post_index, in_pre_index in zip(in_post, in_pre):
-                    if np.random.rand() <= p_out_mid[out_mid_index]  \
+                for in_post_index in in_post:
+                    if np.random.rand() <= p_out_mid[out_mid_index] \
                             and np.random.rand() <= p_out_post[in_post_index]:
                         connection_matrix_out.append(node)
                         connection_matrix_in.append(nodes_post[in_post_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
                         p_in_post[in_post_index] = p_in_post[in_post_index] * decay
+                for in_pre_index in in_pre:
                     if np.random.rand() <= p_out_mid[out_mid_index] \
                             and np.random.rand() <= p_out_pre[in_pre_index]:
                         connection_matrix_out.append(node)

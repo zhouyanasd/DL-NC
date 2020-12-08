@@ -4,7 +4,7 @@ from brian2 import *
 Dt = defaultclock.dt = 1 * ms
 Switch = 1
 
-taupre = taupost = 20*ms
+taupre = taupost = 100*ms
 wmin = 0
 wmax = 1
 Apre = 0.01
@@ -19,8 +19,8 @@ threshold_max = 1
 a_threshold = 0.2
 A_threshold = 0.01
 
-standard_tau = 100
-tau_I = 1
+standard_tau = 100 * ms
+tau_I = 1 * ms
 
 voltage_reset = 2
 
@@ -34,15 +34,15 @@ I = stimulus(t,i) : 1
 dynamics_reservoir = '''
 property : 1
 tau : 1
-dv/dt = (I-v+voltage_reset) / (tau * standard_tau * ms) : 1 (unless refractory)
-dI/dt = (-I)/(tau_I*ms) : 1
-dthreshold/dt = (threshold_solid-threshold)/(tau*ms) : 1
+dv/dt = (I-v+voltage_reset) / (tau * standard_tau) : 1 (unless refractory)
+dI/dt = (-I)/(tau_I) : 1
+dthreshold/dt = (threshold_solid-threshold)/(tau * standard_tau) : 1
 '''
 
 dynamics_readout = '''
 count : 1
-dv/dt = (I-v) / (standard_tau*ms) : 1
-dI/dt = (-I)/(tau_I*ms) : 1
+dv/dt = (I-v) / (standard_tau) : 1
+dI/dt = (-I)/(tau_I) : 1
 '''
 
 dynamics_block_synapse_STDP = '''
@@ -158,12 +158,12 @@ config_codes = [[1, 1, None, None, None],
                 [None, None, None, None, None, None, None, None, None, None],
                 [None, None, None]]
 
-config_ranges = [[[0, 255], [0, 255], [0, 1], [0, 1], [0, 1]],
-                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                 [[15, 30], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                 [[5, 10], [5, 10], [5, 10], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                 [[0, 1], [0, 1], [0, 1]]]
+config_ranges = [[[0, 255], [0, 255], [0, 1], [0.1, 1], [0.1, 1]],
+                 [[15, 150], [0.1, 1], [0, 1], [0.1, 1], [0.1, 1], [0.1, 0.3]],
+                 [[15, 150], [0.1, 1], [0, 1], [0.1, 1], [0.1, 1], [0, 1], [0, 1], [0, 1]],
+                 [[15, 150], [0.1, 1], [0, 1], [0.1, 1], [0.1, 1], [0.1, 0.5], [0.1, 0.5], [0, 0.5]],
+                 [[5, 50], [5, 50], [5, 50], [0.1, 1], [0, 1], [0.1, 1], [0.1, 1], [0.3, 1], [0.3, 1], [0.5, 0.9]],
+                 [[0, 1], [0.1, 1], [0.1, 1]]]
 
 config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
