@@ -484,8 +484,8 @@ class LSM_Network(BaseFunctions):
           'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
           'readout': None,
           'reservoir_readout': None,
-          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6, 'threshold': 0.6},
-                                                    'random': {'tau': 0.3, 'threshold': 0.3}},
+          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6},
+                                                    'random': {'tau': 0.3}},
                         'parameter_block_synapses': {'hierarchy': {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
                                                      'random': {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
                         'parameter_pathway': {'type: 1.0', 'plasticity': 0.2, 'strength': 0.2}}}

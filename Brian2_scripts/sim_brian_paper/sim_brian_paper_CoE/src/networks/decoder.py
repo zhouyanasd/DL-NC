@@ -212,7 +212,7 @@ class Decoder(BaseFunctions):
             sub_parameters = self.get_sub_dict(parameters, 'N', 'p')
             return sub_parameters
         if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'threshold', 'type')
+            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'type')
             return sub_parameters
 
     def decode_block_scale_free(self, need):
@@ -229,7 +229,7 @@ class Decoder(BaseFunctions):
             sub_parameters = self.get_sub_dict(parameters, 'N', 'p_alpha', 'p_beta', 'p_gama')
             return sub_parameters
         if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'threshold', 'type')
+            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'type')
             return sub_parameters
 
     def decode_block_circle(self, need):
@@ -246,7 +246,7 @@ class Decoder(BaseFunctions):
             sub_parameters = self.get_sub_dict(parameters, 'N', 'p_backward', 'p_forward', 'p_threshold')
             return sub_parameters
         if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'threshold', 'type')
+            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau','type')
             return sub_parameters
 
     def decode_block_hierarchy(self, need):
@@ -263,7 +263,7 @@ class Decoder(BaseFunctions):
             sub_parameters = self.get_sub_dict(parameters, 'N_h', 'N_i', 'N_o', 'decay', 'p_in', 'p_out')
             return sub_parameters
         if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'threshold', 'type')
+            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'type')
             return sub_parameters
 
     def get_reservoir_block_type(self):
@@ -359,7 +359,7 @@ class Decoder(BaseFunctions):
         for block_type in block_types:
             name = structure_blocks['components_'+str(block_type)]
             parameters_block_neurons[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
-                                                                     'tau', 'threshold')
+                                                                     'tau')
             parameters_block_neurons[name]['v'] = voltage_reset
             parameters_block_neurons[name]['threshold'] = threshold_solid
             parameters_block_synapses[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
