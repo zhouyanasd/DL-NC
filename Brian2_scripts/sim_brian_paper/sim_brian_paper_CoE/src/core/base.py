@@ -16,9 +16,7 @@ class BaseFunctions():
         return [l[x] for x in s]
 
     def get_sub_dict(self, _dict, *keys):
-        values = itemgetter(*keys)(_dict)
-        _sub_dict = dict(zip(keys, values))
-        return _sub_dict
+        return {key:value for key,value in _dict.items() if key in keys}
 
     def change_dict_key(self, _dict, key1, key2):
         _dict[key2] = _dict.pop(key1)
