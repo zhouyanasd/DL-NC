@@ -101,11 +101,11 @@ class Generator_connection_matrix(BaseFunctions):
         for index_pre, node_pre in enumerate(circle[:N]):
             for index_post, node_post in enumerate(circle[index_pre+1:N+index_pre+1]):
                 distance = index_post
-                decay = (N-distance-1)/(N-1)
-                if np.random.rand() <= p_forward * (decay - p_threshold):
+                decay = np.clip((N * p_threshold - distance - 1), 0.0, N) / (N * p_threshold - 1)
+                if np.random.rand() <= p_forward * decay:
                     connection_matrix_out.append(node_pre)
                     connection_matrix_in.append(node_post)
-                if np.random.rand() <= p_backward * (decay - p_threshold):
+                if np.random.rand() <= p_backward * decay:
                     connection_matrix_out.append(node_post)
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
