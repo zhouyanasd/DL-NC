@@ -62,7 +62,6 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_block_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_reservoir_synapse_STDP = '''
@@ -82,7 +81,6 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_reservoir_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_encoding_synapse_STDP = '''
@@ -102,7 +100,6 @@ strength = clip(strength+apost*Switch, wmin, wmax)
 dynamics_encoding_synapse_post_STDP = '''
 apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
-threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
 '''
 
 dynamics_readout_synapse_pre = '''
@@ -114,7 +111,10 @@ threshold_encoding = 'I > 0'
 
 threshold_reservoir = 'v >= voltage_reset + A_threshold * threshold'
 
-reset_reservoir = 'v = voltage_reset'
+reset_reservoir = '''
+v = voltage_reset
+threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
+'''
 
 # --- reservoir layer structure ---
 structure_blocks = {'components_0':'random',
