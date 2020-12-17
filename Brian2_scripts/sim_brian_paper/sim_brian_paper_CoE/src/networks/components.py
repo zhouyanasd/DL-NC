@@ -56,7 +56,7 @@ class Block(BaseFunctions):
         adjacent_matrix = self.connection_matrix_to_adjacent_matrix(self.N, self.connect_matrix)
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
-        self.input, self.output = topological_sorting_tarjan.suggest_inout()
+        self.input, self.output = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.2)
 
     def create_neurons(self, model, threshold, reset,refractory, name, **kwargs):
         '''

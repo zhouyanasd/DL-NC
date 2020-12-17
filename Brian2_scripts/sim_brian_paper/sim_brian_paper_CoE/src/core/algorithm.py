@@ -165,14 +165,14 @@ class Topological_sorting_tarjan(Tarjan):
     def suggest_inout(self):  # 因为拓扑排序一定有开始和结束，DAG是单方向的，所以直接找到入度为0的点作为输入，出度为0的点作为输出
         incoming = []
         outgoing = []
-        _g = self.g
+        _g = self.g.copy()
         for c_root in self._sorting: # 这里先将链接矩阵中所有强连通分量的链接删除
             c_sub = self.components[c_root]
             X, Y = np.meshgrid(c_sub, c_sub)
             for x, y in zip(X.reshape(-1, ).tolist(), Y.reshape(-1, ).tolist()):
                 _g[x][y] = 0
-            _g_input = np.sum(self.g, 0)[c_sub] # 然后统计各个强连通分量的出入链接数
-            _g_output = np.sum(self.g, 1)[c_sub]
+            _g_input = np.sum(_g, 0)[c_sub] # 然后统计各个强连通分量的出入链接数
+            _g_output = np.sum(_g, 1)[c_sub]
             if sum(_g_input) == 0: # 将入/出度为0的分量（包括只有一个节点的）作为输入/出（多节点随机选一个）
                 _c_sub = c_sub.copy()
                 np.random.shuffle(_c_sub)
@@ -181,6 +181,37 @@ class Topological_sorting_tarjan(Tarjan):
                 _c_sub = c_sub.copy()
                 np.random.shuffle(_c_sub)
                 outgoing.append(_c_sub[0])
+        return incoming, outgoing
+
+    def suggest_inout_multi_io(self, multi_io = 0.2):  # 因为拓扑排序一定有开始和结束，DAG是单方向的，所以直接找到入度为0的点作为输入，出度为0的点作为输出
+        incoming = []
+        outgoing = []
+        _g = self.g.copy()
+        for c_root in self._sorting: # 这里先将链接矩阵中所有强连通分量的链接删除
+            c_sub = self.components[c_root]
+            X, Y = np.meshgrid(c_sub, c_sub)
+            for x, y in zip(X.reshape(-1, ).tolist(), Y.reshape(-1, ).tolist()):
+                _g[x][y] = 0
+            _g_input = np.sum(_g, 0)[c_sub] # 然后统计各个强连通分量的出入链接数
+            _g_output = np.sum(_g, 1)[c_sub]
+            if sum(_g_input) == 0: # 将入/出度为0的分量（包括只有一个节点的）作为输入/出（多节点随机选一个）
+                _c_sub = c_sub.copy()
+                np.random.shuffle(_c_sub)
+                incoming.append(_c_sub[0])
+            if sum(_g_output) == 0:
+                _c_sub = c_sub.copy()
+                np.random.shuffle(_c_sub)
+                outgoing.append(_c_sub[0])
+                # 如果总的输入输出节点太少，那么会增加作为输入输出的节点
+                # 如果不够那么就随机选取一些
+        if len(incoming)<=int(multi_io*self.n) :
+            unpicked = np.setdiff1d(np.arange(self.n), incoming)
+            np.random.shuffle(unpicked)
+            incoming.extend(list(unpicked[:int(multi_io*self.n-len(incoming))]))
+        if len(outgoing)<=int(multi_io*self.n) :
+            unpicked = np.setdiff1d(np.arange(self.n), outgoing)
+            np.random.shuffle(unpicked)
+            outgoing.extend(list(unpicked[:int(multi_io*self.n-len(outgoing))]))
         return incoming, outgoing
 
 
