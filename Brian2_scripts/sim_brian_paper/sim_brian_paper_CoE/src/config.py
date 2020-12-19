@@ -22,7 +22,7 @@ A_threshold = 0.01
 standard_tau = 100 * ms
 tau_I = 1 * ms
 
-voltage_reset = 2
+voltage_reset = 0.2
 
 refractory_reservoir = 2 * ms
 
