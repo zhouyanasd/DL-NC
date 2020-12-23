@@ -177,10 +177,14 @@ class Generator_connection_matrix(BaseFunctions):
                 blocks_type_, count_, cmo_, cmi_, o_, i_ = \
                     self.generate_connection_matrix_reservoir_layer(
                         blocks_type_, count_, layer-1, structure_type, cmo_, cmi_)
-                cmo_.extend(list(np.array(o_)[component['structure'][0]].reshape(-1)))
-                cmi_.extend(list(np.array(i_)[component['structure'][1]].reshape(-1)))
-                o.append(list(np.array(o_)[component['output_input'][0]].reshape(-1)))
-                i.append(list(np.array(i_)[component['output_input'][1]].reshape(-1)))
+                for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
+                    for com_so_ in o_[com_so]:
+                        for com_si_ in i_[com_si]:
+                            cmo_.append(com_so_)
+                            cmi_.append(com_si_)
+                for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
+                    o.append(o_[com_o])
+                    i.append(i_[com_i])
             return blocks_type_, count_, cmo_, cmi_, o, i
         else:
             o, i = [],[]
@@ -214,14 +218,19 @@ class Generator_connection_matrix(BaseFunctions):
         count = 0
         blocks_type = []
         o, i = [], []
+        component = structure_reservoir['components']
         blocks_type, count, connection_matrix_out, connection_matrix_in, o_, i_ = \
             self.generate_connection_matrix_reservoir_layer(blocks_type, count, layer, structure_type,
                                                   connection_matrix_out, connection_matrix_in)
-        connection_matrix_out.extend(list(np.array(o_)[structure_reservoir['components']['structure'][0]].reshape(-1)))
-        connection_matrix_in.extend(list(np.array(i_)[structure_reservoir['components']['structure'][1]].reshape(-1)))
-        o.append(list(np.array(o_)[structure_reservoir['components']['output_input'][0]].reshape(-1)))
-        i.append(list(np.array(i_)[structure_reservoir['components']['output_input'][1]].reshape(-1)))
-        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o[0], i[0]
+        for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
+            for com_so_ in o_[com_so]:
+                for com_si_ in i_[com_si]:
+                    connection_matrix_out.append(com_so_)
+                    connection_matrix_in.append(com_si_)
+        for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
+            o.extend(o_[com_o])
+            i.extend(i_[com_i])
+        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o, i
 
 
 class Generator(Generator_connection_matrix):

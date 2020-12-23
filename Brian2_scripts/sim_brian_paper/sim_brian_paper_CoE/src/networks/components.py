@@ -239,7 +239,7 @@ class Pathway(BaseFunctions):
          type: str, the connection type for the synapses of the Pathway.
          '''
 
-        if type in ['full', 'one_to_one']:
+        if type in ['full', 'one_to_one', 'probability']:
             self.connect_type = type
         else:
             raise ("wrong connection type, only 'full' or 'one_to_one'.")
@@ -258,7 +258,7 @@ class Pathway(BaseFunctions):
                                on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
             self.synapses_group.append(synapses)
 
-    def connect(self):
+    def connect(self, **kwargs):
         '''
          Connect neurons using synapse based on the fixed connection matrix and connection type.
 
@@ -284,6 +284,17 @@ class Pathway(BaseFunctions):
                 block_post = self.blocks_post[self.post[index]]
                 synapses.connect(i = block_pre.output, j = block_post.input[count:count+len(block_pre.output)])
                 count = count + len(block_pre.output)
+        elif self.connect_type == 'probability':
+            for index, synapses in enumerate(self.synapses_group):
+                block_pre = self.blocks_pre[self.pre[index]]
+                block_post = self.blocks_post[self.post[index]]
+                connect_matrix = [[],[]]
+                for i in block_pre.output:
+                    for j in block_post.input:
+                        if np.random.rand()< kwargs['p_connection']:
+                            connect_matrix[0].append(i)
+                            connect_matrix[1].append(j)
+                synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
 
 
     def _initialize(self, synapses, **kwargs):
