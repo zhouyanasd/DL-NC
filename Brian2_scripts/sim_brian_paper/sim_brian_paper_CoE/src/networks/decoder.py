@@ -319,19 +319,23 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength', 'type')
-        return parameter
+        parameters = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength', 'type')
+        return parameters
 
-    def get_parameters_encoding_readout(self):
+    def get_parameters_encoding_readout(self, need):
         '''
          Decode parameters of the encoding_readout.
 
          Parameters
          ----------
          '''
-
-        parameter = self.decode('Encoding_Readout')
-        return parameter
+        parameters = self.decode('Encoding_Readout')
+        if need == 'structure':
+            sub_parameters = self.get_sub_dict(parameters, 'p_connection')
+            return sub_parameters
+        if need == 'parameter':
+            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
+            return sub_parameters
 
     def get_encoding_structure(self):
         '''
@@ -372,7 +376,7 @@ class Decoder(BaseFunctions):
         self.change_dict_key(parameters['reservoir']['parameter_pathway'], 'strength', 'strength_need_random')
         parameters['encoding'] = None
         parameters['readout'] = None
-        parameters['encoding_reservoir'] = self.get_parameters_encoding_readout()
+        parameters['encoding_reservoir'] = self.get_parameters_encoding_readout('parameter')
         self.change_dict_key(parameters['encoding_reservoir'], 'strength', 'strength_need_random')
         parameters['reservoir_readout'] = None
         return parameters

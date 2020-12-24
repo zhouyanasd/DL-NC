@@ -389,10 +389,12 @@ class Generator(Generator_connection_matrix):
          '''
 
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
+        p_connection = self.decoder.get_parameters_encoding_readout('structure')['p_connection']
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
                                         dynamics_encoding_synapse_post_STDP)
-        pathway.connect()
+        pathway._set_connect_type('probability')
+        pathway.connect(p_connection = p_connection)
         return pathway
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
