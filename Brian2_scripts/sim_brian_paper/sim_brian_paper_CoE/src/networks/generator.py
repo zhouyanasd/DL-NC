@@ -194,7 +194,8 @@ class Generator_connection_matrix(BaseFunctions):
                 cmi_.extend(list(np.array(component['structure'][1]) + count_))
                 o.append(list(np.array(component['output_input'][0]) + count_))
                 i.append(list(np.array(component['output_input'][1]) + count_))
-                type = list(np.unique(component['structure'][0] + component['structure'][1]))
+                type = list(np.unique(component['structure'][0] + component['structure'][1] +
+                                      component['output_input'][0] + component['output_input'][1]))
                 count_ = count_ + len(type)
                 blocks_type_.extend(type)
             return blocks_type_, count_, cmo_, cmi_, o, i
