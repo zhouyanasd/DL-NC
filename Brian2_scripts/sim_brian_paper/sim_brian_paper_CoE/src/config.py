@@ -12,7 +12,7 @@ Apost = -Apre*taupre/taupost*1.05
 
 A_strength = 1
 A_strength_reservoir = 1
-A_strength_encoding = 1
+A_strength_encoding = 0.001
 
 threshold_solid = 0.2
 threshold_max = 1
@@ -124,7 +124,7 @@ structure_blocks = {'components_0':'random',
 
 structure_layer = {'components_0':{'structure': [[],[]], 'output_input':[[0,1,2,3],[0,1,2,3]]},
                     'components_1': {'structure':[[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
-                    'components_2': {'structure':[[0,0,2,2],[1,2,1,3]], 'output_input':[[1,3],[0,2]]},
+                    'components_2': {'structure':[[0,0,2,2],[1,3,1,3]], 'output_input':[[1,3],[0,2]]},
                     'components_3': {'structure':[[0,0,0],[1,2,3]], 'output_input':[[1,2,3],[0]]}}
 
 structure_reservoir = {'components': {'structure':[[],[]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
