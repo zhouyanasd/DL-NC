@@ -24,6 +24,7 @@ Citation
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
+import gc
 from functools import partial
 from multiprocessing import Manager, Pool
 
