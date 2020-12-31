@@ -161,6 +161,9 @@ def run_net(gen, inputs):
 @ProgressBar
 @Timelog
 def parameters_search(**parameter):
+    # ------apply the pool and queue-------
+    pool = Pool(core)
+    q = Manager().Queue(core)
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
@@ -194,6 +197,10 @@ def parameters_search(**parameter):
                                                                    np.asarray(_label_validation),
                                                                    np.asarray(_label_test), solver="lbfgs",
                                                                    multi_class="multinomial")
+    # ------close the pool and collect the memory-------
+    pool.close()
+    del net, q, pool
+    gc.collect()
     # ----------show results-----------
     print('parameter %s' % parameter)
     print('Train score: ', score_train)
@@ -205,8 +212,6 @@ def parameters_search(**parameter):
 # -------optimizer settings---------------
 if __name__ == '__main__':
     core = 8
-    pool = Pool(core)
-    q = Manager().Queue(core)
     parameters_search.total = 600
 
     method = 'CoE_rf'
