@@ -243,7 +243,7 @@ if __name__ == '__main__':
         best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=9, NIND=10,
                                             maxormin=1, SUBPOP=1, GGAP=0.5,
                                             selectStyle='sus', recombinStyle='xovdp',
-                                            distribute=False, LHS_path = LHS_path, drawing=False)
+                                            distribute=False, drawing=False)
 
     elif method == 'CoE_rf':
         optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
