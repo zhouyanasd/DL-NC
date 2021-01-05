@@ -200,6 +200,7 @@ def parameters_search(**parameter):
                                                                    multi_class="multinomial")
     # ------close the pool and collect the memory-------
     pool.close()
+    pool.join()
     del net, q, pool
     gc.collect()
     # ----------show results-----------

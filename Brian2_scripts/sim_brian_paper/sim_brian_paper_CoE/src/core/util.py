@@ -20,14 +20,6 @@ class Timelog():
         self.func = func
         self.itime = time.time()
         self.iteration = 0
-        with open('Results_Record' + '.dat', 'w') as f:
-            f.write('iteration' + ' '
-                    + 'wall_time' + ' '
-                    + 'result_validation' + ' '
-                    + 'result_test' + ' '
-                    + 'result_train' + ' '
-                    + 'parameters' + ' '
-                    + '\n')
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters = self.func(*args, **kwargs)
@@ -40,6 +32,15 @@ class Timelog():
 
     def save(self, validation, test, train, parameters):
         self.iteration += 1
+        if self.iteration == 1:
+            with open('Results_Record' + '.dat', 'w') as f:
+                f.write('iteration' + ' '
+                        + 'wall_time' + ' '
+                        + 'result_validation' + ' '
+                        + 'result_test' + ' '
+                        + 'result_train' + ' '
+                        + 'parameters' + ' '
+                        + '\n')
         with open('Results_Record' + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
                     + str(test) + ' ' + str(train) + ' ' + str(parameters) + ' ' + '\n')
