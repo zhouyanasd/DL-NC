@@ -265,7 +265,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
             if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
                 SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
-        return self._space.add_precision(SelCh,self._space._precisions)
+        return self._space.add_precision(SelCh,self._space._precisions[SubCom_i])
 
     def is2(self, FieldD):
         r = FieldD[2, :] - FieldD[1, :]
