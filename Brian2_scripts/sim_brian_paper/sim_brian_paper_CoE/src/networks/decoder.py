@@ -72,7 +72,7 @@ class Decoder(BaseFunctions):
             for group in gen_group:
                 sub_com += self.config_SubCom[group]
             SubCom.append(sub_com)
-        return
+        return SubCom
 
     @property
     def get_dim(self):
