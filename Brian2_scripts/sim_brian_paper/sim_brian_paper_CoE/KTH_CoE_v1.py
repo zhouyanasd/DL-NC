@@ -64,7 +64,7 @@ evaluator = Evaluation()
 
 #--- create generator and decoder ---
 decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                  config_precisions, config_scales, neurons_encoding)
+                  config_precisions, config_scales, neurons_encoding, gen_group)
 
 generator = Generator(np_state)
 generator.register_decoder(decoder)

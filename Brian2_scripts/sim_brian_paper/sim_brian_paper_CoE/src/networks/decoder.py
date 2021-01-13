@@ -26,8 +26,9 @@ class Decoder(BaseFunctions):
     """
 
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, neurons_encoding):
+                      config_precisions, config_scales, neurons_encoding, gen_group):
         super(Decoder).__init__()
+        self.gen_group = gen_group
         self.config_group = config_group
         self.config_keys = config_keys
         self.config_codes = config_codes
@@ -65,8 +66,13 @@ class Decoder(BaseFunctions):
          Parameters
          ----------
          '''
-
-        return self.config_SubCom
+        SubCom = []
+        for gen_group in self.gen_group:
+            sub_com = []
+            for group in gen_group:
+                sub_com += self.config_SubCom[group]
+            SubCom.append(sub_com)
+        return
 
     @property
     def get_dim(self):

@@ -186,6 +186,8 @@ config_scales = [[0] * 5,
                  [0] * 10,
                  [0] * 4]
 
+gen_group = [[0], [1], [2, 3, 4, 5]]
+
 '''
 All gen is in float.
 Example:
