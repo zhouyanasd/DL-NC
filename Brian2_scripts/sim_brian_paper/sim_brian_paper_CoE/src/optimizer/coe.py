@@ -9,7 +9,7 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import create_surrogate
 
-import time
+import time, pickle
 
 import numpy as np
 import geatpy as ga
@@ -40,6 +40,16 @@ class CoE_surrogate(BaseFunctions):
             return FitnV
         else:
             return self.f_p(LegV, FitnV)
+
+    def save_states(self, B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state):
+        with open('./coe.p', 'wb') as f:
+            pickle.dump((B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state),
+                        f, pickle.HIGHEST_PROTOCOL)
+
+    def load_states(self):
+        with open('./coe.p', 'wb') as f:
+            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, time, numpy_state=  pickle.load(f)
+        return B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -376,7 +386,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
 
     def coe_surrogate(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                       maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
-                      selectStyle='sus', recombinStyle='xovdp', distribute = False, LHS_path = None, drawing= False):
+                      selectStyle='sus', recombinStyle='xovdp', distribute = False, LHS_path = None, drawing= False,
+                      load_continue = False):
 
         # ==========================初始化配置===========================
         # 得到控制变量的个数
@@ -401,10 +412,20 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
 
         # =========================开始遗传算法进化=======================
         # 开始进化！！
-        # 开始计时
-        start_time = time.time()
-        # 根据时间改变随机数
-        np.random.seed(int(start_time))
+        if load_continue:
+            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state = self.load_states()
+            # 初始化计时
+            start_time = time.time()-times
+            end_time = time.time()
+            # 根据时间改变随机数
+            np.random.set_state(numpy_state)
+        else:
+            # 初始化计时
+            start_time = time.time()
+            end_time = time.time()
+            times = end_time - start_time
+            # 根据时间改变随机数
+            np.random.seed(int(start_time))
         # 设置一个用原函数评估的代数间隔
         estimation = interval - 1
         while gen < MAXGEN:
@@ -485,9 +506,10 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             var_trace[gen, :] = B[0]
             # 增加代数
             gen += 1
-        # 结束计时
-        end_time = time.time()
-        times = end_time - start_time
+            # 更新计时
+            end_time = time.time()
+            times = end_time - start_time
+            self.save_states(B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, np.random.get_state())
 
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果
@@ -500,7 +522,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
 
     def coe(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10,
             maxormin=1, SUBPOP=1, GGAP=0.5,
-            selectStyle='sus', recombinStyle='xovdp', distribute = False, drawing= False):
+            selectStyle='sus', recombinStyle='xovdp', distribute = False, drawing= False, load_continue = False):
 
         # ==========================初始化配置===========================
         # 得到控制变量的个数
@@ -545,8 +567,20 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
 
         # =========================开始遗传算法进化=======================
         # 开始进化！！
-        # 开始计时
-        start_time = time.time()
+        if load_continue:
+            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state = self.load_states()
+            # 初始化计时
+            start_time = time.time()-times
+            end_time = time.time()
+            # 根据时间改变随机数
+            np.random.set_state(numpy_state)
+        else:
+            # 初始化计时
+            start_time = time.time()
+            end_time = time.time()
+            times = end_time - start_time
+            # 根据时间改变随机数
+            np.random.seed(int(start_time))
         # 根据时间改变随机数
         np.random.seed(int(start_time))
         while gen < MAXGEN:
@@ -602,9 +636,10 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             var_trace[gen, :] = B[0]
             # 增加代数
             gen += 1
-        # 结束计时
-        end_time = time.time()
-        times = end_time - start_time
+            # 更新计时
+            end_time = time.time()
+            times = end_time - start_time
+            self.save_states(B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, np.random.get_state())
 
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果

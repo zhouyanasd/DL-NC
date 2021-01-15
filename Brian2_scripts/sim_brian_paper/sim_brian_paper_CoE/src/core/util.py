@@ -20,6 +20,7 @@ class Timelog():
         self.func = func
         self.itime = time.time()
         self.iteration = 0
+        self.load_continue = False
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters = self.func(*args, **kwargs)
@@ -32,7 +33,7 @@ class Timelog():
 
     def save(self, validation, test, train, parameters):
         self.iteration += 1
-        if self.iteration == 1:
+        if self.iteration == 1 or not self.load_continue:
             with open('Results_Record' + '.dat', 'w') as f:
                 f.write('iteration' + ' '
                         + 'wall_time' + ' '
