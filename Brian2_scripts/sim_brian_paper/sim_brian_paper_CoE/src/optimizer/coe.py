@@ -41,15 +41,15 @@ class CoE_surrogate(BaseFunctions):
         else:
             return self.f_p(LegV, FitnV)
 
-    def save_states(self, B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state):
+    def save_states(self, B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state):
         with open('./coe.p', 'wb') as f:
-            pickle.dump((B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state),
+            pickle.dump((B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state),
                         f, pickle.HIGHEST_PROTOCOL)
 
     def load_states(self):
-        with open('./coe.p', 'wb') as f:
-            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, time, numpy_state=  pickle.load(f)
-        return B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, time, numpy_state
+        with open('./coe.p', 'rb') as f:
+            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state =  pickle.load(f)
+        return B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state
 
     def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
                                    problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
@@ -414,6 +414,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 开始进化！！
         if load_continue:
             B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state = self.load_states()
+            pop_trace[:20, :] = pop_trace_
+            var_trace[:20, :] = var_trace_
             # 初始化计时
             start_time = time.time()-times
             end_time = time.time()
@@ -568,7 +570,9 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # =========================开始遗传算法进化=======================
         # 开始进化！！
         if load_continue:
-            B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state = self.load_states()
+            B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
+            pop_trace[:20, :] = pop_trace_
+            var_trace[:20, :] = var_trace_
             # 初始化计时
             start_time = time.time()-times
             end_time = time.time()
