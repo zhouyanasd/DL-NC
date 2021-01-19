@@ -571,8 +571,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 开始进化！！
         if load_continue:
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
-            pop_trace[:20, :] = pop_trace_
-            var_trace[:20, :] = var_trace_
+            pop_trace[:gen, :] = pop_trace_
+            var_trace[:gen, :] = var_trace_
             # 初始化计时
             start_time = time.time()-times
             end_time = time.time()
