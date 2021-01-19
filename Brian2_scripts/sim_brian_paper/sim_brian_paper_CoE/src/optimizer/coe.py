@@ -392,26 +392,8 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # ==========================初始化配置===========================
         # 得到控制变量的个数
         NVAR = self.FieldDR.shape[1]
-        # 定义进化记录器，初始值为nan
-        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
-        # 定义变量记录器，记录控制变量值，初始值为nan
-        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
-        # 初始化重复个体数为0
-        repnum = [0] * len(self.SubCom)
         # 初始化代理模型
-        self.surrogate.initial_model(init_points = init_points, LHS_path = LHS_path, is_LHS = True, lazy = False)
-        # 从代理模型初始化的数据中找到最好的点
-        B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
-        F_B = self._space.target.min()
-        # 初始化各个子种群
-        P, ObjV, LegV = self.initialize_offspring(NIND,B)
-        # 初始代数
-        gen = 0
-        # 用于记录在“遗忘策略下”被忽略的代数
-        badCounter = 0
-
-        # =========================开始遗传算法进化=======================
-        # 开始进化！！
+        self.surrogate.initial_model(init_points=init_points, LHS_path=LHS_path, is_LHS=True, lazy=False)
         if load_continue:
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
             pop_trace[:gen, :] = pop_trace_
@@ -422,6 +404,19 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             # 根据时间改变随机数
             np.random.set_state(numpy_state)
         else:
+            # 定义进化记录器，初始值为nan
+            pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+            # 定义变量记录器，记录控制变量值，初始值为nan
+            var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
+            # 初始化重复个体数为0
+            repnum = [0] * len(self.SubCom)
+            # 从代理模型初始化的数据中找到最好的点
+            B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
+            F_B = self._space.target.min()
+            # 初始化各个子种群
+            P, ObjV, LegV = self.initialize_offspring(NIND, B)
+            # 初始代数
+            gen = 0
             # 初始化计时
             start_time = time.time()
             end_time = time.time()
@@ -430,6 +425,11 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             np.random.seed(int(start_time))
         # 设置一个用原函数评估的代数间隔
         estimation = interval - 1
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
         while gen < MAXGEN:
             # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
             if badCounter >= 10 * MAXGEN:
@@ -529,46 +529,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # ==========================初始化配置===========================
         # 得到控制变量的个数
         NVAR = self.FieldDR.shape[1]
-        # 定义进化记录器，初始值为nan
-        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
-        # 定义变量记录器，记录控制变量值，初始值为nan
-        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
-        # 初始化重复个体数为0
-        repnum = [0] * len(self.SubCom)
-        # 定义初始context vector
-        B = self.initilize_B()
-        # 求初代context vector 的 fitness
-        [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
-        # 初始化各个子种群
-        P = []
-        ObjV = []
-        LegV = []
-        for SubCom_i in self.SubCom:
-            FieldDR_i = self.FieldDR[:, SubCom_i]
-            # 生成初始种群
-            P_i = ga.crtrp(NIND, FieldDR_i)
-            # 进行必要的二进制编码
-            P_i = self.b_coding(P_i, SubCom_i)
-            # 替换context vector中个体基因
-            Chrom = B.copy().repeat(NIND, axis=0)
-            Chrom[:, SubCom_i] = P_i
-            Chrom = self._space.add_precision(Chrom,self._space._precisions)
-            LegV_i = np.ones((NIND, 1))
-            # 求子问题的目标函数值
-            [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
-            # 各个种群的初始基因
-            P.append(P_i)
-            # 各个种群的初始函数值
-            ObjV.append(ObjV_i)
-            # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
-            LegV.append(LegV_i)
-        # 初始代数
-        gen = 0
-        # 用于记录在“遗忘策略下”被忽略的代数
-        badCounter = 0
-
-        # =========================开始遗传算法进化=======================
-        # 开始进化！！
         if load_continue:
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
             pop_trace[:gen, :] = pop_trace_
@@ -579,14 +539,54 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             # 根据时间改变随机数
             np.random.set_state(numpy_state)
         else:
+            # 定义进化记录器，初始值为nan
+            pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+            # 定义变量记录器，记录控制变量值，初始值为nan
+            var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
+            # 初始化重复个体数为0
+            repnum = [0] * len(self.SubCom)
+            # 定义初始context vector
+            B = self.initilize_B()
+            # 求初代context vector 的 fitness
+            [F_B, LegV_B] = self.aimfunc(B, np.ones((1, 1)))
+            # 初始化各个子种群
+            P = []
+            ObjV = []
+            LegV = []
+            for SubCom_i in self.SubCom:
+                FieldDR_i = self.FieldDR[:, SubCom_i]
+                # 生成初始种群
+                P_i = ga.crtrp(NIND, FieldDR_i)
+                # 进行必要的二进制编码
+                P_i = self.b_coding(P_i, SubCom_i)
+                # 替换context vector中个体基因
+                Chrom = B.copy().repeat(NIND, axis=0)
+                Chrom[:, SubCom_i] = P_i
+                Chrom = self._space.add_precision(Chrom, self._space._precisions)
+                LegV_i = np.ones((NIND, 1))
+                # 求子问题的目标函数值
+                [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
+                # 各个种群的初始基因
+                P.append(P_i)
+                # 各个种群的初始函数值
+                ObjV.append(ObjV_i)
+                # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
+                LegV.append(LegV_i)
+            # 初始代数
+            gen = 0
             # 初始化计时
             start_time = time.time()
             end_time = time.time()
             times = end_time - start_time
             # 根据时间改变随机数
             np.random.seed(int(start_time))
-        # 根据时间改变随机数
-        np.random.seed(int(start_time))
+            # 根据时间改变随机数
+            np.random.seed(int(start_time))
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
         while gen < MAXGEN:
             # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
             if badCounter >= 10 * MAXGEN:
