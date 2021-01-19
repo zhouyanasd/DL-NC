@@ -75,12 +75,22 @@ class ProgressBar():
         self.func = func
         self.total = 0
         self.now = 0
+        self.load_continue = False
 
     def __call__(self, *arg, **kwargs):
+        if self.load_continue:
+            self.load_continue = False
+            self.now = self.load()
         self.now += 1
         print("\r", end="")
         print("Runing progress: {:^3.0f}%: ".format((self.now)/self.total*100), "▋" * (int(self.now/self.total*100) // 2), end="\n")
         return self.func(**kwargs)
+
+    def load(self):
+        with open('Results_Record' + '.dat', 'r') as f:
+            l = f.readlines()
+        l.pop(0)
+        return  int(l[-1].split(' ')[0])
 
 
 
