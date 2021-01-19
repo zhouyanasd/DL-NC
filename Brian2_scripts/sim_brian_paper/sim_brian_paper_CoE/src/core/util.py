@@ -33,7 +33,8 @@ class Timelog():
 
     def save(self, validation, test, train, parameters):
         self.iteration += 1
-        if self.iteration == 1 or not self.load_continue:
+        if self.iteration == 1 or self.load_continue:
+            self.load_continue = False
             with open('Results_Record' + '.dat', 'w') as f:
                 f.write('iteration' + ' '
                         + 'wall_time' + ' '
