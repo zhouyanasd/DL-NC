@@ -24,6 +24,9 @@ class Timelog():
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters = self.func(*args, **kwargs)
+        if self.load_continue:
+            self.load_continue = False
+            self.iteration = self.load()
         self.save(validation, test, train, parameters)
         return validation
 
@@ -31,9 +34,15 @@ class Timelog():
     def elapsed(self):
         return time.time() - self.itime
 
+    def load(self):
+        with open('Results_Record' + '.dat', 'r') as f:
+            l = f.readlines()
+        l.pop(0)
+        return  int(l[-1].split(' ')[0])
+
     def save(self, validation, test, train, parameters):
         self.iteration += 1
-        if self.iteration == 1 or not self.load_continue:
+        if self.iteration == 1:
             with open('Results_Record' + '.dat', 'w') as f:
                 f.write('iteration' + ' '
                         + 'wall_time' + ' '
