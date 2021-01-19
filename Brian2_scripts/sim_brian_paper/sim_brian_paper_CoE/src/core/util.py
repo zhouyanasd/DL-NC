@@ -26,7 +26,8 @@ class Timelog():
         validation, test, train, parameters = self.func(*args, **kwargs)
         if self.load_continue:
             self.load_continue = False
-            self.iteration = self.load()
+            self.iteration, time = self.load()
+            self.itime = self.itime - time
         self.save(validation, test, train, parameters)
         return validation
 
@@ -38,7 +39,7 @@ class Timelog():
         with open('Results_Record' + '.dat', 'r') as f:
             l = f.readlines()
         l.pop(0)
-        return  int(l[-1].split(' ')[0])
+        return  int(l[-1].split(' ')[0]), float(l[-1].split(' ')[1])
 
     def save(self, validation, test, train, parameters):
         self.iteration += 1
