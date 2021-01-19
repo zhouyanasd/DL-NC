@@ -392,6 +392,10 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # ==========================初始化配置===========================
         # 得到控制变量的个数
         NVAR = self.FieldDR.shape[1]
+        # 定义进化记录器，初始值为nan
+        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+        # 定义变量记录器，记录控制变量值，初始值为nan
+        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
         # 初始化代理模型
         self.surrogate.initial_model(init_points=init_points, LHS_path=LHS_path, is_LHS=True, lazy=False)
         if load_continue:
@@ -404,10 +408,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             # 根据时间改变随机数
             np.random.set_state(numpy_state)
         else:
-            # 定义进化记录器，初始值为nan
-            pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
-            # 定义变量记录器，记录控制变量值，初始值为nan
-            var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
             # 初始化重复个体数为0
             repnum = [0] * len(self.SubCom)
             # 从代理模型初始化的数据中找到最好的点
@@ -529,6 +529,10 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # ==========================初始化配置===========================
         # 得到控制变量的个数
         NVAR = self.FieldDR.shape[1]
+        # 定义进化记录器，初始值为nan
+        pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
+        # 定义变量记录器，记录控制变量值，初始值为nan
+        var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
         if load_continue:
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
             pop_trace[:gen, :] = pop_trace_
@@ -539,10 +543,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             # 根据时间改变随机数
             np.random.set_state(numpy_state)
         else:
-            # 定义进化记录器，初始值为nan
-            pop_trace = (np.zeros((MAXGEN, 1)) * np.nan)
-            # 定义变量记录器，记录控制变量值，初始值为nan
-            var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
             # 初始化重复个体数为0
             repnum = [0] * len(self.SubCom)
             # 定义初始context vector
