@@ -399,13 +399,14 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 初始化代理模型
         self.surrogate.initial_model(init_points=init_points, LHS_path=LHS_path, is_LHS=True, lazy=False)
         if load_continue:
+            # 重新载入历史的进化数据
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
             pop_trace[:gen, :] = pop_trace_[:gen, :]
             var_trace[:gen, :] = var_trace_[:gen, :]
             # 初始化计时
             start_time = time.time()-times
             end_time = time.time()
-            # 根据时间改变随机数
+            # 恢复随机数
             np.random.set_state(numpy_state)
         else:
             # 初始化重复个体数为0
@@ -534,13 +535,14 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
         # 定义变量记录器，记录控制变量值，初始值为nan
         var_trace = (np.zeros((MAXGEN, NVAR)) * np.nan)
         if load_continue:
+            # 重新载入历史的进化数据
             B, F_B, ObjV, LegV, repnum, pop_trace_, var_trace_, P, gen, times, numpy_state = self.load_states()
             pop_trace[:gen, :] = pop_trace_[:gen, :]
             var_trace[:gen, :] = var_trace_[:gen, :]
             # 初始化计时
             start_time = time.time()-times
             end_time = time.time()
-            # 根据时间改变随机数
+            # 恢复随机数
             np.random.set_state(numpy_state)
         else:
             # 初始化重复个体数为0
