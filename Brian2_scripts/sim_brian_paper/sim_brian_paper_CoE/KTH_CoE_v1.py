@@ -24,18 +24,22 @@ Citation
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
-import gc
-from functools import partial
-from multiprocessing import Manager, Pool
-
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
+
+import os, gc, warnings
+from functools import partial
+from multiprocessing import Manager, Pool
 
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
-data_path = '../../../Data/KTH/'
+if os.name == 'nt':
+    data_path = '../../../Data/KTH/'
+elif os.name == 'posix':
+    os.system('export PYTHONPATH=~/Project/DL-NC')
+    data_path = '/Project/DL-NC/Data/KTH/'
 
 ###################################
 #------------------------------------------

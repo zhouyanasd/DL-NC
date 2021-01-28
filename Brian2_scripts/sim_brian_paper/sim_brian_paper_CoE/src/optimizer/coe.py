@@ -22,7 +22,11 @@ class CoE_surrogate(BaseFunctions):
         self.f = f # for BO with dict input
         self.f_p = f_p
         self.SubCom = SubCom
-        self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
+        if ga.__version__ == '1.1.5':
+            self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
+        elif ga.__version__ == '2.1.0':
+            self.FieldDR = ga.crtfld('RI', np.array([0]*len(precisions)),
+                                 ranges=ranges, borders=borders, precisions=list(precisions))
         self.keys = keys
         self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f, random_state= random_state,
                                           keys=keys, ranges=ranges, borders=borders, precisions=precisions,
