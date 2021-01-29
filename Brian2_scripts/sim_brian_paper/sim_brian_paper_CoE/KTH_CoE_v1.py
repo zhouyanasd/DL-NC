@@ -39,7 +39,7 @@ if os.name == 'nt':
     data_path = '../../../Data/KTH/'
 elif os.name == 'posix':
     os.system('export PYTHONPATH=~/Project/DL-NC')
-    data_path = '/Project/DL-NC/Data/KTH/'
+    data_path = '/home/zy/Project/DL-NC/Data/KTH/'
 
 ###################################
 #------------------------------------------
@@ -217,11 +217,11 @@ def parameters_search(**parameter):
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
-    core = 8
+    core = 1
     parameters_search.total = 600
 
     method = 'CoE_rf'
-    LHS_path = './LHS_KTH.dat'
+    LHS_path = None
     load_continue = False
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
