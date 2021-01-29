@@ -221,7 +221,7 @@ if __name__ == '__main__':
     parameters_search.total = 600
 
     method = 'CoE_rf'
-    LHS_path = None
+    LHS_path = './LHS_KTH.dat'
     load_continue = False
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
