@@ -107,10 +107,10 @@ data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
 data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 
-ob_data_train_s, ob_label_train = ray.put(data_train_s), ray.put(label_train)
-ob_data_pre_train_s, ob_label_pre_train = ray.put(data_pre_train_s), ray.put(label_pre_train)
-ob_data_validation_s, ob_label_validation = ray.put(data_validation_s), ray.put(label_validation)
-ob_data_test_s, ob_label_test = ray.put(data_test_s), ray.put(label_test)
+# ob_data_train_s, ob_label_train = ray.put(data_train_s), ray.put(label_train)
+# ob_data_pre_train_s, ob_label_pre_train = ray.put(data_pre_train_s), ray.put(label_pre_train)
+# ob_data_validation_s, ob_label_validation = ray.put(data_validation_s), ray.put(label_validation)
+# ob_data_test_s, ob_label_test = ray.put(data_test_s), ray.put(label_test)
 
 #--- define network run function ---
 def init_net(gen):
@@ -128,7 +128,7 @@ def init_net(gen):
     net.store('init')
     return net
 
-@ray.remote
+@ray.remote(num_gpus=40, max_calls=40)
 def pre_run_net(gen, inputs, queue):
     #--- run network ---
     global Switch, stimulus
@@ -162,7 +162,7 @@ def sum_strength(gen, queue):
     net._stored_state['pre_run'] = state_init
     net.store('pre_run', 'pre_run_state.txt')
 
-@ray.remote
+@ray.remote(num_gpus=40, max_calls=40)
 def run_net(gen, inputs):
     #--- run network ---
     global Switch, stimulus
