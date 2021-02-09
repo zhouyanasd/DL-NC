@@ -48,7 +48,8 @@ elif os.name == 'posix':
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
-np_state = ray.put(np.random.get_state())
+np_state = np.random.get_state()
+ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
 DataName = 'coe_[15,5,4]'
@@ -114,7 +115,7 @@ ob_data_test_s, ob_label_test = ray.put(data_test_s), ray.put(label_test)
 #--- define network run function ---
 def init_net(gen):
     # ---- set numpy random state for each run----
-    np.random.set_state(ray.get(np_state))
+    np.random.set_state(ray.get(ob_np_state))
 
     # ---- register the gen to the decoder ----
     generator.decoder.register(gen)
