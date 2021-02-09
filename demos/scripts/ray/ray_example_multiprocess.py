@@ -10,13 +10,14 @@ x = 1
 y = 2
 z = 0
 r = np.random.rand()
+print(id(r))
 
 ob_r = ray.put(r)
 
 @ray.remote
 def add_ray(a, b, c):
     print(a,b,c)
-    print(r == ray.get(ob_r))
+    print(id(r))
     return a+b+c
 
 
