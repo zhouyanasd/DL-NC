@@ -29,8 +29,13 @@ from sklearn.preprocessing import MinMaxScaler
 
 import os, gc, warnings
 from functools import partial
-from multiprocessing import Manager, Pool
 
+import ray
+from ray.util.queue import Queue
+from ray.util.multiprocessing import Pool
+
+ray.init(address='219.216.80.3:6379', logging_level=logging.INFO)
+clear_cache('cython')
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
@@ -38,13 +43,14 @@ np.random.seed(100)
 if os.name == 'nt':
     data_path = '../../../Data/KTH/'
 elif os.name == 'posix':
-    os.system('export PYTHONPATH=~/Project/DL-NC')
+    os.system('export PYTHONPATH=/home/zy/Project/DL-NC')
     data_path = '/home/zy/Project/DL-NC/Data/KTH/'
 
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
 np_state = np.random.get_state()
+ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
 DataName = 'coe_[15,5,4]'
@@ -105,7 +111,7 @@ data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 #--- define network run function ---
 def init_net(gen):
     # ---- set numpy random state for each run----
-    np.random.set_state(np_state)
+    np.random.set_state(ray.get(ob_np_state))
 
     # ---- register the gen to the decoder ----
     generator.decoder.register(gen)
@@ -120,16 +126,32 @@ def init_net(gen):
 
 def pre_run_net(gen, inputs, queue):
     #--- run network ---
-    global Switch, stimulus
+    taupre = taupost = 100 * ms
+    wmin = 0
+    wmax = 1
+    Apre = 0.01
+    Apost = -Apre * taupre / taupost * 1.05
+    A_strength = 1
+    A_strength_reservoir = 1
+    A_strength_encoding = 0.001
+    threshold_solid = 0.2
+    threshold_max = 1
+    a_threshold = 0.2
+    A_threshold = 0.01
+    standard_tau = 100 * ms
+    tau_I = 1 * ms
+    voltage_reset = 0.2
+    refractory_reservoir = 2 * ms
+
     net = init_net(gen)
     Switch = 1
-    state = queue.get(False)
+    state = queue.get()
     net._stored_state['temp'] = state
     net.restore('temp')
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
-    queue.put(net._full_state(), False)
+    queue.put(net._full_state())
 
 def sum_strength(gen, queue):
     net = init_net(gen)
@@ -153,7 +175,23 @@ def sum_strength(gen, queue):
 
 def run_net(gen, inputs):
     #--- run network ---
-    global Switch, stimulus
+    taupre = taupost = 100 * ms
+    wmin = 0
+    wmax = 1
+    Apre = 0.01
+    Apost = -Apre * taupre / taupost * 1.05
+    A_strength = 1
+    A_strength_reservoir = 1
+    A_strength_encoding = 0.001
+    threshold_solid = 0.2
+    threshold_max = 1
+    a_threshold = 0.2
+    A_threshold = 0.01
+    standard_tau = 100 * ms
+    tau_I = 1 * ms
+    voltage_reset = 0.2
+    refractory_reservoir = 2 * ms
+
     net = init_net(gen)
     net.restore('pre_run', 'pre_run_state.txt')
     Switch = 0
@@ -167,8 +205,8 @@ def run_net(gen, inputs):
 @Timelog
 def parameters_search(**parameter):
     # ------apply the pool and queue-------
-    pool = Pool(core)
-    q = Manager().Queue(core)
+    pool = Pool(processes=core, ray_address='auto', maxtasksperchild = None)
+    q = Queue(core)
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
@@ -202,6 +240,7 @@ def parameters_search(**parameter):
                                                                    np.asarray(_label_validation),
                                                                    np.asarray(_label_test), solver="lbfgs",
                                                                    multi_class="multinomial")
+    # score_train, score_validation, score_test = 0.5, 0.5, 0.5
     # ------close the pool and collect the memory-------
     pool.close()
     pool.join()
