@@ -34,7 +34,7 @@ import os, gc, warnings
 import ray
 from ray.util.queue import Queue
 
-ray.init('auto')
+ray.init(address='219.216.80.3:6379', logging_level=logging.INFO)
 warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
@@ -42,7 +42,7 @@ np.random.seed(100)
 if os.name == 'nt':
     data_path = '../../../Data/KTH/'
 elif os.name == 'posix':
-    os.system('export PYTHONPATH=~/Project/DL-NC')
+    os.system('export PYTHONPATH=/home/zy/Project/DL-NC')
     data_path = '/home/zy/Project/DL-NC/Data/KTH/'
 
 ###################################
@@ -128,19 +128,19 @@ def init_net(gen):
     net.store('init')
     return net
 
-@ray.remote(num_gpus=40, max_calls=40)
+@ray.remote(num_cpus=1)
 def pre_run_net(gen, inputs, queue):
     #--- run network ---
     global Switch, stimulus
     net = init_net(gen)
     Switch = 1
-    state = queue.get(False)
+    state = queue.get()
     net._stored_state['temp'] = state
     net.restore('temp')
     stimulus = TimedArray(inputs[0], dt=Dt)
     duration = inputs[0].shape[0]
     net.run(duration * Dt)
-    queue.put(net._full_state(), False)
+    queue.put(net._full_state())
 
 def sum_strength(gen, queue):
     net = init_net(gen)
@@ -162,7 +162,7 @@ def sum_strength(gen, queue):
     net._stored_state['pre_run'] = state_init
     net.store('pre_run', 'pre_run_state.txt')
 
-@ray.remote(num_gpus=40, max_calls=40)
+@ray.remote(num_cpus=1)
 def run_net(gen, inputs):
     #--- run network ---
     global Switch, stimulus
