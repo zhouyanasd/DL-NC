@@ -12,6 +12,10 @@ class BaseFunctions():
 
     """
 
+    def data_batch(self, data, n_batch):
+        batches = 0
+        return batches
+
     def sub_list(self, l, s):
         return [l[x] for x in s]
 
