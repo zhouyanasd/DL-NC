@@ -1,9 +1,8 @@
 import numpy as np
-import scipy as sp
+import math
 
 from brian2 import NeuronGroup, Synapses
 
-from operator import itemgetter
 
 
 class BaseFunctions():
@@ -13,7 +12,11 @@ class BaseFunctions():
     """
 
     def data_batch(self, data, n_batch):
-        batches = 0
+        batches = []
+        n_data = math.ceil(data.shape[0] / n_batch)
+        for i in range(n_batch):
+            sub_data = data[i * n_data:(i + 1) * n_data]
+            batches.append(sub_data)
         return batches
 
     def sub_list(self, l, s):

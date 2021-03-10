@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-class KTH_classification():
+class KTH_classification(BaseFunctions):
     def __init__(self):
         self.CATEGORIES = {
             "boxing": 0,
