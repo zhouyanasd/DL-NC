@@ -63,7 +63,7 @@ np_state = np.random.get_state()
 ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
-core = 65
+core = 1
 
 method = 'CoE_rf'
 total_eva = 300
