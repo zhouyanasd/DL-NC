@@ -16,6 +16,7 @@ Brian2
 
 Usage
 =======
+Add the project path to the PYTHONPATH or site-packages for linux system.
 
 Citation
 =======
@@ -27,33 +28,49 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
 
-import os, gc, warnings
+import os, gc
 from functools import partial
 
 import ray
 from ray.util.queue import Queue
 from ray.util.multiprocessing import Pool
 
-ray.init(address='219.216.80.3:6379', logging_level=logging.INFO)
-clear_cache('cython')
-warnings.filterwarnings("ignore")
-prefs.codegen.target = "numpy"
-start_scope()
-np.random.seed(100)
+ray.init(address='219.216.80.3:6379', logging_level=logging.WARNING)
 if os.name == 'nt':
     data_path = '../../../Data/KTH/'
 elif os.name == 'posix':
-    os.system('export PYTHONPATH=/home/zy/Project/DL-NC')
     data_path = '/home/zy/Project/DL-NC/Data/KTH/'
+
+exec_env = '''
+from brian2 import *
+import warnings
+try:
+    clear_cache('cython')
+except:
+    pass
+warnings.filterwarnings("ignore")
+prefs.codegen.target = "numpy"
+start_scope()
+'''
+
+exec_var = open("./src/config.py").read()
 
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
+np.random.seed(100)
 np_state = np.random.get_state()
 ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
+core = 65
+
+method = 'CoE_rf'
+total_eva = 300
+load_continue = False
+
 DataName = 'coe_[15,5,4]'
+LHS_path = None
 
 origin_size = (120, 160)
 pool_size = (5, 5)
@@ -115,6 +132,9 @@ data_test_s_batch, label_test_batch = KTH.data_batch(data_test_s, core), KTH.dat
 
 #--- define network run function ---
 def init_net(gen):
+    exec(exec_env)
+    exec(exec_var)
+
     # ---- set numpy random state for each run----
     np.random.set_state(ray.get(ob_np_state))
 
@@ -130,32 +150,18 @@ def init_net(gen):
     return net
 
 def pre_run_net(gen, inputs, queue):
-    #--- run network ---
-    taupre = taupost = 100 * ms
-    wmin = 0
-    wmax = 1
-    Apre = 0.01
-    Apost = -Apre * taupre / taupost * 1.05
-    A_strength = 1
-    A_strength_reservoir = 1
-    A_strength_encoding = 0.001
-    threshold_solid = 0.2
-    threshold_max = 1
-    a_threshold = 0.2
-    A_threshold = 0.01
-    standard_tau = 100 * ms
-    tau_I = 1 * ms
-    voltage_reset = 0.2
-    refractory_reservoir = 2 * ms
+    exec(exec_env)
+    exec(exec_var)
 
+    #--- run network ---
     net = init_net(gen)
     Switch = 1
     state = queue.get()
     net._stored_state['temp'] = state
     net.restore('temp')
-    for input in inputs:
-        stimulus = TimedArray(inputs[0], dt=Dt)
-        duration = inputs[0].shape[0]
+    for data in inputs[0]:
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
         net.run(duration * Dt)
     queue.put(net._full_state())
 
@@ -176,41 +182,28 @@ def sum_strength(gen, queue):
                             out = state_init[com]['strength'][0])
             except:
                 continue
-    net._stored_state['pre_run'] = state_init
-    net.store('pre_run', 'pre_run_state.txt')
+    state_pre_run = ray.put(state_init)
+    return state_pre_run
 
-def run_net(gen, inputs):
+def run_net(gen, state_pre_run, inputs):
+    exec(exec_env)
+    exec(exec_var)
+
     #--- run network ---
-    taupre = taupost = 100 * ms
-    wmin = 0
-    wmax = 1
-    Apre = 0.01
-    Apost = -Apre * taupre / taupost * 1.05
-    A_strength = 1
-    A_strength_reservoir = 1
-    A_strength_encoding = 0.001
-    threshold_solid = 0.2
-    threshold_max = 1
-    a_threshold = 0.2
-    A_threshold = 0.01
-    standard_tau = 100 * ms
-    tau_I = 1 * ms
-    voltage_reset = 0.2
-    refractory_reservoir = 2 * ms
-
     net = init_net(gen)
-    net.restore('pre_run', 'pre_run_state.txt')
+    net._stored_state['pre_run'] = ray.get(state_pre_run)
+    net.restore('pre_run')
     Switch = 0
     states = []
-    label = []
-    for input in inputs:
-        stimulus = TimedArray(input[0], dt=Dt)
-        duration = input[0].shape[0]
+    labels = []
+    for data, label in zip(inputs[0], inputs[1]):
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
         net.run(duration * Dt)
         state = net.get_states()['block_readout']['v']
         states.append(state)
-        label.append(input[1])
-    return states, label
+        labels.append(label)
+    return states, labels
 
 @ProgressBar
 @Timelog
@@ -225,13 +218,13 @@ def parameters_search(**parameter):
     for i in range(core):
         q.put(net._full_state())
     pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s_batch, label_pre_train_batch)])
-    sum_strength(gen, q)
+    state_pre_run = sum_strength(gen, q)
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_train_s_batch, label_train_batch)])
+    states_train_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_train_s_batch, label_train_batch)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_validation_s_batch, label_validation_batch)])
+    states_validation_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_validation_s_batch, label_validation_batch)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_test_s_batch, label_test_batch)])
+    states_test_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_test_s_batch, label_test_batch)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for train in states_train_list:
@@ -266,12 +259,7 @@ def parameters_search(**parameter):
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
-    core = 1
-    parameters_search.total = 600
-
-    method = 'CoE_rf'
-    LHS_path = './LHS_KTH.dat'
-    load_continue = False
+    parameters_search.total = total_eva
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
 
