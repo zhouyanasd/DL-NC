@@ -27,6 +27,7 @@ project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
 
 sys.path.append(project_dir)
 data_path = project_dir+'/Data/KTH/'
+LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
@@ -49,6 +50,12 @@ np.random.seed(100)
 np_state = np.random.get_state()
 
 # -----simulation parameter setting-------
+core = 1
+
+method = 'CoE_rf'
+total_eva = 300
+load_continue = False
+
 DataName = 'coe_[15,5,4]'
 
 origin_size = (120, 160)
@@ -104,6 +111,11 @@ data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is
 data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
 data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
 
+data_train_s_batch, label_train_batch = KTH.data_batch(data_train_s, core), KTH.data_batch(label_train, core)
+data_pre_train_s_batch, label_pre_train_batch = KTH.data_batch(data_pre_train_s, core), KTH.data_batch(label_pre_train, core)
+data_validation_s_batch, label_validation_batch = KTH.data_batch(data_validation_s, core), KTH.data_batch(label_validation, core)
+data_test_s_batch, label_test_batch = KTH.data_batch(data_test_s, core), KTH.data_batch(label_test, core)
+
 #--- define network run function ---
 def init_net(gen):
     # ---- set numpy random state for each run----
@@ -128,9 +140,10 @@ def pre_run_net(gen, inputs, queue):
     state = queue.get(False)
     net._stored_state['temp'] = state
     net.restore('temp')
-    stimulus = TimedArray(inputs[0], dt=Dt)
-    duration = inputs[0].shape[0]
-    net.run(duration * Dt)
+    for data in inputs[0]:
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
+        net.run(duration * Dt)
     queue.put(net._full_state(), False)
 
 def sum_strength(gen, queue):
@@ -159,10 +172,15 @@ def run_net(gen, inputs):
     net = init_net(gen)
     net.restore('pre_run', 'pre_run_state.txt')
     Switch = 0
-    stimulus = TimedArray(inputs[0], dt=Dt)
-    duration = inputs[0].shape[0]
-    net.run(duration * Dt)
-    states = net.get_states()['block_readout']['v']
+    states = []
+    labels = []
+    for data, label in zip(inputs[0], inputs[1]):
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
+        net.run(duration * Dt)
+        state = net.get_states()['block_readout']['v']
+        states.append(state)
+        labels.append(label)
     return (states, inputs[1])
 
 @ProgressBar
@@ -177,25 +195,24 @@ def parameters_search(**parameter):
     net = init_net(gen)
     for i in range(core):
         q.put(net._full_state())
-    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s, label_pre_train)])
+    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s_batch, label_pre_train_batch)])
     sum_strength(gen, q)
     # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_train_s, label_train)])
+    states_train_list = pool.map(partial(run_net, gen), [x for x in zip(data_train_s_batch, label_train_batch)])
     # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_validation_s, label_validation)])
+    states_validation_list = pool.map(partial(run_net, gen), [x for x in zip(data_validation_s_batch, label_validation_batch)])
     # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, gen), [(x) for x in zip(data_test_s, label_test)])
-    # ------Readout---------------
+    states_test_list = pool.map(partial(run_net, gen), [x for x in zip(data_test_s_batch, label_test_batch)])
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for train in states_train_list:
-        states_train.append(train[0])
-        _label_train.append(train[1])
+        states_train.extend(train[0])
+        _label_train.extend(train[1])
     for validation in states_validation_list:
-        states_validation.append(validation[0])
-        _label_validation.append(validation[1])
+        states_validation.extend(validation[0])
+        _label_validation.extend(validation[1])
     for test in states_test_list:
-        states_test.append(test[0])
-        _label_test.append(test[1])
+        states_test.extend(test[0])
+        _label_test.extend(test[1])
     states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
     states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
@@ -219,12 +236,7 @@ def parameters_search(**parameter):
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
-    core = 1
-    parameters_search.total = 300
-
-    method = 'CoE_rf'
-    LHS_path = './LHS_KTH.dat'
-    load_continue = False
+    parameters_search.total = total_eva
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
 
