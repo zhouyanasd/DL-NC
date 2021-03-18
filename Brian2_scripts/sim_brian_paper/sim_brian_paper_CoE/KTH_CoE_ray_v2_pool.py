@@ -22,26 +22,25 @@ Citation
 =======
 
 """
+import os, sys
+exec_dir = os.path.split(os.path.realpath(__file__))[0]
+project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
+
+sys.path.append(project_dir)
+data_path = project_dir+'/Data/KTH/'
+
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
 
-import os, gc
+import gc
 from functools import partial
 
 import ray
 from ray.util.queue import Queue
 from ray.util.multiprocessing import Pool
-
-ray.init(address='219.216.80.3:6379', logging_level=logging.WARNING)
-if os.name == 'nt':
-    data_path = '../../../Data/KTH/'
-elif os.name == 'posix':
-    data_path = '/home/zy/Project/DL-NC/Data/KTH/'
-
-exec_dir = os.path.split(os.path.realpath(__file__))[0]
 
 exec_env = '''
 from brian2 import *
@@ -57,6 +56,7 @@ start_scope()
 
 exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
+ray.init(address='219.216.80.3:6379', logging_level=logging.WARNING)
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
@@ -65,7 +65,7 @@ np_state = np.random.get_state()
 ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
-core = 1
+core = 100
 
 method = 'CoE_rf'
 total_eva = 300
@@ -298,9 +298,9 @@ if __name__ == '__main__':
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=300,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
-                                                      interval=2,
+                                                      init_points=150,
+                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
+                                                      interval=1,
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=False,
                                                       load_continue = load_continue)

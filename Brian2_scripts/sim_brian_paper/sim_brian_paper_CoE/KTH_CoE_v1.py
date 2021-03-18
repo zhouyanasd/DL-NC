@@ -21,13 +21,20 @@ Citation
 =======
 
 """
+import os, sys
+exec_dir = os.path.split(os.path.realpath(__file__))[0]
+project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
+
+sys.path.append(project_dir)
+data_path = project_dir+'/Data/KTH/'
+
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
 
-import os, gc, warnings
+import gc, warnings
 from functools import partial
 from multiprocessing import Manager, Pool
 
@@ -35,11 +42,6 @@ warnings.filterwarnings("ignore")
 prefs.codegen.target = "numpy"
 start_scope()
 np.random.seed(100)
-if os.name == 'nt':
-    data_path = '../../../Data/KTH/'
-elif os.name == 'posix':
-    os.system('export PYTHONPATH=~/Project/DL-NC')
-    data_path = '/home/zy/Project/DL-NC/Data/KTH/'
 
 ###################################
 #------------------------------------------
