@@ -41,6 +41,8 @@ if os.name == 'nt':
 elif os.name == 'posix':
     data_path = '/home/zy/Project/DL-NC/Data/KTH/'
 
+exec_dir = os.path.split(os.path.realpath(__file__))[0]
+
 exec_env = '''
 from brian2 import *
 import warnings
@@ -53,7 +55,7 @@ prefs.codegen.target = "numpy"
 start_scope()
 '''
 
-exec_var = open("./src/config.py").read()
+exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
 ###################################
 #------------------------------------------
