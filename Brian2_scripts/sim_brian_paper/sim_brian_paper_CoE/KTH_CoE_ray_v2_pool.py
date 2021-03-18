@@ -28,6 +28,7 @@ project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
 
 sys.path.append(project_dir)
 data_path = project_dir+'/Data/KTH/'
+LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
@@ -41,6 +42,8 @@ from functools import partial
 import ray
 from ray.util.queue import Queue
 from ray.util.multiprocessing import Pool
+
+ray_cluster_address = '219.216.80.3:6379'
 
 exec_env = '''
 from brian2 import *
@@ -56,7 +59,7 @@ start_scope()
 
 exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
-ray.init(address='219.216.80.3:6379', logging_level=logging.WARNING)
+ray.init(address=ray_cluster_address, logging_level=logging.WARNING)
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
@@ -72,7 +75,6 @@ total_eva = 300
 load_continue = False
 
 DataName = 'coe_[15,5,4]'
-LHS_path = './LHS_KTH.dat'
 
 origin_size = (120, 160)
 pool_size = (5, 5)
@@ -211,7 +213,7 @@ def run_net(gen, state_pre_run, inputs):
 @Timelog
 def parameters_search(**parameter):
     # ------apply the pool and queue-------
-    pool = Pool(processes=core, ray_address='auto', maxtasksperchild = None)
+    pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild = None)
     q = Queue(core)
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
