@@ -220,7 +220,7 @@ def parameters_search(**parameter):
 # -------optimizer settings---------------
 if __name__ == '__main__':
     core = 1
-    parameters_search.total = 600
+    parameters_search.total = 300
 
     method = 'CoE_rf'
     LHS_path = './LHS_KTH.dat'

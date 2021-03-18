@@ -72,7 +72,7 @@ total_eva = 300
 load_continue = False
 
 DataName = 'coe_[15,5,4]'
-LHS_path = None
+LHS_path = './LHS_KTH.dat'
 
 origin_size = (120, 160)
 pool_size = (5, 5)
