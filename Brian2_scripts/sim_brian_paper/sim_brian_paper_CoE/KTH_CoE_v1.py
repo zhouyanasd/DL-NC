@@ -261,9 +261,9 @@ if __name__ == '__main__':
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=300,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
-                                                      interval=2,
+                                                      init_points=150,
+                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
+                                                      interval=1,
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=False,
                                                       load_continue = load_continue)
@@ -274,9 +274,9 @@ if __name__ == '__main__':
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=300,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
-                                                      interval=2,
+                                                      init_points=150,
+                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
+                                                      interval=1,
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=True,
                                                       load_continue = load_continue)

@@ -65,7 +65,7 @@ np_state = np.random.get_state()
 ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
-core = 100
+core = 1
 
 method = 'CoE_rf'
 total_eva = 300
@@ -311,9 +311,9 @@ if __name__ == '__main__':
                                              decoder.get_scales, decoder.get_keys, None,
                                              surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
         best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=300,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=2,
-                                                      interval=2,
+                                                      init_points=150,
+                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
+                                                      interval=1,
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=True,
                                                       load_continue = load_continue)
