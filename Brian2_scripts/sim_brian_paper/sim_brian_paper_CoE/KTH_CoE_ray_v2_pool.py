@@ -27,7 +27,7 @@ exec_dir = os.path.split(os.path.realpath(__file__))[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
 
 sys.path.append(project_dir)
-data_path = project_dir+'/Data/KTH/'
+data_path = '/home/zy/Project/DL-NC'+'/Data/KTH/'
 LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *

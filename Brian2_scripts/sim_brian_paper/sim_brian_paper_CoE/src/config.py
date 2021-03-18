@@ -1,4 +1,4 @@
-from brian2 import *
+from brian2 import defaultclock, ms
 
 # --- dynamic models ---
 Dt = defaultclock.dt = 1 * ms
