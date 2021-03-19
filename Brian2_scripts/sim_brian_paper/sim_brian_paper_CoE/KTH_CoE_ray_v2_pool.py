@@ -59,7 +59,7 @@ start_scope()
 
 exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
-ray.init(address=ray_cluster_address, logging_level=logging.WARNING)
+ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
@@ -124,15 +124,10 @@ except FileNotFoundError:
     KTH.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
     KTH.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
 
-data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
-data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is_group=True)
-data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
-
-data_train_s_batch, label_train_batch = KTH.data_batch(data_train_s, core), KTH.data_batch(label_train, core)
-data_pre_train_s_batch, label_pre_train_batch = KTH.data_batch(data_pre_train_s, core), KTH.data_batch(label_pre_train, core)
-data_validation_s_batch, label_validation_batch = KTH.data_batch(data_validation_s, core), KTH.data_batch(label_validation, core)
-data_test_s_batch, label_test_batch = KTH.data_batch(data_test_s, core), KTH.data_batch(label_test, core)
+data_train_index_batch = KTH.data_batch(df_en_train.index.values, core)
+data_pre_train_index_batch = KTH.data_batch(df_en_pre_train.index.values, core)
+data_validation_index_batch = KTH.data_batch(df_en_validation.index.values, core)
+data_test_index_batch = KTH.data_batch(df_en_test.index.values, core)
 
 #--- define network run function ---
 def init_net(gen):
@@ -153,9 +148,12 @@ def init_net(gen):
     net.store('init')
     return net
 
-def pre_run_net(gen, inputs, queue):
+def pre_run_net(gen, data_index, queue):
     exec(exec_env)
     exec(exec_var)
+    KTH_ = KTH_classification()
+    df_en_pre_train = KTH_.load_data(data_path + 'pre_train_' + DataName + '.p')
+    data_pre_train_s, label_pre_train = KTH_.get_series_data_list(df_en_pre_train, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
@@ -163,7 +161,8 @@ def pre_run_net(gen, inputs, queue):
     state = queue.get()
     net._stored_state['temp'] = state
     net.restore('temp')
-    for data in inputs[0]:
+    for ind in data_index:
+        data = data_pre_train_s[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
@@ -188,25 +187,60 @@ def sum_strength(gen, queue):
                 continue
     return state_init
 
-def run_net(gen, state_pre_run, inputs):
+def run_net(gen, state_pre_run, data_indexs):
     exec(exec_env)
     exec(exec_var)
+    KTH_ = KTH_classification()
+    df_en_train = KTH_.load_data(data_path + 'train_' + DataName+'.p')
+    df_en_validation = KTH_.load_data(data_path + 'validation_' + DataName+'.p')
+    df_en_test = KTH_.load_data(data_path + 'test_' + DataName+'.p')
+    data_train_s, label_train = KTH_.get_series_data_list(df_en_train, is_group=True)
+    data_validation_s, label_validation = KTH_.get_series_data_list(df_en_validation, is_group=True)
+    data_test_s, label_test = KTH_.get_series_data_list(df_en_test, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
     net._stored_state['pre_run'] = state_pre_run
     net.restore('pre_run')
     Switch = 0
-    states = []
-    labels = []
-    for data, label in zip(inputs[0], inputs[1]):
+    states_train = []
+    labels_train = []
+    states_val = []
+    labels_val = []
+    states_test = []
+    labels_test = []
+
+    for ind in data_indexs[0]:
+        data = data_train_s[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
         state = net.get_states()['block_readout']['v']
-        states.append(state)
-        labels.append(label)
-    return states, labels
+        states_train.append(state)
+        labels_train.append(label_train[ind])
+        net.restore('pre_run')
+
+    for ind in data_indexs[1]:
+        data = data_validation_s[ind]
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
+        net.run(duration * Dt)
+        state = net.get_states()['block_readout']['v']
+        states_val.append(state)
+        labels_val.append(label_validation[ind])
+        net.restore('pre_run')
+
+    for ind in data_indexs[2]:
+        data = data_test_s[ind]
+        stimulus = TimedArray(data, dt=Dt)
+        duration = data.shape[0]
+        net.run(duration * Dt)
+        state = net.get_states()['block_readout']['v']
+        states_test.append(state)
+        labels_test.append(label_test[ind])
+        net.restore('pre_run')
+
+    return states_train, labels_train, states_val, labels_val, states_test, labels_test
 
 @ProgressBar
 @Timelog
@@ -220,25 +254,21 @@ def parameters_search(**parameter):
     net = init_net(gen)
     for i in range(core):
         q.put(net._full_state())
-    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in zip(data_pre_train_s_batch, label_pre_train_batch)])
+    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in data_pre_train_index_batch])
     state_pre_run = sum_strength(gen, q)
-    # ------parallel run for train-------
-    states_train_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_train_s_batch, label_train_batch)])
-    # ------parallel run for validation-------
-    states_validation_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_validation_s_batch, label_validation_batch)])
-    # ----parallel run for test--------
-    states_test_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_test_s_batch, label_test_batch)])
+    # ------parallel run for training data-------
+    results_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_train_index_batch,
+                                                                                 data_validation_index_batch,
+                                                                                 data_test_index_batch)])
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
-    for train in states_train_list:
-        states_train.extend(train[0])
-        _label_train.extend(train[1])
-    for validation in states_validation_list:
-        states_validation.extend(validation[0])
-        _label_validation.extend(validation[1])
-    for test in states_test_list:
-        states_test.extend(test[0])
-        _label_test.extend(test[1])
+    for result in results_list:
+        states_train.extend(result[0])
+        _label_train.extend(result[1])
+        states_validation.extend(result[2])
+        _label_validation.extend(result[3])
+        states_test.extend(result[4])
+        _label_test.extend(result[5])
     states_train = (MinMaxScaler().fit_transform(np.asarray(states_train))).T
     states_validation = (MinMaxScaler().fit_transform(np.asarray(states_validation))).T
     states_test = (MinMaxScaler().fit_transform(np.asarray(states_test))).T
