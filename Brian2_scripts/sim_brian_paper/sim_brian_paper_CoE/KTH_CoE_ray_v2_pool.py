@@ -186,8 +186,7 @@ def sum_strength(gen, queue):
                             out = state_init[com]['strength'][0])
             except:
                 continue
-    state_pre_run = ray.put(state_init)
-    return state_pre_run
+    return state_init
 
 def run_net(gen, state_pre_run, inputs):
     exec(exec_env)
@@ -195,7 +194,7 @@ def run_net(gen, state_pre_run, inputs):
 
     #--- run network ---
     net = init_net(gen)
-    net._stored_state['pre_run'] = ray.get(state_pre_run)
+    net._stored_state['pre_run'] = state_pre_run
     net.restore('pre_run')
     Switch = 0
     states = []
