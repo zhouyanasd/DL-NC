@@ -85,8 +85,8 @@ class BaseFunctions():
             result.append(int(remainder))
             if num == 0:
                 break
-        if len(result) < l:
-            result.extend([0] * (l - len(result)))
+        if len(result) < int(l):
+            result.extend([0] * (int(l) - len(result)))
         return result[::-1]
 
     def bin2gary(self, binary):
