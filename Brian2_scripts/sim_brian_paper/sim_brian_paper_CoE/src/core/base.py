@@ -65,37 +65,6 @@ class BaseFunctions():
     def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
         pass
 
-    def bin2dec(self, binary):
-        result = 0
-        for i in range(len(binary)):
-            result += int(binary[-(i + 1)]) * pow(2, i)
-        return result
-
-    def gray2bin(self, gray):
-        result = []
-        result.append(gray[0])
-        for i, g in enumerate(gray[1:]):
-            result.append(g ^ result[i])
-        return result
-
-    def dec2bin(self,num, l):
-        result = []
-        while True:
-            num, remainder = divmod(num, 2)
-            result.append(int(remainder))
-            if num == 0:
-                break
-        if len(result) < int(l):
-            result.extend([0] * (int(l) - len(result)))
-        return result[::-1]
-
-    def bin2gary(self, binary):
-        result = []
-        result.append(binary[0])
-        for i, b in enumerate(binary[1:]):
-            result.append(b ^ binary[i])
-        return result
-
     def np_extend(self, a, b, axis=0):
         if a is None:
             shape = list(b.shape)

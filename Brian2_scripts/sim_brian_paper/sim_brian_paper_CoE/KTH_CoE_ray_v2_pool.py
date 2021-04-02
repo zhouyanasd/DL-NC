@@ -43,7 +43,7 @@ import ray
 from ray.util.queue import Queue
 from ray.util.multiprocessing import Pool
 
-ray_cluster_address = '219.216.80.3:6379'
+ray_cluster_address = 'auto'
 
 exec_env = '''
 from brian2 import *
@@ -68,7 +68,7 @@ np_state = np.random.get_state()
 ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
-core = 1
+core = 60
 
 method = 'CoE_rf'
 total_eva = 300

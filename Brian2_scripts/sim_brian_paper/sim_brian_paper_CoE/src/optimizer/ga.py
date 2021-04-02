@@ -440,14 +440,14 @@ def is2(FieldD):
     else:
         return False
 
-def rv2bs(self, gen, FieldD):
+def rv2bs(gen, FieldD):
     result = []
     for individual in gen:
         gen_i = []
         for g, u, c, l in zip(individual, FieldD[1,:], FieldD[3, :], FieldD[0, :]):
-            g_b = self.dec2bin(g-u, l)
+            g_b = dec2bin(g-u, l)
             if c == 1:
-                g_g =self.bin2gary(g_b)
+                g_g = bin2gary(g_b)
                 gen_i.extend(g_g)
             elif c == 0:
                 gen_i.extend(g_b)

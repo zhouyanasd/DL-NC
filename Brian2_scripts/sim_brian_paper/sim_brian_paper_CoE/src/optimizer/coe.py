@@ -8,11 +8,11 @@
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import create_surrogate
+import Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.ga as ga
 
 import time, pickle
 
 import numpy as np
-import geatpy as ga
 
 
 class CoE_surrogate(BaseFunctions):
@@ -22,11 +22,7 @@ class CoE_surrogate(BaseFunctions):
         self.f = f # for BO with dict input
         self.f_p = f_p
         self.SubCom = SubCom
-        if ga.__version__ == '1.1.5':
-            self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
-        elif ga.__version__ == '2.1.0':
-            self.FieldDR = ga.crtfld('RI', np.array([0]*len(precisions)),
-                                 ranges=ranges, borders=borders, precisions=list(precisions))
+        self.FieldDR = ga.crtfld(ranges, borders, list(precisions))
         self.keys = keys
         self.surrogate = create_surrogate(surrogate_type = surrogate_type , f = f, random_state= random_state,
                                           keys=keys, ranges=ranges, borders=borders, precisions=precisions,
@@ -55,9 +51,9 @@ class CoE_surrogate(BaseFunctions):
             B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state =  pickle.load(f)
         return B, F_B, ObjV, LegV, repnum, pop_trace, var_trace, P, gen, times, numpy_state
 
-    def coe_surrogate_real_templet(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
-                                   problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
-                                   selectStyle='sus', recombinStyle='xovdp', distribute=True, LHS_path = None, drawing=0):
+    def coe_surrogate(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, init_points = 50,
+                            problem='R', maxormin=1, SUBPOP=1, GGAP=0.5, online = True, eva = 1, interval=1,
+                            selectStyle='sus', recombinStyle='xovdp', distribute=True, LHS_path = None, drawing=0):
 
         """==========================初始化配置==========================="""
         # GGAP = 0.5  # 因为父子合并后选择，因此要将代沟设为0.5以维持种群规模
@@ -236,7 +232,7 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             borders_ib = self.borders[:,SubCom_i][:,index_ib]
             precisions_ib = self.precisions[SubCom_i][index_ib]
             FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
-            if not self.is2(FieldD):
+            if not ga.is2(FieldD):
                 raise Exception('worng range of binary coding')
             Lind = np.sum(FieldD[0, :])  # 种群染色体长度
             P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
@@ -257,9 +253,9 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             borders_ib = self.borders[:,SubCom_i][:,index_ib]
             precisions_ib = self.precisions[SubCom_i][index_ib]
             FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
-            if not self.is2(FieldD):
+            if not ga.is2(FieldD):
                 raise Exception('worng range of binary coding')
-            P_ib = self.rv2bs(P_i[:, index_ib],FieldD)
+            P_ib = ga.rv2bs(P_i[:, index_ib],FieldD)
             SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
             SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
             variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
@@ -280,28 +276,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
                 SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
         return self._space.add_precision(SelCh,self._space._precisions[SubCom_i])
-
-    def is2(self, FieldD):
-        r = FieldD[2, :] - FieldD[1, :]
-        result = [self.dec2bin(x, l) for x, l in zip(r, FieldD[0, :])]
-        if (np.array(result) == 1).all():
-            return True
-        else:
-            return False
-
-    def rv2bs(self, gen, FieldD):
-        result = []
-        for individual in gen:
-            gen_i = []
-            for g, u, c, l in zip(individual, FieldD[1,:], FieldD[3, :], FieldD[0, :]):
-                g_b = self.dec2bin(g-u, l)
-                if c == 1:
-                    g_g =self.bin2gary(g_b)
-                    gen_i.extend(g_g)
-                elif c == 0:
-                    gen_i.extend(g_b)
-            result.append(gen_i)
-        return np.array(result)
 
     def initilize_B(self):
         B = []
