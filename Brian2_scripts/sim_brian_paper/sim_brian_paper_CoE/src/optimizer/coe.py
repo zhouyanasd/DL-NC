@@ -8,7 +8,7 @@
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import create_surrogate
-import Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.ga as ga
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer import ga as ga
 
 import time, pickle
 
@@ -645,7 +645,7 @@ if __name__ == "__main__":
         return f if len(f) > 1 else f[0]  # 1-element-list into scalar
 
     dim = 8
-    keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2']
+    keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2']
     ranges = np.vstack([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 9], [0, 10], [0, 9]]).T
     borders = np.vstack([[0, 0]] * dim).T
     precisions = np.array([4, 4, 4, 4, 4, 0, 4, 0])

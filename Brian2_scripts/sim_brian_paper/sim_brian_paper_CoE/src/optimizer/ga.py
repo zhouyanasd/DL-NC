@@ -219,12 +219,21 @@ def mutint(OldChrom, FieldDR, Pm=None, params3=None, params4=None):
     return NewChrom
 
 
+def mutbin(OldChrom, Pm=None, params3=None, params4=None):
+    Nind, Nvar = OldChrom.shape
+    FieldDR = np.array([[0] * Nvar, [1] * Nvar])
+
+    NewChrom = mutint(OldChrom, FieldDR, Pm)
+
+    return NewChrom.astype(np.int64)
+
+
 def ranking(ObjV, LegV, RFun=None, SUBPOP=1):
     if ObjV.shape != LegV.shape:
         raise ValueError('The ObjV and LegV should be match.')
 
     for i, o in enumerate(ObjV):
-        if o == None or np.nan:
+        if o == None or o == np.nan:
             LegV[i] = 0
 
     Nind, ans = ObjV.shape
@@ -484,3 +493,6 @@ def bin2gary(binary):
     for i, b in enumerate(binary[1:]):
         result.append(b ^ binary[i])
     return result
+
+def trcplot():
+    pass
