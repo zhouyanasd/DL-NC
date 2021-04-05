@@ -148,7 +148,7 @@ def init_net(gen):
     net.store('init')
     return net
 
-def pre_run_net(gen, data_index, queue):
+def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
     KTH_ = KTH_classification()
@@ -158,29 +158,23 @@ def pre_run_net(gen, data_index, queue):
     #--- run network ---
     net = init_net(gen)
     Switch = 1
-    state = queue.get()
-    net._stored_state['temp'] = state
-    net.restore('temp')
     for ind in data_index:
         data = data_pre_train_s[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
-    queue.put(net._full_state())
+    return net._full_state()
 
-def sum_strength(gen, queue):
+def sum_strength(gen, net_state_list):
     net = init_net(gen)
     state_init = net._full_state()
-    l = queue.qsize()
-    states = []
-    while not queue.empty():
-        states.append(queue.get())
+    l = len(net_state_list)
     for com in list(state_init.keys()):
         if 'block_block_' in com or 'pathway_' in com and '_pre' not in com and '_post' not in com:
             try:
                 np.subtract(state_init[com]['strength'][0], state_init[com]['strength'][0],
                        out=state_init[com]['strength'][0])
-                for state in states:
+                for state in net_state_list:
                     np.add(state_init[com]['strength'][0], state[com]['strength'][0]/l,
                             out = state_init[com]['strength'][0])
             except:
@@ -247,15 +241,11 @@ def run_net(gen, state_pre_run, data_indexs):
 def parameters_search(**parameter):
     # ------apply the pool and queue-------
     pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild = None)
-    q = Queue(core)
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    net = init_net(gen)
-    for i in range(core):
-        q.put(net._full_state())
-    pool.starmap(partial(pre_run_net, gen), [(x, q) for x in data_pre_train_index_batch])
-    state_pre_run = sum_strength(gen, q)
+    net_state_list = pool.map(partial(pre_run_net, gen), [x for x in data_pre_train_index_batch])
+    state_pre_run = sum_strength(gen, net_state_list)
     # ------parallel run for training data-------
     results_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_train_index_batch,
                                                                                  data_validation_index_batch,
@@ -280,7 +270,6 @@ def parameters_search(**parameter):
     # ------close the pool and collect the memory-------
     pool.close()
     pool.join()
-    del net, q, pool
     gc.collect()
     # ----------show results-----------
     print('parameter %s' % parameter)

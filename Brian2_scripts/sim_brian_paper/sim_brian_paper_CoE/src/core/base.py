@@ -1,7 +1,6 @@
 import numpy as np
 import math
-
-from brian2 import NeuronGroup, Synapses
+import brian2
 
 
 
@@ -27,43 +26,6 @@ class BaseFunctions():
 
     def change_dict_key(self, _dict, key1, key2):
         _dict[key2] = _dict.pop(key1)
-
-    def initialize_parameters(self, object, parameter_name, parameter_value):
-        '''
-         Set the initial parameters of the objects in the block.
-
-         Parameters
-         ----------
-         object: Brian2.NeuronGroup or Brian2.Synapse, one of the two kinds of objects.
-         parameter_name: str, the name of the parameter.
-         parameter_value: np.array, the value of the parameter.
-         '''
-        if '_need_random' in parameter_name:
-            parameter_name_ = parameter_name.replace('_need_random','')
-            parameter_value_ = np.random.rand(
-                    object.pre.variables[parameter_name_].get_value().shape[0]) * parameter_value
-        else:
-            parameter_name_ = parameter_name
-            parameter_value_ = parameter_value
-        if isinstance(object, NeuronGroup):
-            object.variables[parameter_name_].set_value(parameter_value_)
-        elif isinstance(object, Synapses):
-            object.pre.variables[parameter_name_].set_value(parameter_value_)
-
-    def get_parameters_synapse(self, connection_matrix, parameter):
-        parameter_list = []
-        for index_i, index_j in zip(connection_matrix[0], connection_matrix[1]):
-            parameter_list.append(parameter[index_i][index_j])
-        return parameter_list
-
-    def connection_matrix_to_adjacent_matrix(self, n, connection_matrix):
-        adjacent_matrix = np.zeros(shape=(n, n), dtype='int')
-        for a,b in zip(connection_matrix[0],connection_matrix[1]):
-            adjacent_matrix[a][b] = 1
-        return adjacent_matrix
-
-    def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
-        pass
 
     def np_extend(self, a, b, axis=0):
         if a is None:

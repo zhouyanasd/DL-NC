@@ -13,7 +13,54 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import Topologi
 
 from brian2 import *
 
-class Block(BaseFunctions):
+
+class NetworkBase(BaseFunctions):
+    """
+    Some basic functions for the network
+
+    """
+    def __init__(self):
+        super().__init__()
+
+    def initialize_parameters(self, object, parameter_name, parameter_value):
+        '''
+         Set the initial parameters of the objects in the block.
+
+         Parameters
+         ----------
+         object: Brian2.NeuronGroup or Brian2.Synapse, one of the two kinds of objects.
+         parameter_name: str, the name of the parameter.
+         parameter_value: np.array, the value of the parameter.
+         '''
+        if '_need_random' in parameter_name:
+            parameter_name_ = parameter_name.replace('_need_random','')
+            parameter_value_ = np.random.rand(
+                    object.pre.variables[parameter_name_].get_value().shape[0]) * parameter_value
+        else:
+            parameter_name_ = parameter_name
+            parameter_value_ = parameter_value
+        if isinstance(object, NeuronGroup):
+            object.variables[parameter_name_].set_value(parameter_value_)
+        elif isinstance(object, Synapses):
+            object.pre.variables[parameter_name_].set_value(parameter_value_)
+
+    def get_parameters_synapse(self, connection_matrix, parameter):
+        parameter_list = []
+        for index_i, index_j in zip(connection_matrix[0], connection_matrix[1]):
+            parameter_list.append(parameter[index_i][index_j])
+        return parameter_list
+
+    def connection_matrix_to_adjacent_matrix(self, n, connection_matrix):
+        adjacent_matrix = np.zeros(shape=(n, n), dtype='int')
+        for a,b in zip(connection_matrix[0],connection_matrix[1]):
+            adjacent_matrix[a][b] = 1
+        return adjacent_matrix
+
+    def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
+        pass
+
+
+class Block(NetworkBase):
     """
     This class offers a basic property and functions of block in LSM.
 
@@ -205,7 +252,7 @@ class BlockGroup(BaseFunctions):
         for block in self.blocks:
             block.join_network(net)
 
-class Pathway(BaseFunctions):
+class Pathway(NetworkBase):
     '''
      Pathway contains the synapses between blocks, which
      offer the basic synaptic-like function of connection.
@@ -335,7 +382,7 @@ class Pathway(BaseFunctions):
             net.add(synapse)
 
 
-class Reservoir(BaseFunctions):
+class Reservoir(NetworkBase):
     """
     This class offers a basic property and functions of reservoir containing blocks.
 
@@ -429,7 +476,7 @@ class Reservoir(BaseFunctions):
         self.pathway.join_network(net)
 
 
-class LSM_Network(BaseFunctions):
+class LSM_Network(NetworkBase):
     """
     This class offers a basic property and functions of network
     containing reservoir, encoding and readout.

@@ -11,6 +11,8 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import structure_blocks, \
     voltage_reset, threshold_solid
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.ga import dec2bin, bin2dec
+
 import numpy as np
 
 class Decoder(BaseFunctions):
@@ -199,8 +201,8 @@ class Decoder(BaseFunctions):
         parameter = {}
         for p,k,c,r in zip(self.sub_list(self.Gen, SubCom), key, codes, ranges):
             if c != None:
-                l = len(self.dec2bin((r[1]-r[0]), 0))
-                p = self.dec2bin(p, l)
+                l = len(dec2bin((r[1]-r[0]), 0))
+                p = dec2bin(p, l)
             parameter[k] = p
         return parameter
 
@@ -287,7 +289,7 @@ class Decoder(BaseFunctions):
             temp = type_b[i:i + 2]
             i += 2
             if len(temp) == 2:
-                type_d.append(self.bin2dec(temp))
+                type_d.append(bin2dec(temp))
             else:
                 return type_d
 
@@ -309,7 +311,7 @@ class Decoder(BaseFunctions):
                     temp = type_b[i:i + 2]
                     i += 2
                     if len(temp) == 2:
-                        type_d_i.append(self.bin2dec(temp))
+                        type_d_i.append(bin2dec(temp))
                     else:
                         type_d.append(type_d_i)
                         break
