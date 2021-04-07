@@ -32,6 +32,7 @@ LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.ray_config import *
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
@@ -40,8 +41,8 @@ import gc
 from functools import partial
 
 import ray
-from ray.util.queue import Queue
 from ray.util.multiprocessing import Pool
+from ray.exceptions import RayActorError, WorkerCrashedError, RayError
 
 ray_cluster_address = 'auto'
 
@@ -59,7 +60,13 @@ start_scope()
 
 exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
+# -------prepare the ray cluster------------
+cluster = Cluster(ray_cluster_one)
+cluster.start()
+if ray.is_initialized():
+    ray.shutdown()
 ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
+
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
@@ -236,20 +243,40 @@ def run_net(gen, state_pre_run, data_indexs):
 
     return states_train, labels_train, states_val, labels_val, states_test, labels_test
 
+def parallel_run(fun, data):
+    while True:
+        try:
+            # ------apply the pool-------
+            pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild=None)
+            result = pool.map(fun, [x for x in data])
+            # ------close the pool-------
+            pool.close()
+            pool.join()
+            return result
+        except (RayActorError, WorkerCrashedError) as r:
+            print(r)
+            alive = cluster.check_alive()
+            cluster.reconnect(alive)
+        except RayError as e:
+            print(e)
+            cluster.restart()
+        except Exception as e:
+            print(e)
+        finally:
+            print('unknown error, restart task')
+
 @ProgressBar
 @Timelog
 def parameters_search(**parameter):
-    # ------apply the pool and queue-------
-    pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild = None)
     # ------convert the parameter to gen-------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    net_state_list = pool.map(partial(pre_run_net, gen), [x for x in data_pre_train_index_batch])
+    net_state_list = parallel_run(partial(pre_run_net, gen), data_pre_train_index_batch)
     state_pre_run = sum_strength(gen, net_state_list)
     # ------parallel run for training data-------
-    results_list = pool.map(partial(run_net, gen, state_pre_run), [x for x in zip(data_train_index_batch,
-                                                                                 data_validation_index_batch,
-                                                                                 data_test_index_batch)])
+    results_list = parallel_run(partial(run_net, gen, state_pre_run), zip(data_train_index_batch,
+                                                                          data_validation_index_batch,
+                                                                          data_test_index_batch))
     # ------Readout---------------
     states_train, states_validation, states_test, _label_train, _label_validation, _label_test = [], [], [], [], [], []
     for result in results_list:
@@ -267,9 +294,7 @@ def parameters_search(**parameter):
                                                                    np.asarray(_label_validation),
                                                                    np.asarray(_label_test), solver="lbfgs",
                                                                    multi_class="multinomial")
-    # ------close the pool and collect the memory-------
-    pool.close()
-    pool.join()
+    # ------collect the memory-------
     gc.collect()
     # ----------show results-----------
     print('parameter %s' % parameter)
