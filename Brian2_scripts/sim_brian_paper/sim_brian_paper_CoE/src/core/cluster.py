@@ -108,9 +108,7 @@ class Cluster():
                 node.send(msg)
             print('start node: ' + address + ':' + str(port))
             node.close()
-        alive = self.check_alive()
-        if len(alive) > 0:
-            self.reconnect(alive)
+        self.reconnect(self.check_alive())
 
     def stop(self):
         for address, port, name, password in zip(self.nodes['manage_address_list'], self.nodes['manage_port_list'],
@@ -147,7 +145,7 @@ class Cluster():
         if not ray.is_initialized():
             ray.init('auto')
         for node in ray.nodes():
-            if node['NodeManagerAddress'] in cluster_address:
+            if node['Alive'] is True and node['NodeManagerAddress'] in cluster_address:
                 mask[cluster_address.index(node['NodeManagerAddress'])] = False
         dead_node = list(np.array(cluster_address)[mask])
         ray.shutdown()
@@ -159,6 +157,8 @@ class Cluster():
         self.start()
 
     def reconnect(self, cluster_address):
+        if len(cluster_address) <= 0:
+            return
         for node_address in cluster_address:
             if node_address == self.head['address']:
                 self.restart()

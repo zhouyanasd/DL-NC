@@ -65,6 +65,7 @@ cluster = Cluster(ray_cluster_one)
 if ray.is_initialized():
     ray.shutdown()
 try:
+    cluster.reconnect(cluster.check_alive())
     ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 except ConnectionError:
     cluster.start()
@@ -255,15 +256,14 @@ def parallel_run(fun, data):
             pool.close()
             pool.join()
             return result
-        except (RayActorError, WorkerCrashedError) as r:
-            print(r)
-            alive = cluster.check_alive()
-            cluster.reconnect(alive)
+        except (RayActorError, WorkerCrashedError) as e:
+            print(repr(e))
+            cluster.reconnect(cluster.check_alive())
         except RayError as e:
-            print(e)
+            print(repr(e))
             cluster.restart()
         except Exception as e:
-            print(e)
+            print(repr(e))
         finally:
             print('unknown error, restart task')
 
