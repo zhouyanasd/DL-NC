@@ -10,6 +10,7 @@
 from .util import *
 from .base import *
 from .algorithm import *
+from .cluster import *
 
 __all__ = [
     "Timelog",
@@ -19,4 +20,5 @@ __all__ = [
     "Evaluation",
     "Topological_sorting_tarjan",
     "Direct_scale_free",
+    "Cluster"
 ]

@@ -6,6 +6,7 @@ from .optimizer import *
 __all__ = [
     "Timelog",
     "ProgressBar",
+    "Cluster",
     "KTH_classification",
     "BaseFunctions",
     "Evaluation",
