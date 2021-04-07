@@ -62,10 +62,12 @@ exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
 # -------prepare the ray cluster------------
 cluster = Cluster(ray_cluster_one)
-cluster.start()
 if ray.is_initialized():
     ray.shutdown()
-ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
+try:
+    ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
+except ConnectionError:
+    cluster.start()
 
 ###################################
 #------------------------------------------
@@ -362,3 +364,5 @@ if __name__ == '__main__':
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=True,
                                                       load_continue = load_continue)
+
+    cluster.stop()

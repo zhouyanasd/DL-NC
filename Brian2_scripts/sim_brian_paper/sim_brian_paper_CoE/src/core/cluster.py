@@ -168,3 +168,15 @@ class Cluster():
                 self._execute(self.nodes['manage_address_list'][index], self.nodes['manage_port_list'][index],
                               self.nodes['name_list'][index], self.nodes['password_list'][index],
                               self.nodes['start_commends'])
+
+    def init(self, **kwargs):
+        try:
+            kwargs['address']
+        except KeyError:
+            kwargs['address'] = 'auto'
+        if ray.is_initialized():
+            ray.shutdown()
+        try:
+            ray.init(**kwargs)
+        except ConnectionError:
+            self.start()
