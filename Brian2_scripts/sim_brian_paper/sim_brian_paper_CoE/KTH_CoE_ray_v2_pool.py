@@ -66,16 +66,15 @@ if ray.is_initialized():
     ray.shutdown()
 try:
     cluster.reconnect(cluster.check_alive())
-    ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 except ConnectionError:
     cluster.start()
+ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
 np.random.seed(100)
 np_state = np.random.get_state()
-ob_np_state = ray.put(np_state)
 
 # -----simulation parameter setting-------
 core = 60
@@ -145,7 +144,7 @@ def init_net(gen):
     exec(exec_var)
 
     # ---- set numpy random state for each run----
-    np.random.set_state(ray.get(ob_np_state))
+    np.random.set_state(np_state)
 
     # ---- register the gen to the decoder ----
     generator.decoder.register(gen)
@@ -257,15 +256,16 @@ def parallel_run(fun, data):
             pool.join()
             return result
         except (RayActorError, WorkerCrashedError) as e:
-            print(repr(e))
+            print('restart task: ', e)
             cluster.reconnect(cluster.check_alive())
         except RayError as e:
-            print(repr(e))
+            print('restart task: ', e)
+            ray.shutdown()
             cluster.restart()
         except Exception as e:
-            print(repr(e))
-        finally:
-            print('unknown error, restart task')
+            print('restart task: ', e)
+            ray.shutdown()
+            cluster.restart()
 
 @ProgressBar
 @Timelog

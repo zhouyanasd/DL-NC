@@ -136,7 +136,6 @@ class Cluster():
                 time.sleep(1)
                 try_time -= 1
                 continue
-        print('can not connect dashboard')
 
     def check_alive(self):
         cluster_address = self.nodes['address_list'].copy()
