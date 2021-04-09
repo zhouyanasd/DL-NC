@@ -364,5 +364,3 @@ if __name__ == '__main__':
                                                       selectStyle='sus', recombinStyle='xovdp',
                                                       distribute=False, LHS_path = LHS_path, drawing=True,
                                                       load_continue = load_continue)
-
-    cluster.stop()
