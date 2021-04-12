@@ -1,5 +1,6 @@
 import numpy as np
 from decimal import Decimal
+import matplotlib.pyplot as plt
 
 def rep(MatIn,REPN):
     N  = MatIn.shape
@@ -494,5 +495,20 @@ def bin2gary(binary):
         result.append(b ^ binary[i])
     return result
 
-def trcplot():
-    pass
+def trcplot(pop_trace, labels, titles = None, save_path = None):
+    l = len(pop_trace)
+    t = np.arange(l)
+    index = 0
+    for i, l_i in enumerate(labels):
+        plt.figure()
+        plt.xlabel('代数')
+        plt.grid(True)
+        for l_j in l_i:
+            plt.plot(t, pop_trace[:,index:index+1], label=l_j)
+            index += 1
+        plt.legend()
+        if titles is not None:
+            plt.title(titles[i])
+    if save_path is not None:
+        plt.savefig(save_path)
+    plt.show()
