@@ -246,11 +246,12 @@ def run_net(gen, state_pre_run, data_indexs):
     return states_train, labels_train, states_val, labels_val, states_test, labels_test
 
 def parallel_run(fun, data):
+    data_list = [x for x in data]
     while True:
         try:
             # ------apply the pool-------
             pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild=None)
-            result = pool.map(fun, [x for x in data])
+            result = pool.map(fun, data_list)
             # ------close the pool-------
             pool.close()
             pool.join()
