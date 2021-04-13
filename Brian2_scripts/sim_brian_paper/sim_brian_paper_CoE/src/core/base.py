@@ -40,16 +40,3 @@ class BaseFunctions():
         if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
-
-    def vis_block(self, edges):
-        import networkx as nx
-        import matplotlib.pyplot as plt
-        G = nx.DiGraph()
-        G.add_edges_from(edges)
-        values = [node * 0.1 for node in G.nodes()]
-        pos = nx.spring_layout(G)
-        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'),
-                               node_color=values, node_size=500)
-        nx.draw_networkx_labels(G, pos)
-        nx.draw_networkx_edges(G, pos, edgelist=G.edges(), arrows=True)
-        plt.show()
