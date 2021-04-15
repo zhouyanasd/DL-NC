@@ -39,8 +39,6 @@ class OptimizerBase(BaseFunctions):
         self.pop_trace = np.array([]).reshape(-1, 1)
         self.var_trace = np.array([]).reshape(-1, self.NVAR)
 
-        np.random.set_state(random_state)
-
     def set_random_state(self, random_state = None):
         if random_state is None:
             np.random.set_state(self.start_time)
@@ -104,6 +102,8 @@ class CoE(OptimizerBase):
         if load_continue:
             self.reload()
         else:
+            # 初始化各个子种群
+            self.initialize_offspring()
             # 根据时间改变随机数
             self.set_random_state()
 
@@ -178,7 +178,7 @@ class CoE(OptimizerBase):
         return self._space.add_precision(np.array(B).reshape(1,-1), self._space._precisions)
 
     def update_context_vector(self, Chrom_, B, F_B, ObjVSel_, LegVSel_):
-        _B, _F_B= B, F_B
+        _B, _F_B = B, F_B
         for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel_, LegVSel_)):
             if self.maxormin == 1:
                 if ObjVSel_j < F_B and LegVSel_j == 1:
@@ -190,7 +190,7 @@ class CoE(OptimizerBase):
                     _B[0] = Chrom_[j, :]
         return _B, _F_B
 
-    def add_distribute(self,ObjV_i,FitnV):
+    def add_distribute(self, ObjV_i, FitnV):
         idx = np.argsort(ObjV_i[:, 0], 0)
         dis = np.diff(ObjV_i[idx, 0]) / (
                 np.max(ObjV_i[idx, 0]) - np.min(ObjV_i[idx, 0]) + 1)  # 差分计算距离的修正偏移量
@@ -214,7 +214,6 @@ class CoE(OptimizerBase):
                  selectStyle='sus', recombinStyle='xovdp', distribute = False):
         # 用于记录在“遗忘策略下”被忽略的代数
         badCounter = 0
-
         # =========================开始遗传算法进化=======================
         # 开始进化！！
         while self.gen < MAXGEN:
@@ -268,7 +267,6 @@ class CoE(OptimizerBase):
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果
         self.deal_records(self.pop_trace, self.var_trace)
-
 
 
 class CoE_surrogate(CoE):
