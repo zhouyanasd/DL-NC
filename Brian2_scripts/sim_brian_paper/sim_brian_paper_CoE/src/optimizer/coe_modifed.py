@@ -39,6 +39,12 @@ class OptimizerBase(BaseFunctions):
         self.pop_trace = np.array([]).reshape(-1, 1)
         self.var_trace = np.array([]).reshape(-1, self.NVAR)
 
+        self.B = None
+        self.F_B = None
+        self.ObjV = None
+        self.LegV = None
+        self.P = None
+
     def set_random_state(self, random_state = None):
         if random_state is None:
             np.random.set_state(self.start_time)
@@ -137,6 +143,41 @@ class CoE(OptimizerBase):
             self.ObjV.append(ObjV_i)
             # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
             self.LegV.append(LegV_i)
+
+    def remu(self, P_i, SubCom_i,recombinStyle,recopt,SUBPOP,pm,distribute,repnum,index):
+        FieldDR_i = self.FieldDR[:, SubCom_i]
+        SelCh = np.zeros(P_i.shape)
+        if (np.array(self.codes[SubCom_i]) != None).any():
+            index_ib = np.where(np.array(self.codes[SubCom_i]) != None)[0]
+            codes_ib = self.codes[SubCom_i][index_ib]
+            scales_ib = self.scales[SubCom_i][index_ib]
+            ranges_ib = self.ranges[:,SubCom_i][:,index_ib]
+            borders_ib = self.borders[:,SubCom_i][:,index_ib]
+            precisions_ib = self.precisions[SubCom_i][index_ib]
+            FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
+            if not ga.is2(FieldD):
+                raise Exception('worng range of binary coding')
+            P_ib = ga.rv2bs(P_i[:, index_ib],FieldD)
+            SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
+            SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
+            variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
+
+            index_ir = np.where(np.array(self.codes[SubCom_i]) == None)[0]
+            P_ir = P_i[:, index_ir]
+            FieldDR_ir = FieldDR_i[:, index_ir]
+            SelCh_ir = ga.recombin(recombinStyle, P_ir, recopt, SUBPOP)  # 重组
+            SelCh_ir = ga.mutbga(SelCh_ir, FieldDR_ir, pm)  # 变异
+            if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+                SelCh_ir = ga.mutgau(SelCh_ir, FieldDR_ir, pm)  # 高斯变异
+
+            SelCh[:, index_ib] = variable
+            SelCh[:, index_ir] = SelCh_ir
+        else:
+            SelCh = ga.recombin(recombinStyle, P_i, recopt, SUBPOP)  # 重组
+            SelCh = ga.mutbga(SelCh, FieldDR_i, pm)  # 变异
+            if distribute == True and repnum[index] > P_i.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+                SelCh = ga.mutgau(SelCh, FieldDR_i, pm)  # 高斯变异
+        return self._space.add_precision(SelCh,self._space._precisions[SubCom_i])
 
     def reload(self):
         # 重新载入历史的进化数据
