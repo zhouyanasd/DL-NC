@@ -41,8 +41,11 @@ class OptimizerBase(BaseFunctions):
 
         np.random.set_state(random_state)
 
-    def set_random_state_by_time(self):
-        np.random.set_state(self.start_time)
+    def set_random_state(self, random_state = None):
+        if random_state is None:
+            np.random.set_state(self.start_time)
+        else:
+            np.random.set_state(random_state)
 
     def get_times(self):
         return self.end_time - self.start_time
@@ -101,37 +104,39 @@ class CoE(OptimizerBase):
         if load_continue:
             self.reload()
         else:
-            # 初始化重复个体数为0
-            self.repnum = [0] * len(self.SubCom)
-            # 定义初始context vector
-            self.B = self.initilize_B()
-            # 求初代context vector 的 fitness
-            [self.F_B, self.LegV_B] = self.aimfunc(self.B, np.ones((1, 1)))
-            # 初始化各个子种群
-            self.P = []
-            self.ObjV = []
-            self.LegV = []
-            for SubCom_i in self.SubCom:
-                FieldDR_i = self.FieldDR[:, SubCom_i]
-                # 生成初始种群
-                P_i = ga.crtrp(self.NIND, FieldDR_i)
-                # 进行必要的二进制编码
-                P_i = self.b_coding(P_i, SubCom_i)
-                # 替换context vector中个体基因
-                Chrom = self.B.copy().repeat(self.NIND, axis=0)
-                Chrom[:, SubCom_i] = P_i
-                Chrom = self._space.add_precision(Chrom, self._space._precisions)
-                LegV_i = np.ones((self.NIND, 1))
-                # 求子问题的目标函数值
-                [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
-                # 各个种群的初始基因
-                self.P.append(P_i)
-                # 各个种群的初始函数值
-                self.ObjV.append(ObjV_i)
-                # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
-                self.LegV.append(LegV_i)
             # 根据时间改变随机数
-            self.set_random_state_by_time()
+            self.set_random_state()
+
+    def initialize_offspring(self):
+        # 初始化重复个体数为0
+        self.repnum = [0] * len(self.SubCom)
+        # 定义初始context vector
+        self.B = self.initilize_B()
+        # 求初代context vector 的 fitness
+        [self.F_B, self.LegV_B] = self.aimfunc(self.B, np.ones((1, 1)))
+        # 初始化各个子种群
+        self.P = []
+        self.ObjV = []
+        self.LegV = []
+        for SubCom_i in self.SubCom:
+            FieldDR_i = self.FieldDR[:, SubCom_i]
+            # 生成初始种群
+            P_i = ga.crtrp(self.NIND, FieldDR_i)
+            # 进行必要的二进制编码
+            P_i = self.b_coding(P_i, SubCom_i)
+            # 替换context vector中个体基因
+            Chrom = self.B.copy().repeat(self.NIND, axis=0)
+            Chrom[:, SubCom_i] = P_i
+            Chrom = self._space.add_precision(Chrom, self._space._precisions)
+            LegV_i = np.ones((self.NIND, 1))
+            # 求子问题的目标函数值
+            [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
+            # 各个种群的初始基因
+            self.P.append(P_i)
+            # 各个种群的初始函数值
+            self.ObjV.append(ObjV_i)
+            # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
+            self.LegV.append(LegV_i)
 
     def reload(self):
         # 重新载入历史的进化数据
@@ -284,7 +289,7 @@ class CoE_surrogate(CoE):
             # 初始化各个子种群
             self.initialize_offspring()
             # 根据时间改变随机数
-            self.set_random_state_by_time()
+            self.set_random_state()
 
     def initialize_offspring(self, is_eva = False):
         # 初始化重复个体数为0
