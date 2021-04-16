@@ -56,24 +56,22 @@ class TargetSpace(object):
         random_state : int, RandomState, or None
             optionally specify a seed for a random number generator
         """
-        self.FieldDR = self.crtfld(ranges, borders, precisions)
-
-        self.pbounds = dict(zip(keys, [tuple(x) for x in self.FieldDR.T]))
-
-        self.pprecisions = dict(zip(keys, precisions))
-
-        self.random_state = ensure_rng(random_state)
-
         # The function to be optimized
         self.target_func = target_func
 
         # Get the name of the parameters
         self._keys = keys
 
-        # Create an array with parameters bounds
-        self._bounds = self.FieldDR.T
-
         self._precisions = precisions
+
+        self.random_state = ensure_rng(random_state)
+
+        # Create an array with parameters bounds
+        self._bounds = self.get_bounds(ranges, borders, precisions)
+
+        self.pbounds = dict(zip(keys, [tuple(x) for x in self._bounds]))
+
+        self.pprecisions = dict(zip(keys, precisions))
 
         # preallocated memory for X and Y points
         self._params = np.empty(shape=(0, self.dim))
@@ -113,7 +111,8 @@ class TargetSpace(object):
     def bounds(self):
         return self._bounds
 
-    def crtfld(self, ranges, borders, precisions):
+    #TODO: this function is the same as ga.crtfld
+    def get_bounds(self, ranges, borders, precisions):
         shape = ranges.shape
         bounds = np.zeros(shape).T
         for index, (r, b, p) in enumerate(zip(ranges.T, borders.T, precisions.T)):
@@ -123,7 +122,7 @@ class TargetSpace(object):
             if b[1] == 0:
                 bound_[1] = bound_[1] - 1 / (10 ** p)
             bounds[index] = bound_
-        return bounds.T
+        return bounds
 
     def add_precision(self, x, precisions):
         shape = x.shape

@@ -124,7 +124,6 @@ class Result():
             if 'block_block_' in com or 'pathway_' in com and '_pre' not in com and '_post' not in com:
                 try:
                     all_strength.extend(list(net.get_states()[com]['strength']))
-                    # print(com)
                 except:
                     continue
         fig_distribution_w_EE = plt.figure(figsize=(5, 5))

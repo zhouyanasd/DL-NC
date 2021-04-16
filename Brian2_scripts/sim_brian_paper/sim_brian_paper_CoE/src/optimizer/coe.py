@@ -32,7 +32,7 @@ class CoE_surrogate(BaseFunctions):
     def aimfunc(self, Phen, LegV): # for GA with the LegV input and output
         res = []
         for phen in Phen:
-            res.append(self.surrogate.probe(phen, lazy=False)) # probe replace f and use space checking and register
+            res.append(self._space.probe(phen)) # probe replace f and use space checking and register
         return [np.array(res).reshape(-1,1), LegV]
 
     def punfunc(self, LegV, FitnV):
@@ -558,8 +558,6 @@ class CoE_surrogate_mixgentype(CoE_surrogate):
             start_time = time.time()
             end_time = time.time()
             times = end_time - start_time
-            # 根据时间改变随机数
-            np.random.seed(int(start_time))
             # 根据时间改变随机数
             np.random.seed(int(start_time))
         # 用于记录在“遗忘策略下”被忽略的代数
