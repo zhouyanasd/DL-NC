@@ -73,7 +73,8 @@ ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 ###################################
 #------------------------------------------
 # -------get numpy random state------------
-np.random.seed(100)
+seed = 100
+np.random.seed(seed)
 np_state = np.random.get_state()
 
 # -----simulation parameter setting-------
