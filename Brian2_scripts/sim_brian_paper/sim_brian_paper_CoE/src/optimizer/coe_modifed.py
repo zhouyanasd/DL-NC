@@ -401,7 +401,7 @@ class CoE_surrogate(CoE):
                 # 调用罚函数
                 FitnV = self.punfunc(LegV_i, FitnV)
                 # 排除非可行解
-                badCounter, repnum[index] = self.non_feasible_solution(self, ObjV_i, LegV_i, FitnV,
+                badCounter, repnum[index] = self.non_feasible_solution(ObjV_i, LegV_i, FitnV,
                                                                        repnum[index], badCounter)
                 # 若要增强种群的分布性（可能会造成收敛慢）
                 if distribute == True:
