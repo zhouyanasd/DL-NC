@@ -51,7 +51,7 @@ class OptimizerBase(BaseFunctions):
 
     def set_random_state(self, random_state=None):
         if random_state is None:
-            np.random.set_state(self.start_time)
+            np.random.seed(int(self.start_time))
         elif isinstance(random_state, np.random.RandomState):
             np.random.set_state(random_state)
         elif isinstance(random_state, int):
@@ -127,9 +127,9 @@ class OptimizerBase(BaseFunctions):
 
     def update_generation(self):
         # 记录当代目标函数的最优值
-        self.np_append(self.pop_trace, self.F_B)
+        self.pop_trace = self.np_append(self.pop_trace, self.F_B)
         # 记录当代最优的控制变量值
-        self.np_append(self.var_trace, self.B[0])
+        self.var_trace = self.np_append(self.var_trace, self.B[0])
         # 增加代数
         self.gen += 1
         # 更新计时
@@ -139,7 +139,7 @@ class OptimizerBase(BaseFunctions):
     def deal_records(self):
         delIdx = np.where(np.isnan(self.pop_trace))[0]
         self.pop_trace = np.delete(self.pop_trace, delIdx, 0)
-        self.pop_trace = np.delete(self.var_trace, delIdx, 0)
+        self.var_trace = np.delete(self.var_trace, delIdx, 0)
         if self.pop_trace.shape[0] == 0:
             raise RuntimeError('error: no feasible solution. (有效进化代数为0，没找到可行解。)')
         if self.maxormin == 1:
@@ -161,38 +161,29 @@ class OptimizerBase(BaseFunctions):
 
 
 class CoE(OptimizerBase):
-    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin,
-                 load_continue):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin):
         super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
 
-        if load_continue:
-            self.load_states()
-        else:
-            # 初始化各个子种群
-            self.initialize_offspring()
-            # 根据时间改变随机数
-            self.set_random_state()
-
-    def initialize_offspring(self):
+    def initialize_offspring(self, NIND):
         # 初始化 context vector
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
             B_i = ga.crtrp(1, FieldDR_i)
             self.binary_encoding(B_i, SubCom_i)
             self.B.extend(list(B_i[0]))
-        self._space.add_precision(np.array(self.B).reshape(1, -1), self._space._precisions)
+        self.B  = self._space.add_precision(np.array(self.B).reshape(1, -1), self._space._precisions)
         # 初始化各个子种群
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
             # 生成初始种群
-            P_i = ga.crtrp(self.NIND, FieldDR_i)
+            P_i = ga.crtrp(NIND, FieldDR_i)
             # 进行必要的二进制编码
             self.binary_encoding(P_i, SubCom_i)
             # 替换context vector中个体基因
-            Chrom = self.B.copy().repeat(self.NIND, axis=0)
+            Chrom = self.B.copy().repeat(NIND, axis=0)
             Chrom[:, SubCom_i] = P_i
             Chrom = self._space.add_precision(Chrom, self._space._precisions)
-            LegV_i = np.ones((self.NIND, 1))
+            LegV_i = np.ones((NIND, 1))
             # 求子问题的目标函数值
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
             # 各个种群的初始基因
@@ -251,7 +242,15 @@ class CoE(OptimizerBase):
         return badCounter_, repnum_
 
     def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
-                 selectStyle='sus', recombinStyle='xovdp', distribute=False):
+                 selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
+
+        if load_continue:
+            self.load_states()
+        else:
+            # 初始化各个子种群
+            self.initialize_offspring(NIND)
+            # 根据时间改变随机数
+            self.set_random_state()
         # 初始化重复个体数为0
         repnum = [0] * len(self.SubCom)
         # 用于记录在“遗忘策略下”被忽略的代数
@@ -284,7 +283,7 @@ class CoE(OptimizerBase):
                 # 调用罚函数
                 FitnV = self.punfunc(LegV_i, FitnV)
                 # 排除非可行解
-                badCounter, repnum[index] = self.non_feasible_solution(self, ObjV_i, LegV_i, FitnV,
+                badCounter, repnum[index] = self.non_feasible_solution(ObjV_i, LegV_i, FitnV,
                                                                        repnum[index], badCounter)
                 if distribute == True:
                     self.add_distribute(ObjV_i, FitnV)
@@ -297,12 +296,12 @@ class CoE(OptimizerBase):
             self.update_generation()
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果
-        self.deal_records(self.pop_trace, self.var_trace)
+        self.deal_records()
 
 
 class CoE_surrogate(CoE):
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin,
-                 surrogate_type, init_points, LHS_path, load_continue, **surrogate_parameters):
+                 surrogate_type, init_points, LHS_path, **surrogate_parameters):
         super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
 
         self.surrogate = create_surrogate(surrogate_type=surrogate_type, f=f, random_state=random_state,
@@ -311,28 +310,20 @@ class CoE_surrogate(CoE):
         self.surrogate.initial_model(init_points=init_points, LHS_path=LHS_path, is_LHS=True, lazy=False)
         self._space = self.surrogate._space
 
-        if load_continue:
-            self.load_states()
-        else:
-            # 初始化各个子种群
-            self.initialize_offspring()
-            # 根据时间改变随机数
-            self.set_random_state()
-
-    def initialize_offspring(self):
+    def initialize_offspring(self, NIND):
         # 从代理模型初始化的数据中找到最好的点
         self.B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
             # 生成初始种群
-            P_i = ga.crtrp(self.NIND, FieldDR_i)
+            P_i = ga.crtrp(NIND, FieldDR_i)
             # 进行必要的二进制编码
             self.binary_encoding(P_i, SubCom_i)
             # 替换context vector中个体基因
-            Chrom = self.B.copy().repeat(self.NIND, axis=0)
+            Chrom = self.B.copy().repeat(NIND, axis=0)
             Chrom[:, SubCom_i] = P_i
             Chrom = self._space.add_precision(Chrom, self._space._precisions)
-            LegV_i = np.ones((self.NIND, 1))
+            LegV_i = np.ones((NIND, 1))
             # 初代中确直接用代理评估出来
             ObjV_i = self.surrogate.predict(Chrom).reshape(-1, 1)
             # 各个种群的初始基因
@@ -345,7 +336,15 @@ class CoE_surrogate(CoE):
         self.F_B = self._space.target.min()
 
     def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=True, eva=1, interval=1,
-                 selectStyle='sus', recombinStyle='xovdp', distribute=False):
+                 selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
+
+        if load_continue:
+            self.load_states()
+        else:
+            # 初始化各个子种群
+            self.initialize_offspring(NIND)
+            # 根据时间改变随机数
+            self.set_random_state()
         # 设置一个用原函数评估的代数间隔
         estimation = interval - 1
         # 初始化重复个体数为0
@@ -420,4 +419,4 @@ class CoE_surrogate(CoE):
 
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果
-        self.deal_records(self.pop_trace, self.var_trace)
+        self.deal_records()
