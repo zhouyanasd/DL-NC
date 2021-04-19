@@ -1,6 +1,9 @@
-import paramiko, requests, time
-import ray
-import numpy  as np
+try:
+    import paramiko, requests, time
+    import ray
+    import numpy  as np
+except ModuleNotFoundError:
+    print('the ray or paramiko may not installed')
 
 class Linux(object):
     # 通过IP, 用户名，密码，超时时间初始化一个远程Linux主机
