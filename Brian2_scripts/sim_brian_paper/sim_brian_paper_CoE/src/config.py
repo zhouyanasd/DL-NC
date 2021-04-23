@@ -130,7 +130,7 @@ structure_layer = {'components_0':{'structure': [[],[]], 'output_input':[[0,1,2,
 structure_reservoir = {'components': {'structure':[[],[]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
-Reservoir_config = ['block', 'layer_1', 'type', 'strength', 'plasticity']
+Reservoir_config = ['block', 'layer_1', 'type', 'strength', 'plasticity', 'p_connection']
 Block_random = ['N', 'tau', 'type', 'strength', 'plasticity', 'p']
 Block_scale_free = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
 Block_circle = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
@@ -144,49 +144,49 @@ config_keys = [Reservoir_config, Block_random, Block_scale_free,
               Block_circle, Block_hierarchy, Encoding_Readout]
 
 
-config_SubCom = [[0, 1, 2, 3, 4],
-                 [5, 6, 7, 8, 9, 10],
-                 [11, 12, 13, 14, 15, 16, 17, 18],
-                 [19, 20, 21, 22, 23, 24, 25, 26],
-                 [27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
-                 [37, 38, 39, 40]]
+config_SubCom = [[0, 1, 2, 3, 4, 5],
+                 [6, 7, 8, 9, 10, 11],
+                 [12, 13, 14, 15, 16, 17, 18, 19],
+                 [20, 21, 22, 23, 24, 25, 26, 27],
+                 [28, 29, 30, 31, 32, 33, 34, 35, 36, 37],
+                 [38, 39, 40, 41]]
 
-config_codes = [[1, 1, None, None, None],
+config_codes = [[1, 1, None, None, None, None],
                 [None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None, None, None],
                 [None, None, None, None]]
 
-config_ranges = [[[0, 255], [0, 255], [0, 1], [0.1, 1.0], [0.1, 1.0]],
+config_ranges = [[[0, 255], [0, 255], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.6, 1.0]],
                  [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 0.3]],
                  [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
                  [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 0.5], [0.1, 0.5], [0.1, 0.5]],
                  [[5, 50], [5, 50], [5, 50], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.3, 1.0], [0.3, 1.0], [0.5, 0.9]],
                  [[0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 1.0]]]
 
-config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1]],
+config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[1, 1], [0, 1], [0, 1], [0, 1]]]
 
-config_precisions = [[0, 0, 0, 4, 4],
+config_precisions = [[0, 0, 0, 4, 4, 4],
                      [0, 4, 0, 4, 4, 4],
                      [0, 4, 0, 4, 4, 4, 4, 4],
                      [0, 4, 0, 4, 4, 4, 4, 4],
                      [0, 0, 0, 4, 0, 4, 4, 4, 4, 4],
                      [0, 4, 4, 4]]
 
-config_scales = [[0] * 5,
+config_scales = [[0] * 6,
                  [0] * 6,
                  [0] * 8,
                  [0] * 8,
                  [0] * 10,
                  [0] * 4]
 
-gen_group = [[0], [1], [2, 3, 4, 5]]
+gen_group = [[0], [1], [2], [3], [4], [5]]
 
 '''
 All gen is in float.
