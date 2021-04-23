@@ -25,9 +25,11 @@ Citation
 import os, sys
 exec_dir = os.path.split(os.path.realpath(__file__))[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
+project_dir_sever = '/home/zy/Project/DL-NC'
+exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
 
 sys.path.append(project_dir)
-data_path = '/home/zy/Project/DL-NC'+'/Data/KTH/'
+data_path = project_dir_sever+'/Data/KTH/'
 LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
@@ -62,6 +64,7 @@ exec_var = open(os.path.join(exec_dir,"src/config.py")).read()
 
 # -------prepare the ray cluster------------
 cluster = Cluster(ray_cluster_one)
+cluster.sync_file_cluster(exec_dir, exec_dir_sever, '.py')
 if ray.is_initialized():
     ray.shutdown()
 try:
