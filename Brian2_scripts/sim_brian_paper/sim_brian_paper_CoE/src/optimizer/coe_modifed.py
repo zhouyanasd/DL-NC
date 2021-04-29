@@ -103,6 +103,12 @@ class OptimizerBase(BaseFunctions):
             raise Exception('worng range of binary coding')
         return index_ib, FieldD
 
+    def get_sub_FieldDR(self, SubCom):
+        index_ir = np.where(np.array(self.codes[SubCom]) == None)[0]
+        FieldDR_i = self.FieldDR[:, SubCom]
+        FieldDR = FieldDR_i[:, index_ir]
+        return index_ir, FieldDR
+
     def binary_encoding(self, P, SubCom):
         if self.is_need_encoding(SubCom):
             NIND = len(P)
@@ -198,20 +204,18 @@ class CoE(OptimizerBase):
         self.F_B = self._space.target.min()
 
     def remu(self, P, SubCom, recombinStyle, recopt, SUBPOP, pm, distribute, repnum):
-        FieldDR_i = self.FieldDR[:, SubCom]
         SelCh = np.zeros(P.shape)
-        index_ir = np.where(np.array(self.codes[SubCom]) == None)[0]
+        index_ir, FieldDR = self.get_sub_FieldDR(SubCom)
         P_ir = P[:, index_ir]
-        FieldDR_ir = FieldDR_i[:, index_ir]
         SelCh_ir = ga.recombin(recombinStyle, P_ir, recopt, SUBPOP)  # 重组
-        SelCh_ir = ga.mutbga(SelCh_ir, FieldDR_ir, pm)  # 变异
+        SelCh_ir = ga.mutbga(SelCh_ir, FieldDR, pm)  # 变异
         if distribute == True and repnum > P.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
-            SelCh_ir = ga.mutgau(SelCh_ir, FieldDR_ir, pm)  # 高斯变异
+            SelCh_ir = ga.mutgau(SelCh_ir, FieldDR, pm)  # 高斯变异
         SelCh[:, index_ir] = SelCh_ir
         if self.is_need_encoding(SubCom):
             index_ib, FieldD = self.get_sub_FieldD(SubCom)
             P_ib = ga.rv2bs(P[:, index_ib], FieldD)
-            SelCh_ib = ga.recombin(recombinStyle, P_ib, recopt, SUBPOP)  # 重组
+            SelCh_ib = ga.recombin('xovdp', P_ib, recopt, SUBPOP)  # 重组
             SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
             variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
             SelCh[:, index_ib] = variable
@@ -420,3 +424,28 @@ class CoE_surrogate(CoE):
         # ====================处理进化记录==================================
         # 处理进化记录并获取最佳结果
         self.deal_records()
+
+
+if __name__ == "__main__":
+    dim = 8
+    keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2']
+    ranges = np.vstack([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 9], [0, 10], [0, 9]]).T
+    borders = np.vstack([[0, 0]] * dim).T
+    precisions = np.array([4, 4, 4, 4, 4, 0, 4, 0])
+    codes = np.array([None, None, None, None, None, 1, None, 1])
+    scales = np.array([0] * dim)
+    FieldDR = ga.crtfld(ranges, borders, list(precisions))
+    SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
+    radom_state = 1
+
+    coe = CoE(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1)
+    coe.optimize(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
+                 selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue=False)
+    coe.draw()
+
+
+    coe_surrogate = CoE_surrogate(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
+                        surrogate_type = 'rf', init_points = 100, LHS_path = None, n_Q = 100, n_estimators=1000)
+    coe_surrogate.optimize(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=True, eva=1, interval=1,
+            selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue = False)
+    coe_surrogate.draw()
