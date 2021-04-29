@@ -1,9 +1,9 @@
 try:
-    import paramiko, requests, time
+    import paramiko, requests, time, os
     import ray
     import numpy  as np
 except ModuleNotFoundError:
-    print('the ray or paramiko may not installed')
+    pass
 
 class Linux(object):
     # 通过IP, 用户名，密码，超时时间初始化一个远程Linux主机
@@ -93,6 +93,22 @@ class Cluster():
         for msg in comments:
             linux.send(msg)
         linux.close()
+
+    def _sync_file(self, address, port, name, password, file_dir, target_dir, *file_type):
+        linux = Linux(address, port, name, password)
+        for root, dirs, files in os.walk(file_dir):
+            for file in files:
+                if os.path.splitext(file)[1] in file_type:
+                    upload_files = os.path.join(root, file)
+                    upload_path = os.path.join(root.replace(file_dir, target_dir), file)
+                    linux.upload_file(upload_files, upload_path)
+
+    def sync_file_cluster(self, file_dir, target_dir, *file_type):
+        self._sync_file(self.head['manage_address'], self.head['manage_port'], self.head['name'], self.head['password'],
+                        file_dir, target_dir, *file_type)
+        for address, port, name, password in zip(self.nodes['manage_address_list'], self.nodes['manage_port_list'],
+                                                 self.nodes['name_list'], self.nodes['password_list']):
+            self._sync_file(address, port, name, password, file_dir, target_dir, *file_type)
 
     def start(self):
         head = Linux(self.head['manage_address'], self.head['manage_port'], self.head['name'], self.head['password'])

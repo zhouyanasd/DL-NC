@@ -327,13 +327,15 @@ class Generator(Generator_connection_matrix):
         reservoir = Reservoir()
         block_type = self.decoder.get_reservoir_block_type()
         structure_type = self.decoder.get_reservoir_structure_type()
+        p_connection = self.decoder.get_parameters_pathway('Reservoir_config', 'structure')['p_connection']
         blocks_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
         blocks_type = list(np.array(block_type)[blocks_type])
         block_group = self.generate_blocks(blocks_type)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
                                         dynamics_reservoir_synapse_post_STDP)
-        pathway.connect()
+        pathway._set_connect_type('probability')
+        pathway.connect(p_connection = p_connection)
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.register_input_output(o, i)
@@ -390,7 +392,7 @@ class Generator(Generator_connection_matrix):
          '''
 
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
-        p_connection = self.decoder.get_parameters_encoding_readout('structure')['p_connection']
+        p_connection = self.decoder.get_parameters_pathway('Encoding_Readout', 'structure')['p_connection']
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
                                         dynamics_encoding_synapse_post_STDP)

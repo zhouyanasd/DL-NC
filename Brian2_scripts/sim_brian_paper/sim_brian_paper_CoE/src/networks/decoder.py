@@ -319,25 +319,15 @@ class Decoder(BaseFunctions):
             except KeyError:
                 return type_d
 
-    def get_parameters_reservoir(self):
+    def get_parameters_pathway(self, component, need):
         '''
-         Decode the parameters of the reservoir.
+         Decode parameters of the reservoir and encoding_readout.
+         The component should be 'Reservoir_config' or 'Encoding_Readout' based on config.
 
          Parameters
          ----------
          '''
-
-        parameters = self.get_sub_dict(self.decode('Reservoir_config'), 'plasticity', 'strength', 'type')
-        return parameters
-
-    def get_parameters_encoding_readout(self, need):
-        '''
-         Decode parameters of the encoding_readout.
-
-         Parameters
-         ----------
-         '''
-        parameters = self.decode('Encoding_Readout')
+        parameters = self.decode(component)
         if need == 'structure':
             sub_parameters = self.get_sub_dict(parameters, 'p_connection')
             return sub_parameters
@@ -380,11 +370,11 @@ class Decoder(BaseFunctions):
 
         parameters['reservoir'] = {'parameter_block_neurons':parameters_block_neurons,
                                    'parameter_block_synapses':parameters_block_synapses,
-                                   'parameter_pathway': self.get_parameters_reservoir()}
+                                   'parameter_pathway': self.get_parameters_pathway('Reservoir_config', 'parameter')}
         self.change_dict_key(parameters['reservoir']['parameter_pathway'], 'strength', 'strength_need_random')
         parameters['encoding'] = None
         parameters['readout'] = None
-        parameters['encoding_reservoir'] = self.get_parameters_encoding_readout('parameter')
+        parameters['encoding_reservoir'] = self.get_parameters_pathway('Encoding_Readout', 'parameter')
         self.change_dict_key(parameters['encoding_reservoir'], 'strength', 'strength_need_random')
         parameters['reservoir_readout'] = None
         return parameters
