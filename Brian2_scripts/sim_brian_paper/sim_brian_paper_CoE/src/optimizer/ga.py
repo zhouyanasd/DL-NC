@@ -119,6 +119,73 @@ def crtbp(Nind, LorB):
     return np.floor(Chrom).astype(np.int64)
 
 
+def reclin(OldChrom, XOVR=None):
+    NewChrom = np.zeros(OldChrom.shape)
+    Nind, Nvar = OldChrom.shape
+    Xops = int(np.floor(Nind / 2))
+
+    odd = np.arange(1, Nind, 2)
+    even = np.arange(0, Nind - 1, 2)
+
+    # position of value of offspring compared to parents
+    Alpha = -0.25 + 1.5 * np.random.rand(Xops, 1)
+    Alpha = Alpha[0:Xops, np.zeros(Nvar, dtype=np.int)]
+
+    # recombination
+    NewChrom[odd, :] = OldChrom[odd, :] + Alpha * (OldChrom[even, :] - OldChrom[odd, :])
+
+    # the same ones more for second half of offspring
+    Alpha = -0.25 + 1.5 * np.random.rand(Xops, 1)
+    Alpha = Alpha[0:Xops, np.zeros(Nvar, dtype=np.int)]
+    NewChrom[even, :] = OldChrom[odd, :] + Alpha * (OldChrom[even, :] - OldChrom[odd, :])
+
+    if np.remainder(Nind, 2):
+        NewChrom[Nind - 1, :] = OldChrom[Nind - 1, :]
+
+    return NewChrom
+
+
+def recint(OldChrom, XOVR=None):
+    NewChrom = np.zeros(OldChrom.shape)
+    Nind, Nvar = OldChrom.shape
+    Xops = int(np.floor(Nind / 2))
+
+    odd = np.arange(1, Nind, 2)
+    even = np.arange(0, Nind - 1, 2)
+
+    # position of value of offspring compared to parents
+    Alpha = -0.25 + 1.5 * np.random.rand(Xops, Nvar)
+
+    # recombination
+    NewChrom[odd, :] = OldChrom[odd, :] + Alpha * (OldChrom[even, :] - OldChrom[odd, :])
+
+    # the same ones more for second half of offspring
+    Alpha = -0.25 + 1.5 * np.random.rand(Xops, Nvar)
+    NewChrom[even, :] = OldChrom[odd, :] + Alpha * (OldChrom[even, :] - OldChrom[odd, :])
+
+    if np.remainder(Nind, 2):
+        NewChrom[Nind - 1, :] = OldChrom[Nind - 1, :]
+
+    return NewChrom
+
+
+def recdis(OldChrom, XOVR=None):
+    NewChrom = np.zeros(OldChrom.shape, dtype=OldChrom.dtype)
+    Nind, Nvar = OldChrom.shape
+    Xops = int(np.floor(Nind / 2))
+
+    # which parent gives the value
+    Mask1 = (np.random.rand(Xops, Nvar) < 0.5)
+    Mask2 = (np.random.rand(Xops, Nvar) < 0.5)
+
+    odd = np.arange(1, Nind, 2)
+    even = np.arange(0, Nind - 1, 2)
+
+    NewChrom[odd, :] = (OldChrom[odd, :] * Mask1) + (OldChrom[even, :] * (1 - Mask1))
+    NewChrom[even, :] = (OldChrom[odd, :] * Mask2) + (OldChrom[even, :] * (1 - Mask2))
+    return NewChrom
+
+
 def xovmp(OldChrom, Px=0.7, Npt=0, Rs=0):
     Nind, Lind = OldChrom.shape
     if Lind < 2:
