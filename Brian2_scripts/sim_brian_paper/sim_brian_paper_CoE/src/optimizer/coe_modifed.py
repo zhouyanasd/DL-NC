@@ -201,7 +201,7 @@ class CoE(OptimizerBase):
         # 从代理模型初始化的数据中找到最好的点
         self.B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
         # 求初代context vector 的 fitness
-        self.F_B = self._space.target.min()
+        self.F_B = np.array([self._space.target.min()])
 
     def remu(self, P, SubCom, recombinStyle, recopt, SUBPOP, pm, distribute, repnum):
         SelCh = np.zeros(P.shape)
@@ -337,7 +337,7 @@ class CoE_surrogate(CoE):
             # 生成可行性列向量，元素为1表示对应个体是可行解，0表示非可行解
             self.LegV.append(LegV_i)
         # 求初代context vector 的 fitness
-        self.F_B = self._space.target.min()
+        self.F_B = np.array([self._space.target.min()])
 
     def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=True, eva=1, interval=1,
                  selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
@@ -427,6 +427,16 @@ class CoE_surrogate(CoE):
 
 
 if __name__ == "__main__":
+
+    def rosen(alpha=1e2, **X):
+        x = [X[key] / 10 for key in X.keys()]
+        """Rosenbrock test objective function"""
+        x = [x] if np.isscalar(x[0]) else x  # scalar into list
+        x = np.asarray(x)
+        f = [sum(alpha * (x[:-1] ** 2 - x[1:]) ** 2 + (1. - x[:-1]) ** 2) for x in x]
+        return f if len(f) > 1 else f[0]  # 1-element-list into scalar
+
+
     dim = 8
     keys = ['x', 'y', 'z', 'x1', 'y1', 'z1', 'x2', 'y2']
     ranges = np.vstack([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 9], [0, 10], [0, 9]]).T
