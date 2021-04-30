@@ -215,7 +215,7 @@ class CoE(OptimizerBase):
         if self.is_need_encoding(SubCom):
             index_ib, FieldD = self.get_sub_FieldD(SubCom)
             P_ib = ga.rv2bs(P[:, index_ib], FieldD)
-            SelCh_ib = ga.recombin('xovdp', P_ib, recopt, SUBPOP)  # 重组
+            SelCh_ib = ga.recombin('xovdp', P_ib, recopt, SUBPOP)  # 二进制保持用xovdp重组
             SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
             variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
             SelCh[:, index_ib] = variable
@@ -456,6 +456,6 @@ if __name__ == "__main__":
 
     coe_surrogate = CoE_surrogate(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
                         surrogate_type = 'rf', init_points = 100, LHS_path = None, n_Q = 100, n_estimators=1000)
-    coe_surrogate.optimize(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=True, eva=1, interval=1,
+    coe_surrogate.optimize(recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=False, eva=1, interval=1,
             selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue = False)
     coe_surrogate.draw()
