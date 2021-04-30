@@ -335,37 +335,31 @@ if __name__ == '__main__':
         )
 
     elif method == 'CoE':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
-                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
-                                             decoder.get_scales, decoder.get_keys, None,
-                                             )
-        best_gen, best_ObjV = optimizer.coe(recopt=0.9, pm=0.1, MAXGEN=9, NIND=10,
-                                            maxormin=1, SUBPOP=1, GGAP=0.5,
-                                            selectStyle='sus', recombinStyle='xovdp',
-                                            distribute=False, drawing=False, load_continue = load_continue)
+        coe = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                  decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                  random_state = seed, maxormin=1)
+        coe.optimize(recopt=0.9, pm=0.1, MAXGEN=9, NIND=10, SUBPOP=1, GGAP=0.5,
+                     selectStyle='tour', recombinStyle='reclin',
+                     distribute=False, drawing=False, load_continue = load_continue)
 
     elif method == 'CoE_rf':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
-                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
-                                             decoder.get_scales, decoder.get_keys, None,
-                                             surrogate_type = 'rf', n_Q = 100, n_estimators=1000)
-        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=150,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
-                                                      interval=1,
-                                                      selectStyle='sus', recombinStyle='xovdp',
-                                                      distribute=False, LHS_path = LHS_path, drawing=False,
-                                                      load_continue = load_continue)
+        coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                            decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                            random_state = seed, maxormin=1,
+                            surrogate_type='rf', init_points=150, LHS_path=LHS_path,
+                            n_Q = 100, n_estimators=1000)
+        coe.optimize(recopt=0.9, pm=0.1, MAXGEN=50, NIND=20, SUBPOP=1, GGAP=0.5,
+                     online=False, eva=1, interval=1,
+                     selectStyle='tour', recombinStyle='reclin',
+                     distribute=False, load_continue = load_continue)
 
     elif method == 'CoE_gp':
-        optimizer = CoE_surrogate_mixgentype(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
-                                             decoder.get_borders, decoder.get_precisions, decoder.get_codes,
-                                             decoder.get_scales, decoder.get_keys, None,
-                                             surrogate_type='gp', acq='ucb', kappa=2.576, xi=0.0)
-        best_gen, best_ObjV = optimizer.coe_surrogate(recopt=0.9, pm=0.1, MAXGEN=50, NIND=10,
-                                                      init_points=150,
-                                                      maxormin=1, SUBPOP=1, GGAP=0.5, online=False, eva=1,
-                                                      interval=1,
-                                                      selectStyle='sus', recombinStyle='xovdp',
-                                                      distribute=False, LHS_path = LHS_path, drawing=True,
-                                                      load_continue = load_continue)
+        coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                            decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                            random_state = seed, maxormin=1,
+                            surrogate_type='gp', init_points=150, LHS_path=LHS_path,
+                            acq='ucb', kappa=2.576, xi=0.0)
+        coe.optimize(recopt=0.9, pm=0.1, MAXGEN=50, NIND=20, SUBPOP=1, GGAP=0.5,
+                     online=False, eva=1, interval=1,
+                     selectStyle='tour', recombinStyle='reclin',
+                     distribute=False, load_continue = load_continue)

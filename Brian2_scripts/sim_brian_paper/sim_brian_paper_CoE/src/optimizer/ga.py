@@ -568,7 +568,7 @@ def trcplot(pop_trace, labels, titles = None, save_path = None):
     index = 0
     for i, l_i in enumerate(labels):
         plt.figure()
-        plt.xlabel('代数')
+        plt.xlabel('Iteration')
         plt.grid(True)
         for l_j in l_i:
             plt.plot(t, pop_trace[:,index:index+1], label=l_j)

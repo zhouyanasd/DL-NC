@@ -18,7 +18,8 @@ __all__ = [
     "Decoder",
     "Generator",
     "BayesianOptimization",
-    "CoE_surrogate_mixgentype",
+    "CoE",
+    "CoE_surrogate",
     "RandomForestRegressor_surrogate",
     "GaussianProcess_surrogate",
 ]
