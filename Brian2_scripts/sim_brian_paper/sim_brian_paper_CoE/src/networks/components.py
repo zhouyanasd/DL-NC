@@ -210,16 +210,16 @@ class BlockGroup(BaseFunctions):
 
          Parameters
          ----------
-         blocks: list[Block], the block list for counting.
+         blocks: list[int], the block index for counting.
          '''
 
         if blocks == None:
             blocks_ = self.blocks
         else:
-            blocks_= blocks
+            blocks_= [self.blocks[x] for x in blocks]
         N_neurons = 0
         for block in blocks_:
-            N_neurons += self.blocks[block].N
+            N_neurons += block.N
         return N_neurons
 
     def add_block(self, block, type):
