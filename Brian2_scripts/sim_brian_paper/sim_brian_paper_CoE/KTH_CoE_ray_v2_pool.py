@@ -185,11 +185,12 @@ def sum_strength(gen, net_state_list):
     for com in list(state_init.keys()):
         if 'block_block_' in com or 'pathway_' in com and '_pre' not in com and '_post' not in com:
             try:
-                np.subtract(state_init[com]['strength'][0], state_init[com]['strength'][0],
-                       out=state_init[com]['strength'][0])
+                para_init = list(state_init[com]['strength'])
+                para = list(state[com]['strength'])
+                np.subtract(para_init[0], para_init[0], out=para_init[0])
                 for state in net_state_list:
-                    np.add(state_init[com]['strength'][0], state[com]['strength'][0]/l,
-                            out = state_init[com]['strength'][0])
+                    np.add(para_init[0], para[0]/l, out = para_init[0])
+                state_init[com]['strength'] = tuple(para_init)
             except:
                 continue
     return state_init
