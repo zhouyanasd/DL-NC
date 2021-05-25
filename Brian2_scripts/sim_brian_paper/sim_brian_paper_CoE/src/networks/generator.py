@@ -334,8 +334,7 @@ class Generator(Generator_connection_matrix):
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
                                         dynamics_reservoir_synapse_post_STDP)
-        pathway._set_connect_type('probability')
-        pathway.connect(p_connection = p_connection)
+        pathway.connect(p_connection = p_connection, connect_type = 'probability')
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)
         reservoir.register_input_output(o, i)
@@ -371,7 +370,7 @@ class Generator(Generator_connection_matrix):
          '''
 
         block_group = BlockGroup()
-        N = reservoir.output_neurons_count
+        N = reservoir.all_neurons_count
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = False, name='block_readout')
@@ -396,8 +395,7 @@ class Generator(Generator_connection_matrix):
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
                                         dynamics_encoding_synapse_post_STDP)
-        pathway._set_connect_type('probability')
-        pathway.connect(p_connection = p_connection)
+        pathway.connect(p_connection = p_connection, connect_type = 'probability')
         return pathway
 
     def generate_pathway_reservoir_readout(self, reservoir, readout):
@@ -410,11 +408,10 @@ class Generator(Generator_connection_matrix):
          readout: BlockGroup, a instance of BlockGroup class only containing one Block as readout layer.
          '''
 
-        connection_matrix = [reservoir.output, [0]*len(reservoir.output)]
+        connection_matrix = [reservoir.all, [0]*len(reservoir.all)]
         pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
                                         'strength = 1 : 1', dynamics_readout_synapse_pre, None)
-        pathway._set_connect_type('one_to_one')
-        pathway.connect()
+        pathway.connect(connect_type = 'one_to_one_all')
         return pathway
 
     def generate_network(self):

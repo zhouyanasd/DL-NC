@@ -204,7 +204,7 @@ class BlockGroup(BaseFunctions):
         self.blocks = []
         self.blocks_type = []
 
-    def get_neurons_count(self, blocks = None):
+    def get_neurons_count(self, blocks = None, specified = None):
         '''
          Count the total number of neurons int the blocks.
 
@@ -219,7 +219,12 @@ class BlockGroup(BaseFunctions):
             blocks_= [self.blocks[x] for x in blocks]
         N_neurons = 0
         for block in blocks_:
-            N_neurons += block.N
+            if specified is 'input':
+                N_neurons += len(block.input)
+            elif specified is 'output':
+                N_neurons += len(block.output)
+            else:
+                N_neurons += block.N
         return N_neurons
 
     def add_block(self, block, type):
@@ -299,10 +304,10 @@ class Pathway(NetworkBase):
          type: str, the connection type for the synapses of the Pathway.
          '''
 
-        if type in ['full', 'one_to_one', 'probability']:
+        if type in ['full', 'one_to_one', 'one_to_one_all', 'probability']:
             self.connect_type = type
         else:
-            raise ("wrong connection type, only 'full' or 'one_to_one'.")
+            raise ("wrong connection type, only 'full' , 'one_to_one' or 'probability'.")
 
     def create_synapse(self, model, on_pre, on_post,  name, **kwargs):
         '''
@@ -326,6 +331,10 @@ class Pathway(NetworkBase):
          ----------
          The parameters follow the necessary 'Synapses' class of Brain2.
          '''
+        try:
+            self._set_connect_type(kwargs['connect_type'])
+        except KeyError:
+            pass
 
         if self.connect_type == 'full':
             for index, synapses in enumerate(self.synapses_group):
@@ -344,6 +353,14 @@ class Pathway(NetworkBase):
                 block_post = self.blocks_post[self.post[index]]
                 synapses.connect(i = block_pre.output, j = block_post.input[count:count+len(block_pre.output)])
                 count = count + len(block_pre.output)
+        elif self.connect_type == 'one_to_one_all':
+            count = 0
+            for index, synapses in enumerate(self.synapses_group):
+                block_pre = self.blocks_pre[self.pre[index]]
+                block_post = self.blocks_post[self.post[index]]
+                synapses.connect(i = list(np.arange(block_pre.N)),
+                                 j = list(np.arange(block_post.N))[count:count+block_pre.N])
+                count = count + block_pre.N
         elif self.connect_type == 'probability':
             for index, synapses in enumerate(self.synapses_group):
                 block_pre = self.blocks_pre[self.pre[index]]
@@ -409,6 +426,40 @@ class Reservoir(NetworkBase):
         super().__init__()
         self.block_group = None
         self.pathway = None
+        self.input = None
+        self.output = None
+
+    @property
+    def all(self):
+        '''
+         Get the index list of all blocks.
+
+         Parameters
+         ----------
+         '''
+
+        return list(np.arange(self.block_group.N))
+
+    @property
+    def connect_matrix(self):
+        '''
+         Get connect_matrix of the pathway in this reservoir
+
+         Parameters
+         ----------
+         '''
+
+        return self.pathway.connect_matrix
+
+    @property
+    def total_neurons_count(self):
+        '''
+         Get the total number of neurons of this reservoir.
+
+         Parameters
+         ----------
+         '''
+        return self.block_group.get_neurons_count()
 
     @property
     def input_neurons_count(self):
@@ -429,6 +480,16 @@ class Reservoir(NetworkBase):
          ----------
          '''
         return self.block_group.get_neurons_count(self.output)
+
+    def get_neurons_count(self, **kwargs):
+        '''
+         Get the total number of neurons of the block group in this reservoir.
+
+         Parameters
+         ----------
+         '''
+
+        return self.block_group.get_neurons_count(**kwargs)
 
     def register_input_output(self, o, i):
         '''
