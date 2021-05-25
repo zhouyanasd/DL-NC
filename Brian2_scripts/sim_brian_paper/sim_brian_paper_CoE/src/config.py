@@ -10,17 +10,18 @@ wmax = 1
 Apre = 0.01
 Apost = -Apre*taupre/taupost*1.05
 
-A_strength = 1
+A_strength_block = 1
 A_strength_reservoir = 1
-A_strength_encoding = 0.001
+A_strength_encoding = 1
 
-threshold_solid = 0.2
-threshold_max = 1
-a_threshold = 0.2
-A_threshold = 0.01
+threshold_solid = 0.21
+threshold_max = 100
+threshold_jump = 0.01
+A_threshold = 1
 
 standard_tau = 100 * ms
-tau_I = 1 * ms
+
+tau_I = 2 * ms
 
 voltage_reset = 0.2
 
@@ -34,7 +35,7 @@ I = stimulus(t,i) : 1
 dynamics_reservoir = '''
 property : 1
 tau : 1
-dv/dt = (I-v+voltage_reset) / (tau * standard_tau) : 1 (unless refractory)
+dv/dt = (I-v+voltage_reset) / (standard_tau) : 1 (unless refractory)
 dI/dt = (-I)/(tau_I) : 1
 dthreshold/dt = (threshold_solid-threshold)/(tau * standard_tau) : 1
 '''
@@ -54,7 +55,7 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_block_synapse_pre_STDP = '''
-I += A_strength * strength
+I += A_strength_block * strength
 apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost*Switch, wmin, wmax)
 '''
@@ -113,7 +114,7 @@ threshold_reservoir = 'v >= voltage_reset + A_threshold * threshold'
 
 reset_reservoir = '''
 v = voltage_reset
-threshold = clip(threshold+a_threshold, threshold_solid, threshold_max)
+threshold = clip(threshold+threshold_jump, threshold_solid, threshold_max)
 '''
 
 # --- reservoir layer structure ---
@@ -158,12 +159,12 @@ config_codes = [[1, 1, None, None, None, None],
                 [None, None, None, None, None, None, None, None, None, None],
                 [None, None, None, None]]
 
-config_ranges = [[[0, 255], [0, 255], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 1.0]],
-                 [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 0.3]],
-                 [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[15, 150], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 0.5], [0.1, 0.5], [0.1, 0.5]],
-                 [[5, 50], [5, 50], [5, 50], [0.1, 1.0], [0, 1], [0.1, 1.0], [0.1, 1.0], [0.3, 1.0], [0.3, 1.0], [0.5, 0.9]],
-                 [[0, 1], [0.1, 1.0], [0.1, 1.0], [0.1, 1.0]]]
+config_ranges = [[[0, 255], [0, 255], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.01, 0.8]],
+                 [[15, 150], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.01, 0.3]],
+                 [[15, 150], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.1, 1.0], [0.1, 1.0], [0.1, 1.0]],
+                 [[15, 150], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.1, 0.5], [0.1, 0.5], [0.1, 0.5]],
+                 [[5, 50], [5, 50], [5, 50], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.3, 1.0], [0.3, 1.0], [0.5, 0.9]],
+                 [[0, 1], [0.0001, 1.0], [0.01, 0.5], [0.0001, 1.0]]]
 
 config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
@@ -173,10 +174,10 @@ config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[1, 1], [0, 1], [0, 1], [0, 1]]]
 
 config_precisions = [[0, 0, 0, 4, 4, 4],
-                     [0, 4, 0, 4, 4, 4],
-                     [0, 4, 0, 4, 4, 4, 4, 4],
-                     [0, 4, 0, 4, 4, 4, 4, 4],
-                     [0, 0, 0, 4, 0, 4, 4, 4, 4, 4],
+                     [0, 2, 0, 4, 4, 4],
+                     [0, 2, 0, 4, 4, 4, 4, 4],
+                     [0, 2, 0, 4, 4, 4, 4, 4],
+                     [0, 0, 0, 2, 0, 4, 4, 4, 4, 4],
                      [0, 4, 4, 4]]
 
 config_scales = [[0] * 6,
