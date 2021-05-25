@@ -370,7 +370,7 @@ class Generator(Generator_connection_matrix):
          '''
 
         block_group = BlockGroup()
-        N = reservoir.all_neurons_count
+        N = reservoir.total_neurons_count
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_readout, threshold=None, reset = None,
                              refractory = False, name='block_readout')
