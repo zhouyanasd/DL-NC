@@ -371,7 +371,11 @@ class Pathway(NetworkBase):
                         if np.random.rand()< kwargs['p_connection']:
                             connect_matrix[0].append(i)
                             connect_matrix[1].append(j)
-                synapses.connect(i = connect_matrix[0], j = connect_matrix[1])
+                if self.connect_matrix.size != 0:
+                    synapses.connect(i=connect_matrix[0], j=connect_matrix[1])
+                else:
+                    self.synapses.active = False
+
 
 
     def _initialize(self, synapses, **kwargs):
