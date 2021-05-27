@@ -374,7 +374,7 @@ class Pathway(NetworkBase):
                 if np.array(connect_matrix).size != 0:
                     synapses.connect(i=connect_matrix[0], j=connect_matrix[1])
                 else:
-                    self.synapses.active = False
+                    synapses.active = False
 
 
 
