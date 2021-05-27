@@ -55,7 +55,7 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_block_synapse_pre_STDP = '''
-I += A_strength_block * strength
+I += A_strength_block * strength * property_pre 
 apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost*Switch, wmin, wmax)
 '''
@@ -74,7 +74,7 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_reservoir_synapse_pre_STDP = '''
-I += A_strength_reservoir * strength
+I += A_strength_reservoir * strength * property_pre
 apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost*Switch, wmin, wmax)
 '''
@@ -93,7 +93,7 @@ dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
 '''
 
 dynamics_encoding_synapse_pre_STDP = '''
-I += A_strength_encoding * strength
+I += A_strength_encoding * strength * property_pre
 apre += Apre * (wmax-strength)**type
 strength = clip(strength+apost*Switch, wmin, wmax)
 '''
