@@ -618,10 +618,10 @@ class LSM_Network(NetworkBase):
          ----------
          {'encoding': None,
           'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
-          'readout': None,
+          'readout': {'tau_I': 0.1},
           'reservoir_readout': None,
-          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6},
-                                                    'random': {'tau': 0.3}},
+          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6, 'tau_I': 0.2},
+                                                    'random': {'tau': 0.3, 'tau_I': 0.2}},
                         'parameter_block_synapses': {'hierarchy': {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
                                                      'random': {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
                         'parameter_pathway': {'type: 1.0', 'plasticity': 0.2, 'strength': 0.2}}}
