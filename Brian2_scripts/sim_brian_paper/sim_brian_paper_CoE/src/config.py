@@ -135,7 +135,7 @@ Reservoir_config = ['block', 'layer_1', 'type', 'strength', 'plasticity', 'p_con
 Block_random = ['N', 'tau', 'type', 'strength', 'plasticity', 'p']
 Block_scale_free = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_alpha', 'p_beta', 'p_gama']
 Block_circle = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_forward', 'p_backward', 'p_threshold']
-Block_hierarchy = ['N_i', 'N_h', 'N_o', 'tau', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
+Block_hierarchy = ['N', 'tau', 'type', 'strength', 'plasticity', 'p_out', 'p_in', 'decay']
 Encoding_Readout = ['type', 'strength', 'p_connection', 'plasticity']
 
 config_group = ['Reservoir_config', 'Block_random', 'Block_scale_free',
@@ -149,42 +149,42 @@ config_SubCom = [[0, 1, 2, 3, 4, 5],
                  [6, 7, 8, 9, 10, 11],
                  [12, 13, 14, 15, 16, 17, 18, 19],
                  [20, 21, 22, 23, 24, 25, 26, 27],
-                 [28, 29, 30, 31, 32, 33, 34, 35, 36, 37],
-                 [38, 39, 40, 41]]
+                 [28, 29, 30, 31, 32, 33, 34, 35],
+                 [36, 37, 38, 39]]
 
 config_codes = [[1, 1, None, None, None, None],
                 [None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None],
                 [None, None, None, None]]
 
 config_ranges = [[[0, 255], [0, 255], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.01, 0.8]],
                  [[15, 300], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.01, 0.3]],
                  [[15, 300], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.1, 1.0], [0.1, 1.0], [0.1, 1.0]],
                  [[15, 300], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.1, 0.5], [0.1, 0.5], [0.1, 0.5]],
-                 [[5, 100], [5, 100], [5, 100], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.3, 1.0], [0.3, 1.0], [0.5, 0.9]],
+                 [[15, 300], [0.01, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.3, 1.0], [0.3, 1.0], [0.5, 0.9]],
                  [[0, 1], [0.0001, 1.0], [0.01, 0.5], [0.0001, 1.0]]]
 
 config_borders = [[[1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                  [[0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[1, 1], [0, 1], [0, 1], [0, 1]]]
 
 config_precisions = [[0, 0, 0, 4, 4, 2],
                      [0, 2, 0, 4, 4, 2],
                      [0, 2, 0, 4, 4, 4, 4, 4],
                      [0, 2, 0, 4, 4, 4, 4, 4],
-                     [0, 0, 0, 2, 0, 4, 4, 4, 4, 4],
+                     [0, 2, 0, 4, 4, 4, 4, 4],
                      [0, 4, 2, 4]]
 
 config_scales = [[0] * 6,
                  [0] * 6,
                  [0] * 8,
                  [0] * 8,
-                 [0] * 10,
+                 [0] * 8,
                  [0] * 4]
 
 gen_group = [[0], [1], [2], [3], [4], [5]]

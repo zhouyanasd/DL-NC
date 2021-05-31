@@ -268,7 +268,7 @@ class Decoder(BaseFunctions):
 
         parameters = self.decode('Block_hierarchy')
         if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'N_h', 'N_i', 'N_o', 'decay', 'p_in', 'p_out')
+            sub_parameters = self.get_sub_dict(parameters, 'N', 'decay', 'p_in', 'p_out')
             return sub_parameters
         if need == 'parameter':
             sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'type')

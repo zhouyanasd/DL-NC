@@ -110,7 +110,7 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_hierarchy(self, N_i, N_h, N_o, p_out, p_in, decay):
+    def generate_connection_matrix_hierarchy(self, N, p_out, p_in, decay):
         '''
          Generate connection matrix of hierarchy block.
          The hierarchy structure separate as three layer.
@@ -121,6 +121,9 @@ class Generator_connection_matrix(BaseFunctions):
          p_out, p_in: double, the connection probability between two neurons.
          decay: double, the decay of connection probability.
          '''
+
+        N_i, N_o = int(np.floor(N/3)), int(np.floor(N/3))
+        N_h = N - N_i - N_o
 
         connection_matrix_out, connection_matrix_in = [], []
         nodes = np.arange(N_i + N_h + N_o)
