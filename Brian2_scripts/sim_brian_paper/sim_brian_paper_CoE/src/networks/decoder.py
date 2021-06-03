@@ -9,8 +9,6 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import structure_blocks, \
-    voltage_reset, threshold_solid
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.ga import dec2bin, bin2dec
 
 import numpy as np

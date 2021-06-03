@@ -382,8 +382,7 @@ class Generator(Generator_connection_matrix):
         block = Block(N, np.array([]).reshape(2,-1))
         block.create_neurons(dynamics_encoding, threshold='I > 0', reset = None,
                              refractory = 0 * ms , name='block_encoding')
-        block.create_synapse('strength : 1', None,
-                            None, name='block_block_encoding_0')
+        block.create_synapse('strength : 1', None, None, name='block_block_encoding_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
         return block_group
@@ -401,10 +400,8 @@ class Generator(Generator_connection_matrix):
         block_group = BlockGroup()
         N = reservoir.total_neurons_count
         block = Block(N, np.array([]).reshape(2,-1))
-        block.create_neurons(dynamics_readout, threshold=None, reset = None,
-                             refractory = False, name='block_readout')
-        block.create_synapse('strength : 1', None,
-                            None, name='block_block_readout_0')
+        block.create_neurons(dynamics_readout, threshold=None, reset = None, refractory = False, name='block_readout')
+        block.create_synapse('strength : 1', None, None, name='block_block_readout_0')
         block.determine_input_output()
         block_group.add_block(block, -1)
         return block_group
