@@ -27,6 +27,9 @@ class BaseFunctions():
     def change_dict_key(self, _dict, key1, key2):
         _dict[key2] = _dict.pop(key1)
 
+    def adapt_scale(self, scale, parameter):
+        return scale[0] + parameter * abs(scale[1] - scale[0])
+
     def np_extend(self, a, b, axis=0):
         if a is None:
             shape = list(b.shape)

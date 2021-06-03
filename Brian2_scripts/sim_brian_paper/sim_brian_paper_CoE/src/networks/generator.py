@@ -29,12 +29,42 @@ class Generator_connection_matrix(BaseFunctions):
     def __init__(self, random_state):
         super().__init__()
         self.random_state = random_state
-        self.block_generator_type = {'random':self.generate_connection_matrix_random,
-                                     'scale_free':self.generate_connection_matrix_scale_free,
-                                     'circle':self.generate_connection_matrix_circle,
-                                     'hierarchy':self.generate_connection_matrix_hierarchy}
+        self.block_types_N = len(list(structure_blocks))
+        self.layer_types_N = len(list(structure_layer))
 
-    def generate_connection_matrix_random(self, N, p):
+    def generate_connection_matrix_blocks(self, block_type, **parameters):
+        '''
+         General function of the generate connection matrix function.
+
+         Parameters
+         ----------
+         block_type: int, the order of the block.
+         parameters: dict, the connection parameters for different generation type.
+         '''
+        parameters_ = self.get_sub_dict(parameters, 'N')
+        component = structure_blocks['components_' + str(block_type)]
+        if component['name'] == 'random':
+            parameters_['p'] = self.adapt_scale(component['p_0'], parameters['p_0'])
+        elif component['name'] == 'scale_free':
+            parameters_['p_alpha'] = self.adapt_scale(component['p_0'], parameters['p_0'])
+            parameters_['p_beta'] = self.adapt_scale(component['p_1'], parameters['p_1'])
+            parameters_['p_gama'] = self.adapt_scale(component['p_2'], parameters['p_2'])
+        elif component['name'] == 'circle':
+            parameters_['p_forward'] = self.adapt_scale(component['p_0'], parameters['p_0'])
+            parameters_['p_backward'] = self.adapt_scale(component['p_1'], parameters['p_1'])
+            parameters_['p_threshold'] = self.adapt_scale(component['p_2'], parameters['p_2'])
+        elif component['name'] == 'hierarchy':
+            parameters_['p_out'] = self.adapt_scale(component['p_0'], parameters['p_0'])
+            parameters_['p_in'] = self.adapt_scale(component['p_1'], parameters['p_1'])
+            parameters_['decay'] = self.adapt_scale(component['p_2'], parameters['p_2'])
+
+        block_generator_type = {'random': self.generate_connection_matrix_blocks_random,
+                                'scale_free': self.generate_connection_matrix_blocks_scale_free,
+                                'circle': self.generate_connection_matrix_blocks_circle,
+                                'hierarchy': self.generate_connection_matrix_blocks_hierarchy}
+        return block_generator_type[ component['name']](**parameters_)
+
+    def generate_connection_matrix_blocks_random(self, N, p):
         '''
          Generate connection matrix of random block
 
@@ -56,7 +86,7 @@ class Generator_connection_matrix(BaseFunctions):
                     continue
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_scale_free(self, N, p_alpha, p_beta, p_gama):
+    def generate_connection_matrix_blocks_scale_free(self, N, p_alpha, p_beta, p_gama):
         '''
          Generate connection matrix of scale_free block
 
@@ -75,7 +105,7 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_circle(self, N, p_forward, p_backward, p_threshold):
+    def generate_connection_matrix_blocks_circle(self, N, p_forward, p_backward, p_threshold):
         '''
          Generate connection matrix of circle block.
          'circle' is the critical variate to mark the position of neurons.
@@ -110,7 +140,7 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_hierarchy(self, N, p_out, p_in, decay):
+    def generate_connection_matrix_blocks_hierarchy(self, N, p_out, p_in, decay):
         '''
          Generate connection matrix of hierarchy block.
          The hierarchy structure separate as three layer.
@@ -151,17 +181,17 @@ class Generator_connection_matrix(BaseFunctions):
                         connection_matrix_in.append(nodes_pre[in_pre_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
                         p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
-        return N_i + N_h + N_o, np.array([connection_matrix_out, connection_matrix_in])
+        return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_reservoir_layer(self, blocks_type, count, layer, structure_type, cmo, cmi):
+    def generate_connection_matrix_reservoir_layer(self, blocks_position, count, layer, structure_type, cmo, cmi):
         '''
          Generate connection matrix of reservoir for signal layer.
          This programme use recursion.
 
          Parameters
          ----------
-         blocks_type: list, the existing block position in a basic block group.
-                      A basic block group contain four block with different type decided by gen.
+         blocks_position: list, the existing block position in a basic block group.
+                          A basic block group contain four block with different type decided by gen.
          count: int, the current number of neurons have been added in this reservoir.
                      it will help with the index of neurons.
          layer: int, the layer order.
@@ -172,14 +202,14 @@ class Generator_connection_matrix(BaseFunctions):
 
         cmo_, cmi_ = cmo, cmi
         count_ = count
-        blocks_type_ = blocks_type
+        blocks_position_ = blocks_position
         if layer > 0 :
             o, i = [],[]
             for gen in structure_type[layer]:
                 component = structure_layer['components_' + str(gen)]
-                blocks_type_, count_, cmo_, cmi_, o_, i_ = \
+                blocks_position_, count_, cmo_, cmi_, o_, i_ = \
                     self.generate_connection_matrix_reservoir_layer(
-                        blocks_type_, count_, layer-1, structure_type, cmo_, cmi_)
+                        blocks_position_, count_, layer-1, structure_type, cmo_, cmi_)
                 for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
                     for com_so_ in o_[com_so]:
                         for com_si_ in i_[com_si]:
@@ -188,7 +218,7 @@ class Generator_connection_matrix(BaseFunctions):
                 for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
                     o.append(o_[com_o])
                     i.append(i_[com_i])
-            return blocks_type_, count_, cmo_, cmi_, o, i
+            return blocks_position_, count_, cmo_, cmi_, o, i
         else:
             o, i = [],[]
             for gen in structure_type[layer]:
@@ -197,11 +227,11 @@ class Generator_connection_matrix(BaseFunctions):
                 cmi_.extend(list(np.array(component['structure'][1]) + count_))
                 o.append(list(np.array(component['output_input'][0]) + count_))
                 i.append(list(np.array(component['output_input'][1]) + count_))
-                type = list(np.unique(component['structure'][0] + component['structure'][1] +
+                position = list(np.unique(component['structure'][0] + component['structure'][1] +
                                       component['output_input'][0] + component['output_input'][1]))
-                count_ = count_ + len(type)
-                blocks_type_.extend(type)
-            return blocks_type_, count_, cmo_, cmi_, o, i
+                count_ = count_ + len(position)
+                blocks_position_.extend(position)
+            return blocks_position_, count_, cmo_, cmi_, o, i
 
     def generate_connection_matrix_reservoir(self, structure_type):
         '''
@@ -220,11 +250,11 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_out, connection_matrix_in = [], []
         layer = len(structure_type)-1
         count = 0
-        blocks_type = []
+        blocks_position = []
         o, i = [], []
         component = structure_reservoir['components']
-        blocks_type, count, connection_matrix_out, connection_matrix_in, o_, i_ = \
-            self.generate_connection_matrix_reservoir_layer(blocks_type, count, layer, structure_type,
+        blocks_position, count, connection_matrix_out, connection_matrix_in, o_, i_ = \
+            self.generate_connection_matrix_reservoir_layer(blocks_position, count, layer, structure_type,
                                                   connection_matrix_out, connection_matrix_in)
         for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
             for com_so_ in o_[com_so]:
@@ -234,7 +264,7 @@ class Generator_connection_matrix(BaseFunctions):
         for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
             o.extend(o_[com_o])
             i.extend(i_[com_i])
-        return blocks_type, np.array([connection_matrix_out, connection_matrix_in]), o, i
+        return blocks_position, np.array([connection_matrix_out, connection_matrix_in]), o, i
 
 
 class Generator(Generator_connection_matrix):
@@ -260,24 +290,25 @@ class Generator(Generator_connection_matrix):
 
         self.decoder = decoder
 
-    def generate_block(self, name, get_parameter_structure, get_matrix):
+    def generate_block(self, index, position):
         '''
-         AA basic block generator function.
+         A basic block generator function.
 
          Parameters
          ----------
-         name: str, the pre name of the generated block.
-         get_parameter_structure: function, the function of decoder.
-         get_parameter_structure: function, the function of generator.
+         index: int, the block index of all blocks in reservoir.
+         position: int, the block order of the block group.s
          '''
 
-        parameter_structure = get_parameter_structure('structure')
-        N, connect_matrix = get_matrix(**parameter_structure)
+        block_type =  self.decoder.get_block_type(position)
+        parameter_structure = self.decoder.get_block_structure(position)
+        component_name = structure_blocks['components_' + str(block_type)]['name'] + '_' + str(index)
+        N, connect_matrix = self.generate_connection_matrix_blocks(block_type, **parameter_structure)
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + name)
+                             refractory = refractory_reservoir, name='block_' + component_name)
         block.create_synapse(dynamics_block_synapse_STDP, dynamics_block_synapse_pre_STDP,
-                            dynamics_block_synapse_post_STDP, name='block_block_' + name)
+                            dynamics_block_synapse_post_STDP, name='block_block_' + component_name)
         block.separate_ex_inh()
         block.connect()
         block.determine_input_output()
@@ -300,23 +331,20 @@ class Generator(Generator_connection_matrix):
         pathway.create_synapse(model, model_pre, model_post,  name = name)
         return pathway
 
-    def generate_blocks(self, blocks_type):
+    def generate_blocks(self, blocks_position):
         '''
          Generate blocks for reservoir according to blocks_type,
          the blocks belong to one block group.
 
          Parameters
          ----------
-         blocks_type: list[int], the block type order according to 'structure_blocks'.
+         blocks_position: list[int], the blocks posidtion order according to 'structure_blocks'.
          '''
 
         block_group = BlockGroup()
-        for index, type in enumerate(blocks_type):
-            component = structure_blocks['components_' + str(type)]
-            block_decoder = self.decoder.block_decoder_type[component]
-            block_generator = self.block_generator_type[component]
-            block = self.generate_block(component + '_' + str(index), block_decoder, block_generator)
-            block_group.add_block(block, component)
+        for index, position in enumerate(blocks_position):
+            block = self.generate_block(index, position)
+            block_group.add_block(block, position)
         return block_group
 
     def generate_reservoir(self):
@@ -328,12 +356,10 @@ class Generator(Generator_connection_matrix):
          '''
 
         reservoir = Reservoir()
-        block_type = self.decoder.get_reservoir_block_type()
         structure_type = self.decoder.get_reservoir_structure_type()
-        p_connection = self.decoder.get_parameters_pathway('Reservoir_config', 'structure')['p_connection']
-        blocks_type, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
-        blocks_type = list(np.array(block_type)[blocks_type])
-        block_group = self.generate_blocks(blocks_type)
+        p_connection = self.decoder.get_pathway_structure('Reservoir_config')['p_connection']
+        blocks_position, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
+        block_group = self.generate_blocks(blocks_position)
         pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
                                         dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
                                         dynamics_reservoir_synapse_post_STDP)
@@ -394,7 +420,7 @@ class Generator(Generator_connection_matrix):
          '''
 
         connection_matrix = [[0]*len(reservoir.input), reservoir.input]
-        p_connection = self.decoder.get_parameters_pathway('Encoding_Readout', 'structure')['p_connection']
+        p_connection = self.decoder.get_pathway_structure('Encoding_Readout')['p_connection']
         pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
                                         dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
                                         dynamics_encoding_synapse_post_STDP)
@@ -439,6 +465,82 @@ class Generator(Generator_connection_matrix):
         network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
         return network
 
+    def pre_initialize_block(self, position):
+        '''
+         Initialize the block with the parameters form decoder.
+
+         Parameters
+         ----------
+         position: int, the block order in a basic block group.
+         '''
+
+        block_type = self.decoder.get_block_type(position)
+        parameters = self.decoder.get_block_parameter(position)
+        parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
+        parameters_neurons['v'] = voltage_reset
+        parameters_neurons['threshold'] = threshold_solid
+        parameters_synapses = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
+        self.change_dict_key(parameters_synapses, 'strength', 'strength_need_random')
+        return parameters_neurons, parameters_synapses
+
+    def pre_initialize_reservoir(self):
+        '''
+         Initialize the components of reservoir, which contains pathway and block gourp.
+
+         Parameters
+         ----------
+         '''
+        parameter_block_neurons = {}
+        parameter_block_synapses = {}
+        for position in range(self.block_types_N):
+            parameter_block_neurons[position], parameter_block_synapses[position] = self.pre_initialize_block(position)
+        parameter_block_group = {'parameter_block_neurons':parameter_block_neurons,
+                                 'parameter_block_synapses':parameter_block_synapses}
+        parameters_reservoir = {'parameter_block_group':parameter_block_group,
+                                'parameter_pathway': self.decoder.get_pathway_parameter('Reservoir_config')}
+        self.change_dict_key(parameters_reservoir['parameter_pathway'], 'strength', 'strength_need_random')
+        return parameters_reservoir
+
+    def pre_initialize_readout(self):
+        '''
+         Initialize the components of readout, readout is a block group.
+
+         Parameters
+         ----------
+         '''
+
+        return  {'parameter_block_neurons': {-1: self.decoder.get_readout_parameter()}}
+
+    def pre_initialize_encoding_reservoir(self):
+        '''
+         Initialize the components of encoding, encoding is a block group.
+
+         Parameters
+         ----------
+         '''
+
+        parameters_encoding_reservoir = self.decoder.get_pathway_parameter('Encoding_Readout')
+        self.decoder.change_dict_key(parameters_encoding_reservoir, 'strength', 'strength_need_random')
+        return parameters_encoding_reservoir
+
+    def pre_initialize_network(self):
+        '''
+         Initialize the components of network.
+
+         Parameters
+         ----------
+         '''
+
+        parameters = {}
+        parameters['encoding'] = None
+        parameters['reservoir'] = self.pre_initialize_reservoir()
+        parameters['readout'] = self.pre_initialize_readout()
+        parameters['encoding_reservoir'] = self.pre_initialize_encoding_reservoir()
+        parameters['reservoir_readout'] = None
+
+        return parameters
+
+
     def initialize(self, network):
         '''
          Initialize the components of LSM_Network,
@@ -449,8 +551,7 @@ class Generator(Generator_connection_matrix):
          network: LSM_Network, the instance of 'LSM_Network'.
          '''
 
-        parameters = self.decoder.get_parameters_initialization()
-        network.initialize(**parameters)
+        network.initialize(**self.pre_initialize_network())
 
     def join(self, net, network):
         '''

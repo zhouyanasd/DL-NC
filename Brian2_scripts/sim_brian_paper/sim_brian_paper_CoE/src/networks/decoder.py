@@ -39,10 +39,6 @@ class Decoder(BaseFunctions):
         self.config_borders = config_borders
         self.config_precisions = config_precisions
         self.config_scales = config_scales
-        self.block_decoder_type = {'random':self.decode_block_random,
-                                   'scale_free':self.decode_block_scale_free,
-                                   'circle':self.decode_block_circle,
-                                   'hierarchy':self.decode_block_hierarchy}
         self.neurons_encoding = neurons_encoding
 
     @property
@@ -206,92 +202,44 @@ class Decoder(BaseFunctions):
             parameter[k] = p
         return parameter
 
-    def decode_block_random(self, need):
+    def get_block_type(self, position):
         '''
-         Decode the information of the random block.
+         Decode the type of the block.
 
          Parameters
          ----------
-         need: str, 'structure' or 'parameter'.
-         '''
-
-        parameters = self.decode('Block_random')
-        if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'N', 'p')
-            return sub_parameters
-        if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
-            return sub_parameters
-
-    def decode_block_scale_free(self, need):
+         position: int, the position order of the basic layer.
         '''
-         Decode the information of the scale free block.
+
+        parameters = self.decode('Block_'+str(position))
+        block_type = bin2dec(parameters['block'])
+        return block_type
+
+    def get_block_structure(self, position):
+        '''
+         Decode the structure information of the block.
 
          Parameters
          ----------
-         need: str, 'structure' or 'parameter'.
-         '''
-
-        parameters = self.decode('Block_scale_free')
-        if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'N', 'p_alpha', 'p_beta', 'p_gama')
-            return sub_parameters
-        if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
-            return sub_parameters
-
-    def decode_block_circle(self, need):
+         position: int, the position order of the basic layer.
         '''
-         Decode the information of the circle block.
+
+        parameters = self.decode('Block_'+str(position))
+        sub_parameters = self.get_sub_dict(parameters, 'N', 'p_0', 'p_1', 'p_2')
+        return sub_parameters
+
+    def get_block_parameter(self, position):
+        '''
+         Decode the neurons and synapse parameters of the block.
 
          Parameters
          ----------
-         need: str, 'structure' or 'parameter'.
-         '''
-
-        parameters = self.decode('Block_circle')
-        if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'N', 'p_backward', 'p_forward', 'p_threshold')
-            return sub_parameters
-        if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
-            return sub_parameters
-
-    def decode_block_hierarchy(self, need):
+         position: int, the position order of the basic layer.
         '''
-         Decode the information of the hierarchy block.
 
-         Parameters
-         ----------
-         need: str, 'structure' or 'parameter'.
-         '''
-
-        parameters = self.decode('Block_hierarchy')
-        if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'N', 'decay', 'p_in', 'p_out')
-            return sub_parameters
-        if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
-            return sub_parameters
-
-    def get_reservoir_block_type(self):
-        '''
-         Decode the block type of each position of basic block group.
-
-         Parameters
-         ----------
-         '''
-
-        parameter = self.decode('Reservoir_config')
-        type_b = parameter['block']
-        type_d, i = [], 0
-        while True:
-            temp = type_b[i:i + 2]
-            i += 2
-            if len(temp) == 2:
-                type_d.append(bin2dec(temp))
-            else:
-                return type_d
+        parameters = self.decode('Block_'+str(position))
+        sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
+        return sub_parameters
 
     def get_reservoir_structure_type(self):
         '''
@@ -319,21 +267,29 @@ class Decoder(BaseFunctions):
             except KeyError:
                 return type_d
 
-    def get_parameters_pathway(self, component, need):
+    def get_pathway_structure(self, component):
         '''
-         Decode parameters of the reservoir and encoding_readout.
-         The component should be 'Reservoir_config' or 'Encoding_Readout' based on config.
+         Decode structure information of the reservoir and encoding_readout.
 
          Parameters
          ----------
+         component: str, 'Reservoir_config' or 'Encoding_Readout' based on config
          '''
         parameters = self.decode(component)
-        if need == 'structure':
-            sub_parameters = self.get_sub_dict(parameters, 'p_connection')
-            return sub_parameters
-        if need == 'parameter':
-            sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
-            return sub_parameters
+        sub_parameters = self.get_sub_dict(parameters, 'p_connection')
+        return sub_parameters
+
+    def get_pathway_parameter(self, component):
+        '''
+         Decode parameters of the reservoir and encoding_readout.
+
+         Parameters
+         ----------
+         component: str, 'Reservoir_config' or 'Encoding_Readout' based on config
+         '''
+        parameters = self.decode(component)
+        sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
+        return sub_parameters
 
     def get_encoding_structure(self):
         '''
@@ -345,7 +301,7 @@ class Decoder(BaseFunctions):
 
         return self.neurons_encoding
 
-    def get_readout_parameters(self):
+    def get_readout_parameter(self):
         '''
          Decode the readout parameters.
 
@@ -355,37 +311,3 @@ class Decoder(BaseFunctions):
 
         parameters = self.decode('Encoding_Readout')
         return self.get_sub_dict(parameters, 'tau_I')
-
-    def get_parameters_initialization(self):
-        '''
-         Decoder and organize the parameters of initialization for the
-         whole LSM_network.
-
-         Parameters
-         ----------
-         '''
-
-        parameters = {}
-        parameters_block_neurons = {}
-        parameters_block_synapses = {}
-        block_types = self.get_reservoir_block_type()
-        for block_type in block_types:
-            name = structure_blocks['components_'+str(block_type)]
-            parameters_block_neurons[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
-                                                                     'tau', 'tau_I')
-            parameters_block_neurons[name]['v'] = voltage_reset
-            parameters_block_neurons[name]['threshold'] = threshold_solid
-            parameters_block_synapses[name] = self.get_sub_dict(self.block_decoder_type[name]('parameter'),
-                                                                      'plasticity', 'strength', 'type')
-            self.change_dict_key(parameters_block_synapses[name],'strength','strength_need_random')
-
-        parameters['reservoir'] = {'parameter_block_neurons':parameters_block_neurons,
-                                   'parameter_block_synapses':parameters_block_synapses,
-                                   'parameter_pathway': self.get_parameters_pathway('Reservoir_config', 'parameter')}
-        self.change_dict_key(parameters['reservoir']['parameter_pathway'], 'strength', 'strength_need_random')
-        parameters['encoding'] = None
-        parameters['readout'] = self.get_readout_parameters()
-        parameters['encoding_reservoir'] = self.get_parameters_pathway('Encoding_Readout', 'parameter')
-        self.change_dict_key(parameters['encoding_reservoir'], 'strength', 'strength_need_random')
-        parameters['reservoir_readout'] = None
-        return parameters

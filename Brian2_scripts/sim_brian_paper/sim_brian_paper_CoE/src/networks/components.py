@@ -195,14 +195,14 @@ class BlockGroup(BaseFunctions):
     ----------
     N: int, the number of neurons.
     blocks: list[Block], the contained block list.
-    blocks_type: list[int], the block type order according to 'structure_blocks'.
+    blocks_position: list[int], the block position order according to 'structure_blocks'.
     """
 
     def __init__(self):
         super().__init__()
         self.N = 0
         self.blocks = []
-        self.blocks_type = []
+        self.blocks_position = []
 
     def get_neurons_count(self, blocks = None, specified = None):
         '''
@@ -227,36 +227,41 @@ class BlockGroup(BaseFunctions):
                 N_neurons += block.N
         return N_neurons
 
-    def add_block(self, block, type):
+    def add_block(self, block, position):
         '''
          Add block to the block group.
 
          Parameters
          ----------
          block: Block, the object of Block.
-         type: int, the block type order according to 'structure_blocks'.
-               -1 represents the encoding and readout.
+         position: int, the block position order according to 'structure_blocks'.
+                   -1 represents the encoding and readout.
          '''
 
         self.blocks.append(block)
-        self.blocks_type.append(type)
+        self.blocks_position.append(position)
         self.N += 1
 
-    def initialize(self, parameter_neuron = None, parameter_synapse  = None):
+    def initialize(self, **parameter_block_group):
         '''
          Initial the parameters of blocks.
 
          Parameters
          ----------
-         parameter_neuron, parameter_synapse: list[dict], the parameter of
-         neuron and synapse.
+         parameter_block_group: dict{dict{dict}}, the parameter of neuron and synapse.
          '''
 
-        for block, block_type in zip(self.blocks, self.blocks_type):
-            if parameter_neuron != None:
-                block.initialize(block.neurons, **parameter_neuron[block_type])
-            if parameter_synapse != None:
-                block.initialize(block.synapses, **parameter_synapse[block_type])
+        for block, blocks_position in zip(self.blocks, self.blocks_position):
+            try:
+                parameter_neuron = parameter_block_group['parameter_block_neurons']
+                block.initialize(block.neurons, **parameter_neuron[blocks_position])
+            except:
+                pass
+            try:
+                parameter_synapse = parameter_block_group['parameter_block_synapses']
+                block.initialize(block.synapses, **parameter_synapse[blocks_position])
+            except:
+                pass
 
     def join_network(self, net):
         '''
@@ -528,18 +533,17 @@ class Reservoir(NetworkBase):
 
         self.pathway = pathway
 
-    def initialize(self, parameter_block_neurons, parameter_block_synapses, parameter_pathway):
+    def initialize(self, **parameters_reservoir):
         '''
         Initialize the block group and pathway in the reservoir.
 
          Parameters
          ----------
-         parameter_block_neurons: dict{dict{dict}}, the parameters for neurons of blocks.
-         parameter_block_synapses: dict{dict{dict}}, the parameters for synapses of blocks.
-         parameter_pathway: dict, the parameters for pathway.
+         parameters_reservoir: dict{dict{dict{dict}}}, the parameters for neurons of block group and pathway.
          '''
-        self.block_group.initialize(parameter_block_neurons,parameter_block_synapses)
-        self.pathway.initialize(**parameter_pathway)
+
+        self.block_group.initialize(**parameters_reservoir['parameter_block_group'])
+        self.pathway.initialize(**parameters_reservoir['parameter_pathway'])
 
     def join_network(self, net):
         '''
@@ -618,12 +622,16 @@ class LSM_Network(NetworkBase):
          ----------
          {'encoding': None,
           'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
-          'readout': {'tau_I': 0.1},
+          'readout': {'parameter_block_neurons': {-1: {'tau_I': 0.6}}},
           'reservoir_readout': None,
-          'reservoir': {'parameter_block_neurons': {'hierarchy': {'tau': 0.6, 'tau_I': 0.2},
-                                                    'random': {'tau': 0.3, 'tau_I': 0.2}},
-                        'parameter_block_synapses': {'hierarchy': {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
-                                                     'random': {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
+          'reservoir': {'parameter_block_group': {'parameter_block_neurons': {0: {'tau': 0.6, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2},
+                                                                              1: {'tau': 0.3, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2}},
+                                                                              2: {'tau': 0.6, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2},
+                                                                              3: {'tau': 0.3, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2}},
+                                                  'parameter_block_synapses': {0: {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
+                                                                               1: {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
+                                                                               2: {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
+                                                                               3: {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
                         'parameter_pathway': {'type: 1.0', 'plasticity': 0.2, 'strength': 0.2}}}
          '''
         self._initialize(self.layers, **parameter)
