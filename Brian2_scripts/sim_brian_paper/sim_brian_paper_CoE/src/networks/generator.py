@@ -169,18 +169,18 @@ class Generator_connection_matrix(BaseFunctions):
                 in_post, in_pre = p_in_post.argsort()[::-1], p_in_pre.argsort()[::-1]
                 for in_post_index in in_post:
                     if np.random.rand() <= p_out_mid[out_mid_index] \
-                            and np.random.rand() <= p_out_post[in_post_index]:
+                            and np.random.rand() <= p_in_post[in_post_index]:
                         connection_matrix_out.append(node)
                         connection_matrix_in.append(nodes_post[in_post_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
                         p_in_post[in_post_index] = p_in_post[in_post_index] * decay
                 for in_pre_index in in_pre:
                     if np.random.rand() <= p_out_mid[out_mid_index] \
-                            and np.random.rand() <= p_out_pre[in_pre_index]:
+                            and np.random.rand() <= p_in_pre[in_pre_index]:
                         connection_matrix_out.append(node)
                         connection_matrix_in.append(nodes_pre[in_pre_index])
                         p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
-                        p_out_pre[in_pre_index] = p_out_pre[in_pre_index] * decay
+                        p_in_pre[in_pre_index] = p_in_pre[in_pre_index] * decay
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_reservoir_layer(self, blocks_position, count, layer, structure_type, cmo, cmi):

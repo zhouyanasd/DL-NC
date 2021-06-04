@@ -122,8 +122,8 @@ threshold = clip(threshold+threshold_jump, threshold_solid, threshold_max)
 # --- block layer and reservoir structure ---
 structure_blocks = {'components_0': {'name':'random',     'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
-                    'components_2': {'name':'circle',     'p_0':[0.1, 0.5], 'p_1':[0.1, 0.5], 'p_2':[0.1, 0.5]},
-                    'components_3': {'name':'hierarchy',  'p_0':[0.3, 1.0], 'p_1':[0.3, 1.0], 'p_2':[0.5, 0.9]}}
+                    'components_2': {'name':'circle',     'p_0':[0.4, 0.8], 'p_1':[0.4, 0.8], 'p_2':[0.3, 0.7]},
+                    'components_3': {'name':'hierarchy',  'p_0':[0.8, 1.0], 'p_1':[0.8, 1.0], 'p_2':[0.9, 1.0]}}
 
 structure_layer =  {'components_0': {'structure':[[],[]], 'output_input':[[0,1,2,3],[0,1,2,3]]},
                     'components_1': {'structure':[[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
