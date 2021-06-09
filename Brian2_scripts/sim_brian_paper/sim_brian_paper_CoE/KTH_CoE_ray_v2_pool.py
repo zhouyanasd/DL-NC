@@ -330,9 +330,9 @@ if __name__ == '__main__':
         )
         optimizer.minimize(
             LHS_path=LHS_path,
-            init_points=300,
+            init_points=100,
             is_LHS=True,
-            n_iter=300,
+            n_iter=600,
         )
 
     elif method == 'CoE':
@@ -347,9 +347,9 @@ if __name__ == '__main__':
         coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                             decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                             random_state = seed, maxormin=1,
-                            surrogate_type='rf', init_points=150, LHS_path=LHS_path,
+                            surrogate_type='rf', init_points=100, LHS_path=LHS_path,
                             n_Q = 100, n_estimators=1000)
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=75, NIND=10, SUBPOP=1, GGAP=0.5,
+        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=90, NIND=10, SUBPOP=1, GGAP=0.5,
                      online=False, eva=1, interval=1,
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue = load_continue)
@@ -358,9 +358,9 @@ if __name__ == '__main__':
         coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                             decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                             random_state = seed, maxormin=1,
-                            surrogate_type='gp', init_points=150, LHS_path=LHS_path,
+                            surrogate_type='gp', init_points=100, LHS_path=LHS_path,
                             acq='ucb', kappa=2.576, xi=0.0)
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=75, NIND=10, SUBPOP=1, GGAP=0.5,
+        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=90, NIND=10, SUBPOP=1, GGAP=0.5,
                      online=False, eva=1, interval=1,
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue = load_continue)
