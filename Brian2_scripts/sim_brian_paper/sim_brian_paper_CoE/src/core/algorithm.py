@@ -217,8 +217,7 @@ class Topological_sorting_tarjan(Tarjan):
 
 class Direct_scale_free(BaseFunctions):
     def __init__(self, init_nodes, final_nodes, alpha=0.4, beta=0.2,
-                 gama=0.4, delta_in=1, delta_out=1):
-        super().__init__()
+                 gama=0.4, delta_in=0, delta_out=0):
         self.init_nodes = init_nodes
         self.final_nodes = final_nodes
         self.alpha = alpha
@@ -227,7 +226,7 @@ class Direct_scale_free(BaseFunctions):
         self.delta_in = delta_in
         self.delta_out = delta_out
         self.nodes = list(np.arange(self.init_nodes))
-        self.o, self.i =self._full_connected(self.init_nodes)
+        self.o, self.i = self._full_connected(self.init_nodes)
         self.new_node = self.nodes[-1] + 1
 
     def _full_connected(self, init_nodes):
@@ -241,6 +240,24 @@ class Direct_scale_free(BaseFunctions):
                     i.append(node_post)
                     o.append(node_pre)
         return o, i
+
+    def _check_edge_exist(self, post_node, pre_note):
+        for edge in self.edges:
+            if pre_note == edge[0] and post_node == edge[1]:
+                return True
+            else:
+                return False
+
+    def _check_all_edges_exist(self, pre_notes, post_nodes):
+        for pre_note in pre_notes:
+            for post_node in post_nodes:
+                if self._check_edge_exist(pre_note, post_node):
+                    continue
+                else:
+                    return False
+
+    def _get_absence_edges(self):
+        pass
 
     @property
     def edges(self):
@@ -274,23 +291,37 @@ class Direct_scale_free(BaseFunctions):
         return random_probe_node_in, random_probe_node_out
 
     def add_edge(self):
-        random_probe_node_in, random_probe_node_out = self.rand_prob_node()
         r = np.random.rand()
+        if self.num_nodes <= 1:
+            self.add_node()
+        if self.num_edges == 0:
+            nodes = self.nodes.copy()
+            np.random.shuffle(nodes)
+            self.i.append(nodes[0])
+            self.o.append(nodes[1])
         if r > 0 and r <= self.alpha:
+            random_probe_node_in, random_probe_node_out = self.rand_prob_node()
             self.i.append(random_probe_node_in)
             self.o.append(self.new_node)
+            self.add_node()
         if r > self.alpha and r <= self.beta + self.alpha:
-            self.i.append(random_probe_node_in)
-            self.o.append(random_probe_node_out)
+            random_probe_node_in, random_probe_node_out = self.rand_prob_node()
+            if not self._check_edge_exist(random_probe_node_in, random_probe_node_out):
+                self.i.append(random_probe_node_in)
+                self.o.append(random_probe_node_out)
         if r > self.beta + self.alpha and r <= 1:
+            random_probe_node_in, random_probe_node_out = self.rand_prob_node()
             self.i.append(self.new_node)
             self.o.append(random_probe_node_out)
+            self.add_node()
+
+    def add_node(self):
+        self.nodes.append(self.new_node)
+        self.new_node += 1
 
     def generate_graph(self):
-        for count in range(self.final_nodes - self.init_nodes):
-            self.nodes.append(self.init_nodes + count)
+        while self.new_node != self.final_nodes:
             self.add_edge()
-            self.new_node += 1
 
 
 class Evaluation():

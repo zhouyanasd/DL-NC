@@ -96,11 +96,11 @@ class Generator_connection_matrix(BaseFunctions):
          p_alpha, p_beta, p_gama: double, the connection probability between two neurons.
          '''
 
-        alpha = p_alpha/(p_alpha+p_beta+p_gama)
-        beta = p_beta/(p_alpha+p_beta+p_gama)
-        gama = p_gama/(p_alpha+p_beta+p_gama)
-        DSF = Direct_scale_free(final_nodes = N,  alpha = alpha, beta = beta, gama = gama,
-                                init_nodes = 1, delta_in=1, delta_out = 1)
+        alpha = p_alpha / (p_alpha + p_beta + p_gama)
+        beta = p_beta / (p_alpha + p_beta + p_gama)
+        gama = p_gama / (p_alpha + p_beta + p_gama)
+        DSF = Direct_scale_free(final_nodes=N, alpha=alpha, beta=beta, gama=gama,
+                                init_nodes=1, delta_in=0, delta_out=0)
         DSF.generate_graph()
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return N, np.array([connection_matrix_out, connection_matrix_in])
