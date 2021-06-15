@@ -341,7 +341,7 @@ if __name__ == '__main__':
                   random_state = seed, maxormin=1)
         coe.optimize(recopt=0.9, pm=0.2, MAXGEN=9, NIND=10, SUBPOP=1, GGAP=0.5,
                      selectStyle='tour', recombinStyle='reclin',
-                     distribute=False, drawing=False, load_continue = load_continue)
+                     distribute=False, load_continue = load_continue)
 
     elif method == 'CoE_rf':
         coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
