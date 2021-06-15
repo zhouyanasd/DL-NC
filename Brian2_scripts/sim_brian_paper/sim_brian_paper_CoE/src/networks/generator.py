@@ -105,6 +105,9 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
+    def generate_connection_matrix_blocks_small_world(self, N, p_K, p_reconnect):
+        pass
+
     def generate_connection_matrix_blocks_circle(self, N, p_forward, p_backward, p_threshold):
         '''
          Generate connection matrix of circle block.
