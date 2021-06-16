@@ -17,7 +17,7 @@ class BayesianOptimization(Surrogate):
             alpha=1e-6,
             normalize_y=True,
             n_restarts_optimizer=25,
-            random_state=self._random_state,
+            random_state=random_state,
         )
         self._gp.set_params(**gp_params)
 

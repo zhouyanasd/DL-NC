@@ -1,5 +1,6 @@
 from numpy import asarray, zeros, zeros_like, tile, array, argmin, mod
 from numpy.random import random, randint, rand, seed as rseed, uniform
+import numpy as np
 
 class _function_wrapper(object):
     def __init__(self, f, args, kwargs):
@@ -17,7 +18,7 @@ class DiffEvol(object):
         if seed is not None:
             rseed(seed)
 
-        self.minfun = self._function_wrapper(fun, args, kwargs)
+        self.minfun = _function_wrapper(fun, args, kwargs)
         self.bounds = asarray(bounds)
         self.n_pop = npop
         self.n_par = self.bounds.shape[0]
