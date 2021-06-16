@@ -72,6 +72,14 @@ class NetworkBase(BaseFunctions):
         nx.draw_networkx_edges(G, pos, edgelist=G.edges(), arrows=True)
         plt.show()
 
+    def vis_block_2(self, edges):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        G = nx.DiGraph()
+        G.add_edges_from(edges)
+        pos = nx.circular_layout(G)  # 布置框架
+        nx.draw(G, pos, with_labels=False, node_size=30)
+        plt.show()
 
 class Block(NetworkBase):
     """
