@@ -129,14 +129,12 @@ class TargetSpace(object):
         return bounds
 
     def add_precision(self, x, precisions):
-        shape = x.shape
+        _x = x.reshape(1, -1) if x.ndim ==1 else x.copy()
+        shape = _x.shape
         result = np.zeros(shape)
-        try:
-            for i in range(shape[1]):
-                result[:, i] = np.round(x[:, i], precisions[i])
-        except IndexError:
-            result = np.round(x, precisions)
-        return result
+        for i in range(shape[1]):
+            result[:, i] = np.round(_x[:, i], precisions[i])
+        return result.reshape(-1) if x.ndim ==1 else result
 
     def params_to_array(self, params):
         try:
