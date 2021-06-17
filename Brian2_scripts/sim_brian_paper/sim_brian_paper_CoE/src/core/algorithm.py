@@ -218,6 +218,7 @@ class Topological_sorting_tarjan(Tarjan):
 class Direct_scale_free(BaseFunctions):
     def __init__(self, init_nodes, final_nodes, alpha=0.4, beta=0.2,
                  gama=0.4, delta_in=0, delta_out=0):
+        super().__init__()
         self.init_nodes = init_nodes
         self.final_nodes = final_nodes
         self.alpha = alpha
