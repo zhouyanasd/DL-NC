@@ -111,6 +111,10 @@ class TargetSpace(object):
     def bounds(self):
         return self._bounds
 
+    @property
+    def precisions(self):
+        return self._precisions
+
     #TODO: this function is the same as ga.crtfld
     def get_bounds(self, ranges, borders, precisions):
         shape = ranges.shape
@@ -127,8 +131,11 @@ class TargetSpace(object):
     def add_precision(self, x, precisions):
         shape = x.shape
         result = np.zeros(shape)
-        for i in range(shape[1]):
-            result[:, i] = np.round(x[:, i], precisions[i])
+        try:
+            for i in range(shape[1]):
+                result[:, i] = np.round(x[:, i], precisions[i])
+        except IndexError:
+            result = np.round(x, precisions)
         return result
 
     def params_to_array(self, params):
@@ -276,7 +283,7 @@ class TargetSpace(object):
         return res
 
     def min(self):
-        """Get maximum target value found and corresponding parametes."""
+        """Get minimum target value found and corresponding parametes."""
         try:
             res = {
                 'target': self.target.min(),
@@ -460,7 +467,7 @@ class Surrogate():
             self.model.fit(self._space.params, self._space.target)
 
     def guess(self, X):
-        gauss_value = self.model.guess_fixedpoint(X)
+        gauss_value = self.model.predict(X)
         return gauss_value
 
     def predict(self, X):
@@ -502,7 +509,7 @@ class RandomForestRegressor_surrogate(Surrogate):
             model=self._rf
         )
 
-    def guess(self, X):
+    def predict(self, X):
         y_predict = self.model.predict(X)
         y_all_tree = np.array(self.model.y_hat_).T
         y_order_index = y_all_tree.argsort()
@@ -515,9 +522,9 @@ class RandomForestRegressor_surrogate(Surrogate):
         y_predict = y_selected.mean(axis=0)
         return y_predict
 
-    def predict(self, X):
-        predict_value = self.guess(X)
-        return predict_value
+    def guess(self, X):
+        guess_value = self.predict(X)
+        return guess_value
 
     def _uniform_select(self, index):
         n = len(index)

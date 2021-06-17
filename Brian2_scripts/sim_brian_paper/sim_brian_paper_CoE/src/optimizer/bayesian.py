@@ -9,8 +9,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 import cma
 
 class BayesianOptimization(Surrogate):
-    def __init__(self, f, keys, ranges, borders, precisions, random_state=None, acq='ucb', opt='de', kappa=2.576, xi=0.0,
-                  verbose=0, **gp_params):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state=None,
+                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **gp_params):
         # Internal GP regressor
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
@@ -38,8 +38,6 @@ class BayesianOptimization(Surrogate):
 
         self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds = self._space.bounds)
 
-        self._verbose = verbose
-
     def acq_min_CMA(self, ac, gp, y_min, bounds, random_state):
         x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
                                        size=(bounds.shape[0]))
@@ -54,7 +52,6 @@ class BayesianOptimization(Surrogate):
         de = DiffEvol(lambda x: ac(x.reshape(1, -1), gp=gp, y_min=y_min)[0], bounds, npop, f=f, c=c,
                       seed=random_state)
         de.optimize(ngen)
-        print(de.minimum_value, de.minimum_location, de.minimum_index)
         x_min = de.minimum_location
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
@@ -68,13 +65,14 @@ class BayesianOptimization(Surrogate):
             bounds=self._space.bounds,
             random_state=self._random_state.randint(100000)
         )
-        return self._space.array_to_params(suggestion)
+        return self._space.array_to_params(self._space.add_precision(suggestion,self._space.precisions))
 
     def minimize(self,
                  LHS_path=None,
                  init_points=5,
                  is_LHS=False,
                  n_iter=25,
+                 show = False,
                  ):
         """Mazimize your function"""
 
@@ -89,3 +87,5 @@ class BayesianOptimization(Surrogate):
                 x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
+            if show:
+                print(self._space.min())
