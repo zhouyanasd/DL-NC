@@ -72,6 +72,7 @@ class BayesianOptimization(Surrogate):
                  init_points=5,
                  is_LHS=False,
                  n_iter=25,
+                 online = True,
                  show = False,
                  ):
         """Mazimize your function"""
@@ -83,7 +84,8 @@ class BayesianOptimization(Surrogate):
             try:
                 x_probe = next(self._queue)
             except StopIteration:
-                self.update_model()
+                if online:
+                    self.update_model()
                 x_probe = self.suggest()
                 iteration += 1
             self.probe(x_probe, lazy=False)
