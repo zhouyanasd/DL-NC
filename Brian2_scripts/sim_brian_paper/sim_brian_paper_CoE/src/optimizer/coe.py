@@ -46,9 +46,6 @@ class OptimizerBase(BaseFunctions):
         self.ObjV = []
         self.LegV = []
 
-    def is_need_encoding(self, SubCom):
-        return (np.array(self.codes[SubCom]) != None).any()
-
     def set_random_state(self, random_state=None):
         if random_state is None:
             np.random.seed(int(self.start_time))
@@ -80,8 +77,8 @@ class OptimizerBase(BaseFunctions):
                          self.P, self.gen, self.end_time, np.random.get_state()),
                         file, pickle.HIGHEST_PROTOCOL)
 
-    def load_states(self):
-        with open('./coe.p', 'rb') as file:
+    def load_states(self, path='./coe.p'):
+        with open(path, 'rb') as file:
             # 重新载入历史的进化数据
             self.B, self.F_B, self.ObjV, self.LegV, self.pop_trace, self.var_trace, \
             self.P, self.gen, times, numpy_state, kwargs_ = pickle.load(file)
@@ -90,46 +87,6 @@ class OptimizerBase(BaseFunctions):
             self.end_time = time.time()
             # 恢复随机数
             self.set_random_state(numpy_state)
-
-    def get_sub_FieldD(self, SubCom):
-        index_ib = np.where(np.array(self.codes[SubCom]) != None)[0]
-        codes_ib = self.codes[SubCom][index_ib]
-        scales_ib = self.scales[SubCom][index_ib]
-        ranges_ib = self.ranges[:, SubCom][:, index_ib]
-        borders_ib = self.borders[:, SubCom][:, index_ib]
-        precisions_ib = self.precisions[SubCom][index_ib]
-        FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
-        if not ga.is2(FieldD):
-            raise Exception('worng range of binary coding')
-        return index_ib, FieldD
-
-    def get_sub_FieldDR(self, SubCom):
-        index_ir = np.where(np.array(self.codes[SubCom]) == None)[0]
-        FieldDR_i = self.FieldDR[:, SubCom]
-        FieldDR = FieldDR_i[:, index_ir]
-        return index_ir, FieldDR
-
-    def binary_encoding(self, P, SubCom):
-        if self.is_need_encoding(SubCom):
-            NIND = len(P)
-            index, FieldD = self.get_sub_FieldD(SubCom)
-            Lind = np.sum(FieldD[0, :])  # 种群染色体长度
-            P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
-            variable = ga.bs2rv(P_ib, FieldD)  # 解码
-            P[:, index] = variable
-
-    def update_context_vector(self, Chrom, B, F_B, ObjVSel, LegVSel):
-        _B, _F_B = B, F_B
-        for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel, LegVSel)):
-            if self.maxormin == 1:
-                if ObjVSel_j < F_B and LegVSel_j == 1:
-                    _F_B = ObjVSel_j
-                    _B[0] = Chrom[j, :]
-            if self.maxormin == -1:
-                if ObjVSel_j > F_B and LegVSel_j == 1:
-                    _F_B = ObjVSel_j
-                    _B[0] = Chrom[j, :]
-        return _B, _F_B
 
     def update_generation(self):
         # 记录当代目标函数的最优值
@@ -166,7 +123,253 @@ class OptimizerBase(BaseFunctions):
         print('时间已过 %s 秒' % (self.get_times()))
 
 
-class CoE(OptimizerBase):
+class EvolutionBase(OptimizerBase):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
+
+    def add_distribute(self, ObjV, FitnV):
+        idx = np.argsort(ObjV[:, 0], 0)
+        dis = np.diff(ObjV[idx, 0]) / (
+                np.max(ObjV[idx, 0]) - np.min(ObjV[idx, 0]) + 1)  # 差分计算距离的修正偏移量
+        dis = np.hstack([dis, dis[-1]])
+        dis = dis + np.min(dis)  # 修正偏移量+最小量=修正绝对量
+        FitnV[idx, 0] *= np.exp(dis)  # 根据相邻距离修改适应度，突出相邻距离大的个体，以增加种群的多样性
+
+    def non_feasible_solution(self, ObjV_i, LegV_i, FitnV, repnum, badCounter):
+        # 获取最优个体的下标
+        bestIdx = np.argmax(FitnV)
+        if LegV_i[bestIdx] != 0:
+            # feasible = np.where(LegV_i != 0)[0]
+            # 计算最优个体重复数
+            repnum_ = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])
+            # badCounter计数器清零
+            badCounter_ = 0
+        else:
+            # 忽略这一代
+            self.gen -= 1
+            repnum_ = repnum
+            badCounter_  = badCounter + 1
+        return badCounter_, repnum_
+
+    def update_context_vector(self, Chrom, B, F_B, ObjVSel, LegVSel):
+        _B, _F_B = B, F_B
+        for j, (ObjVSel_j, LegVSel_j) in enumerate(zip(ObjVSel, LegVSel)):
+            if self.maxormin == 1:
+                if ObjVSel_j < F_B and LegVSel_j == 1:
+                    _F_B = ObjVSel_j
+                    _B[0] = Chrom[j, :]
+            if self.maxormin == -1:
+                if ObjVSel_j > F_B and LegVSel_j == 1:
+                    _F_B = ObjVSel_j
+                    _B[0] = Chrom[j, :]
+        return _B, _F_B
+
+class CoorperateEvolutionBase(EvolutionBase):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
+
+    def is_need_encoding(self, SubCom):
+        return (np.array(self.codes[SubCom]) != None).any()
+
+    def binary_encoding(self, P, SubCom):
+        if self.is_need_encoding(SubCom):
+            NIND = len(P)
+            index, FieldD = self.get_sub_FieldD(SubCom)
+            Lind = np.sum(FieldD[0, :])  # 种群染色体长度
+            P_ib = ga.crtbp(NIND, Lind)  # 生成初始种
+            variable = ga.bs2rv(P_ib, FieldD)  # 解码
+            P[:, index] = variable
+
+    def get_sub_FieldD(self, SubCom):
+        index_ib = np.where(np.array(self.codes[SubCom]) != None)[0]
+        codes_ib = self.codes[SubCom][index_ib]
+        scales_ib = self.scales[SubCom][index_ib]
+        ranges_ib = self.ranges[:, SubCom][:, index_ib]
+        borders_ib = self.borders[:, SubCom][:, index_ib]
+        precisions_ib = self.precisions[SubCom][index_ib]
+        FieldD = ga.crtfld(ranges_ib, borders_ib, list(precisions_ib), list(codes_ib), list(scales_ib))
+        if not ga.is2(FieldD):
+            raise Exception('worng range of binary coding')
+        return index_ib, FieldD
+
+    def get_sub_FieldDR(self, SubCom):
+        index_ir = np.where(np.array(self.codes[SubCom]) == None)[0]
+        FieldDR_i = self.FieldDR[:, SubCom]
+        FieldDR = FieldDR_i[:, index_ir]
+        return index_ir, FieldDR
+
+
+class GA(EvolutionBase):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
+
+    def initialize_offspring(self, NIND):
+        # 初始化各个子种群
+        self.P = ga.crtrp(NIND, self.FieldDR)
+        self.P = self._space.add_precision(self.P, self._space.precisions)
+        self.LegV = np.ones((NIND, 1))
+        # 求子问题的目标函数值
+        [self.ObjV, self.LegV] = self.aimfunc(self.P, self.LegV)
+        # 从代理模型初始化的数据中找到最好的点
+        self.B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
+        # 求初代context vector 的 fitness
+        self.F_B = np.array([self._space.target.min()])
+
+    def remu(self, P, recombinStyle, recopt, SUBPOP, pm, distribute, repnum):
+        SelCh = ga.recombin(recombinStyle, P, recopt, SUBPOP)  # 重组
+        SelCh = ga.mutbga(SelCh, self.FieldDR, pm)  # 变异
+        if distribute == True and repnum > P.shape[0] * 0.01:  # 当最优个体重复率高达1%时，进行一次高斯变异
+            SelCh = ga.mutgau(SelCh, self.FieldDR, pm)  # 高斯变异
+        return self._space.add_precision(SelCh, self._space.precisions)
+
+    def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
+                 selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
+
+        if load_continue:
+            self.load_states()
+        else:
+            # 初始化各个子种群
+            self.initialize_offspring(NIND)
+            # 根据时间改变随机数
+            self.set_random_state()
+        # 初始化重复个体数为0
+        repnum = [0] * len(self.SubCom)
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
+        while self.gen < MAXGEN:
+            # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
+            if badCounter >= 10 * MAXGEN:
+                break
+            # 进行遗传算子的重组和变异，生成子代
+            SelCh = self.remu(self.P, recombinStyle, recopt, SUBPOP, pm, distribute, repnum)
+            # 初始化育种种群的可行性列向量
+            LegVSel = np.ones((SelCh.shape[0], 1))
+            # 求育种种群的目标函数值
+            [ObjVSel, LegVSel] = self.aimfunc(SelCh, LegVSel)
+            # 更新context vector 及其fitness （已经考虑排除不可行解）
+            self.B, self.F_B = self.update_context_vector(SelCh, self.B, self.F_B, ObjVSel, LegVSel)
+            # 父子合并
+            self.P = np.vstack([self.P, SelCh])
+            self.ObjV = np.vstack([self.ObjV, ObjVSel])
+            self.LegV = np.vstack([self.LegV, LegVSel])
+            # 对合并的种群进行适应度评价
+            FitnV = ga.ranking(self.maxormin * self.ObjV, self.LegV, None, SUBPOP)
+            # 调用罚函数
+            FitnV = self.punfunc(self.LegV, FitnV)
+            # 排除非可行解
+            badCounter, repnum = self.non_feasible_solution(self.ObjV, self.LegV, FitnV, repnum, badCounter)
+            if distribute == True:
+                self.add_distribute(ObjV_i, FitnV)
+            # 选择个体生成新一代种群
+            [self.P, self.ObjV, self.LegV] = ga.selecting(selectStyle, self.P, FitnV, GGAP, SUBPOP, self.ObjV,
+                                                          self.LegV)
+            self.update_generation()
+        # ====================处理进化记录==================================
+        # 处理进化记录并获取最佳结果
+        self.deal_records()
+
+
+class GA_surrogate(GA):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin,
+                surrogate_type, init_points, LHS_path, **surrogate_parameters):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
+
+        self.surrogate = create_surrogate(surrogate_type=surrogate_type, f=f, random_state=random_state,
+                                          keys=keys, ranges=ranges, borders=borders, precisions=precisions,
+                                          **surrogate_parameters)
+        self.surrogate.initial_model(init_points=init_points, LHS_path=LHS_path, is_LHS=True, lazy=False)
+        self._space = self.surrogate._space
+
+    def initialize_offspring(self, NIND):
+        # 初始化各个子种群
+        self.P = ga.crtrp(NIND, self.FieldDR)
+        self.P = self._space.add_precision(self.P, self._space.precisions)
+        self.LegV = np.ones((NIND, 1))
+        # 初代中确直接用代理评估出来
+        self.ObjV = self.surrogate.predict(self.P).reshape(-1, 1)
+        # 从代理模型初始化的数据中找到最好的点
+        self.B = np.expand_dims(self._space.params[self._space.target.argmin()], 0)
+        # 求初代context vector 的 fitness
+        self.F_B = np.array([self._space.target.min()])
+
+    def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5, online=True, eva=1, interval=1,
+                 selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
+
+        if load_continue:
+            self.load_states()
+        else:
+            # 初始化各个子种群
+            self.initialize_offspring(NIND)
+            # 根据时间改变随机数
+            self.set_random_state()
+        # 设置一个用原函数评估的代数间隔
+        estimation = interval - 1
+        # 初始化重复个体数为0
+        repnum = [0] * len(self.SubCom)
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
+        while self.gen < MAXGEN:
+            # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
+            if badCounter >= 10 * MAXGEN:
+                break
+            # 本轮估计次数+1
+            estimation += 1
+            # 进行遗传算子的重组和变异，生成子代
+            SelCh = self.remu(self.P, recombinStyle, recopt, SUBPOP, pm, distribute, repnum)
+            # 初始化育种种群的可行性列向量
+            LegVSel = np.ones((SelCh.shape[0], 1))
+            # get the estimated value thought the surrogate
+            ObjVSel = self.surrogate.predict(SelCh).reshape(-1, 1)
+            # 估计子种群的acquisition function value
+            guess = self.surrogate.guess(SelCh)
+            # 如果评估次数大于代数间隔就进行原函数评估
+            if estimation >= interval:
+                # 找到估计最好的eva个基因序号
+                best_guess = guess.argsort()[0:int(eva)]
+                # 找到估计最好的eva个基因
+                SelCh_ = np.array(SelCh)[best_guess]
+                # 初始化实际评估种群的可行性列向量
+                LegVSel_ = np.ones((SelCh_.shape[0], 1))
+                # 求育种种群的目标函数值
+                [ObjVSel_, LegVSel_] = self.aimfunc(SelCh_, LegVSel_)
+                # 如果在线更新，则更新代理模型
+                if online:
+                    # update the BO model
+                    self.surrogate.update_model()
+                # replace the estimated value by real value
+                ObjVSel[best_guess] = ObjVSel_
+                LegVSel[best_guess] = LegVSel_
+                # 更新context vector 及其fitness （已经考虑排除不可行解）
+                self.B, self.F_B = self.update_context_vector(SelCh, self.B, self.F_B, ObjVSel, LegVSel)
+            # 父子合并
+            self.P = np.vstack([self.P, SelCh])
+            self.ObjV = np.vstack([self.ObjV, ObjVSel])
+            self.LegV = np.vstack([self.LegV, LegVSel])
+            # 对合并的种群进行适应度评价
+            FitnV = ga.ranking(self.maxormin * self.ObjV, self.LegV, None, SUBPOP)
+            # 调用罚函数
+            FitnV = self.punfunc(self.LegV, FitnV)
+            # 排除非可行解
+            badCounter, repnum = self.non_feasible_solution(self.ObjV, self.LegV, FitnV, repnum, badCounter)
+            if distribute == True:
+                self.add_distribute(ObjV_i, FitnV)
+            # 选择个体生成新一代种群
+            [self.P, self.ObjV, self.LegV] = ga.selecting(selectStyle, self.P, FitnV, GGAP, SUBPOP, self.ObjV,
+                                                          self.LegV)
+            # 如果估计次数大于间隔则清零计数
+            if estimation >= interval:
+                estimation = 0
+            self.update_generation()
+        # ====================处理进化记录==================================
+        # 处理进化记录并获取最佳结果
+        self.deal_records()
+
+
+class CoE(CoorperateEvolutionBase):
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin):
         super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
 
@@ -177,7 +380,7 @@ class CoE(OptimizerBase):
             B_i = ga.crtrp(1, FieldDR_i)
             self.binary_encoding(B_i, SubCom_i)
             self.B.extend(list(B_i[0]))
-        self.B  = self._space.add_precision(np.array(self.B).reshape(1, -1), self._space._precisions)
+        self.B  = self._space.add_precision(np.array(self.B).reshape(1, -1), self._space.precisions)
         # 初始化各个子种群
         for SubCom_i in self.SubCom:
             FieldDR_i = self.FieldDR[:, SubCom_i]
@@ -188,7 +391,7 @@ class CoE(OptimizerBase):
             # 替换context vector中个体基因
             Chrom = self.B.copy().repeat(NIND, axis=0)
             Chrom[:, SubCom_i] = P_i
-            Chrom = self._space.add_precision(Chrom, self._space._precisions)
+            Chrom = self._space.add_precision(Chrom, self._space.precisions)
             LegV_i = np.ones((NIND, 1))
             # 求子问题的目标函数值
             [ObjV_i, LegV_i] = self.aimfunc(Chrom, LegV_i)
@@ -219,31 +422,7 @@ class CoE(OptimizerBase):
             SelCh_ib = ga.mutbin(SelCh_ib, pm)  # 变异
             variable = ga.bs2rv(SelCh_ib, FieldD)  # 解码
             SelCh[:, index_ib] = variable
-        return self._space.add_precision(SelCh, self._space._precisions[SubCom])
-
-    def add_distribute(self, ObjV, FitnV):
-        idx = np.argsort(ObjV[:, 0], 0)
-        dis = np.diff(ObjV[idx, 0]) / (
-                np.max(ObjV[idx, 0]) - np.min(ObjV[idx, 0]) + 1)  # 差分计算距离的修正偏移量
-        dis = np.hstack([dis, dis[-1]])
-        dis = dis + np.min(dis)  # 修正偏移量+最小量=修正绝对量
-        FitnV[idx, 0] *= np.exp(dis)  # 根据相邻距离修改适应度，突出相邻距离大的个体，以增加种群的多样性
-
-    def non_feasible_solution(self, ObjV_i, LegV_i, FitnV, repnum, badCounter):
-        # 获取最优个体的下标
-        bestIdx = np.argmax(FitnV)
-        if LegV_i[bestIdx] != 0:
-            # feasible = np.where(LegV_i != 0)[0]
-            # 计算最优个体重复数
-            repnum_ = len(np.where(ObjV_i[bestIdx] == ObjV_i)[0])
-            # badCounter计数器清零
-            badCounter_ = 0
-        else:
-            # 忽略这一代
-            self.gen -= 1
-            repnum_ = repnum
-            badCounter_  = badCounter + 1
-        return badCounter_, repnum_
+        return self._space.add_precision(SelCh, self._space.precisions[SubCom])
 
     def optimize(self, recopt=0.9, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
                  selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
@@ -326,7 +505,7 @@ class CoE_surrogate(CoE):
             # 替换context vector中个体基因
             Chrom = self.B.copy().repeat(NIND, axis=0)
             Chrom[:, SubCom_i] = P_i
-            Chrom = self._space.add_precision(Chrom, self._space._precisions)
+            Chrom = self._space.add_precision(Chrom, self._space.precisions)
             LegV_i = np.ones((NIND, 1))
             # 初代中确直接用代理评估出来
             ObjV_i = self.surrogate.predict(Chrom).reshape(-1, 1)
