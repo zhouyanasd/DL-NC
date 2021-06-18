@@ -527,12 +527,6 @@ class RandomForestRegressor_surrogate(Surrogate):
         guess_value = self.predict(X)
         return guess_value
 
-    def _uniform_select(self, index):
-        n = len(index)
-        idx = np.round(np.linspace(0, n - 1, self.n_Q)).astype(int)
-        return index[idx]
-
-
 
 class GaussianProcess_surrogate(Surrogate):
     def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
