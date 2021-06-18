@@ -491,7 +491,8 @@ class RandomForestRegressor_surrogate(Surrogate):
             n_jobs=1,
             random_state=None,
             verbose=0,
-            warm_start=False
+            warm_start=False,
+            c_features = None,
         )
         self._rf.set_params(**rf_params)
 
