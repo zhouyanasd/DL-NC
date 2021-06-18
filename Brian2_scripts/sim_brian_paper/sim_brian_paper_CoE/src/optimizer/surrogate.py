@@ -508,16 +508,18 @@ class RandomForestRegressor_surrogate(Surrogate):
         )
 
     def predict(self, X):
-        y_predict = self.model.predict(X)
+        x_best = self.space.params_to_array(self.space.min()['params']).reshape(1, -1)
+        y_best = self.space.min()['target']
+        self.model.predict(x_best)
+        y_all_tree = np.array(self.model.y_hat_).reshape(-1)
+        y_acc = np.abs(y_all_tree-y_best)
+        p_choice = (np.max(y_acc)-y_acc)/np.sum(np.max(y_acc)-y_acc)
+        y_selected_index = np.random.choice(np.arange(self.model.n_estimators), size=self.n_Q, p= p_choice, replace=False)
+
+        self.model.predict(X)
         y_all_tree = np.array(self.model.y_hat_).T
-        y_order_index = y_all_tree.argsort()
-        y_selected_index = []
-        y_selected = []
-        for i in range(len(y_all_tree)):
-            y_selected_index.append(self._uniform_select(y_order_index[i]))
-            y_selected.append(y_all_tree[i][y_selected_index[i]])
-        y_selected = np.array(y_selected).T
-        y_predict = y_selected.mean(axis=0)
+        y_selected = y_all_tree[:,y_selected_index]
+        y_predict = y_selected.mean(axis=1)
         return y_predict
 
     def guess(self, X):
