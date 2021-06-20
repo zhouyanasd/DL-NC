@@ -16,6 +16,7 @@ __all__ = [
     "DiffEvol",
     "BayesianOptimization",
     "RandomForestRegressor_surrogate",
+    "RandomForestRegressor_surrogate_wang",
     "GaussianProcess_surrogate",
     "CoE",
     "CoE_surrogate",

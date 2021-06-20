@@ -1,4 +1,5 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.random_forest import RandomForestRegressor_
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.random_forest import \
+    RandomForestRegressor, RandomForestRegressor_wang
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.utility_functions import UtilityFunction
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -473,9 +474,9 @@ class Surrogate():
         return predict_value
 
 
-class RandomForestRegressor_surrogate(Surrogate):
+class RandomForestRegressor_surrogate_wang(Surrogate):
     def __init__(self, f, keys, ranges, borders, precisions, random_state, n_Q, **rf_params):
-        self._rf = RandomForestRegressor_(
+        self._rf = RandomForestRegressor_wang(
             n_estimators=10,
             criterion="mse",
             max_depth=None,
@@ -498,7 +499,7 @@ class RandomForestRegressor_surrogate(Surrogate):
 
         self.n_Q = n_Q
 
-        super(RandomForestRegressor_surrogate, self).__init__(
+        super(RandomForestRegressor_surrogate_wang, self).__init__(
             f=f,
             keys = keys,
             ranges = ranges,
@@ -526,6 +527,45 @@ class RandomForestRegressor_surrogate(Surrogate):
     def guess(self, X):
         guess_value = self.predict(X)
         return guess_value
+
+
+class RandomForestRegressor_surrogate(Surrogate):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='ucb', kappa=2.576, xi=0.0, **rf_params):
+        self._rf = RandomForestRegressor(
+            n_estimators=10,
+            criterion="mse",
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.,
+            max_features="auto",
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.,
+            min_impurity_split=None,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=1,
+            random_state=None,
+            verbose=0,
+            warm_start=False,
+        )
+        self._rf.set_params(**rf_params)
+
+        super(RandomForestRegressor_surrogate, self).__init__(
+            f=f,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
+            random_state=random_state,
+            model=self._rf
+        )
+
+        self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds=self._space.bounds)
+
+    def guess(self, X):
+        y =self.utility_function.utility(X, self.model, self._space.target.min())
+        return y
 
 
 class GaussianProcess_surrogate(Surrogate):
@@ -567,15 +607,24 @@ def create_surrogate(surrogate_type, f, keys, ranges, borders, precisions, rando
                                               **surrogate_parameters)
         return surrogate
     elif surrogate_type == 'rf':
-        n_Q = surrogate_parameters.pop('n_Q')
+        acq = surrogate_parameters.pop('acq')
+        kappa = surrogate_parameters.pop('kappa'),
+        xi = surrogate_parameters.pop('xi'),
         surrogate = RandomForestRegressor_surrogate(f = f, keys=keys, ranges=ranges, borders=borders,
                                                     precisions=precisions, random_state = random_state,
-                                                    n_Q = n_Q,
+                                                    acq=acq, kappa=kappa, xi=xi,
                                                     **surrogate_parameters)
+        return surrogate
+    elif surrogate_type == 'rf_w':
+        n_Q = surrogate_parameters.pop('n_Q')
+        surrogate = RandomForestRegressor_surrogate_wang(f = f, keys=keys, ranges=ranges, borders=borders,
+                                                         precisions=precisions, random_state = random_state,
+                                                         n_Q = n_Q,
+                                                         **surrogate_parameters)
         return surrogate
     elif surrogate_type == None:
         surrogate = Surrogate(f=f, keys=keys, ranges=ranges, borders=borders,
                               precisions=precisions, random_state=random_state, model=None)
         return surrogate
     else:
-        raise ('Wrong surrogate type, only "gp" or "rl" or None')
+        raise ('Wrong surrogate type, only "gp" or "rl" or "rf_w" or None')
