@@ -83,8 +83,8 @@ np_state = np.random.get_state()
 # -----simulation parameter setting-------
 core = 60
 
-method = 'CoE_rf'
-total_eva = 300
+method = 'CoE_rf_w'
+total_eva = 600
 load_continue = False
 
 DataName = 'coe_[15,5,4]'
