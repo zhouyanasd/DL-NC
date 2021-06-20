@@ -360,7 +360,7 @@ if __name__ == '__main__':
                             decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                             random_state = seed, maxormin=1,
                             surrogate_type='rf', init_points=100, LHS_path=LHS_path,
-                            acq='ucb', kappa=2.576, xi=0.0, n_estimators=100)
+                            acq='ucb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
         coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450, NIND=20, SUBPOP=1, GGAP=0.5,
                      online=True, eva=2, interval=10,
                      selectStyle='tour', recombinStyle='reclin',

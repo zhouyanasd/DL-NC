@@ -541,13 +541,13 @@ class RandomForestRegressor_surrogate(Surrogate):
             max_features="auto",
             max_leaf_nodes=None,
             min_impurity_decrease=0.,
-            min_impurity_split=None,
             bootstrap=True,
             oob_score=False,
             n_jobs=1,
             random_state=None,
             verbose=0,
             warm_start=False,
+            min_variance=0.0,
         )
         self._rf.set_params(**rf_params)
 
