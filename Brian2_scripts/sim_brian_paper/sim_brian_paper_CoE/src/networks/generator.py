@@ -16,6 +16,13 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
 from brian2 import *
 
 
+def convert_networkx(G):
+    N = G.number_of_nodes()
+    edges = G.edges()
+    connection_matrix_out, connection_matrix_in = [e[0] for e in edges], [e[1] for e in edges]
+    return N, np.array([connection_matrix_out, connection_matrix_in])
+
+
 class Generator_connection_matrix(BaseFunctions):
     """
     This class offers the connection matrix generation functions
@@ -105,8 +112,74 @@ class Generator_connection_matrix(BaseFunctions):
         connection_matrix_out, connection_matrix_in = DSF.o, DSF.i
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_blocks_small_world(self, N, p_K, p_reconnect):
-        pass
+    def generate_connection_matrix_blocks_small_world(self, N, p_k, p_reconnect):
+        '''
+         Generate connection matrix of small world.
+
+         Parameters
+         ----------
+         N: int, number of neurons of the block.
+         p_k: float, each node is joined with its `np.ceil(p_k*N)` nearest neighbors in a ring topology.
+         p_reconnect： float, the probability of rewriting a new edge for each edge.，
+
+         See Also
+         --------
+         watts_strogatz_graph
+
+         References
+         ----------
+         [1] Duncan J. Watts and Steven H. Strogatz,
+             Collective dynamics of small-world networks,
+             Nature, 393, pp. 440--442, 1998.
+         [2] https://github.com/networkx/networkx/blob/main/networkx/generators/random_graphs.py
+         '''
+
+        if p_k >=1:
+            return self.generate_connection_matrix_blocks_random(N, 1)
+
+        k = np.floor(p_k * N).astype(np.int)
+        k_h = np.floor(0.5 * k).astype(np.int)
+
+        connection_matrix_out, connection_matrix_in = [], []
+        nodes = np.arange(N)
+        start = np.random.randint(0, N)
+        circle = []
+        for i in range(N):
+            try:
+                circle.append(nodes[start + i])
+            except IndexError:
+                circle.append(nodes[start + i -N])
+        circle = circle + circle
+
+        for index_pre, node_pre in enumerate(circle[:N]):
+            for index_post, node_post in enumerate(circle[index_pre+1:N+index_pre+1]):
+                distance = index_post
+                if distance <= k_h:
+                    connection_matrix_out.append(node_pre)
+                    connection_matrix_in.append(node_post)
+                    connection_matrix_out.append(node_post)
+                    connection_matrix_in.append(node_pre)
+                else:
+                    break
+
+        edges = list(zip(connection_matrix_out, connection_matrix_in))
+
+        for index_pre, node_pre in enumerate(circle[:N]):
+            for index_post, node_post in enumerate(circle[index_pre+1:N+index_pre+1]):
+                distance = index_post
+                if distance <= k_h and np.random.rand() <= p_reconnect:
+                    node = np.random.choice(nodes)
+                    while node_pre == node or (node, node_post) in edges:
+                        node = np.random.choice(nodes)
+                        if sum(np.array(connection_matrix_out) == node) >= N-1:
+                            break
+                    else:
+                        edges.remove((node_pre, node_post))
+                        edges.append((node_pre, node))
+
+        connection_matrix_out, connection_matrix_in = [e[0] for e in edges], [e[1] for e in edges]
+
+        return N, np.array([connection_matrix_out, connection_matrix_in])
 
     def generate_connection_matrix_blocks_circle(self, N, p_forward, p_backward, p_threshold):
         '''
