@@ -512,6 +512,7 @@ def bs2int(Chrom, FieldD):
 def is2(FieldD):
     r = FieldD[2, :] - FieldD[1, :]
     result = [dec2bin(x, l) for x, l in zip(r, FieldD[0, :])]
+    result = [i for item in result for i in item]
     if (np.array(result) == 1).all():
         return True
     else:
