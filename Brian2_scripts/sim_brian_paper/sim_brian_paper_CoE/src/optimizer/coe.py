@@ -81,7 +81,7 @@ class OptimizerBase(BaseFunctions):
         with open(path, 'rb') as file:
             # 重新载入历史的进化数据
             self.B, self.F_B, self.ObjV, self.LegV, self.pop_trace, self.var_trace, \
-            self.P, self.gen, times, numpy_state, kwargs_ = pickle.load(file)
+            self.P, self.gen, times, numpy_state = pickle.load(file)
             # 初始化计时
             self.start_time = time.time() - times
             self.end_time = time.time()
