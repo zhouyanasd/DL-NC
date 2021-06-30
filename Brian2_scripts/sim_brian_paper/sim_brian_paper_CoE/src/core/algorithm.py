@@ -166,13 +166,15 @@ class Topological_sorting_tarjan(Tarjan):
         incoming = []
         outgoing = []
         _g = self.g.copy()
+        _g_0 = np.sum(_g, 0)
+        _g_1 = np.sum(_g, 1)
         for c_root in self._sorting: # 这里先将链接矩阵中所有强连通分量的链接删除
             c_sub = self.components[c_root]
             X, Y = np.meshgrid(c_sub, c_sub)
             for x, y in zip(X.reshape(-1, ).tolist(), Y.reshape(-1, ).tolist()):
                 _g[x][y] = 0
-            _g_input = np.sum(_g, 0)[c_sub] # 然后统计各个强连通分量的出入链接数
-            _g_output = np.sum(_g, 1)[c_sub]
+            _g_input = _g_0[c_sub] # 然后统计各个强连通分量的出入链接数
+            _g_output = _g_1[c_sub]
             if sum(_g_input) == 0: # 将入/出度为0的分量（包括只有一个节点的）作为输入/出（多节点随机选一个）
                 _c_sub = c_sub.copy()
                 np.random.shuffle(_c_sub)
@@ -187,13 +189,15 @@ class Topological_sorting_tarjan(Tarjan):
         incoming = []
         outgoing = []
         _g = self.g.copy()
+        _g_0 = np.sum(_g, 0)
+        _g_1 = np.sum(_g, 1)
         for c_root in self._sorting: # 这里先将链接矩阵中所有强连通分量的链接删除
             c_sub = self.components[c_root]
             X, Y = np.meshgrid(c_sub, c_sub)
             for x, y in zip(X.reshape(-1, ).tolist(), Y.reshape(-1, ).tolist()):
                 _g[x][y] = 0
-            _g_input = np.sum(_g, 0)[c_sub] # 然后统计各个强连通分量的出入链接数
-            _g_output = np.sum(_g, 1)[c_sub]
+            _g_input = _g_0[c_sub] # 然后统计各个强连通分量的出入链接数
+            _g_output = _g_1[c_sub]
             if sum(_g_input) == 0: # 将入/出度为0的分量（包括只有一个节点的）作为输入/出（多节点随机选一个）
                 _c_sub = c_sub.copy()
                 np.random.shuffle(_c_sub)
@@ -228,6 +232,9 @@ class Direct_scale_free(BaseFunctions):
         self.delta_out = delta_out
         self.nodes = list(np.arange(self.init_nodes))
         self.o, self.i = self._full_connected(self.init_nodes)
+        self.degree_o, self.degree_i = [0] * self.final_nodes, [0] * self.final_nodes
+        self.num_nodes = 0
+        self.num_edges = 0
         self.new_node = self.nodes[-1] + 1
 
     def _full_connected(self, init_nodes):
@@ -264,13 +271,13 @@ class Direct_scale_free(BaseFunctions):
     def edges(self):
         return list(zip(self.o, self.i))
 
-    @property
-    def num_nodes(self):
-        return len(self.nodes)
-
-    @property
-    def num_edges(self):
-        return len(self.edges)
+    # @property
+    # def num_nodes(self):
+    #     return len(self.nodes)
+    #
+    # @property
+    # def num_edges(self):
+    #     return len(self.edges)
 
     def get_degree_in(self, node):
         return sum(np.array(self.i) == node)
@@ -282,8 +289,8 @@ class Direct_scale_free(BaseFunctions):
         node_probe_in = []
         node_probe_out = []
         for node in self.nodes:
-            degree_in = self.get_degree_in(node)
-            degree_out = self.get_degree_out(node)
+            degree_in = self.degree_i[node]
+            degree_out = self.degree_o[node]
             node_probe_in.append((degree_in + self.delta_in) / (self.num_edges + self.delta_in * self.num_nodes))
             node_probe_out.append(
                 (degree_out + self.delta_out) / (self.num_edges + self.delta_out * self.num_nodes))
@@ -294,31 +301,35 @@ class Direct_scale_free(BaseFunctions):
     def add_edge(self):
         r = np.random.rand()
         if self.num_nodes <= 1:
-            self.add_node()
+            self._add_node()
         if self.num_edges == 0:
             nodes = self.nodes.copy()
             np.random.shuffle(nodes)
-            self.i.append(nodes[0])
-            self.o.append(nodes[1])
+            self._add_edge(nodes[0], nodes[1])
         if r > 0 and r <= self.alpha:
             random_probe_node_in, random_probe_node_out = self.rand_prob_node()
-            self.i.append(random_probe_node_in)
-            self.o.append(self.new_node)
-            self.add_node()
+            self._add_edge(random_probe_node_in, self.new_node)
+            self._add_node()
         if r > self.alpha and r <= self.beta + self.alpha:
             random_probe_node_in, random_probe_node_out = self.rand_prob_node()
             if not self._check_edge_exist(random_probe_node_in, random_probe_node_out):
-                self.i.append(random_probe_node_in)
-                self.o.append(random_probe_node_out)
+                self._add_edge(random_probe_node_in, random_probe_node_out)
         if r > self.beta + self.alpha and r <= 1:
             random_probe_node_in, random_probe_node_out = self.rand_prob_node()
-            self.i.append(self.new_node)
-            self.o.append(random_probe_node_out)
-            self.add_node()
+            self._add_edge(self.new_node, random_probe_node_out)
+            self._add_node()
 
-    def add_node(self):
+    def _add_edge(self, node_i, node_o):
+        self.i.append(node_i)
+        self.o.append(node_o)
+        self.degree_i[node_i] += 1
+        self.degree_o[node_o] += 1
+        self.num_edges += 1
+
+    def _add_node(self):
         self.nodes.append(self.new_node)
         self.new_node += 1
+        self.num_nodes += 1
 
     def generate_graph(self):
         while self.new_node != self.final_nodes:
