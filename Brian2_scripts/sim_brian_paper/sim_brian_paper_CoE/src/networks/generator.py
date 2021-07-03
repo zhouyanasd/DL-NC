@@ -547,7 +547,6 @@ class Generator(Generator_connection_matrix):
          position: int, the block order in a basic block group.
          '''
 
-        block_type = self.decoder.get_block_type(position)
         parameters = self.decoder.get_block_parameter(position)
         parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
         parameters_neurons['v'] = voltage_reset
@@ -563,6 +562,7 @@ class Generator(Generator_connection_matrix):
          Parameters
          ----------
          '''
+
         parameter_block_neurons = {}
         parameter_block_synapses = {}
         for position in range(self.block_types_N):

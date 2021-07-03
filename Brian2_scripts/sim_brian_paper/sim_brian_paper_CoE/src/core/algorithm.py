@@ -271,14 +271,6 @@ class Direct_scale_free(BaseFunctions):
     def edges(self):
         return list(zip(self.o, self.i))
 
-    # @property
-    # def num_nodes(self):
-    #     return len(self.nodes)
-    #
-    # @property
-    # def num_edges(self):
-    #     return len(self.edges)
-
     def get_degree_in(self, node):
         return sum(np.array(self.i) == node)
 
