@@ -1,6 +1,7 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.de import DiffEvol
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import Surrogate
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.utility_functions import UtilityFunction
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.random_forest import RandomForestRegressor
 
 import numpy as np
 from sklearn.gaussian_process.kernels import Matern
@@ -9,18 +10,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 import cma
 
 class BayesianOptimization(Surrogate):
-    def __init__(self, f, keys, ranges, borders, precisions, random_state=None,
-                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **gp_params):
-        # Internal GP regressor
-        self._gp = GaussianProcessRegressor(
-            kernel=Matern(nu=2.5),
-            alpha=1e-6,
-            normalize_y=True,
-            n_restarts_optimizer=25,
-            random_state=random_state,
-        )
-        self._gp.set_params(**gp_params)
-
+    def __init__(self, f, keys, ranges, borders, precisions, model, random_state=None,
+                 acq='ucb', opt='de', kappa=2.576, xi=0.0):
         super(BayesianOptimization, self).__init__(
             f = f,
             keys = keys,
@@ -28,7 +19,7 @@ class BayesianOptimization(Surrogate):
             borders = borders,
             precisions = precisions,
             random_state=random_state,
-            model = self._gp
+            model = model
         )
 
         if opt == 'cma':
@@ -38,18 +29,18 @@ class BayesianOptimization(Surrogate):
 
         self.utility_function = UtilityFunction(kind=acq, kappa=kappa, xi=xi, bounds = self._space.bounds)
 
-    def acq_min_CMA(self, ac, gp, y_min, bounds, random_state):
+    def acq_min_CMA(self, ac, model, y_min, bounds, random_state):
         x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
                                        size=(bounds.shape[0]))
         options = {'tolfunhist': -1e+4, 'tolfun': -1e+4, 'ftarget': -1e+4, 'bounds': bounds.T.tolist(), 'maxiter': 1000,
                    'verb_log': 0, 'verb_time': False, 'verbose': -9}
-        res = cma.fmin(lambda x: ac(x.reshape(1, -1), gp=gp, y_min=y_min), x_seeds, 0.25, options=options,
+        res = cma.fmin(lambda x: ac(x.reshape(1, -1), gp=model, y_min=y_min), x_seeds, 0.25, options=options,
                        restarts=0, incpopsize=0, restart_from_best=False, bipop=False)
         x_min = res[0]
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
-    def acq_min_DE(self, ac, gp, y_min, bounds, random_state, ngen=100, npop=45, f=0.4, c=0.3):
-        de = DiffEvol(lambda x: ac(x.reshape(1, -1), gp=gp, y_min=y_min)[0], bounds, npop, f=f, c=c,
+    def acq_min_DE(self, ac, model, y_min, bounds, random_state, ngen=100, npop=45, f=0.4, c=0.3):
+        de = DiffEvol(lambda x: ac(x.reshape(1, -1), gp=model, y_min=y_min)[0], bounds, npop, f=f, c=c,
                       seed=random_state)
         de.optimize(ngen)
         x_min = de.minimum_location
@@ -60,7 +51,7 @@ class BayesianOptimization(Surrogate):
             return self._space.array_to_params(self._space.random_sample())
         suggestion = self.opt_function(
             ac=self.utility_function.utility,
-            gp=self._gp,
+            model=self.model,
             y_min=self._space.target.min(),
             bounds=self._space.bounds,
             random_state=self._random_state.randint(100000)
@@ -91,3 +82,67 @@ class BayesianOptimization(Surrogate):
             self.probe(x_probe, lazy=False)
             if show:
                 print(self._space.min())
+
+class GaussianProcess_BayesianOptimization(BayesianOptimization):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state,
+                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **gp_params):
+        self._gp = GaussianProcessRegressor(
+            kernel=Matern(nu=2.5),
+            alpha=1e-6,
+            normalize_y=True,
+            n_restarts_optimizer=25,
+            random_state=random_state,
+        )
+        self._gp.set_params(**gp_params)
+
+        super(GaussianProcess_BayesianOptimization, self).__init__(
+            f=f,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
+            random_state=random_state,
+            acq=acq,
+            opt=opt,
+            kappa=kappa,
+            xi=xi,
+            model=self._gp
+        )
+
+
+class RandomForestRegressor_BayesianOptimization(BayesianOptimization):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state,
+                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **rf_params):
+        self._rf = RandomForestRegressor(
+            n_estimators=10,
+            criterion="mse",
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.,
+            max_features="auto",
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=1,
+            random_state=None,
+            verbose=0,
+            warm_start=False,
+            min_variance=0.0,
+        )
+        self._rf.set_params(**rf_params)
+
+        super(RandomForestRegressor_BayesianOptimization, self).__init__(
+            f=f,
+            keys = keys,
+            ranges = ranges,
+            borders = borders,
+            precisions = precisions,
+            random_state=random_state,
+            acq=acq,
+            opt=opt,
+            kappa=kappa,
+            xi=xi,
+            model=self._rf
+        )

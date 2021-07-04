@@ -22,6 +22,8 @@ __all__ = [
     "CoE_surrogate",
     "RandomForestRegressor_surrogate",
     "GaussianProcess_surrogate",
+    "GaussianProcess_BayesianOptimization",
+    "RandomForestRegressor_BayesianOptimization",
 ]
 
 __doc__ = """
