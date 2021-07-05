@@ -8,6 +8,7 @@ __all__ = [
     "ProgressBar",
     "Cluster",
     "KTH_classification",
+    "UCI_classification",
     "BaseFunctions",
     "Evaluation",
     "Block",
