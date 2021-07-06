@@ -164,7 +164,7 @@ def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
     KTH_ = KTH_classification()
-    df_en_pre_train = KTH_.load_data(data_path + 'pre_train_' + DataName + '.p')
+    df_en_pre_train = KTH_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
     data_pre_train_s, label_pre_train = KTH_.get_series_data_list(df_en_pre_train, is_group=True)
 
     #--- run network ---
