@@ -29,7 +29,7 @@ project_dir_sever = '/home/zy/Project/DL-NC'
 exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
 
 sys.path.append(project_dir)
-data_path = project_dir_sever+'/Data/KTH/'
+data_path = project_dir_sever+'/Data/HAPT-Dataset/Raw-Data/"'
 LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
@@ -87,10 +87,9 @@ method = 'CoE_rf_w'
 total_eva = 600
 load_continue = False
 
-DataName = 'coe_[15,5,4]'
+DataName = 'coe_[7,3,3]'
 
-origin_size = (120, 160)
-pool_size = (5, 5)
+pool_size = 4
 pool_types = 'max'
 pool_threshold = 0.2
 
@@ -99,7 +98,7 @@ F_pre_train = 0.2
 F_validation = 1
 F_test = 1
 
-neurons_encoding = int((origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1]))
+neurons_encoding = 20
 
 ##-----------------------------------------------------
 # --- data and classifier ----------------------
@@ -115,10 +114,10 @@ generator.register_decoder(decoder)
 
 # -------data initialization----------------------
 try:
-    df_en_train = UCI.load_data(data_path + 'train_' + DataName+'.p')
-    df_en_pre_train = UCI.load_data(data_path + 'pre_train_' + DataName + '.p')
-    df_en_validation = UCI.load_data(data_path + 'validation_' + DataName+'.p')
-    df_en_test = UCI.load_data(data_path + 'test_' + DataName+'.p')
+    df_en_train = UCI.load_data(data_path + 'Spike_train_Data/train_' + DataName+'.p')
+    df_en_pre_train = UCI.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
+    df_en_validation = UCI.load_data(data_path + 'Spike_train_Data/validation_' + DataName+'.p')
+    df_en_test = UCI.load_data(data_path + 'Spike_train_Data/test_' + DataName+'.p')
 except FileNotFoundError:
     UCI.load_data_UCI_all(data_path, split_type='mixed', split=[15, 5, 4])
 
@@ -127,10 +126,10 @@ except FileNotFoundError:
     df_validation = UCI.select_data_UCI(F_validation, UCI.validation, False)
     df_test = UCI.select_data_UCI(F_train, UCI.test, False)
 
-    df_en_train = UCI.encoding_latency_UCI(df_train, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_pre_train = UCI.encoding_latency_UCI(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_validation = UCI.encoding_latency_UCI(df_validation, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_test = UCI.encoding_latency_UCI(df_test, origin_size, pool_size, pool_types, pool_threshold)
+    df_en_train = UCI.encoding_latency_UCI(df_train, pool_size, pool_types, pool_threshold)
+    df_en_pre_train = UCI.encoding_latency_UCI(df_pre_train, pool_size, pool_types, pool_threshold)
+    df_en_validation = UCI.encoding_latency_UCI(df_validation, pool_size, pool_types, pool_threshold)
+    df_en_test = UCI.encoding_latency_UCI(df_test, pool_size, pool_types, pool_threshold)
 
     UCI.dump_data(data_path + 'Spike_train_Data/train_' + DataName + '.p', df_en_train)
     UCI.dump_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p', df_en_pre_train)
