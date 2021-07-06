@@ -163,9 +163,9 @@ def init_net(gen):
 def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
-    KTH_ = KTH_classification()
-    df_en_pre_train = KTH_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
-    data_pre_train_s, label_pre_train = KTH_.get_series_data_list(df_en_pre_train, is_group=True)
+    UCI_ = UCI_classification()
+    df_en_pre_train = UCI_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
+    data_pre_train_s, label_pre_train = UCI_.get_series_data_list(df_en_pre_train, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
@@ -197,13 +197,13 @@ def sum_strength(gen, net_state_list):
 def run_net(gen, state_pre_run, data_indexs):
     exec(exec_env)
     exec(exec_var)
-    KTH_ = KTH_classification()
-    df_en_train = KTH_.load_data(data_path + 'Spike_train_Data/train_' + DataName+'.p')
-    df_en_validation = KTH_.load_data(data_path + 'Spike_train_Data/validation_' + DataName+'.p')
-    df_en_test = KTH_.load_data(data_path + 'Spike_train_Data/test_' + DataName+'.p')
-    data_train_s, label_train = KTH_.get_series_data_list(df_en_train, is_group=True)
-    data_validation_s, label_validation = KTH_.get_series_data_list(df_en_validation, is_group=True)
-    data_test_s, label_test = KTH_.get_series_data_list(df_en_test, is_group=True)
+    UCI_ = UCI_classification()
+    df_en_train = UCI_.load_data(data_path + 'Spike_train_Data/train_' + DataName+'.p')
+    df_en_validation = UCI_.load_data(data_path + 'Spike_train_Data/validation_' + DataName+'.p')
+    df_en_test = UCI_.load_data(data_path + 'Spike_train_Data/test_' + DataName+'.p')
+    data_train_s, label_train = UCI_.get_series_data_list(df_en_train, is_group=True)
+    data_validation_s, label_validation = UCI_.get_series_data_list(df_en_validation, is_group=True)
+    data_test_s, label_test = UCI_.get_series_data_list(df_en_test, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
