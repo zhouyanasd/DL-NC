@@ -29,7 +29,7 @@ project_dir_sever = '/home/zy/Project/DL-NC'
 exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
 
 sys.path.append(project_dir)
-data_path = project_dir_sever+'/Data/HAPT-Dataset/Raw-Data/"'
+data_path = project_dir_sever+'/Data/HAPT-Dataset/Raw-Data/'
 LHS_path = exec_dir+'/LHS_KTH.dat'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
