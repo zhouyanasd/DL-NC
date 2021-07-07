@@ -34,13 +34,13 @@ class BayesianOptimization(Surrogate):
                                        size=(bounds.shape[0]))
         options = {'tolfunhist': -1e+4, 'tolfun': -1e+4, 'ftarget': -1e+4, 'bounds': bounds.T.tolist(), 'maxiter': 1000,
                    'verb_log': 0, 'verb_time': False, 'verbose': -9}
-        res = cma.fmin(lambda x: ac(x.reshape(1, -1), gp=model, y_min=y_min), x_seeds, 0.25, options=options,
+        res = cma.fmin(lambda x: ac(x.reshape(1, -1), model=model, y_min=y_min), x_seeds, 0.25, options=options,
                        restarts=0, incpopsize=0, restart_from_best=False, bipop=False)
         x_min = res[0]
         return np.clip(x_min, bounds[:, 0], bounds[:, 1])
 
     def acq_min_DE(self, ac, model, y_min, bounds, random_state, ngen=100, npop=45, f=0.4, c=0.3):
-        de = DiffEvol(lambda x: ac(x.reshape(1, -1), gp=model, y_min=y_min)[0], bounds, npop, f=f, c=c,
+        de = DiffEvol(lambda x: ac(x.reshape(1, -1), model=model, y_min=y_min)[0], bounds, npop, f=f, c=c,
                       seed=random_state)
         de.optimize(ngen)
         x_min = de.minimum_location
@@ -113,6 +113,10 @@ class GaussianProcess_BayesianOptimization(BayesianOptimization):
 class RandomForestRegressor_BayesianOptimization(BayesianOptimization):
     def __init__(self, f, keys, ranges, borders, precisions, random_state,
                  acq='ucb', opt='de', kappa=2.576, xi=0.0, **rf_params):
+
+        if acq == 'es':
+            print('warning: Entropy search acquisition function should use gp model')
+
         self._rf = RandomForestRegressor(
             n_estimators=10,
             criterion="mse",

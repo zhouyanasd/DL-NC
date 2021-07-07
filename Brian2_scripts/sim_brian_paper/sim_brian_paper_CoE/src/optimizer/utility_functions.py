@@ -163,32 +163,32 @@ class UtilityFunction():
 
         self.bounds = bounds
 
-    def utility(self, x, gp, y_min):
+    def utility(self, x, model, y_min):
         if self.kind == 'ucb':
-            return self._ucb_(x, gp, self.kappa)
+            return self._ucb_(x, model, self.kappa)
         if self.kind == 'ei':
-            return self._ei_(x, gp, y_min, self.xi)
+            return self._ei_(x, model, y_min, self.xi)
         if self.kind == 'poi':
-            return self._poi_(x, gp, y_min, self.xi)
+            return self._poi_(x, model, y_min, self.xi)
         if self.kind == 'es':
-            entropy_search = EntropySearch(gp, n_candidates=20, n_gp_samples=500,
+            entropy_search = EntropySearch(model, n_candidates=20, n_gp_samples=500,
                  n_samples_y=10, n_trial_points=500, rng_seed=0)
             entropy_search.set_boundaries(self.bounds)
             return entropy_search(x, y_min)
 
     @staticmethod
-    def _ucb_(x, gp, kappa):
-        mean, std = gp.predict(x, return_std=True)
+    def _ucb_(x, model, kappa):
+        mean, std = model.predict(x, return_std=True)
         return mean - kappa * std
 
     @staticmethod
-    def _ei_(x, gp, y_min, xi):
-        mean, std = gp.predict(x, return_std=True)
+    def _ei_(x, model, y_min, xi):
+        mean, std = model.predict(x, return_std=True)
         z = (y_min - mean - xi) / std
         return -(y_min - mean - xi) * norm.cdf(z) - std * norm.pdf(z)
 
     @staticmethod
-    def _poi_(x, gp, y_min, xi):
-        mean, std = gp.predict(x, return_std=True)
+    def _poi_(x, model, y_min, xi):
+        mean, std = model.predict(x, return_std=True)
         z = (y_min - mean - xi) / std
         return -norm.cdf(z)
