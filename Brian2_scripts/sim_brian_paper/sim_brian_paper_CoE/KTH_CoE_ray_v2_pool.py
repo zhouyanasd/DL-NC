@@ -340,7 +340,16 @@ if __name__ == '__main__':
         coe = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                   random_state = seed, maxormin=1)
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=9, NIND=10, SUBPOP=1, GGAP=0.5,
+        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=9+2, NIND=10, SUBPOP=1, GGAP=0.5,
+                     selectStyle='tour', recombinStyle='reclin',
+                     distribute=False, load_continue = load_continue)
+
+    elif method == 'CoE_fi':
+        coe = CoE_fitness_inheritance(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                  decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                  random_state = seed, maxormin=1,
+                  p_fi=0.5)
+        coe.optimize(recopt=1, pm=0.2, MAXGEN=19+2, NIND=10, SUBPOP=1, GGAP=0.5,
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue = load_continue)
 
@@ -350,7 +359,7 @@ if __name__ == '__main__':
                             random_state = seed, maxormin=1,
                             surrogate_type='rf_w', init_points=100, LHS_path=LHS_path,
                             n_Q = 10, n_estimators=100, c_features = np.floor(decoder.get_dim*0.5).astype(np.int))
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450, NIND=20, SUBPOP=1, GGAP=0.5,
+        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450+50, NIND=20, SUBPOP=1, GGAP=0.5,
                      online=True, eva=2, interval=10,
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue = load_continue)
@@ -361,7 +370,7 @@ if __name__ == '__main__':
                             random_state = seed, maxormin=1,
                             surrogate_type='rf', init_points=100, LHS_path=LHS_path,
                             acq='ucb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450, NIND=20, SUBPOP=1, GGAP=0.5,
+        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450+50, NIND=20, SUBPOP=1, GGAP=0.5,
                      online=True, eva=2, interval=10,
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue = load_continue)
