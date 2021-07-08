@@ -214,7 +214,7 @@ def xovmp(OldChrom, Px=0.7, Npt=0, Rs=0):
             OldChrom[odd[i], :] = OldChrom[odd[i], order[:, i]]
             OldChrom[even[i], :] = OldChrom[even[i], order[:, i]]
     # Perform crossover
-    NewChrom = np.zeros(OldChrom.shape, dtype=np.int64)
+    NewChrom = np.zeros(OldChrom.shape, dtype=OldChrom.dtype)
     NewChrom[odd, :] = OldChrom[odd, :] * Mask_finall + OldChrom[even, :] * (1 - Mask_finall)
     NewChrom[even, :] = OldChrom[odd, :] * (1 - Mask_finall) + OldChrom[even, :] * Mask_finall
     # If the number of individuals is odd, the last individual cannot be mated

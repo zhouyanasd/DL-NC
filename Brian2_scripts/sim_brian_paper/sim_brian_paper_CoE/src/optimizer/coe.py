@@ -605,6 +605,88 @@ class CoE_surrogate(CoE):
         self.deal_records()
 
 
+class CoE_fitness_inheritance(CoE):
+    def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin,
+                 p_fi):
+        super().__init__(f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin)
+
+        self.p_fi = p_fi
+
+    def average_inheritance(self, f1, f2):
+        return (f1 + f2) / 2
+
+    def fitness_inheritance(self, Obj_p, Chome_p, Chome_ch):
+        NIND = len(Obj_p)
+        Obj_ch = [None] * NIND
+        is_recombin = (Chome_p == Chome_ch)
+        for i in range(int(np.ceil(NIND/2))):
+            try:
+                if np.random.rand() > self.p_fi:
+                    Obj_ch[i] = self.average_inheritance(Obj_p[i], Obj_p[i+1])
+                if np.random.rand() > self.p_fi:
+                    Obj_ch[i+1] = self.average_inheritance(Obj_p[i], Obj_p[i + 1])
+            except IndexError:
+                Obj_ch[i] = Obj_p[i]
+        return Obj_ch
+
+    def optimize(self, recopt=1, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
+                 selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
+
+        if load_continue:
+            self.load_states()
+        else:
+            # 初始化各个子种群
+            self.initialize_offspring(NIND)
+            # 根据时间改变随机数
+            self.set_random_state()
+        # 初始化重复个体数为0
+        repnum = [0] * len(self.SubCom)
+        # 用于记录在“遗忘策略下”被忽略的代数
+        badCounter = 0
+        # =========================开始遗传算法进化=======================
+        # 开始进化！！
+        while self.gen < MAXGEN:
+            # 若多花了10倍的迭代次数仍没有可行解出现，则跳出
+            if badCounter >= 10 * MAXGEN:
+                break
+            # 每一轮进化轮流进化各个子种群
+            for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, self.P, self.ObjV, self.LegV)):
+                # 进行遗传算子的重组和变异，生成子代
+                SelCh = self.remu(P_i, SubCom_i, recombinStyle, recopt, SUBPOP, pm, distribute, repnum[index])
+                # 替换context vector中个体基因
+                Chrom = self.B.copy().repeat(NIND, axis=0)
+                Chrom[:, SubCom_i] = SelCh
+                # 初始化育种种群的可行性列向量
+                LegVSel = np.ones((Chrom.shape[0], 1))
+                # 求育种种群的目标函数值
+                [ObjVSel, LegVSel] = self.aimfunc(Chrom, LegVSel)
+                # 更新context vector 及其fitness （已经考虑排除不可行解）
+                self.B, self.F_B = self.update_context_vector(Chrom, self.B, self.F_B, ObjVSel, LegVSel)
+                # 父子合并
+                P_i = np.vstack([P_i, SelCh])
+                ObjV_i = np.vstack([ObjV_i, ObjVSel])
+                LegV_i = np.vstack([LegV_i, LegVSel])
+                # 对合并的种群进行适应度评价
+                FitnV = ga.ranking(self.maxormin * ObjV_i, LegV_i, None, SUBPOP)
+                # 调用罚函数
+                FitnV = self.punfunc(LegV_i, FitnV)
+                # 排除非可行解
+                badCounter, repnum[index] = self.non_feasible_solution(ObjV_i, LegV_i, FitnV,
+                                                                       repnum[index], badCounter)
+                if distribute == True:
+                    self.add_distribute(ObjV_i, FitnV)
+                # 选择个体生成新一代种群
+                [P_i, ObjV_i, LegV_i] = ga.selecting(selectStyle, P_i, FitnV, GGAP, SUBPOP, ObjV_i,
+                                                     LegV_i)
+                # 将子种群情况更新到总种群中去
+                self.P[index], self.ObjV[index], self.LegV[index] = P_i, ObjV_i, LegV_i
+
+            self.update_generation()
+        # ====================处理进化记录==================================
+        # 处理进化记录并获取最佳结果
+        self.deal_records()
+
+
 if __name__ == "__main__":
 
     def rosen(alpha=1e2, **X):
