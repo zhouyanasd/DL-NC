@@ -622,12 +622,12 @@ class CoE_fitness_inheritance(CoE):
         for i in range(int(np.ceil(NIND/2))):
             try:
                 if np.random.rand() > self.p_fi:
-                    Obj_ch[i] = self.average_inheritance(Obj_p[i], Obj_p[i+1])
+                    Obj_ch[i*2] = self.average_inheritance(Obj_p[i*2], Obj_p[i*2 + 1])
                 if np.random.rand() > self.p_fi:
-                    Obj_ch[i+1] = self.average_inheritance(Obj_p[i], Obj_p[i + 1])
+                    Obj_ch[i*2 + 1] = self.average_inheritance(Obj_p[i*2], Obj_p[i*2 + 1])
             except IndexError:
-                Obj_ch[i] = Obj_p[i]
-        return Obj_ch
+                Obj_ch[i*2] = Obj_p[i*2]
+        return np.array(Obj_ch, dtype=np.float64).reshape(-1, 1)
 
     def optimize(self, recopt=1, pm=0.1, MAXGEN=100, NIND=10, SUBPOP=1, GGAP=0.5,
                  selectStyle='sus', recombinStyle='xovdp', distribute=False, load_continue=False):
@@ -653,13 +653,24 @@ class CoE_fitness_inheritance(CoE):
             for index, (SubCom_i, P_i, ObjV_i, LegV_i) in enumerate(zip(self.SubCom, self.P, self.ObjV, self.LegV)):
                 # 进行遗传算子的重组和变异，生成子代
                 SelCh = self.remu(P_i, SubCom_i, recombinStyle, recopt, SUBPOP, pm, distribute, repnum[index])
+                # 计算子代个体的fintness继承值
+                ObjVSel = self.fitness_inheritance(ObjV_i, P_i, SelCh)
                 # 替换context vector中个体基因
                 Chrom = self.B.copy().repeat(NIND, axis=0)
                 Chrom[:, SubCom_i] = SelCh
                 # 初始化育种种群的可行性列向量
                 LegVSel = np.ones((Chrom.shape[0], 1))
+                # 找到需要被评估的基因序号
+                need_eva = np.isnan(ObjVSel).reshape(-1)
+                # 找到需要被评估的基因
+                Chrom_ = np.array(Chrom)[need_eva]
+                # 初始化需要被评估种群的可行性列向量
+                LegVSel_ = np.ones((Chrom_.shape[0], 1))
                 # 求育种种群的目标函数值
-                [ObjVSel, LegVSel] = self.aimfunc(Chrom, LegVSel)
+                [ObjVSel_, LegVSel_] = self.aimfunc(Chrom_, LegVSel_)
+                # replace the estimated value by real value
+                ObjVSel[need_eva] = ObjVSel_
+                LegVSel[need_eva] = LegVSel_
                 # 更新context vector 及其fitness （已经考虑排除不可行解）
                 self.B, self.F_B = self.update_context_vector(Chrom, self.B, self.F_B, ObjVSel, LegVSel)
                 # 父子合并
@@ -709,14 +720,15 @@ if __name__ == "__main__":
     SubCom = np.array([[0, 1], [2, 3], [4, 5, 6, 7]])
     radom_state = 1
 
-    coe = CoE(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1)
-    coe.optimize(recopt=0.9, pm=0.2, MAXGEN=1000, NIND=10, SUBPOP=1, GGAP=0.5,
+    coe = CoE_fitness_inheritance(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
+                                  p_fi = 0.3)
+    coe.optimize(recopt=1, pm=0.2, MAXGEN=1000, NIND=10, SUBPOP=1, GGAP=0.5,
                  selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue=False)
     coe.draw()
 
 
-    coe_surrogate = CoE_surrogate(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
-                        surrogate_type = 'rf', init_points = 100, LHS_path = None, n_Q = 10, n_estimators=100, c_features = 4)
-    coe_surrogate.optimize(recopt=0.9, pm=0.2, MAXGEN=800, NIND=20, SUBPOP=1, GGAP=0.5, online=True, eva=2, interval=10,
-            selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue = False)
-    coe_surrogate.draw()
+    # coe_surrogate = CoE_surrogate(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
+    #                     surrogate_type = 'rf', init_points = 100, LHS_path = None, n_Q = 10, n_estimators=100, c_features = 4)
+    # coe_surrogate.optimize(recopt=0.9, pm=0.2, MAXGEN=800, NIND=20, SUBPOP=1, GGAP=0.5, online=True, eva=2, interval=10,
+    #         selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue = False)
+    # coe_surrogate.draw()
