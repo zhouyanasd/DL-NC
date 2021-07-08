@@ -721,20 +721,20 @@ if __name__ == "__main__":
     radom_state = 1
 
     coe = CoE(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1)
-    coe.optimize(recopt=0.9, pm=0.2, MAXGEN=1000, NIND=10, SUBPOP=1, GGAP=0.5,
+    coe.optimize(recopt=0.9, pm=0.2, MAXGEN=20, NIND=10, SUBPOP=1, GGAP=0.5,
                  selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue=False)
     coe.draw()
 
 
     coe = CoE_fitness_inheritance(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
                                   p_fi = 0.5)
-    coe.optimize(recopt=1, pm=0.2, MAXGEN=1000, NIND=10, SUBPOP=1, GGAP=0.5,
+    coe.optimize(recopt=1, pm=0.2, MAXGEN=40, NIND=10, SUBPOP=1, GGAP=0.5,
                  selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue=False)
     coe.draw()
 
 
     coe_surrogate = CoE_surrogate(rosen, None, SubCom, ranges, borders, precisions, codes, scales, keys, radom_state, maxormin=1,
                         surrogate_type = 'rf', init_points = 100, LHS_path = None, n_Q = 10, n_estimators=100, c_features = 4)
-    coe_surrogate.optimize(recopt=0.9, pm=0.2, MAXGEN=800, NIND=20, SUBPOP=1, GGAP=0.5, online=True, eva=2, interval=10,
+    coe_surrogate.optimize(recopt=0.9, pm=0.2, MAXGEN=820, NIND=20, SUBPOP=1, GGAP=0.5, online=True, eva=2, interval=10,
             selectStyle='tour', recombinStyle='reclin', distribute=False, load_continue = False)
     coe_surrogate.draw()
