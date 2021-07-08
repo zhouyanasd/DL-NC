@@ -21,6 +21,7 @@ __all__ = [
     "BayesianOptimization",
     "CoE",
     "CoE_surrogate",
+    "CoE_fitness_inheritance",
     "RandomForestRegressor_surrogate",
     "GaussianProcess_surrogate",
     "GaussianProcess_BayesianOptimization",

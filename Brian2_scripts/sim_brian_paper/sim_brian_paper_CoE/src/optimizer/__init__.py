@@ -22,4 +22,5 @@ __all__ = [
     "GaussianProcess_surrogate",
     "CoE",
     "CoE_surrogate",
+    "CoE_fitness_inheritance",
 ]
