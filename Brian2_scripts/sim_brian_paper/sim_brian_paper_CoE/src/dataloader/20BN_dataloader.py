@@ -1,272 +1,260 @@
+# -*- coding: utf-8 -*-
+"""
+    The functions for preparing the data.
+
+:Author: Yan Zhou
+
+:License: BSD 3-Clause, see LICENSE file.
+"""
+
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
+
 import os
-import logging
+import pickle, shutil, zipfile
+from PIL import Image as PIL_Image
+
 import numpy as np
 import pandas as pd
-import imageio as io
 
-from tqdm import tqdm
+class BN_classification(BaseFunctions):
 
+    def __init__(self):
+        self.IMG_HEIGHT = 100
+        self.IMG_WIDTH = 150
+        self.NUM_FRAMES = 30
 
-class JesterDataSet:
-    N_CLASSES = 27
-    DEFAULT_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data', '20BN-JESTER')
-
-    def __init__(self, partition='train', classes=None, proportion=1.0, video_shape=(30, 100, 100, 3), data_shape=None,
-                 batch_size=10, cutoff=True, preload=True, dtype=np.float16, verbose=False, data_path=None):
+    def _get_category(self, path_category):
+        """Loads the Dataframe labels from a csv and creates dictionnaries to convert the string labels to int and backwards
+        # Arguments
+            path_labels : path to the csv containing the labels
         """
-        Container for the 20BN-JESTER dataset. Note that both the data and the labels have to be downloaded manually
-        into the directory specified as an argument. The data can be found at https://www.twentybn.com/datasets/jester.
+        self.category_df = pd.read_csv(path_category, names=['category'])
+        # Extracting list of labels from the dataframe
+        self.category = [str(category[0]) for category in self.category_df.values]
+        self.n_category = len(self.category)
+        # Create dictionnaries to convert label to int and backwards
+        self.CATEGORIES = dict(zip(self.category, range(self.n_category)))
+        self.label_to_category = dict(enumerate(self.category))
 
-        Arguments:
-            partition: value in {'train', 'validation', 'test'}
-            classes: classes that should be loaded. Either None, in which case all of the classes will be loaded,
-                an int n, in which case n first classes will be loaded, or a list of ints representing IDs, in which
-                case the classes with the specified IDs will be loaded
-            proportion: proportion of the data that should be loaded for each class
-            video_shape: dimensions of the input videos, in a format (n_frames, height, width, n_channels)
-            cutoff: True if the number of the videos should be a multiplier of the batch size (remaining images will
-                be discarded), False otherwise
-            preload: True if the whole dataset should be preloaded to the memory, False if each batch should be loaded
-                from the hard drive when required
-            verbose: True if the progress bar for loading the videos should be displayed, False otherwise
-            data_path: directory containing the data, falls back to the default value if None
+    def _load_video_category(self, path_subset, mode="category"):
+        """ Loads a Dataframe from a csv
+        # Arguments
+            path_subset : String, path to the csv to load
+            mode        : String, (default: label), if mode is set to "label", filters rows given if the labels exists in the labels Dataframe loaded previously
+        #Returns
+            A DataFrame
         """
-        assert partition in ['train', 'validation', 'test']
-        assert classes is None \
-               or (type(classes) is int and classes <= self.N_CLASSES) \
-               or (min(classes) >= 0 and max(classes) < self.N_CLASSES)
-        assert 0 < proportion <= 1.0
-
-        self.partition = partition
-        self.video_shape = video_shape
-        self.batch_size = batch_size
-        self.preload = preload
-        self.dtype = dtype
-        self.verbose = verbose
-        self.data_path = data_path
-        self.label_names = []
-        self.label_dictionary = {}
-        self.labels = None
-        self.video_ids = []
-        self.videos = None
-        self.videos_completed = 0
-        self.length = 0
-
-        if classes is None:
-            classes = range(0, 27)
-        elif type(classes) is int:
-            classes = range(0, classes)
-
-        if data_shape is None:
-            self.data_shape = self.video_shape
-        else:
-            self.data_shape = data_shape
-
-        if self.data_path is None:
-            self.data_path = self.DEFAULT_DATA_PATH
-
-        assert os.path.exists(self.data_path)
-
-        df = pd.read_csv(os.path.join(self.data_path, 'jester-v1-labels.csv'), header=None)
-
-        self.label_names = list(df.loc[classes, 0])
-
-        for cls in range(len(classes)):
-            self.label_dictionary[self.label_names[cls]] = cls
-
-        df = pd.read_csv(os.path.join(self.data_path, 'jester-v1-%s.csv' % partition), header=None, delimiter=';')
-
-        if partition in ['train', 'validation']:
-            grouped_video_ids = {}
-
-            for cls in range(len(classes)):
-                grouped_video_ids[cls] = list(df[df[1] == self.label_names[cls]][0])
-
-            if proportion < 1.0:
-                for cls in range(len(classes)):
-                    n = int(proportion * len(grouped_video_ids[cls]))
-
-                    assert n > 0
-
-                    grouped_video_ids[cls] = grouped_video_ids[cls][:n]
-
-            self.video_ids = np.array(sum(grouped_video_ids.values(), []))
-            self.labels = np.array(sum([[cls] * len(grouped_video_ids[cls]) for cls in range(len(classes))], []))
-        else:
-            self.video_ids = np.array(df[0])
-
-        self.length = len(self.video_ids)
-
-        if cutoff:
-            self.length = self.length - self.length % batch_size
-
-            self.video_ids = self.video_ids[:self.length]
-
-            if self.labels is not None:
-                self.labels = self.labels[:self.length]
-
-        if preload:
-            self.videos = self.load_videos(self.video_ids)
-
-    def shuffle(self, indices=None):
-        if indices is None:
-            indices = list(range(len(self.video_ids)))
-            np.random.shuffle(indices)
-
-        self.video_ids = self.video_ids[indices]
-
-        if self.labels is not None:
-            self.labels = self.labels[indices]
-
-        if self.videos is not None:
-            self.videos = self.videos[indices]
-
-    def load_video(self, video_id):
-        video_directory = os.path.join(self.data_path, '20bn-jester-v1', str(video_id))
-
-        assert os.path.exists(video_directory)
-
-        frame_names = sorted([fn for fn in os.listdir(video_directory) if fn.endswith('.jpg')])
-        n_frames = len(frame_names)
-
-        if n_frames >= self.video_shape[0]:
-            first_frame_index = int((n_frames - self.video_shape[0]) / 2)
-            frame_names = frame_names[first_frame_index:(first_frame_index + self.video_shape[0])]
-        else:
-            n_frames_missing = self.video_shape[0] - n_frames
-            n_before = int(n_frames_missing / 2)
-            n_after = n_frames_missing - n_before
-            frame_names = [frame_names[0]] * n_before + frame_names + [frame_names[-1]] * n_after
-
-        frames = []
-
-        for frame_name in frame_names:
-            frames.append(np.array(io.imread(os.path.join(video_directory, frame_name)), dtype=self.dtype))
-
-        video = np.stack(frames)
-
-        assert video.shape[1] == self.video_shape[1]
-        assert video.shape[3] == self.video_shape[3]
-        assert video.shape[2] >= self.video_shape[2]
-
-        width_start = int((video.shape[2] - self.video_shape[2]) / 2)
-        video = video[:, :, width_start:(width_start + self.video_shape[2]), :]
-
-        return video
-
-    def load_videos(self, video_ids):
-        iterator = range(len(video_ids))
-
-        if self.preload and self.verbose:
-            logging.info('Loading the %s partition of the Jester dataset...' % self.partition)
-
-            iterator = tqdm(iterator)
-
-        videos = np.zeros([len(video_ids)] + list(self.data_shape), dtype=self.dtype)
-
-        for i in iterator:
-            video_id = video_ids[i]
-            videos[i] = self.load_video(video_id)
-
-        return videos
-
-    def batch(self):
-        if self.videos is None:
-            videos = self.load_videos(self.video_ids[self.videos_completed:(self.videos_completed + self.batch_size)])
-        else:
-            videos = self.videos[self.videos_completed:(self.videos_completed + self.batch_size)]
-
-        labels = self.labels[self.videos_completed:(self.videos_completed + self.batch_size)]
-
-        self.videos_completed += self.batch_size
-
-        if self.videos_completed >= self.length:
-            self.videos_completed = 0
-
-        return videos, labels
-
-
-class FlattenedJesterDataSet(JesterDataSet):
-    def __init__(self, axis, **kwargs):
-        self.axis = axis
-
-        kwargs['data_shape'] = (kwargs['video_shape'][axis],
-                                np.prod([kwargs['video_shape'][i] for i in range(3) if i != axis]),
-                                kwargs['video_shape'][-1])
-
-        super().__init__(**kwargs)
-
-    def load_video(self, video_id):
-        video = super().load_video(video_id)
-
-        return self._flatten(video, self.axis)
-
-    @staticmethod
-    def _flatten(tensor, axis):
-        assert len(tensor.shape) == 4
-
-        flattened_tensor = []
-
-        for i in range(tensor.shape[3]):
-            channel = tensor[:, :, :, i]
-
-            # roll axis order so that the first tensor dimension is the specified axis
-            channel = np.transpose(channel, (axis, (axis + 1) % 3, (axis + 2) % 3))
-
-            flattened_channel = np.zeros((channel.shape[0], channel.shape[1] * channel.shape[2]), dtype=channel.dtype)
-            position = 0
-
-            for k in range(channel.shape[2]):
-                for j in range(channel.shape[1]):
-                    flattened_channel[:, position] = channel[:, j, k]
-                    position += 1
-
-            flattened_tensor.append(flattened_channel)
-
-        return np.moveaxis(np.array(flattened_tensor), 0, -1)
-
-
-class MultiStreamJesterDataSet:
-    N_CLASSES = JesterDataSet.N_CLASSES
-
-    def __init__(self, stream_types=('C3D', 'C2D_0', 'C2D_1', 'C2D_2'), **kwargs):
-        self.datasets = []
-        self.data_shape = []
-
-        for stream_type in stream_types:
-            if stream_type.startswith('C3D'):
-                self.datasets.append(JesterDataSet(**kwargs))
-            elif stream_type.startswith('C2D_'):
-                axis = int(stream_type[4:])
-
-                self.datasets.append(FlattenedJesterDataSet(axis=axis, **kwargs))
+        if mode == "input":
+            names = ['video_id']
+        elif mode == "category":
+            names = ['video_id', 'category']
+        df = pd.read_csv(path_subset, sep=';', names=names)
+        if mode == "category":
+            df = df[df.label.isin(self.category)]
+        return df
+
+    def load_labels(self):
+        self._get_category(self.path_labels)
+        if self.path_train:
+            self.train_df = self._load_video_category(self.path_train)
+        if self.path_val:
+            self.val_df = self._load_video_category(self.path_val)
+        if self.path_test:
+            self.test_df = self._load_video_category(self.path_test, 'input')
+
+    def normalize2(self, number):
+        stre = str(number)
+        while len(stre) < 5:
+            stre = "0" + stre
+        return stre
+
+    def extract(self, z, sub_path):
+        i = 1
+        while True:
+            try:
+                print(sub_path + self.normalize2(i) + '.jpg')
+                print(z.extract(sub_path + self.normalize2(i) + '.jpg', path=self.data_path))
+                i += 1
+            except KeyError:
+                break
+
+    def delete(self, sub_path):
+        shutil.rmtree(sub_path)
+
+    def load_videos(self, videoIds, z):
+        video_set = []
+        for counterVideo, videoId in enumerate(videoIds, 1):
+            self.extract(z, str(videoId) + '/')
+            directory = os.path.join(self.data_path, str(videoId) + '/')
+            if len(os.listdir(directory)) >= self.NUM_FRAMES:  # don't use if video length is too small
+                video = []
+                for counterImage, image in enumerate(os.listdir(directory), 1):
+                    image_values = PIL_Image.open(os.path.join(directory, image))
+                    image_values = image_values.convert('L')  # L: converts to greyscale
+                    image_values = image_values.resize((self.IMG_WIDTH, self.IMG_HEIGHT), PIL_Image.ANTIALIAS)
+                    video.append(np.asarray(image_values))
+                video_set.append([np.asarray(video), videoId])
             else:
-                raise ValueError
+                print("skipped video # %d with length %d" % (counterVideo, len(os.listdir(directory))))
+            self.delete(directory)
+        return np.asarray(video_set)
 
-            self.data_shape.append(self.datasets[-1].data_shape)
 
-        self.flattened_shape = np.prod(self.datasets[0].data_shape)
-        self.batch_size = self.datasets[0].batch_size
-        self.length = self.datasets[0].length
-        self.labels = self.datasets[0].labels
 
-    def batch(self):
-        inputs = []
-        outputs = None
 
-        for dataset in self.datasets:
-            batch_inputs, batch_outputs = dataset.batch()
 
-            inputs.append(np.reshape(batch_inputs, [-1, 1, self.flattened_shape]))
 
-            if outputs is None:
-                outputs = batch_outputs
 
-        return np.concatenate(inputs, axis=1), outputs
+    def load_data_BN(self):
+        z = zipfile.ZipFile(self.path_vid, 'r', zipfile.ZIP_DEFLATED)
+        # if dataset == "train":
+        #     ID = self.TRAIN_PEOPLE_ID
+        # elif dataset == "validation":
+        #     ID = self.VALIDATION_PEOPLE_ID
+        # else:
+        #     ID = self.TEST_PEOPLE_ID
 
-    def shuffle(self):
-        indices = list(range(self.length))
-        np.random.shuffle(indices)
+        data = []
+        # for category in self.CATEGORIES.keys():
+        #     folder_path = os.path.join(data_path, category)
+        #     filenames = sorted(os.listdir(folder_path))
+        #     for filename in filenames:
+        #         filepath = os.path.join(data_path, category, filename)
+        #         person_id = int(filename.split("_")[0][6:])
+        #         if person_id not in ID:
+        #             continue
+        #         condition_id = int(filename.split("_")[2][1:])
+        #         cap = cv2.VideoCapture(filepath)
+        #         for f_id, seg in enumerate(self.frames_idx[filename]):
+        #             frames = []
+        #             cap.set(cv2.CAP_PROP_POS_FRAMES, seg[0] - 1)  # 设置要获取的帧号
+        #             count = 0
+        #             while (cap.isOpened() and seg[0] + count - 1 < seg[1] + 1):
+        #                 ret, frame = cap.read()
+        #                 if ret == True:
+        #                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #                     frames.append(gray.reshape(-1))
+        #                     count += 1
+        #                 else:
+        #                     break
+        #             data.append({
+        #                 "frames": np.array(frames),
+        #                 "category": category,
+        #                 "person_id": person_id,
+        #                 "condition_id": condition_id,
+        #                 "frame_id": f_id,
+        #             })
+        #         cap.release()
+        z.close()
+        # return pd.DataFrame(data)
 
-        for dataset in self.datasets:
-            dataset.shuffle(indices)
+    def load_data_BN_all(self, data_path):
+        """ Class used to load csvs
+        # Arguments
+            path_vid    : path to the root folder containing the videos
+            path_labels : path to the csv containing the labels
+            path_train  : path to the csv containing a list of the videos used for the training
+            path_val    : path to the csv containing a list of the videos used for the validation
+            path_test   : path to the csv containing a list of the videos used for the test
+        #Returns
+            An instance of the DataLoader class
+        """
+
+        self.data_path = data_path
+        self.path_vid = data_path + '20bn-jester-v1.zip'
+        self.path_labels = data_path + 'jester-v1-labels.csv'
+        self.path_train = data_path + 'jester-v1-train.csv'
+        self.path_val = data_path + 'jester-v1-validation.csv'
+        self.path_test = data_path + 'jester-v1-test.csv'
+
+        self.load_labels()
+
+
+    def frame_diff(self, frames, origin_size=(120, 160)):
+        frame_diff = []
+        it = frames.__iter__()
+        frame_pre = next(it).reshape(origin_size)
+        while True:
+            try:
+                frame = next(it).reshape(origin_size)
+                frame_diff.append(cv2.absdiff(frame_pre, frame).reshape(-1))
+                frame_pre = frame
+            except StopIteration:
+                break
+        return np.asarray(frame_diff)
+
+    def block_array(self, matrix, size):
+        if int(matrix.shape[0] % size[0]) == 0 and int(matrix.shape[1] % size[1]) == 0:
+            X = int(matrix.shape[0] / size[0])
+            Y = int(matrix.shape[1] / size[1])
+            shape = (X, Y, size[0], size[1])
+            strides = matrix.itemsize * np.array([matrix.shape[1] * size[0], size[1], matrix.shape[1], 1])
+            squares = np.lib.stride_tricks.as_strided(matrix, shape=shape, strides=strides)
+            return squares
+        else:
+            raise ValueError('matrix must be divided by size exactly')
+
+    def pooling(self, frames, origin_size=(120, 160), pool_size=(5, 5), types='max'):
+        data = []
+        for frame in frames:
+            pool = np.zeros((int(origin_size[0] / pool_size[0]), int(origin_size[1] / pool_size[1])), dtype=np.int16)
+            frame_block = self.block_array(frame.reshape(origin_size), pool_size)
+            for i, row in enumerate(frame_block):
+                for j, block in enumerate(row):
+                    if types == 'max':
+                        pool[i][j] = block.max()
+                    elif types == 'average':
+                        pool[i][j] = block.mean()
+                    else:
+                        raise ValueError('I have not done that type yet..')
+            data.append(pool.reshape(-1))
+        return np.asarray(data)
+
+    def threshold_norm(self, frames, threshold):
+        frames = (frames - np.min(frames)) / (np.max(frames) - np.min(frames))
+        frames[frames < threshold] = 0
+        frames[frames > threshold] = 1
+        frames = frames.astype('<i1')
+        return frames
+
+    def select_data_BN(self, fraction, data_frame, is_order=True, **kwargs):
+        try:
+            selected = [self.label_to_category[x] for x in kwargs['selected']]
+        except KeyError:
+            selected = self.CATEGORIES.keys()
+        if is_order:
+            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(
+                frac=fraction).sort_index().reset_index(drop=True)
+        else:
+            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(frac=fraction).reset_index(
+                drop=True)
+        return data_frame_selected
+
+    def encoding_latency_BN(self, analog_data, origin_size=(120, 160), pool_size=(5, 5), types='max', threshold=0.2):
+        data_diff = analog_data.frames.apply(self.frame_diff, origin_size=origin_size)
+        data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size=pool_size, types=types)
+        data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
+        label = analog_data.category.map(self.CATEGORIES).astype('<i1')
+        data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
+        return data_frame
+
+    def get_series_data_list(self, data_frame, is_group=False):
+        data_frame_s = []
+        if not is_group:
+            for value in data_frame['value']:
+                data_frame_s.extend(value)
+        else:
+            for value in data_frame['value']:
+                data_frame_s.append(value)
+        label = data_frame['label']
+        return np.asarray(data_frame_s), label
+
+    def dump_data(self, path, dataset):
+        if os.path.exists(path):
+            os.remove(path)
+        with open(path, 'wb') as file:
+            pickle.dump(dataset, file)
+
+    def load_data(self, path):
+        with open(path, 'rb') as file:
+            return pickle.load(file)
