@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
+# from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import os
 import pickle, shutil, zipfile
@@ -16,8 +16,11 @@ from PIL import Image as PIL_Image
 import numpy as np
 import pandas as pd
 
-class BN_classification(BaseFunctions):
+class BN_classification():
+    """
+    Class used to load BN dataset
 
+    """
     def __init__(self):
         self.IMG_HEIGHT = 100
         self.IMG_WIDTH = 150
@@ -50,17 +53,17 @@ class BN_classification(BaseFunctions):
             names = ['video_id', 'category']
         df = pd.read_csv(path_subset, sep=';', names=names)
         if mode == "category":
-            df = df[df.label.isin(self.category)]
+            df = df[df.category.isin(self.category)]
         return df
 
     def load_labels(self):
         self._get_category(self.path_labels)
         if self.path_train:
-            self.train_df = self._load_video_category(self.path_train)
-        if self.path_val:
-            self.val_df = self._load_video_category(self.path_val)
+            self.train = self._load_video_category(self.path_train)
+        if self.path_validation:
+            self.validation = self._load_video_category(self.path_validation)
         if self.path_test:
-            self.test_df = self._load_video_category(self.path_test, 'input')
+            self.test = self._load_video_category(self.path_test, 'input')
 
     def normalize2(self, number):
         stre = str(number)
@@ -72,8 +75,7 @@ class BN_classification(BaseFunctions):
         i = 1
         while True:
             try:
-                print(sub_path + self.normalize2(i) + '.jpg')
-                print(z.extract(sub_path + self.normalize2(i) + '.jpg', path=self.data_path))
+                z.extract(sub_path + self.normalize2(i) + '.jpg', path=self.data_path)
                 i += 1
             except KeyError:
                 break
@@ -92,92 +94,39 @@ class BN_classification(BaseFunctions):
                     image_values = PIL_Image.open(os.path.join(directory, image))
                     image_values = image_values.convert('L')  # L: converts to greyscale
                     image_values = image_values.resize((self.IMG_WIDTH, self.IMG_HEIGHT), PIL_Image.ANTIALIAS)
-                    video.append(np.asarray(image_values))
-                video_set.append([np.asarray(video), videoId])
+                    video.append(np.asarray(image_values).reshape(-1))
+                video_set.append(np.asarray(video))
             else:
-                print("skipped video # %d with length %d" % (counterVideo, len(os.listdir(directory))))
+                # print("skipped video # %d with length %d" % (counterVideo, len(os.listdir(directory))))
+                video_set.append(None)
             self.delete(directory)
         return np.asarray(video_set)
 
-
-
-
-
-
-
-    def load_data_BN(self):
+    def load_data_BN(self, videoId_df):
         z = zipfile.ZipFile(self.path_vid, 'r', zipfile.ZIP_DEFLATED)
-        # if dataset == "train":
-        #     ID = self.TRAIN_PEOPLE_ID
-        # elif dataset == "validation":
-        #     ID = self.VALIDATION_PEOPLE_ID
-        # else:
-        #     ID = self.TEST_PEOPLE_ID
-
-        data = []
-        # for category in self.CATEGORIES.keys():
-        #     folder_path = os.path.join(data_path, category)
-        #     filenames = sorted(os.listdir(folder_path))
-        #     for filename in filenames:
-        #         filepath = os.path.join(data_path, category, filename)
-        #         person_id = int(filename.split("_")[0][6:])
-        #         if person_id not in ID:
-        #             continue
-        #         condition_id = int(filename.split("_")[2][1:])
-        #         cap = cv2.VideoCapture(filepath)
-        #         for f_id, seg in enumerate(self.frames_idx[filename]):
-        #             frames = []
-        #             cap.set(cv2.CAP_PROP_POS_FRAMES, seg[0] - 1)  # 设置要获取的帧号
-        #             count = 0
-        #             while (cap.isOpened() and seg[0] + count - 1 < seg[1] + 1):
-        #                 ret, frame = cap.read()
-        #                 if ret == True:
-        #                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #                     frames.append(gray.reshape(-1))
-        #                     count += 1
-        #                 else:
-        #                     break
-        #             data.append({
-        #                 "frames": np.array(frames),
-        #                 "category": category,
-        #                 "person_id": person_id,
-        #                 "condition_id": condition_id,
-        #                 "frame_id": f_id,
-        #             })
-        #         cap.release()
+        frames = self.load_videos(videoId_df.video_id.values, z)
         z.close()
-        # return pd.DataFrame(data)
+        videoId_df_ = videoId_df.copy()
+        videoId_df_['frames'] = frames
+        return videoId_df_.dropna(axis=0, subset=['frames'])
 
     def load_data_BN_all(self, data_path):
-        """ Class used to load csvs
-        # Arguments
-            path_vid    : path to the root folder containing the videos
-            path_labels : path to the csv containing the labels
-            path_train  : path to the csv containing a list of the videos used for the training
-            path_val    : path to the csv containing a list of the videos used for the validation
-            path_test   : path to the csv containing a list of the videos used for the test
-        #Returns
-            An instance of the DataLoader class
-        """
-
         self.data_path = data_path
         self.path_vid = data_path + '20bn-jester-v1.zip'
         self.path_labels = data_path + 'jester-v1-labels.csv'
         self.path_train = data_path + 'jester-v1-train.csv'
-        self.path_val = data_path + 'jester-v1-validation.csv'
+        self.path_validation = data_path + 'jester-v1-validation.csv'
         self.path_test = data_path + 'jester-v1-test.csv'
-
         self.load_labels()
 
-
-    def frame_diff(self, frames, origin_size=(120, 160)):
+    def frame_diff(self, frames, origin_size=(150, 100)):
         frame_diff = []
         it = frames.__iter__()
         frame_pre = next(it).reshape(origin_size)
         while True:
             try:
                 frame = next(it).reshape(origin_size)
-                frame_diff.append(cv2.absdiff(frame_pre, frame).reshape(-1))
+                frame_diff.append(np.abs(frame_pre.astype(int) - frame.astype(int)).reshape(-1))
                 frame_pre = frame
             except StopIteration:
                 break
@@ -194,7 +143,7 @@ class BN_classification(BaseFunctions):
         else:
             raise ValueError('matrix must be divided by size exactly')
 
-    def pooling(self, frames, origin_size=(120, 160), pool_size=(5, 5), types='max'):
+    def pooling(self, frames, origin_size=(150, 100), pool_size=(5, 5), types='max'):
         data = []
         for frame in frames:
             pool = np.zeros((int(origin_size[0] / pool_size[0]), int(origin_size[1] / pool_size[1])), dtype=np.int16)
@@ -228,9 +177,9 @@ class BN_classification(BaseFunctions):
         else:
             data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(frac=fraction).reset_index(
                 drop=True)
-        return data_frame_selected
+        return self.load_data_BN(data_frame_selected)
 
-    def encoding_latency_BN(self, analog_data, origin_size=(120, 160), pool_size=(5, 5), types='max', threshold=0.2):
+    def encoding_latency_BN(self, analog_data, origin_size=(150, 100), pool_size=(5, 5), types='max', threshold=0.2):
         data_diff = analog_data.frames.apply(self.frame_diff, origin_size=origin_size)
         data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)
@@ -258,3 +207,24 @@ class BN_classification(BaseFunctions):
     def load_data(self, path):
         with open(path, 'rb') as file:
             return pickle.load(file)
+
+if __name__ == "__main__":
+    DataName = 'coe_0.01'
+    data_path = "C:/Users/Administrator/Desktop/share/"
+    BN = BN_classification()
+    BN.load_data_BN_all(data_path)
+
+    df_train = BN.select_data_BN(0.01, BN.train, False)
+    df_pre_train = BN.select_data_BN(0.001, BN.train, False)
+    df_validation = BN.select_data_BN(0.01, BN.validation, False)
+    df_test = BN.select_data_BN(0.01, BN.validation, False)
+
+    df_en_train = BN.encoding_latency_BN(df_train)
+    df_en_pre_train = BN.encoding_latency_BN(df_pre_train)
+    df_en_validation = BN.encoding_latency_BN(df_validation)
+    df_en_test = BN.encoding_latency_BN(df_test)
+
+    BN.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
+    BN.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
+    BN.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
+    BN.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
