@@ -24,7 +24,7 @@ class BN_classification(BaseFunctions):
     def __init__(self):
         self.IMG_HEIGHT = 100
         self.IMG_WIDTH = 150
-        self.NUM_FRAMES = 30
+        self.NUM_FRAMES = 20
 
     def _get_category(self, path_category):
         """Loads the Dataframe labels from a csv and creates dictionnaries to convert the string labels to int and backwards
@@ -214,17 +214,23 @@ if __name__ == "__main__":
     BN = BN_classification()
     BN.load_data_BN_all(data_path)
 
-    df_train = BN.select_data_BN(0.01, BN.train, False)
-    df_pre_train = BN.select_data_BN(0.001, BN.train, False)
-    df_validation = BN.select_data_BN(0.01, BN.validation, False)
-    df_test = BN.select_data_BN(0.01, BN.validation, False)
+    try:
+        df_en_train = BN.load_data(data_path + 'train_' + DataName + '.p')
+        df_en_pre_train = BN.load_data(data_path + 'pre_train_' + DataName + '.p')
+        df_en_validation = BN.load_data(data_path + 'validation_' + DataName + '.p')
+        df_en_test = BN.load_data(data_path + 'test_' + DataName + '.p')
+    except FileNotFoundError:
+        df_train = BN.select_data_BN(0.01, BN.train, False, selected=np.arange(26))
+        df_pre_train = BN.select_data_BN(0.001, BN.train, False, selected=np.arange(26))
+        df_validation = BN.select_data_BN(0.01, BN.validation, False, selected=np.arange(26))
+        df_test = BN.select_data_BN(0.01, BN.validation, False, selected=np.arange(26))
 
-    df_en_train = BN.encoding_latency_BN(df_train)
-    df_en_pre_train = BN.encoding_latency_BN(df_pre_train)
-    df_en_validation = BN.encoding_latency_BN(df_validation)
-    df_en_test = BN.encoding_latency_BN(df_test)
+        df_en_train = BN.encoding_latency_BN(df_train, (150, 100), (5, 5), 'max', 0.3)
+        df_en_pre_train = BN.encoding_latency_BN(df_pre_train, (150, 100), (5, 5), 'max', 0.3)
+        df_en_validation = BN.encoding_latency_BN(df_validation, (150, 100), (5, 5), 'max', 0.3)
+        df_en_test = BN.encoding_latency_BN(df_test, (150, 100), (5, 5), 'max', 0.3)
 
-    BN.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
-    BN.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
-    BN.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
-    BN.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
+        BN.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
+        BN.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
+        BN.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
+        BN.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
