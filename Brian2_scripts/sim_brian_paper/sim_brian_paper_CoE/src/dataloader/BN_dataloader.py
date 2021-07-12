@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-# from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import os
 import pickle, shutil, zipfile
@@ -16,7 +16,7 @@ from PIL import Image as PIL_Image
 import numpy as np
 import pandas as pd
 
-class BN_classification():
+class BN_classification(BaseFunctions):
     """
     Class used to load BN dataset
 
