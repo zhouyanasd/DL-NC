@@ -7,16 +7,16 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import os
 import re
-import pickle
 
 import cv2
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
 
 class KTH_classification(BaseFunctions):
     def __init__(self):
@@ -200,24 +200,3 @@ class KTH_classification(BaseFunctions):
         label = analog_data.category.map(self.CATEGORIES).astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
         return data_frame
-
-    def get_series_data_list(self, data_frame, is_group=False):
-        data_frame_s = []
-        if not is_group:
-            for value in data_frame['value']:
-                data_frame_s.extend(value)
-        else:
-            for value in data_frame['value']:
-                data_frame_s.append(value)
-        label = data_frame['label']
-        return np.asarray(data_frame_s), label
-
-    def dump_data(self, path, dataset):
-        if os.path.exists(path):
-            os.remove(path)
-        with open(path, 'wb') as file:
-            pickle.dump(dataset, file)
-
-    def load_data(self, path):
-        with open(path, 'rb') as file:
-            return pickle.load(file)

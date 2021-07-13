@@ -10,11 +10,12 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import os
-import pickle, shutil, zipfile
+import shutil, zipfile
 from PIL import Image as PIL_Image
 
 import numpy as np
 import pandas as pd
+
 
 class BN_classification(BaseFunctions):
     """
@@ -103,7 +104,7 @@ class BN_classification(BaseFunctions):
         return np.asarray(video_set)
 
     def load_data_BN(self, videoId_df):
-        frames = self.load_videos(videoId_df.video_id.values, z)
+        frames = self.load_videos(videoId_df.video_id.values, self.z)
         self.z.close()
         videoId_df_ = videoId_df.copy()
         videoId_df_['frames'] = frames
@@ -192,51 +193,3 @@ class BN_classification(BaseFunctions):
         label = analog_data.category.map(self.CATEGORIES).astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
         return data_frame
-
-    def get_series_data_list(self, data_frame, is_group=False):
-        data_frame_s = []
-        if not is_group:
-            for value in data_frame['value']:
-                data_frame_s.extend(value)
-        else:
-            for value in data_frame['value']:
-                data_frame_s.append(value)
-        label = data_frame['label']
-        return np.asarray(data_frame_s), label
-
-    def dump_data(self, path, dataset):
-        if os.path.exists(path):
-            os.remove(path)
-        with open(path, 'wb') as file:
-            pickle.dump(dataset, file)
-
-    def load_data(self, path):
-        with open(path, 'rb') as file:
-            return pickle.load(file)
-
-if __name__ == "__main__":
-    DataName = 'coe_0.01'
-    data_path = "C:/Users/Administrator/Desktop/share/"
-    BN = BN_classification()
-    BN.load_data_BN_all(data_path)
-
-    try:
-        df_en_train = BN.load_data(data_path + 'train_' + DataName + '.p')
-        df_en_pre_train = BN.load_data(data_path + 'pre_train_' + DataName + '.p')
-        df_en_validation = BN.load_data(data_path + 'validation_' + DataName + '.p')
-        df_en_test = BN.load_data(data_path + 'test_' + DataName + '.p')
-    except FileNotFoundError:
-        df_train = BN.select_data_BN(0.01, BN.train, False, selected=np.arange(26))
-        df_pre_train = BN.select_data_BN(0.001, BN.train, False, selected=np.arange(26))
-        df_validation = BN.select_data_BN(0.01, BN.validation, False, selected=np.arange(26))
-        df_test = BN.select_data_BN(0.01, BN.validation, False, selected=np.arange(26))
-
-        df_en_train = BN.encoding_latency_BN(df_train, (150, 100), (5, 5), 'max', 0.3)
-        df_en_pre_train = BN.encoding_latency_BN(df_pre_train, (150, 100), (5, 5), 'max', 0.3)
-        df_en_validation = BN.encoding_latency_BN(df_validation, (150, 100), (5, 5), 'max', 0.3)
-        df_en_test = BN.encoding_latency_BN(df_test, (150, 100), (5, 5), 'max', 0.3)
-
-        BN.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
-        BN.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
-        BN.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
-        BN.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)

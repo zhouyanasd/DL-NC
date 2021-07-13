@@ -166,13 +166,12 @@ def pre_run_net(gen, data_index):
     exec(exec_var)
     BN_ = BN_classification()
     df_en_pre_train = BN_.load_data(data_path + 'pre_train_' + DataName + '.p')
-    data_pre_train_s, label_pre_train = BN_.get_series_data_list(df_en_pre_train, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
     Switch = 1
     for ind in data_index:
-        data = data_pre_train_s[ind]
+        data = df_en_pre_train.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
@@ -202,9 +201,6 @@ def run_net(gen, state_pre_run, data_indexs):
     df_en_train = BN_.load_data(data_path + 'train_' + DataName+'.p')
     df_en_validation = BN_.load_data(data_path + 'validation_' + DataName+'.p')
     df_en_test = BN_.load_data(data_path + 'test_' + DataName+'.p')
-    data_train_s, label_train = BN_.get_series_data_list(df_en_train, is_group=True)
-    data_validation_s, label_validation = BN_.get_series_data_list(df_en_validation, is_group=True)
-    data_test_s, label_test = BN_.get_series_data_list(df_en_test, is_group=True)
 
     #--- run network ---
     net = init_net(gen)
@@ -219,33 +215,33 @@ def run_net(gen, state_pre_run, data_indexs):
     labels_test = []
 
     for ind in data_indexs[0]:
-        data = data_train_s[ind]
+        data = df_en_train.value[ind][ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
         state = net.get_states()['block_readout']['v']
         states_train.append(state)
-        labels_train.append(label_train[ind])
+        labels_train.append(df_en_train.label[ind])
         net.restore('pre_run')
 
     for ind in data_indexs[1]:
-        data = data_validation_s[ind]
+        data = df_en_validation.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
         state = net.get_states()['block_readout']['v']
         states_val.append(state)
-        labels_val.append(label_validation[ind])
+        labels_val.append(df_en_validation.label[ind])
         net.restore('pre_run')
 
     for ind in data_indexs[2]:
-        data = data_test_s[ind]
+        data = df_en_test.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
         state = net.get_states()['block_readout']['v']
         states_test.append(state)
-        labels_test.append(label_test[ind])
+        labels_test.append(df_en_test.label[ind])
         net.restore('pre_run')
 
     return states_train, labels_train, states_val, labels_val, states_test, labels_test

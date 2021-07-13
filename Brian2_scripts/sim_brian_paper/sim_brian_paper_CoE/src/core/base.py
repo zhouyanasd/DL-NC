@@ -1,6 +1,6 @@
+import os, pickle
 import numpy as np
 import math
-import brian2
 
 
 
@@ -43,3 +43,13 @@ class BaseFunctions():
         if a is None:
             a = np.array([]).reshape(tuple(shape))
         return np.append(a, b.reshape(tuple(shape)), axis=0)
+
+    def dump_data(self, path, dataset):
+        if os.path.exists(path):
+            os.remove(path)
+        with open(path, 'wb') as file:
+            pickle.dump(dataset, file)
+
+    def load_data(self, path):
+        with open(path, 'rb') as file:
+            return pickle.load(file)

@@ -1,7 +1,4 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
-
-import os
-import pickle
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import numpy as np
 import pandas as pd
@@ -73,17 +70,6 @@ class UCI_classification(BaseFunctions):
         else:
             raise ValueError('duration must divide (coding_n*length of data) exactly')
 
-    def get_series_data(self, data_frame, is_group=False):
-        data_frame_s = None
-        if not is_group:
-            for value in data_frame['value']:
-                data_frame_s = self.np_extend(data_frame_s, value, 0)
-        else:
-            for value in data_frame['value']:
-                data_frame_s = self.np_append(data_frame_s, value)
-        label = data_frame['label']
-        return data_frame_s, label
-
     def get_series_data_list(self, data_frame, is_group=False):
         data_frame_s = []
         if not is_group:
@@ -94,13 +80,3 @@ class UCI_classification(BaseFunctions):
                 data_frame_s.append(value)
         label = data_frame['label']
         return np.asarray(data_frame_s), label
-
-    def dump_data(self, path, dataset):
-        if os.path.exists(path):
-            os.remove(path)
-        with open(path, 'wb') as file:
-            pickle.dump(dataset, file)
-
-    def load_data(self, path):
-        with open(path, 'rb') as file:
-            return pickle.load(file)

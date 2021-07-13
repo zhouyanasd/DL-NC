@@ -106,15 +106,14 @@ except FileNotFoundError:
     KTH.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
     KTH.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
 
-data_train_s, label_train = KTH.get_series_data_list(df_en_train, is_group=True)
-data_pre_train_s, label_pre_train = KTH.get_series_data_list(df_en_pre_train, is_group=True)
-data_validation_s, label_validation = KTH.get_series_data_list(df_en_validation, is_group=True)
-data_test_s, label_test = KTH.get_series_data_list(df_en_test, is_group=True)
-
-data_train_s_batch, label_train_batch = KTH.data_batch(data_train_s, core), KTH.data_batch(label_train, core)
-data_pre_train_s_batch, label_pre_train_batch = KTH.data_batch(data_pre_train_s, core), KTH.data_batch(label_pre_train, core)
-data_validation_s_batch, label_validation_batch = KTH.data_batch(data_validation_s, core), KTH.data_batch(label_validation, core)
-data_test_s_batch, label_test_batch = KTH.data_batch(data_test_s, core), KTH.data_batch(label_test, core)
+data_train_s_batch, label_train_batch = \
+    KTH.data_batch(df_en_train.values.values, core), KTH.data_batch(df_en_train.label.values, core)
+data_pre_train_s_batch, label_pre_train_batch = \
+    KTH.data_batch(df_en_pre_train.values.values, core), KTH.data_batch(df_en_pre_train.label.values, core)
+data_validation_s_batch, label_validation_batch = \
+    KTH.data_batch(df_en_validation.values.values, core), KTH.data_batch(df_en_validation.label.values, core)
+data_test_s_batch, label_test_batch = \
+    KTH.data_batch(df_en_test.values.values, core), KTH.data_batch(df_en_test.label.values, core)
 
 #--- define network run function ---
 def init_net(gen):

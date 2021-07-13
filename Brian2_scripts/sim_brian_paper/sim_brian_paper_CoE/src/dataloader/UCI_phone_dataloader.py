@@ -6,10 +6,7 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
-
-import os
-import pickle
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
 
 import numpy as np
 import scipy as sp
@@ -94,17 +91,6 @@ class UCI_classification(BaseFunctions):
         label = analog_data.activity_Id.astype('<i1')
         data_frame = pd.DataFrame({'value': data_diff_pool_threshold_norm, 'label': label})
         return data_frame
-
-    def get_series_data_list(self, data_frame, is_group=False):
-        data_frame_s = []
-        if not is_group:
-            for value in data_frame['value']:
-                data_frame_s.extend(value)
-        else:
-            for value in data_frame['value']:
-                data_frame_s.append(value)
-        label = data_frame['label']
-        return np.asarray(data_frame_s), label
 
     def select_data_UCI(self, fraction, data_frame, is_order=True, **kwargs):
         try:
@@ -530,13 +516,3 @@ class UCI_classification(BaseFunctions):
 
         # return the data frame
         return data_frame
-
-    def dump_data(self, path, dataset):
-        if os.path.exists(path):
-            os.remove(path)
-        with open(path, 'wb') as file:
-            pickle.dump(dataset, file)
-
-    def load_data(self, path):
-        with open(path, 'rb') as file:
-            return pickle.load(file)
