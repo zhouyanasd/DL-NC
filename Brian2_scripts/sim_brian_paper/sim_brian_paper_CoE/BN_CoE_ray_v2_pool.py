@@ -87,17 +87,17 @@ method = 'CoE_rf_w'
 total_eva = 600
 load_continue = False
 
-DataName = 'coe_0.01'
+DataName = 'coe_100'
 
 origin_size = (150, 100)
 pool_size = (5, 5)
 pool_types = 'max'
-pool_threshold = 0.2
+pool_threshold = 0.3
 
-F_train = 0.01
-F_pre_train = 0.001
-F_validation = 0.01
-F_test = 0.01
+F_train = 100
+F_pre_train = 10
+F_validation = 100
+F_test = 100
 
 neurons_encoding = int((origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1]))
 

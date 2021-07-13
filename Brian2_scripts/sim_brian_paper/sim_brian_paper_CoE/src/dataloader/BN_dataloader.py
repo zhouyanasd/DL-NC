@@ -171,12 +171,18 @@ class BN_classification(BaseFunctions):
             selected = [self.label_to_category[x] for x in kwargs['selected']]
         except KeyError:
             selected = self.CATEGORIES.keys()
-        if is_order:
-            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(
-                frac=fraction).sort_index().reset_index(drop=True)
+        if  fraction > 1:
+            data_frame_selected = pd.DataFrame(columns=data_frame.columns)
+            for s in selected:
+                data_frame_selected = data_frame_selected.append(data_frame[data_frame['category'].isin([s])].sample(
+                    n=fraction))
         else:
-            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(frac=fraction).reset_index(
-                drop=True)
+            data_frame_selected = data_frame[data_frame['category'].isin(selected)].sample(frac=fraction)
+
+        if is_order:
+            data_frame_selected = data_frame_selected.sort_index().reset_index(drop=True)
+        else:
+            data_frame_selected = data_frame_selected.reset_index(drop=True)
         return self.load_data_BN(data_frame_selected)
 
     def encoding_latency_BN(self, analog_data, origin_size=(150, 100), pool_size=(5, 5), types='max', threshold=0.2):
