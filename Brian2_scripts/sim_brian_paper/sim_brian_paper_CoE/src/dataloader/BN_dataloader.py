@@ -8,6 +8,7 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import Dataloader
 
 import os
 import shutil, zipfile
@@ -17,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 
-class BN_classification(BaseFunctions):
+class BN_classification(BaseFunctions, Dataloader):
     """
     Class used to load BN dataset
 

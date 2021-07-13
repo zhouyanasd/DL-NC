@@ -1,10 +1,11 @@
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import Dataloader
 
 import numpy as np
 import pandas as pd
 
 
-class UCI_classification(BaseFunctions):
+class UCI_classification(BaseFunctions, Dataloader):
     def __init__(self, duration):
         super().__init__()
         self.duration = duration

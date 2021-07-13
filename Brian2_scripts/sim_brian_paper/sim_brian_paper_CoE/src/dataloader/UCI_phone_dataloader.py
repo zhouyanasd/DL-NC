@@ -7,6 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import Dataloader
 
 import numpy as np
 import scipy as sp
@@ -22,7 +23,7 @@ from scipy.fftpack import ifft
 from sklearn.model_selection import train_test_split
 
 
-class UCI_classification(BaseFunctions):
+class UCI_classification(BaseFunctions, Dataloader):
     def __init__(self):
         # Creating a dictionary for all types of activities
         # The first 6 activities are called Basic Activities as(BAs) 3 dynamic and 3 static

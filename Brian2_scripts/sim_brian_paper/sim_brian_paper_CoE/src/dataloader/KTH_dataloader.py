@@ -8,6 +8,7 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.dataloader import Dataloader
 
 import os
 import re
@@ -18,7 +19,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-class KTH_classification(BaseFunctions):
+class KTH_classification(BaseFunctions, Dataloader):
     def __init__(self):
         self.CATEGORIES = {
             "boxing": 0,
