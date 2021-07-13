@@ -95,9 +95,9 @@ pool_types = 'max'
 pool_threshold = 0.3
 
 F_train = 100
-F_pre_train = 10
-F_validation = 100
-F_test = 100
+F_pre_train = 8
+F_validation = 12
+F_test = 12
 
 neurons_encoding = int((origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1]))
 

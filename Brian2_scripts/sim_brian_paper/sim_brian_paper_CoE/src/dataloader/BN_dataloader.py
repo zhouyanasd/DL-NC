@@ -103,9 +103,8 @@ class BN_classification(BaseFunctions):
         return np.asarray(video_set)
 
     def load_data_BN(self, videoId_df):
-        z = zipfile.ZipFile(self.path_vid, 'r', zipfile.ZIP_DEFLATED)
         frames = self.load_videos(videoId_df.video_id.values, z)
-        z.close()
+        self.z.close()
         videoId_df_ = videoId_df.copy()
         videoId_df_['frames'] = frames
         return videoId_df_.dropna(axis=0, subset=['frames'])
@@ -118,6 +117,7 @@ class BN_classification(BaseFunctions):
         self.path_validation = data_path + 'jester-v1-validation.csv'
         self.path_test = data_path + 'jester-v1-test.csv'
         self.load_labels()
+        self.z = zipfile.ZipFile(self.path_vid, 'r', zipfile.ZIP_DEFLATED)
 
     def frame_diff(self, frames, origin_size=(150, 100)):
         frame_diff = []
