@@ -163,7 +163,7 @@ def init_net(gen):
 def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
-    UCI_ = UCI_classification()
+    UCI_ = UCI_classification(coding_duration)
     df_en_pre_train = UCI_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
     data_pre_train_s, label_pre_train = UCI_.get_series_data_list(df_en_pre_train, is_group=True)
 
@@ -197,7 +197,7 @@ def sum_strength(gen, net_state_list):
 def run_net(gen, state_pre_run, data_indexs):
     exec(exec_env)
     exec(exec_var)
-    UCI_ = UCI_classification()
+    UCI_ = UCI_classification(coding_duration)
     df_en_train = UCI_.load_data(data_path + 'Spike_train_Data/train_' + DataName+'.p')
     df_en_validation = UCI_.load_data(data_path + 'Spike_train_Data/validation_' + DataName+'.p')
     df_en_test = UCI_.load_data(data_path + 'Spike_train_Data/test_' + DataName+'.p')
