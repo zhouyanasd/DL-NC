@@ -214,7 +214,7 @@ def run_net(gen, state_pre_run, data_indexs):
     labels_test = []
 
     for ind in data_indexs[0]:
-        data = df_en_train.value[ind][ind]
+        data = df_en_train.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
         net.run(duration * Dt)
