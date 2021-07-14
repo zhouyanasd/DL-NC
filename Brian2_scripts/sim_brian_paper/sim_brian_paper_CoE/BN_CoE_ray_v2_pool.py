@@ -122,10 +122,10 @@ try:
 except FileNotFoundError:
     BN.load_data_BN_all(data_path, split_type='mixed', split=[15, 5, 4])
 
-    df_train = BN.select_data_BN(F_train, BN.train, False, selected = np.arange(26))
-    df_pre_train = BN.select_data_BN(F_pre_train, BN.train, False, selected = np.arange(26))
-    df_validation = BN.select_data_BN(F_validation, BN.validation, False, selected = np.arange(26))
-    df_test = BN.select_data_BN(F_train, BN.test, False, selected = np.arange(26))
+    df_train = BN.select_data_BN(F_train, BN.train, True, selected = np.arange(26))
+    df_pre_train = BN.select_data_BN(F_pre_train, BN.train, True, selected = np.arange(26))
+    df_validation = BN.select_data_BN(F_validation, BN.validation, True, selected = np.arange(26))
+    df_test = BN.select_data_BN(F_train, BN.validation, True, selected = np.arange(26))
 
     df_en_train = BN.encoding_latency_BN(df_train, origin_size, pool_size, pool_types, pool_threshold)
     df_en_pre_train = BN.encoding_latency_BN(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)

@@ -105,7 +105,6 @@ class BN_classification(BaseFunctions):
 
     def load_data_BN(self, videoId_df):
         frames = self.load_videos(videoId_df.video_id.values, self.z)
-        self.z.close()
         videoId_df_ = videoId_df.copy()
         videoId_df_['frames'] = frames
         return videoId_df_.dropna(axis=0, subset=['frames'])

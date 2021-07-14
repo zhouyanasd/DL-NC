@@ -107,13 +107,13 @@ except FileNotFoundError:
     KTH.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
 
 data_train_s_batch, label_train_batch = \
-    KTH.data_batch(df_en_train.values.values, core), KTH.data_batch(df_en_train.label.values, core)
+    KTH.data_batch(df_en_train.value.values, core), KTH.data_batch(df_en_train.label.values, core)
 data_pre_train_s_batch, label_pre_train_batch = \
-    KTH.data_batch(df_en_pre_train.values.values, core), KTH.data_batch(df_en_pre_train.label.values, core)
+    KTH.data_batch(df_en_pre_train.value.values, core), KTH.data_batch(df_en_pre_train.label.values, core)
 data_validation_s_batch, label_validation_batch = \
-    KTH.data_batch(df_en_validation.values.values, core), KTH.data_batch(df_en_validation.label.values, core)
+    KTH.data_batch(df_en_validation.value.values, core), KTH.data_batch(df_en_validation.label.values, core)
 data_test_s_batch, label_test_batch = \
-    KTH.data_batch(df_en_test.values.values, core), KTH.data_batch(df_en_test.label.values, core)
+    KTH.data_batch(df_en_test.value.values, core), KTH.data_batch(df_en_test.label.values, core)
 
 #--- define network run function ---
 def init_net(gen):
