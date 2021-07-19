@@ -119,7 +119,7 @@ class BN_classification(BaseFunctions):
         self.load_labels()
         self.z = zipfile.ZipFile(self.path_vid, 'r', zipfile.ZIP_DEFLATED)
 
-    def frame_diff(self, frames, origin_size=(150, 100)):
+    def frame_diff(self, frames, origin_size=(100, 150)):
         frame_diff = []
         it = frames.__iter__()
         frame_pre = next(it).reshape(origin_size)
@@ -143,7 +143,7 @@ class BN_classification(BaseFunctions):
         else:
             raise ValueError('matrix must be divided by size exactly')
 
-    def pooling(self, frames, origin_size=(150, 100), pool_size=(5, 5), types='max'):
+    def pooling(self, frames, origin_size=(100, 150), pool_size=(5, 5), types='max'):
         data = []
         for frame in frames:
             pool = np.zeros((int(origin_size[0] / pool_size[0]), int(origin_size[1] / pool_size[1])), dtype=np.int16)
@@ -185,7 +185,7 @@ class BN_classification(BaseFunctions):
             data_frame_selected = data_frame_selected.reset_index(drop=True)
         return self.load_data_BN(data_frame_selected)
 
-    def encoding_latency_BN(self, analog_data, origin_size=(150, 100), pool_size=(5, 5), types='max', threshold=0.2):
+    def encoding_latency_BN(self, analog_data, origin_size=(100, 150), pool_size=(5, 5), types='max', threshold=0.2):
         data_diff = analog_data.frames.apply(self.frame_diff, origin_size=origin_size)
         data_diff_pool = data_diff.apply(self.pooling, origin_size=origin_size, pool_size=pool_size, types=types)
         data_diff_pool_threshold_norm = data_diff_pool.apply(self.threshold_norm, threshold=threshold)

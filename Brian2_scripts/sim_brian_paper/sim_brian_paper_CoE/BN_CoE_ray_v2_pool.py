@@ -89,10 +89,10 @@ load_continue = False
 
 DataName = 'coe_100'
 
-origin_size = (150, 100)
+origin_size = (100, 150)
 pool_size = (5, 5)
 pool_types = 'max'
-pool_threshold = 0.3
+pool_threshold = 0.2
 
 F_train = 100
 F_pre_train = 8
