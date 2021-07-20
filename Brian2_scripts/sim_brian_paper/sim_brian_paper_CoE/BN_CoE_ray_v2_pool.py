@@ -87,17 +87,17 @@ method = 'CoE_rf_w'
 total_eva = 600
 load_continue = False
 
-DataName = 'coe_100'
+DataName = 'coe_210'
 
-origin_size = (100, 150)
+origin_size = (100, 150, 3)
 pool_size = (5, 5)
 pool_types = 'max'
-pool_threshold = 0.2
+pool_threshold = 0.1
 
-F_train = 100
-F_pre_train = 8
-F_validation = 12
-F_test = 12
+F_train = 210
+F_pre_train = 60
+F_validation = 90
+F_test = 90
 
 neurons_encoding = int((origin_size[0] * origin_size[1]) / (pool_size[0] * pool_size[1]))
 
@@ -120,22 +120,27 @@ try:
     df_en_validation = BN.load_data(data_path + 'validation_' + DataName+'.p')
     df_en_test = BN.load_data(data_path + 'test_' + DataName+'.p')
 except FileNotFoundError:
-    BN.load_data_BN_all(data_path, split_type='mixed', split=[15, 5, 4])
+    BN.load_data_BN_all(data_path)
 
-    df_train = BN.select_data_BN(F_train, BN.train, True, selected = np.arange(26))
-    df_pre_train = BN.select_data_BN(F_pre_train, BN.train, True, selected = np.arange(26))
-    df_validation = BN.select_data_BN(F_validation, BN.validation, True, selected = np.arange(26))
-    df_test = BN.select_data_BN(F_train, BN.validation, True, selected = np.arange(26))
-
+    df_train = BN.select_data_BN(F_train, BN.train, True, selected=np.arange(26))
     df_en_train = BN.encoding_latency_BN(df_train, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_pre_train = BN.encoding_latency_BN(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_validation = BN.encoding_latency_BN(df_validation, origin_size, pool_size, pool_types, pool_threshold)
-    df_en_test = BN.encoding_latency_BN(df_test, origin_size, pool_size, pool_types, pool_threshold)
-
     BN.dump_data(data_path + 'train_' + DataName + '.p', df_en_train)
+    del df_train
+
+    df_pre_train = BN.select_data_BN(F_pre_train, BN.train, True, selected=np.arange(26))
+    df_en_pre_train = BN.encoding_latency_BN(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
     BN.dump_data(data_path + 'pre_train_' + DataName + '.p', df_en_pre_train)
+    del df_pre_train
+
+    df_validation = BN.select_data_BN(F_validation, BN.validation, True, selected=np.arange(26))
+    df_en_validation = BN.encoding_latency_BN(df_validation, origin_size, pool_size, pool_types, pool_threshold)
     BN.dump_data(data_path + 'validation_' + DataName + '.p', df_en_validation)
+    del df_validation
+
+    df_test = BN.select_data_BN(F_test, BN.validation, True, selected=np.arange(26))
+    df_en_test = BN.encoding_latency_BN(df_test, origin_size, pool_size, pool_types, pool_threshold)
     BN.dump_data(data_path + 'test_' + DataName + '.p', df_en_test)
+    del df_test
 
 data_train_index_batch = BN.data_batch(df_en_train.index.values, core)
 data_pre_train_index_batch = BN.data_batch(df_en_pre_train.index.values, core)
