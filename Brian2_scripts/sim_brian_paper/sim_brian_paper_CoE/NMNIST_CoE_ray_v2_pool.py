@@ -167,7 +167,7 @@ def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
     UCI_ = UCI_classification(coding_duration)
-    df_en_pre_train = UCI_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
+    df_en_pre_train = UCI_.load_data(data_path + '/pre_train_' + DataName + '.p')
 
     # --- run network ---
     net = init_net(gen)
@@ -202,9 +202,9 @@ def run_net(gen, state_pre_run, data_indexs):
     exec(exec_env)
     exec(exec_var)
     UCI_ = UCI_classification(coding_duration)
-    df_en_train = UCI_.load_data(data_path + 'Spike_train_Data/train_' + DataName + '.p')
-    df_en_validation = UCI_.load_data(data_path + 'Spike_train_Data/validation_' + DataName + '.p')
-    df_en_test = UCI_.load_data(data_path + 'Spike_train_Data/test_' + DataName + '.p')
+    df_en_train = UCI_.load_data(data_path + '/train_' + DataName + '.p')
+    df_en_validation = UCI_.load_data(data_path + '/validation_' + DataName + '.p')
+    df_en_test = UCI_.load_data(data_path + '/test_' + DataName + '.p')
 
     # --- run network ---
     net = init_net(gen)
