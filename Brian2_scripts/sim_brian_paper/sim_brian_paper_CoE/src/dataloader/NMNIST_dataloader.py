@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 
-class NMINIST_classification(BaseFunctions):
+class NMNIST_classification(BaseFunctions):
     """
     Class used to load NMINIST dataset
 
@@ -197,14 +197,8 @@ class NMINIST_classification(BaseFunctions):
                 name_list.append(name[-9:])
         return pd.DataFrame({'name': name_list, 'label': label})
 
-    def load_data_NMINIST(self, data_df):
+    def load_data_NMNIST(self, data_df, path, z):
         data_list = []
-        if data_df.name[0] in self.train.name.values:
-            path = 'Train/'
-            z = self.z_train
-        elif data_df.name[0] in self.test.name.values:
-            path = 'Test/'
-            z = self.z_test
         for label, data_name in zip(data_df.label.values, data_df.name.values):
             path_file = path+ str(label) +'/'+ data_name
             z.extract(path_file, path=self.data_path)
@@ -216,7 +210,7 @@ class NMINIST_classification(BaseFunctions):
         data_df_['frames'] = data_list
         return data_df_
 
-    def load_data_NMINIST_all(self, data_path):
+    def load_data_NMNIST_all(self, data_path):
         self.data_path = data_path
         self.path_train = data_path + 'Train.zip'
         self.path_test = data_path + 'Test.zip'
@@ -229,7 +223,7 @@ class NMINIST_classification(BaseFunctions):
         frames = (frames>threshold).astype('<i1')
         return frames
 
-    def select_data_NMINIST(self, fraction, data_frame, is_order=True, **kwargs):
+    def select_data_NMNIST(self, fraction, data_frame, is_order=True, **kwargs):
         try:
             selected = kwargs['selected']
         except KeyError:
@@ -246,9 +240,13 @@ class NMINIST_classification(BaseFunctions):
             data_frame_selected = data_frame_selected.sort_index().reset_index(drop=True)
         else:
             data_frame_selected = data_frame_selected.reset_index(drop=True)
-        return self.load_data_NMINIST(data_frame_selected)
 
-    def encoding_latency_NMINIST(self, analog_data, threshold=0):
+        if data_frame is self.train:
+            return self.load_data_NMNIST(data_frame_selected, 'Train/', self.z_train)
+        elif data_frame is self.test:
+            return self.load_data_NMNIST(data_frame_selected, 'Test/', self.z_test)
+
+    def encoding_latency_NMNIST(self, analog_data, threshold=0):
         data_threshold = analog_data.frames.apply(self.threshold, threshold=threshold)
         label = analog_data.label.values.astype('<i1')
         data_frame = pd.DataFrame({'value': data_threshold, 'label': label})

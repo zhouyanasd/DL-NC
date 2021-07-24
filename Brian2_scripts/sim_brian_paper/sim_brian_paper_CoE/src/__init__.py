@@ -10,6 +10,7 @@ __all__ = [
     "KTH_classification",
     "UCI_classification",
     "BN_classification",
+    "NMNIST_classification",
     "BaseFunctions",
     "Evaluation",
     "Block",
