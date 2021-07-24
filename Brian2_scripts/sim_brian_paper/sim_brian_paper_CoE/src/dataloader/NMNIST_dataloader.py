@@ -227,7 +227,7 @@ class NMNIST_classification(BaseFunctions):
         try:
             selected = kwargs['selected']
         except KeyError:
-            selected = list(np.arange(9))
+            selected = list(np.arange(10))
         if  fraction > 1:
             data_frame_selected = pd.DataFrame(columns=data_frame.columns)
             for s in selected:
