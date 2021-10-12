@@ -91,7 +91,7 @@ urllib3==1.21.1
 wcwidth==0.1.7
 Werkzeug==0.12.2
 widgetsnbextension==3.0.3
-opencv-python==3.3.0.10
+opencv-python==3.4.7.28
 bayesian-optimization==1.0.0
 cma==2.6.0
 geatpy==1.1.5
