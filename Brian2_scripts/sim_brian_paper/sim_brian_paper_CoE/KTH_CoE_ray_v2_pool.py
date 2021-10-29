@@ -56,6 +56,7 @@ try:
 except:
     pass
 warnings.filterwarnings("ignore")
+BrianLogger.log_level_error()
 prefs.codegen.target = "numpy"
 start_scope()
 '''
