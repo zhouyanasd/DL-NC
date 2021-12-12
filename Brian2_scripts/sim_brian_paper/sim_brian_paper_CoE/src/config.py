@@ -116,7 +116,7 @@ threshold_reservoir = 'v > A_threshold * threshold'
 
 reset_reservoir = '''
 v = voltage_reset
-threshold = clip(threshold+threshold_jump, threshold_solid, threshold_max)
+threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max)
 '''
 
 # --- block layer and reservoir structure ---
