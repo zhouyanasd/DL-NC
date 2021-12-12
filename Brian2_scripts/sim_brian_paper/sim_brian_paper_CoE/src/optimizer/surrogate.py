@@ -530,7 +530,7 @@ class RandomForestRegressor_surrogate_wang(Surrogate):
 
 
 class RandomForestRegressor_surrogate(Surrogate):
-    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='ucb', kappa=2.576, xi=0.0, **rf_params):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='lcb', kappa=2.576, xi=0.0, **rf_params):
         self._rf = RandomForestRegressor(
             n_estimators=10,
             criterion="mse",
@@ -569,7 +569,7 @@ class RandomForestRegressor_surrogate(Surrogate):
 
 
 class GaussianProcess_surrogate(Surrogate):
-    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='ucb', kappa=2.576, xi=0.0, **gp_params):
+    def __init__(self, f, keys, ranges, borders, precisions, random_state, acq='lcb', kappa=2.576, xi=0.0, **gp_params):
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
             alpha=1e-6,

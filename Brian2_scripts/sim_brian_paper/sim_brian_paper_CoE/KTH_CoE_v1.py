@@ -283,7 +283,7 @@ elif method == 'CoE_gp':
                         decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                         random_state=seed, maxormin=1,
                         surrogate_type='gp', init_points=150, LHS_path=LHS_path,
-                        acq='ucb', kappa=2.576, xi=0.0)
+                        acq='lcb', kappa=2.576, xi=0.0)
     coe.optimize(recopt=0.9, pm=0.1, MAXGEN=75, NIND=10, SUBPOP=1, GGAP=0.5,
                  online=False, eva=1, interval=1,
                  selectStyle='tour', recombinStyle='reclin',

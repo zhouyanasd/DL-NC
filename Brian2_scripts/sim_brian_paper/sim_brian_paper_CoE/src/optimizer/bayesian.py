@@ -11,7 +11,7 @@ import cma
 
 class BayesianOptimization(Surrogate):
     def __init__(self, f, keys, ranges, borders, precisions, model, random_state=None,
-                 acq='ucb', opt='de', kappa=2.576, xi=0.0):
+                 acq='lcb', opt='de', kappa=2.576, xi=0.0):
         super(BayesianOptimization, self).__init__(
             f = f,
             keys = keys,
@@ -85,7 +85,7 @@ class BayesianOptimization(Surrogate):
 
 class GaussianProcess_BayesianOptimization(BayesianOptimization):
     def __init__(self, f, keys, ranges, borders, precisions, random_state,
-                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **gp_params):
+                 acq='lcb', opt='de', kappa=2.576, xi=0.0, **gp_params):
         self._gp = GaussianProcessRegressor(
             kernel=Matern(nu=2.5),
             alpha=1e-6,
@@ -112,7 +112,7 @@ class GaussianProcess_BayesianOptimization(BayesianOptimization):
 
 class RandomForestRegressor_BayesianOptimization(BayesianOptimization):
     def __init__(self, f, keys, ranges, borders, precisions, random_state,
-                 acq='ucb', opt='de', kappa=2.576, xi=0.0, **rf_params):
+                 acq='lcb', opt='de', kappa=2.576, xi=0.0, **rf_params):
 
         if acq == 'es':
             print('warning: Entropy search acquisition function should use gp model')

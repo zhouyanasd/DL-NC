@@ -153,10 +153,10 @@ class UtilityFunction():
 
         self.xi = xi
 
-        if kind not in ['ucb', 'ei', 'poi','es']:
+        if kind not in ['lcb', 'ei', 'poi', 'es']:
             err = "The utility function " \
                   "{} has not been implemented, " \
-                  "please choose one of ucb, ei, or poi.".format(kind)
+                  "please choose one of lcb, ei, or poi.".format(kind)
             raise NotImplementedError(err)
         else:
             self.kind = kind
@@ -164,8 +164,8 @@ class UtilityFunction():
         self.bounds = bounds
 
     def utility(self, x, model, y_min):
-        if self.kind == 'ucb':
-            return self._ucb_(x, model, self.kappa)
+        if self.kind == 'lcb':
+            return self._lcb_(x, model, self.kappa)
         if self.kind == 'ei':
             return self._ei_(x, model, y_min, self.xi)
         if self.kind == 'poi':
@@ -177,7 +177,7 @@ class UtilityFunction():
             return entropy_search(x, y_min)
 
     @staticmethod
-    def _ucb_(x, model, kappa):
+    def _lcb_(x, model, kappa):
         mean, std = model.predict(x, return_std=True)
         return mean - kappa * std
 
