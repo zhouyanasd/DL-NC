@@ -50,10 +50,10 @@ dI/dt = (-I)/(tau_I * A_tau_I) : 1
 
 dynamics_block_synapse_STDP = '''
 strength : 1
-plasticity : 1
+tau_plasticity : 1
 type : 1
-dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
-dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
+dapre/dt = -apre/(taupre*tau_plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*tau_plasticity) : 1 (clock-driven)
 '''
 
 dynamics_block_synapse_pre_STDP = '''
@@ -69,10 +69,10 @@ strength = clip(strength+apre*Switch, wmin, wmax)
 
 dynamics_reservoir_synapse_STDP = '''
 strength : 1
-plasticity : 1
+tau_plasticity : 1
 type : 1
-dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
-dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
+dapre/dt = -apre/(taupre*tau_plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*tau_plasticity) : 1 (clock-driven)
 '''
 
 dynamics_reservoir_synapse_pre_STDP = '''
@@ -88,10 +88,10 @@ strength = clip(strength+apre*Switch, wmin, wmax)
 
 dynamics_encoding_synapse_STDP = '''
 strength : 1
-plasticity : 1
+tau_plasticity : 1
 type : 1
-dapre/dt = -apre/(taupre*plasticity) : 1 (clock-driven)
-dapost/dt = -apost/(taupost*plasticity) : 1 (clock-driven)
+dapre/dt = -apre/(taupre*tau_plasticity) : 1 (clock-driven)
+dapost/dt = -apost/(taupost*tau_plasticity) : 1 (clock-driven)
 '''
 
 dynamics_encoding_synapse_pre_STDP = '''
@@ -122,8 +122,8 @@ threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max
 # --- block layer and reservoir structure ---
 structure_blocks = {'components_0': {'name':'random',     'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
-                    'components_2': {'name':'circle',     'p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]},
-                    'components_3': {'name':'hierarchy',  'p_0':[0.5, 1.0], 'p_1':[0.5, 1.0], 'p_2':[0.5, 1.0]}}
+                    'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]},
+                    'components_3': {'name':'three_layer',  'p_0':[0.5, 1.0], 'p_1':[0.5, 1.0], 'p_2':[0.5, 1.0]}}
 
 structure_layer =  {'components_0': {'structure':[[],[]], 'output_input':[[0,1,2,3],[0,1,2,3]]},
                     'components_1': {'structure':[[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
@@ -133,12 +133,12 @@ structure_layer =  {'components_0': {'structure':[[],[]], 'output_input':[[0,1,2
 structure_reservoir = {'components': {'structure':[[],[]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
 
 # --- parameter settings ---
-Reservoir_config = ['layer_1', 'type', 'strength', 'plasticity', 'p_connection']
-Block_0 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'plasticity', 'p_0', 'p_1', 'p_2']
-Block_1 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'plasticity', 'p_0', 'p_1', 'p_2']
-Block_2 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'plasticity', 'p_0', 'p_1', 'p_2']
-Block_3 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'plasticity', 'p_0', 'p_1', 'p_2']
-Encoding_Readout = ['tau_I', 'type', 'strength', 'plasticity', 'p_connection']
+Reservoir_config = ['layer_1', 'type', 'strength', 'tau_plasticity', 'p_connection']
+Block_0 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Block_1 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Block_2 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Block_3 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Encoding_Readout = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
 
 config_group = ['Reservoir_config', 'Block_0', 'Block_1', 'Block_2', 'Block_3', 'Encoding_Readout']
 

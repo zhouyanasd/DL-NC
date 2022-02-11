@@ -236,7 +236,7 @@ class Decoder(BaseFunctions):
         '''
 
         parameters = self.decode('Block_'+str(position))
-        sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'tau', 'tau_I', 'type')
+        sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'tau', 'tau_I', 'type')
         return sub_parameters
 
     def get_reservoir_structure_type(self):
@@ -286,7 +286,7 @@ class Decoder(BaseFunctions):
          component: str, 'Reservoir_config' or 'Encoding_Readout' based on config
          '''
         parameters = self.decode(component)
-        sub_parameters = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
+        sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
         return sub_parameters
 
     def get_encoding_structure(self):

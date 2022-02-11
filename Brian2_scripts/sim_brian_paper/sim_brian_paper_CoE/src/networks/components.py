@@ -629,18 +629,18 @@ class LSM_Network(NetworkBase):
          Examples
          ----------
          {'encoding': None,
-          'encoding_reservoir': {'plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
+          'encoding_reservoir': {'tau_plasticity': 0.7, 'strength': 0.7', 'type: 1.0'},
           'readout': {'parameter_block_neurons': {-1: {'tau_I': 0.6}}},
           'reservoir_readout': None,
           'reservoir': {'parameter_block_group': {'parameter_block_neurons': {0: {'tau': 0.6, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2},
                                                                               1: {'tau': 0.3, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2}},
                                                                               2: {'tau': 0.6, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2},
                                                                               3: {'tau': 0.3, 'tau_I': 0.2, 'threshold': 0.21, 'v': 0.2}},
-                                                  'parameter_block_synapses': {0: {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
-                                                                               1: {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
-                                                                               2: {'plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
-                                                                               3: {'plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
-                        'parameter_pathway': {'type: 1.0', 'plasticity': 0.2, 'strength': 0.2}}}
+                                                  'parameter_block_synapses': {0: {'tau_plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
+                                                                               1: {'tau_plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
+                                                                               2: {'tau_plasticity': 0.6, 'strength': 0.6, 'type': 1.0},
+                                                                               3: {'tau_plasticity': 0.3, 'strength': 0.3, 'type': 1.0}},
+                        'parameter_pathway': {'type: 1.0', 'tau_plasticity': 0.2, 'strength': 0.2}}}
          '''
         self._initialize(self.layers, **parameter)
         self._initialize(self.pathways, **parameter)

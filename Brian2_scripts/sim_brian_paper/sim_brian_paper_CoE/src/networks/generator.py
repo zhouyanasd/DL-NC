@@ -56,19 +56,19 @@ class Generator_connection_matrix(BaseFunctions):
             parameters_['p_alpha'] = self.adapt_scale(component['p_0'], parameters['p_0'])
             parameters_['p_beta'] = self.adapt_scale(component['p_1'], parameters['p_1'])
             parameters_['p_gama'] = self.adapt_scale(component['p_2'], parameters['p_2'])
-        elif component['name'] == 'circle':
+        elif component['name'] == 'small_world_2':
             parameters_['p_forward'] = self.adapt_scale(component['p_0'], parameters['p_0'])
             parameters_['p_backward'] = self.adapt_scale(component['p_1'], parameters['p_1'])
             parameters_['p_threshold'] = self.adapt_scale(component['p_2'], parameters['p_2'])
-        elif component['name'] == 'hierarchy':
+        elif component['name'] == 'three_layer':
             parameters_['p_out'] = self.adapt_scale(component['p_0'], parameters['p_0'])
             parameters_['p_in'] = self.adapt_scale(component['p_1'], parameters['p_1'])
             parameters_['decay'] = self.adapt_scale(component['p_2'], parameters['p_2'])
 
         block_generator_type = {'random': self.generate_connection_matrix_blocks_random,
                                 'scale_free': self.generate_connection_matrix_blocks_scale_free,
-                                'circle': self.generate_connection_matrix_blocks_circle,
-                                'hierarchy': self.generate_connection_matrix_blocks_hierarchy}
+                                'small_world_2': self.generate_connection_matrix_blocks_small_world_2,
+                                'three_layer': self.generate_connection_matrix_blocks_three_layer}
         return block_generator_type[ component['name']](**parameters_)
 
     def generate_connection_matrix_blocks_random(self, N, p):
@@ -181,9 +181,10 @@ class Generator_connection_matrix(BaseFunctions):
 
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_blocks_circle(self, N, p_forward, p_backward, p_threshold):
+    def generate_connection_matrix_blocks_small_world_2(self, N, p_forward, p_backward, p_threshold):
         '''
-         Generate connection matrix of circle block.
+         Generate connection matrix of direct small_world block.
+         This method is generated based on a 'circle' structure.
          'circle' is the critical variate to mark the position of neurons.
          'circle' is extend as 'circle + circle' to connect the tail and head.
 
@@ -216,10 +217,10 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_blocks_hierarchy(self, N, p_out, p_in, decay):
+    def generate_connection_matrix_blocks_three_layer(self, N, p_out, p_in, decay):
         '''
-         Generate connection matrix of hierarchy block.
-         The hierarchy structure separate as three layer.
+         Generate connection matrix of three_layer block.
+         The three_layer structure separate the neurons as three layer.
 
          Parameters
          ----------
@@ -551,7 +552,7 @@ class Generator(Generator_connection_matrix):
         parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
         parameters_neurons['v'] = voltage_reset
         parameters_neurons['threshold'] = threshold_solid
-        parameters_synapses = self.get_sub_dict(parameters, 'plasticity', 'strength', 'type')
+        parameters_synapses = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
         self.change_dict_key(parameters_synapses, 'strength', 'strength_need_random')
         return parameters_neurons, parameters_synapses
 
