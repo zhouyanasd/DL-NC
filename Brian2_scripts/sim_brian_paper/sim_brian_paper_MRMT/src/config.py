@@ -120,82 +120,54 @@ threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max
 '''
 
 # --- block layer and reservoir structure ---
-structure_blocks = {'components_0': {'name':'random',     'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
+structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
-                    'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]},
-                    'components_3': {'name':'three_layer',  'p_0':[0.5, 1.0], 'p_1':[0.5, 1.0], 'p_2':[0.5, 1.0]}}
-
-structure_layer =  {'components_0': {'structure':[[],[]], 'output_input':[[0,1,2,3],[0,1,2,3]]},
-                    'components_1': {'structure':[[0,0,1,2],[1,2,3,3]], 'output_input':[[3],[0]]},
-                    'components_2': {'structure':[[0,0,2,2],[1,3,1,3]], 'output_input':[[1,3],[0,2]]},
-                    'components_3': {'structure':[[0,0,0],[1,2,3]], 'output_input':[[1,2,3],[0]]}}
-
-structure_reservoir = {'components': {'structure':[[],[]],'output_input':[[0,1,2,3],[0,1,2,3]]}}
+                    'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]}}
+Block_max = 20
 
 # --- parameter settings ---
-Reservoir_config = ['layer_1', 'type', 'strength', 'tau_plasticity', 'p_connection']
+Reservoir_config = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
+Reservoir_arc = ['arc_connections_'+str(x) for x in range(Block_max)]
 Block_0 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 Block_1 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 Block_2 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
-Block_3 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
-Encoding_Readout = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
 
 config_group = ['Reservoir_config', 'Block_0', 'Block_1', 'Block_2', 'Block_3', 'Encoding_Readout']
 
-config_keys = [Reservoir_config, Block_0, Block_1, Block_2, Block_3, Encoding_Readout]
+config_keys = [Reservoir_config, Block_0, Block_1, Block_2]
 
-
-config_SubCom = [[0, 1, 2, 3, 4],
-                 [5,  6,  7,  8,  9,  10, 11, 12, 13, 14],
-                 [15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
-                 [25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
-                 [35, 36, 37, 38, 39, 40, 41, 42, 43, 44],
-                 [45, 46, 47, 48, 49]]
-
-config_codes = [[1, None, None, None, None],
+config_codes = [[None, None, None, None, None, None],
+                [1] * Block_max
                 [1, None, None, None, None, None, None, None, None, None],
                 [1, None, None, None, None, None, None, None, None, None],
-                [1, None, None, None, None, None, None, None, None, None],
-                [1, None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None]]
+                [1, None, None, None, None, None, None, None, None, None]]
 
-config_ranges = [[[0, 255], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
+config_ranges = [[[0.1, 1.0], [0, 255], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
+                 [[0, 1048575]] * Block_max
                  [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
                  [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.2]]]
+                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]]
 
-config_borders = [[[1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
+config_borders = [[[0, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
+                  [[1, 1]] * Block_max
                   [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                   [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]]
+                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]]]
 
-config_precisions = [[0, 0, 8, 2, 8],
+config_precisions = [[1, 0, 0, 8, 2, 8],
+                     [0] * Block_max
                      [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
                      [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
-                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
-                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
-                     [1, 0, 8, 2, 8]]
+                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8]]
 
-config_scales = [[0] * 5,
+config_scales = [[0] * 6,
+                 [0] * Block_max
                  [0] * 10,
                  [0] * 10,
-                 [0] * 10,
-                 [0] * 10,
-                 [0] * 5]
+                 [0] * 10]
 
-gen_group = [[0], [1], [2], [3], [4], [5]]
-
-'''
-All gen is in float.
-Example:
-gen = [27.0, 1.0, 0.9, 0.2, 0.6,
-      0, 110.0, 0.3, 0.4, 1.0, 0.9, 0.3, 0.22, 0.22, 0.22,
-      2, 100.0, 0.4, 0.4, 1.0, 0.4, 0.4, 0.44, 0.44, 0.44,
-      1, 100.0, 0.5, 0.4, 1.0, 0.5, 0.5, 0.33, 0.33, 0.33,
-      3, 100.0, 0.6, 0.4, 1.0, 0.6, 0.6, 0.44, 0.55, 0.66,
-      0.4, 1.0, 0.7, 0.5, 0.7]
-'''
+# '''
+# All gen is in float.
+# Example:
+#
+# '''

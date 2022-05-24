@@ -7,16 +7,10 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .bayesian import *
 from .coe import *
-from .de import *
 from .surrogate import *
 
 __all__ = [
-    "DiffEvol",
-    "BayesianOptimization",
-    "GaussianProcess_BayesianOptimization",
-    "RandomForestRegressor_BayesianOptimization",
     "RandomForestRegressor_surrogate",
     "RandomForestRegressor_surrogate_wang",
     "GaussianProcess_surrogate",
