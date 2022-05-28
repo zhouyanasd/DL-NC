@@ -124,6 +124,7 @@ structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':N
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
                     'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]}}
 Block_max = 20
+Task_id = []
 
 # --- parameter settings ---
 Reservoir_config = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
@@ -132,9 +133,9 @@ Block_0 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', '
 Block_1 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 Block_2 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 
-config_group = ['Reservoir_config', 'Block_0', 'Block_1', 'Block_2', 'Block_3', 'Encoding_Readout']
+config_group = ['Reservoir_config', 'Reservoir_arc', 'Block_0', 'Block_1', 'Block_2']
 
-config_keys = [Reservoir_config, Block_0, Block_1, Block_2]
+config_keys = [Reservoir_config, Reservoir_arc, Block_0, Block_1, Block_2]
 
 config_codes = [[None, None, None, None, None, None],
                 [1] * Block_max
@@ -166,8 +167,12 @@ config_scales = [[0] * 6,
                  [0] * 10,
                  [0] * 10]
 
-# '''
-# All gen is in float.
-# Example:
-#
-# '''
+'''
+All gen is in float.
+Example:
+gen = [0.4, 27.0, 1.0, 0.9, 0.2, 0.6,
+      0, 110.0, 0.3, 0.4, 1.0, 0.9, 0.3, 0.22, 0.22, 0.22,
+      2, 100.0, 0.4, 0.4, 1.0, 0.4, 0.4, 0.44, 0.44, 0.44,
+      1, 100.0, 0.5, 0.4, 1.0, 0.5, 0.5, 0.33, 0.33, 0.33]
+      [5768, ... , 14895]
+'''

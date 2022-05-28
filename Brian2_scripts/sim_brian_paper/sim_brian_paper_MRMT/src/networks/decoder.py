@@ -171,7 +171,6 @@ class Decoder(BaseFunctions):
 
         group = np.where(np.array(self.config_group) == target)[0][0]
         key = self.config_keys[group]
-        SubCom = self.config_SubCom[group]
         codes = self.config_codes[group]
         ranges = self.config_ranges[group]
         parameter = {}
@@ -182,42 +181,42 @@ class Decoder(BaseFunctions):
             parameter[k] = p
         return parameter
 
-    def get_block_type(self, position):
+    def get_block_type(self, task_id):
         '''
          Decode the type of the block.
 
          Parameters
          ----------
-         position: int, the position order of the basic layer.
+         task_id: int, the id of the task.
         '''
 
-        parameters = self.decode('Block_'+str(position))
+        parameters = self.decode('Block_'+str(task_id))
         block_type = bin2dec(parameters['block'])
         return block_type
 
-    def get_block_structure(self, position):
+    def get_block_structure(self, task_id):
         '''
          Decode the structure information of the block.
 
          Parameters
          ----------
-         position: int, the position order of the basic layer.
+         task_id: int, the id of the task.
         '''
 
-        parameters = self.decode('Block_'+str(position))
+        parameters = self.decode('Block_'+str(task_id))
         sub_parameters = self.get_sub_dict(parameters, 'N', 'p_0', 'p_1', 'p_2')
         return sub_parameters
 
-    def get_block_parameter(self, position):
+    def get_block_parameter(self, task_id):
         '''
          Decode the neurons and synapse parameters of the block.
 
          Parameters
          ----------
-         position: int, the position order of the basic layer.
+         task_id: int, the id of the task.
         '''
 
-        parameters = self.decode('Block_'+str(position))
+        parameters = self.decode('Block_'+str(task_id))
         sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'tau', 'tau_I', 'type')
         return sub_parameters
 
@@ -229,21 +228,22 @@ class Decoder(BaseFunctions):
          ----------
          '''
 
-        parameter = self.decode('Reservoir_config')
-        type_d, layer = [], 1
+        parameter = self.decode('Reservoir_arc')
+        type_d, block_id = [], 0
         while True:
             try:
-                type_b = parameter['layer_' + str(layer)]
-                type_d_i, i = [], 0
-                while True:
-                    temp = type_b[i:i + 2]
-                    i += 2
-                    if len(temp) == 2:
-                        type_d_i.append(bin2dec(temp))
-                    else:
-                        type_d.append(type_d_i)
-                        break
-                layer += 1
+                type_d.append(parameter['arc_connections_' + str(block_id)])
+                block_id += 1
+            except KeyError:
+                return type_d
+
+    def get_reservoir_connection_matrix(self):
+        parameter = self.decode('Reservoir_arc')
+        type_d, block_id = [], 0
+        while True:
+            try:
+                type_d.append(parameter['arc_connections_' + str(block_id)])
+                block_id += 1
             except KeyError:
                 return type_d
 
@@ -253,7 +253,7 @@ class Decoder(BaseFunctions):
 
          Parameters
          ----------
-         component: str, 'Reservoir_config' or 'Encoding_Readout' based on config
+         component: str, 'Reservoir_config' based on config
          '''
         parameters = self.decode(component)
         sub_parameters = self.get_sub_dict(parameters, 'p_connection')
@@ -265,7 +265,7 @@ class Decoder(BaseFunctions):
 
          Parameters
          ----------
-         component: str, 'Reservoir_config' or 'Encoding_Readout' based on config
+         component: str, 'Reservoir_config' based on config
          '''
         parameters = self.decode(component)
         sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
@@ -281,13 +281,14 @@ class Decoder(BaseFunctions):
 
         return self.neurons_encoding
 
-    def get_readout_parameter(self):
+    def get_readout_parameter(self, component):
         '''
          Decode the readout parameters.
 
          Parameters
          ----------
+         component: str, 'Reservoir_config' or based on config
          '''
 
-        parameters = self.decode('Encoding_Readout')
+        parameters = self.decode(component)
         return self.get_sub_dict(parameters, 'tau_I')

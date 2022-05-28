@@ -217,131 +217,74 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    def generate_connection_matrix_blocks_three_layer(self, N, p_out, p_in, decay):
+    # def generate_connection_matrix_reservoir_layer(self, blocks_position, count, layer, structure_type, cmo, cmi):
+    #     '''
+    #      Generate connection matrix of reservoir for signal layer.
+    #      This programme use recursion.
+    #
+    #      Parameters
+    #      ----------
+    #      blocks_position: list, the existing block position in a basic block group.
+    #                       A basic block group contain four block with different type decided by gen.
+    #      count: int, the current number of neurons have been added in this reservoir.
+    #                  it will help with the index of neurons.
+    #      layer: int, the layer order.
+    #      structure_type: tuple(list, list,...), the represent number of the structure of each layer.
+    #      cmo: list, the 'connection_matrix[0]'.
+    #      cmi: list, the 'connection_matrix[1]'.
+    #      '''
+    #
+    #     cmo_, cmi_ = cmo, cmi
+    #     count_ = count
+    #     blocks_position_ = blocks_position
+    #     if layer > 0 :
+    #         o, i = [],[]
+    #         for gen in structure_type[layer]:
+    #             component = structure_layer['components_' + str(gen)]
+    #             blocks_position_, count_, cmo_, cmi_, o_, i_ = \
+    #                 self.generate_connection_matrix_reservoir_layer(
+    #                     blocks_position_, count_, layer-1, structure_type, cmo_, cmi_)
+    #             for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
+    #                 for com_so_ in o_[com_so]:
+    #                     for com_si_ in i_[com_si]:
+    #                         cmo_.append(com_so_)
+    #                         cmi_.append(com_si_)
+    #             for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
+    #                 o.append(o_[com_o])
+    #                 i.append(i_[com_i])
+    #         return blocks_position_, count_, cmo_, cmi_, o, i
+    #     else:
+    #         o, i = [],[]
+    #         for gen in structure_type[layer]:
+    #             component = structure_layer['components_' + str(gen)]
+    #             cmo_.extend(list(np.array(component['structure'][0]) + count_))
+    #             cmi_.extend(list(np.array(component['structure'][1]) + count_))
+    #             o.append(list(np.array(component['output_input'][0]) + count_))
+    #             i.append(list(np.array(component['output_input'][1]) + count_))
+    #             position = list(np.unique(component['structure'][0] + component['structure'][1] +
+    #                                   component['output_input'][0] + component['output_input'][1]))
+    #             count_ = count_ + len(position)
+    #             blocks_position_.extend(position)
+    #         return blocks_position_, count_, cmo_, cmi_, o, i
+
+    def generate_connection_matrix_reservoir(self, connection_matrix):
         '''
-         Generate connection matrix of three_layer block.
-         The three_layer structure separate the neurons as three layer.
+         Generate connection matrix of reservoir.
 
          Parameters
          ----------
-         N_i, N_h, N_o: int, number of neurons of the block for different layer.
-         p_out, p_in: double, the connection probability between two neurons.
-         decay: double, the decay of connection probability.
-         '''
-
-        N_i, N_o = int(np.floor(N/3)), int(np.floor(N/3))
-        N_h = N - N_i - N_o
-
-        connection_matrix_out, connection_matrix_in = [], []
-        nodes = np.arange(N_i + N_h + N_o)
-        nodes_ = [nodes[:N_i], nodes[N_i:N_h + N_i], nodes[N_h + N_i:N_i + N_h + N_o]]
-        p_out_ = [np.array([p_out] * N_i), np.array([p_out] * N_h), np.array([p_out] * N_o)]
-        p_in_ = [np.array([p_in] * N_i), np.array([p_in] * N_h), np.array([p_in] * N_o)]
-        circle = [0, 1, 2] + [0, 1, 2]
-        for i in circle[:3]:
-            nodes_mid, p_out_mid, p_in_mid = nodes_[circle[i]], p_out_[circle[i]], p_in_[circle[i]]
-            nodes_pre, p_out_pre, p_in_pre = nodes_[circle[i - 1]], p_out_[circle[i - 1]], p_in_[circle[i - 1]]
-            nodes_post, p_out_post, p_in_post = nodes_[circle[i + 1]], p_out_[circle[i + 1]], p_in_[circle[i + 1]]
-            for out_mid_index, node in enumerate(nodes_mid):
-                in_post, in_pre = p_in_post.argsort()[::-1], p_in_pre.argsort()[::-1]
-                for in_post_index in in_post:
-                    if np.random.rand() <= p_out_mid[out_mid_index] \
-                            and np.random.rand() <= p_in_post[in_post_index]:
-                        connection_matrix_out.append(node)
-                        connection_matrix_in.append(nodes_post[in_post_index])
-                        p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
-                        p_in_post[in_post_index] = p_in_post[in_post_index] * decay
-                for in_pre_index in in_pre:
-                    if np.random.rand() <= p_out_mid[out_mid_index] \
-                            and np.random.rand() <= p_in_pre[in_pre_index]:
-                        connection_matrix_out.append(node)
-                        connection_matrix_in.append(nodes_pre[in_pre_index])
-                        p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
-                        p_in_pre[in_pre_index] = p_in_pre[in_pre_index] * decay
-        return N, np.array([connection_matrix_out, connection_matrix_in])
-
-    def generate_connection_matrix_reservoir_layer(self, blocks_position, count, layer, structure_type, cmo, cmi):
-        '''
-         Generate connection matrix of reservoir for signal layer.
-         This programme use recursion.
-
-         Parameters
-         ----------
-         blocks_position: list, the existing block position in a basic block group.
-                          A basic block group contain four block with different type decided by gen.
-         count: int, the current number of neurons have been added in this reservoir.
-                     it will help with the index of neurons.
-         layer: int, the layer order.
-         structure_type: tuple(list, list,...), the represent number of the structure of each layer.
-         cmo: list, the 'connection_matrix[0]'.
-         cmi: list, the 'connection_matrix[1]'.
-         '''
-
-        cmo_, cmi_ = cmo, cmi
-        count_ = count
-        blocks_position_ = blocks_position
-        if layer > 0 :
-            o, i = [],[]
-            for gen in structure_type[layer]:
-                component = structure_layer['components_' + str(gen)]
-                blocks_position_, count_, cmo_, cmi_, o_, i_ = \
-                    self.generate_connection_matrix_reservoir_layer(
-                        blocks_position_, count_, layer-1, structure_type, cmo_, cmi_)
-                for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
-                    for com_so_ in o_[com_so]:
-                        for com_si_ in i_[com_si]:
-                            cmo_.append(com_so_)
-                            cmi_.append(com_si_)
-                for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
-                    o.append(o_[com_o])
-                    i.append(i_[com_i])
-            return blocks_position_, count_, cmo_, cmi_, o, i
-        else:
-            o, i = [],[]
-            for gen in structure_type[layer]:
-                component = structure_layer['components_' + str(gen)]
-                cmo_.extend(list(np.array(component['structure'][0]) + count_))
-                cmi_.extend(list(np.array(component['structure'][1]) + count_))
-                o.append(list(np.array(component['output_input'][0]) + count_))
-                i.append(list(np.array(component['output_input'][1]) + count_))
-                position = list(np.unique(component['structure'][0] + component['structure'][1] +
-                                      component['output_input'][0] + component['output_input'][1]))
-                count_ = count_ + len(position)
-                blocks_position_.extend(position)
-            return blocks_position_, count_, cmo_, cmi_, o, i
-
-    def generate_connection_matrix_reservoir(self, structure_type):
-        '''
-         Generate connection matrix of reservoir, especially for the first four components of reservoir.
-         This programme use recursion.
-
-         Parameters
-         ----------
-         structure_type: tuple(list, list,...), the represent number of the structure of each layer.
+         connection_matrix: tuple(list, list,...), represents pathways between blocks.
 
          Example
          ----------
-         structure_type = ([2, 0, 0, 1], [3, 3, 2, 3])
+         connection_matrix = ([2, 0, 0, 1], [3, 3, 2, 3])
          '''
 
         connection_matrix_out, connection_matrix_in = [], []
-        layer = len(structure_type)-1
-        count = 0
-        blocks_position = []
+        tasks_ids = []
         o, i = [], []
-        component = structure_reservoir['components']
-        blocks_position, count, connection_matrix_out, connection_matrix_in, o_, i_ = \
-            self.generate_connection_matrix_reservoir_layer(blocks_position, count, layer, structure_type,
-                                                  connection_matrix_out, connection_matrix_in)
-        for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
-            for com_so_ in o_[com_so]:
-                for com_si_ in i_[com_si]:
-                    connection_matrix_out.append(com_so_)
-                    connection_matrix_in.append(com_si_)
-        for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
-            o.extend(o_[com_o])
-            i.extend(i_[com_i])
-        return blocks_position, np.array([connection_matrix_out, connection_matrix_in]), o, i
+
+        return tasks_ids, np.array([connection_matrix_out, connection_matrix_in]), o, i
 
 
 class Generator(Generator_connection_matrix):
@@ -367,18 +310,18 @@ class Generator(Generator_connection_matrix):
 
         self.decoder = decoder
 
-    def generate_block(self, index, position):
+    def generate_block(self, index, task_id):
         '''
          A basic block generator function.
 
          Parameters
          ----------
          index: int, the block index of all blocks in reservoir.
-         position: int, the block order of the block group.s
+         task_id: int, the task id of the block group.
          '''
 
-        block_type =  self.decoder.get_block_type(position)
-        parameter_structure = self.decoder.get_block_structure(position)
+        block_type =  self.decoder.get_block_type(task_id)
+        parameter_structure = self.decoder.get_block_structure(task_id)
         component_name = structure_blocks['components_' + str(block_type)]['name'] + '_' + str(index)
         N, connect_matrix = self.generate_connection_matrix_blocks(block_type, **parameter_structure)
         block = Block(N, connect_matrix)
@@ -408,21 +351,24 @@ class Generator(Generator_connection_matrix):
         pathway.create_synapse(model, model_pre, model_post,  name = name)
         return pathway
 
-    def generate_blocks(self, blocks_position):
+    def generate_blocks(self, tasks_ids):
         '''
          Generate blocks for reservoir according to blocks_type,
          the blocks belong to one block group.
 
          Parameters
          ----------
-         blocks_position: list[int], the blocks posidtion order according to 'structure_blocks'.
+         tasks_ids: list[int], the blocks index order according to 'structure_blocks'.
          '''
 
         block_group = BlockGroup()
-        for index, position in enumerate(blocks_position):
-            block = self.generate_block(index, position)
-            block_group.add_block(block, position)
+        for index, tasks_id in enumerate(tasks_ids):
+            block = self.generate_block(index, tasks_id)
+            block_group.add_block(block, tasks_id)
         return block_group
+
+    def increase_block_reservoir(self):
+        pass
 
     def generate_reservoir(self):
         '''
