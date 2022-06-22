@@ -33,9 +33,9 @@ sys.path.append(project_dir)
 data_path = project_dir_sever + '/Data/HAPT-Dataset/'
 LHS_path = exec_dir + '/LHS_UCI.dat'
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.ray_config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.ray_config import *
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler

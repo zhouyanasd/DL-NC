@@ -6,9 +6,9 @@
 
 :License: BSD 3-Clause, see LICENSE file.
 """
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.surrogate import TargetSpace, create_surrogate
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer import ga as ga
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.surrogate import TargetSpace, create_surrogate
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer import ga as ga
 
 import time, pickle
 
