@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from .trainer import *
+from .coe import *
 from .surrogate import *
 
 __all__ = [

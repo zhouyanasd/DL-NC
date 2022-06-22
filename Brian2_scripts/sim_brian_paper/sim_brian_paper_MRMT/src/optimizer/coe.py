@@ -261,7 +261,7 @@ class GA(EvolutionBase):
             # 排除非可行解
             badCounter, repnum = self.non_feasible_solution(self.ObjV, self.LegV, FitnV, repnum, badCounter)
             if distribute == True:
-                self.add_distribute(ObjV_i, FitnV)
+                self.add_distribute(self.ObjV, FitnV)
             # 选择个体生成新一代种群
             [self.P, self.ObjV, self.LegV] = ga.selecting(selectStyle, self.P, FitnV, GGAP, SUBPOP, self.ObjV,
                                                           self.LegV)
@@ -356,7 +356,7 @@ class GA_surrogate(GA):
             # 排除非可行解
             badCounter, repnum = self.non_feasible_solution(self.ObjV, self.LegV, FitnV, repnum, badCounter)
             if distribute == True:
-                self.add_distribute(ObjV_i, FitnV)
+                self.add_distribute(self.ObjV, FitnV)
             # 选择个体生成新一代种群
             [self.P, self.ObjV, self.LegV] = ga.selecting(selectStyle, self.P, FitnV, GGAP, SUBPOP, self.ObjV,
                                                           self.LegV)
