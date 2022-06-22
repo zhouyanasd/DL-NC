@@ -118,61 +118,57 @@ reset_reservoir = '''
 v = voltage_reset
 threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max)
 '''
+# --- task id and name ---
+# tasks = {'task_0' : 'KTH', 'task_1': 'NMNIST', 'task_2': 'UCI'}
 
 # --- block layer and reservoir structure ---
 structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
                     'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]}}
-Block_max = 20
-Task_id = []
+block_max = 20
 
 # --- parameter settings ---
-Reservoir_config = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
-Reservoir_arc = ['arc_connections_'+str(x) for x in range(Block_max)]
-Block_0 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
-Block_1 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
-Block_2 = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Reservoir_config = ['type', 'strength', 'tau_plasticity', 'p_connection']
+Reservoir_arc = ['connections_' + str(x) for x in range(block_max)]
+Block = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Encoding_Readout = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
 
-config_group = ['Reservoir_config', 'Reservoir_arc', 'Block_0', 'Block_1', 'Block_2']
+config_group_reservoir = ['Reservoir_config', 'Reservoir_arc']
+config_group_block = ['Block', 'Encoding_Readout']
 
-config_keys = [Reservoir_config, Reservoir_arc, Block_0, Block_1, Block_2]
+config_keys_reservoir = [Reservoir_config, Reservoir_arc]
+config_keys_block = [Block, Encoding_Readout]
 
-config_codes = [[None, None, None, None, None, None],
-                [1] * Block_max
-                [1, None, None, None, None, None, None, None, None, None],
-                [1, None, None, None, None, None, None, None, None, None],
-                [1, None, None, None, None, None, None, None, None, None]]
+config_SubCom_reservoir = [[0, 1, 2, 3], [x + 3 for x in range(block_max)]]
+config_SubCom_block = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
 
-config_ranges = [[[0.1, 1.0], [0, 255], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
-                 [[0, 1048575]] * Block_max
-                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
-                 [[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]]
+config_codes_reservoir = [[None, None, None, None], [1] * block_max]
+config_codes_block = [[1, None, None, None, None, None, None, None, None, None], [None, None, None, None, None]]
 
-config_borders = [[[0, 1], [1, 1], [1, 1], [0, 1], [0, 1], [0, 1]],
-                  [[1, 1]] * Block_max
-                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
-                  [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]]]
+config_ranges_reservoir = [[[0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
+                           [[0, 1048575]] * block_max]
+config_ranges_block = [[[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
+                       [[0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.2]]]
 
-config_precisions = [[1, 0, 0, 8, 2, 8],
-                     [0] * Block_max
-                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
-                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8],
-                     [0, 0, 2, 1, 0, 8, 2, 8, 8, 8]]
+config_borders_reservoir = [[[1, 1], [0, 1], [0, 1], [0, 1]],
+                            [[1, 1]] * block_max]
+config_borders_block = [[[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
+                        [[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]]
 
-config_scales = [[0] * 6,
-                 [0] * Block_max
-                 [0] * 10,
-                 [0] * 10,
-                 [0] * 10]
+config_precisions_reservoir = [[0, 8, 2, 8], [0] * block_max]
+config_precisions_block = [[0, 0, 2, 1, 0, 8, 2, 8, 8, 8], [1, 0, 8, 2, 8]]
+
+config_scales_reservoir = [[0] * 4, [0] * block_max]
+config_scales_block = [[0] * 10, [0] * 5]
+
+gen_group_reservoir = [[0], [1]]
+gen_group_block = [[0], [1]]
 
 '''
 All gen is in float.
 Example:
-gen = [0.4, 27.0, 1.0, 0.9, 0.2, 0.6,
-      0, 110.0, 0.3, 0.4, 1.0, 0.9, 0.3, 0.22, 0.22, 0.22,
-      2, 100.0, 0.4, 0.4, 1.0, 0.4, 0.4, 0.44, 0.44, 0.44,
-      1, 100.0, 0.5, 0.4, 1.0, 0.5, 0.5, 0.33, 0.33, 0.33]
-      [5768, ... , 14895]
+gen_reservoir = [0.4, 27.0, 1.0, 0.9, 0.2, 0.6, 
+                5768, ... , 14895]
+gen_block = [0, 110.0, 0.3, 0.4, 1.0, 0.9, 0.3, 0.22, 0.22, 0.22,
+             0.4, 1.0, 0.7, 0.5, 0.7]
 '''

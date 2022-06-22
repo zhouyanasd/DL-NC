@@ -8,8 +8,8 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import Topological_sorting_tarjan
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import Topological_sorting_tarjan
 
 from brian2 import *
 
@@ -35,7 +35,7 @@ class NetworkBase(BaseFunctions):
         if '_need_random' in parameter_name:
             parameter_name_ = parameter_name.replace('_need_random','')
             parameter_value_ = np.random.rand(
-                    object.pre.variables[parameter_name_].get_value().shape[0]) * parameter_value
+                object.pre.variables[parameter_name_].get_value().shape[0]) * parameter_value
         else:
             parameter_name_ = parameter_name
             parameter_value_ = parameter_value
@@ -152,7 +152,7 @@ class Block(NetworkBase):
          '''
 
         self.synapses = Synapses(self.neurons, self.neurons, model, on_pre = on_pre, on_post = on_post,
-                                method='euler', name = name, **kwargs)
+                                 method='euler', name = name, **kwargs)
 
     def connect(self):
         '''
@@ -201,16 +201,16 @@ class BlockGroup(BaseFunctions):
 
     Parameters
     ----------
-    N: int, the number of neurons.
+    N: int, the number of blocks.
     blocks: list[Block], the contained block list.
-    blocks_position: list[int], the block position order according to 'structure_blocks'.
+    task_ids: list[int], the task ids for blocks.
     """
 
     def __init__(self):
         super().__init__()
         self.N = 0
         self.blocks = []
-        self.blocks_position = []
+        self.task_ids = []
 
     def get_neurons_count(self, blocks = None, specified = None):
         '''
@@ -235,19 +235,19 @@ class BlockGroup(BaseFunctions):
                 N_neurons += block.N
         return N_neurons
 
-    def add_block(self, block, position):
+    def add_block(self, block, task_id):
         '''
          Add block to the block group.
 
          Parameters
          ----------
          block: Block, the object of Block.
-         position: int, the block position order according to 'structure_blocks'.
-                   -1 represents the encoding and readout.
+         task_id: int, the task id for the block represented.
+                   -1 represents the block without task relation.
          '''
 
         self.blocks.append(block)
-        self.blocks_position.append(position)
+        self.task_ids.append(task_id)
         self.N += 1
 
     def initialize(self, **parameter_block_group):
@@ -333,7 +333,7 @@ class Pathway(NetworkBase):
 
         for index, (index_i, index_j) in enumerate(zip(self.pre, self.post)):
             synapses = Synapses(self.blocks_pre[index_i].neurons, self.blocks_post[index_j].neurons, model, on_pre = on_pre,
-                               on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
+                                on_post = on_post, method = 'euler', name = name + str(index), **kwargs)
             self.synapses_group.append(synapses)
 
     def connect(self, **kwargs):

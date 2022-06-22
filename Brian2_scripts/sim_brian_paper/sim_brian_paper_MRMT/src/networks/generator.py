@@ -9,9 +9,9 @@
 """
 
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.networks.components import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.networks.components import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import *
 
 from brian2 import *
 
@@ -23,7 +23,7 @@ def convert_networkx(G):
     return N, np.array([connection_matrix_out, connection_matrix_in])
 
 
-class Generator_connection_matrix(BaseFunctions):
+class Generator_connection_matrix(BaseFunctions, NetworkBase):
     """
     This class offers the connection matrix generation functions
     of four kinds of blocks and reservoir.
@@ -36,8 +36,7 @@ class Generator_connection_matrix(BaseFunctions):
     def __init__(self, random_state):
         super().__init__()
         self.random_state = random_state
-        self.block_types_N = len(list(structure_blocks))
-        self.layer_types_N = len(list(structure_layer))
+        # self.block_types_N = len(list(structure_blocks))
 
     def generate_connection_matrix_blocks(self, block_type, **parameters):
         '''
@@ -217,79 +216,11 @@ class Generator_connection_matrix(BaseFunctions):
                     connection_matrix_in.append(node_pre)
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
-    # def generate_connection_matrix_reservoir_layer(self, blocks_position, count, layer, structure_type, cmo, cmi):
-    #     '''
-    #      Generate connection matrix of reservoir for signal layer.
-    #      This programme use recursion.
-    #
-    #      Parameters
-    #      ----------
-    #      blocks_position: list, the existing block position in a basic block group.
-    #                       A basic block group contain four block with different type decided by gen.
-    #      count: int, the current number of neurons have been added in this reservoir.
-    #                  it will help with the index of neurons.
-    #      layer: int, the layer order.
-    #      structure_type: tuple(list, list,...), the represent number of the structure of each layer.
-    #      cmo: list, the 'connection_matrix[0]'.
-    #      cmi: list, the 'connection_matrix[1]'.
-    #      '''
-    #
-    #     cmo_, cmi_ = cmo, cmi
-    #     count_ = count
-    #     blocks_position_ = blocks_position
-    #     if layer > 0 :
-    #         o, i = [],[]
-    #         for gen in structure_type[layer]:
-    #             component = structure_layer['components_' + str(gen)]
-    #             blocks_position_, count_, cmo_, cmi_, o_, i_ = \
-    #                 self.generate_connection_matrix_reservoir_layer(
-    #                     blocks_position_, count_, layer-1, structure_type, cmo_, cmi_)
-    #             for com_so, com_si in zip(component['structure'][0], component['structure'][1]):
-    #                 for com_so_ in o_[com_so]:
-    #                     for com_si_ in i_[com_si]:
-    #                         cmo_.append(com_so_)
-    #                         cmi_.append(com_si_)
-    #             for com_o, com_i in zip(component['output_input'][0], component['output_input'][1]):
-    #                 o.append(o_[com_o])
-    #                 i.append(i_[com_i])
-    #         return blocks_position_, count_, cmo_, cmi_, o, i
-    #     else:
-    #         o, i = [],[]
-    #         for gen in structure_type[layer]:
-    #             component = structure_layer['components_' + str(gen)]
-    #             cmo_.extend(list(np.array(component['structure'][0]) + count_))
-    #             cmi_.extend(list(np.array(component['structure'][1]) + count_))
-    #             o.append(list(np.array(component['output_input'][0]) + count_))
-    #             i.append(list(np.array(component['output_input'][1]) + count_))
-    #             position = list(np.unique(component['structure'][0] + component['structure'][1] +
-    #                                   component['output_input'][0] + component['output_input'][1]))
-    #             count_ = count_ + len(position)
-    #             blocks_position_.extend(position)
-    #         return blocks_position_, count_, cmo_, cmi_, o, i
 
-    def generate_connection_matrix_reservoir(self, connection_matrix):
-        '''
-         Generate connection matrix of reservoir.
-
-         Parameters
-         ----------
-         connection_matrix: tuple(list, list,...), represents pathways between blocks.
-
-         Example
-         ----------
-         connection_matrix = ([2, 0, 0, 1], [3, 3, 2, 3])
-         '''
-
-        connection_matrix_out, connection_matrix_in = [], []
-        tasks_ids = []
-        o, i = [], []
-
-        return tasks_ids, np.array([connection_matrix_out, connection_matrix_in]), o, i
-
-
-class Generator(Generator_connection_matrix):
+class Generator(BaseFunctions):
     """
-    This class offers a basic generation functions of each components in network.
+    This class offers a basic generation functions of each component in network.
+    **This class can not be instantiated, use subclass instead.**
 
     Parameters
     ----------
@@ -309,257 +240,6 @@ class Generator(Generator_connection_matrix):
          '''
 
         self.decoder = decoder
-
-    def generate_block(self, index, task_id):
-        '''
-         A basic block generator function.
-
-         Parameters
-         ----------
-         index: int, the block index of all blocks in reservoir.
-         task_id: int, the task id of the block group.
-         '''
-
-        block_type =  self.decoder.get_block_type(task_id)
-        parameter_structure = self.decoder.get_block_structure(task_id)
-        component_name = structure_blocks['components_' + str(block_type)]['name'] + '_' + str(index)
-        N, connect_matrix = self.generate_connection_matrix_blocks(block_type, **parameter_structure)
-        block = Block(N, connect_matrix)
-        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + component_name)
-        block.create_synapse(dynamics_block_synapse_STDP, dynamics_block_synapse_pre_STDP,
-                            dynamics_block_synapse_post_STDP, name='block_block_' + component_name)
-        block.separate_ex_inh()
-        block.connect()
-        block.determine_input_output()
-        return block
-
-    def generate_pathway(self, name, pre_group, post_group, connection_matrix, model, model_pre, model_post):
-        '''
-         A basic pathway generator function between the block group.
-
-         Parameters
-         ----------
-         name: str, the pre name of the generated synapses.
-         pre_group: BlockGroup, the block group before the pathway.
-         post_group: post_group, the block group after the pathway.
-         connection_matrix: list[list[int], list[int]], the fixed connection matrix between 'Block_group',
-                            int for 'Block'.
-         '''
-
-        pathway = Pathway(pre_group.blocks, post_group.blocks, connection_matrix)
-        pathway.create_synapse(model, model_pre, model_post,  name = name)
-        return pathway
-
-    def generate_blocks(self, tasks_ids):
-        '''
-         Generate blocks for reservoir according to blocks_type,
-         the blocks belong to one block group.
-
-         Parameters
-         ----------
-         tasks_ids: list[int], the blocks index order according to 'structure_blocks'.
-         '''
-
-        block_group = BlockGroup()
-        for index, tasks_id in enumerate(tasks_ids):
-            block = self.generate_block(index, tasks_id)
-            block_group.add_block(block, tasks_id)
-        return block_group
-
-    def increase_block_reservoir(self):
-        pass
-
-    def generate_reservoir(self):
-        '''
-         Generate reservoir and thus generate the block group and pathway in it.
-
-         Parameters
-         ----------
-         '''
-
-        reservoir = Reservoir()
-        structure_type = self.decoder.get_reservoir_structure_type()
-        p_connection = self.decoder.get_pathway_structure('Reservoir_config')['p_connection']
-        blocks_position, connection_matrix, o, i = self.generate_connection_matrix_reservoir(structure_type)
-        block_group = self.generate_blocks(blocks_position)
-        pathway = self.generate_pathway('pathway_reservoir_', block_group, block_group, connection_matrix,
-                                        dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
-                                        dynamics_reservoir_synapse_post_STDP)
-        pathway.connect(p_connection = p_connection, connect_type = 'probability')
-        reservoir.register_blocks(block_group)
-        reservoir.register_pathway(pathway)
-        reservoir.register_input_output(o, i)
-        return reservoir
-
-    def generate_encoding(self):
-        '''
-         Generate a block group containing only one block as encoding layer.
-
-         Parameters
-         ----------
-         '''
-
-        block_group = BlockGroup()
-        N = self.decoder.get_encoding_structure()
-        block = Block(N, np.array([]).reshape(2,-1))
-        block.create_neurons(dynamics_encoding, threshold='I > 0', reset = None,
-                             refractory = 0 * ms , name='block_encoding')
-        block.create_synapse('strength : 1', None, None, name='block_block_encoding_0')
-        block.determine_input_output()
-        block_group.add_block(block, -1)
-        return block_group
-
-    def generate_readout(self, reservoir):
-        '''
-         Generate a block group containing only one block as readout layer.
-         The number of neurons is based on the reservoir.
-
-         Parameters
-         ----------
-         reservoir: Reservoir, a instance of Reservoir class.
-         '''
-
-        block_group = BlockGroup()
-        N = reservoir.total_neurons_count
-        block = Block(N, np.array([]).reshape(2,-1))
-        block.create_neurons(dynamics_readout, threshold=None, reset = None, refractory = False, name='block_readout')
-        block.create_synapse('strength : 1', None, None, name='block_block_readout_0')
-        block.determine_input_output()
-        block_group.add_block(block, -1)
-        return block_group
-
-    def generate_pathway_encoding_reservoir(self, encoding, reservoir):
-        '''
-         Generate pathway between the block group of encoding and the block group of reservoir.
-
-         Parameters
-         ----------
-         encoding: BlockGroup, a instance of BlockGroup class only containing one Block as encoding layer.
-         reservoir: Reservoir, a instance of Reservoir class.
-         '''
-
-        connection_matrix = [[0]*len(reservoir.input), reservoir.input]
-        p_connection = self.decoder.get_pathway_structure('Encoding_Readout')['p_connection']
-        pathway = self.generate_pathway('pathway_encoding_', encoding, reservoir.block_group, connection_matrix,
-                                        dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
-                                        dynamics_encoding_synapse_post_STDP)
-        pathway.connect(p_connection = p_connection, connect_type = 'probability')
-        return pathway
-
-    def generate_pathway_reservoir_readout(self, reservoir, readout):
-        '''
-         Generate pathway between the block group of readout and the block group of reservoir.
-
-         Parameters
-         ----------
-         reservoir: Reservoir, a instance of Reservoir class.
-         readout: BlockGroup, a instance of BlockGroup class only containing one Block as readout layer.
-         '''
-
-        connection_matrix = [reservoir.all, [0]*len(reservoir.all)]
-        pathway = self.generate_pathway('pathway_readout_', reservoir.block_group, readout, connection_matrix,
-                                        'strength = 1 : 1', dynamics_readout_synapse_pre, None)
-        pathway.connect(connect_type = 'one_to_one_all')
-        return pathway
-
-    def generate_network(self):
-        '''
-         A comprehensive structure generation function of the LSM_Network.
-
-         Parameters
-         ----------
-         '''
-
-        network = LSM_Network()
-        encoding = self.generate_encoding()
-        reservoir = self.generate_reservoir()
-        readout = self.generate_readout(reservoir)
-        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
-        pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
-
-        network.register_layer(encoding, 'encoding')
-        network.register_layer(reservoir, 'reservoir')
-        network.register_layer(readout, 'readout')
-        network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir')
-        network.register_pathway(pathway_reservoir_readout, 'reservoir_readout')
-        return network
-
-    def pre_initialize_block(self, position):
-        '''
-         Initialize the block with the parameters form decoder.
-
-         Parameters
-         ----------
-         position: int, the block order in a basic block group.
-         '''
-
-        parameters = self.decoder.get_block_parameter(position)
-        parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
-        parameters_neurons['v'] = voltage_reset
-        parameters_neurons['threshold'] = threshold_solid
-        parameters_synapses = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
-        self.change_dict_key(parameters_synapses, 'strength', 'strength_need_random')
-        return parameters_neurons, parameters_synapses
-
-    def pre_initialize_reservoir(self):
-        '''
-         Initialize the components of reservoir, which contains pathway and block gourp.
-
-         Parameters
-         ----------
-         '''
-
-        parameter_block_neurons = {}
-        parameter_block_synapses = {}
-        for position in range(self.block_types_N):
-            parameter_block_neurons[position], parameter_block_synapses[position] = self.pre_initialize_block(position)
-        parameter_block_group = {'parameter_block_neurons':parameter_block_neurons,
-                                 'parameter_block_synapses':parameter_block_synapses}
-        parameters_reservoir = {'parameter_block_group':parameter_block_group,
-                                'parameter_pathway': self.decoder.get_pathway_parameter('Reservoir_config')}
-        self.change_dict_key(parameters_reservoir['parameter_pathway'], 'strength', 'strength_need_random')
-        return parameters_reservoir
-
-    def pre_initialize_readout(self):
-        '''
-         Initialize the components of readout, readout is a block group.
-
-         Parameters
-         ----------
-         '''
-
-        return  {'parameter_block_neurons': {-1: self.decoder.get_readout_parameter()}}
-
-    def pre_initialize_encoding_reservoir(self):
-        '''
-         Initialize the components of encoding, encoding is a block group.
-
-         Parameters
-         ----------
-         '''
-
-        parameters_encoding_reservoir = self.decoder.get_pathway_parameter('Encoding_Readout')
-        self.decoder.change_dict_key(parameters_encoding_reservoir, 'strength', 'strength_need_random')
-        return parameters_encoding_reservoir
-
-    def pre_initialize_network(self):
-        '''
-         Initialize the components of network.
-
-         Parameters
-         ----------
-         '''
-
-        parameters = {}
-        parameters['encoding'] = None
-        parameters['reservoir'] = self.pre_initialize_reservoir()
-        parameters['readout'] = self.pre_initialize_readout()
-        parameters['encoding_reservoir'] = self.pre_initialize_encoding_reservoir()
-        parameters['reservoir_readout'] = None
-
-        return parameters
-
 
     def initialize(self, network):
         '''
@@ -586,3 +266,438 @@ class Generator(Generator_connection_matrix):
          '''
 
         network.join_network(net)
+
+
+class Generator_Block(Generator, Generator_connection_matrix):
+    """
+    This subclass offers the generation functions of each component for the block.
+
+    Parameters
+    ----------
+    random_state: int, random state generated by np.random.
+    """
+
+    def __init__(self, random_state, task_id):
+        super().__init__(random_state)
+        self.task_id = task_id
+
+    def generate_block(self, index):
+        '''
+         A basic block generator function.
+
+         Parameters
+         ----------
+         index: int, the block index of all blocks in reservoir.
+         '''
+
+        block_type =  self.decoder.get_block_type()
+        parameter_structure = self.decoder.get_block_structure()
+        component_name = structure_blocks['components_' + str(block_type)]['name'] + '_' + str(index)
+        N, connect_matrix = self.generate_connection_matrix_blocks(block_type, **parameter_structure)
+        block = Block(N, connect_matrix)
+        block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
+                             refractory = refractory_reservoir, name='block_' + component_name+'_task'+str(self.task_id))
+        block.create_synapse(dynamics_block_synapse_STDP, dynamics_block_synapse_pre_STDP,
+                             dynamics_block_synapse_post_STDP, name='block_block_' + component_name+'_task'+str(self.task_id))
+        block.separate_ex_inh()
+        block.connect()
+        block.determine_input_output()
+        return block
+
+    def generate_reservoir_block_single(self):
+        '''
+         Generate a block group containing only one block as encoding layer.
+
+         Parameters
+         ----------
+         '''
+
+        reservoir = Reservoir()
+        block_group = BlockGroup()
+        block = self.generate_block(index=0)
+        block_group.add_block(block)
+        pathway = Pathway(block_group.blocks, block_group.blocks, [[],[]])
+        pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
+                               dynamics_reservoir_synapse_post_STDP,
+                               name = 'pathway_block_single_task'+str(self.task_id)+'_')
+        pathway.connect(p_connection= 0, connect_type='probability')
+        reservoir.register_blocks(block_group)
+        reservoir.register_pathway(pathway)
+        reservoir.register_input_output(o=[0], i=[0])
+        return reservoir
+
+    def generate_encoding(self):
+        '''
+         Generate a block group containing only one block as encoding layer.
+
+         Parameters
+         ----------
+         '''
+
+        block_group = BlockGroup()
+        N = self.decoder.get_encoding_structure()
+        block = Block(N, np.array([]).reshape(2,-1))
+        block.create_neurons(dynamics_encoding, threshold='I > 0', reset = None,
+                             refractory = 0 * ms , name='block_encoding_task'+str(self.task_id))
+        block.create_synapse('strength : 1', None, None, name='block_block_encoding_task'+str(self.task_id)+'_0')
+        block.determine_input_output()
+        block_group.add_block(block, self.task_id)
+        return block_group
+
+    def generate_readout(self, reservoir):
+        '''
+         Generate a block group containing only one block as readout layer.
+         The number of neurons is based on the reservoir.
+
+         Parameters
+         ----------
+         reservoir: Reservoir, an instance of Reservoir class.
+         '''
+
+        block_group = BlockGroup()
+        N = reservoir.total_neurons_count
+        block = Block(N, np.array([]).reshape(2,-1))
+        block.create_neurons(dynamics_readout, threshold=None, reset = None,
+                             refractory = False, name='block_readout_task'+str(self.task_id))
+        block.create_synapse('strength : 1', None, None, name='block_block_readout_task'+str(self.task_id)+'_0')
+        block.determine_input_output()
+        block_group.add_block(block, self.task_id)
+        return block_group
+
+    def generate_pathway_encoding_reservoir(self, encoding, reservoir):
+        '''
+         Generate pathway between the block group of encoding and the block group of reservoir.
+
+         Parameters
+         ----------
+         encoding: BlockGroup, an instance of BlockGroup class only containing Blocks for each task as encoding layer.
+         reservoir: Reservoir, an instance of Reservoir class.
+         '''
+
+        connection_matrix = [[0]*len(reservoir.input), reservoir.input]
+        p_connection = self.decoder.get_pathway_structure('Encoding_Readout')['p_connection']
+        pathway = Pathway(encoding.blocks, reservoir.block_group.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_encoding_synapse_STDP, dynamics_encoding_synapse_pre_STDP,
+                               dynamics_encoding_synapse_post_STDP,
+                               name = 'pathway_encoding_task'+str(self.task_id)+'_')
+        pathway.connect(p_connection = p_connection, connect_type = 'probability')
+        return pathway
+
+    def generate_pathway_reservoir_readout(self, reservoir, readout):
+        '''
+         Generate pathway between the block group of readout and the block group of reservoir.
+
+         Parameters
+         ----------
+         reservoir: Reservoir, an instance of Reservoir class.
+         readout: BlockGroup, an instance of BlockGroup class only containing one Block as readout layer.
+         '''
+
+        connection_matrix = [reservoir.all, [0]*len(reservoir.all)]
+        pathway = Pathway(reservoir.block_group.blocks, readout.blocks, connection_matrix)
+        pathway.create_synapse('strength = 1 : 1', dynamics_readout_synapse_pre, None,
+                               name = 'pathway_readout_task'+str(self.task_id)+'_')
+        pathway.connect(connect_type = 'one_to_one_all')
+        return pathway
+
+    def generate_network(self):
+        '''
+         A comprehensive structure generation function of the LSM_Network.
+
+         Parameters
+         ----------
+         '''
+
+        network = LSM_Network()
+        encoding = self.generate_encoding()
+        reservoir = self.generate_reservoir_block_single()
+        readout = self.generate_readout(reservoir)
+        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
+        pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
+
+        network.register_layer(encoding, 'encoding')
+        network.register_layer(reservoir, 'reservoir')
+        network.register_layer(readout, 'readout')
+
+        network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir_task'+str(self.task_id))
+        network.register_pathway(pathway_reservoir_readout, 'reservoir_readout_task'+str(self.task_id))
+        return network
+
+    def pre_initialize_block(self):
+        '''
+         Initialize the block with the parameters form decoder.
+
+         Parameters
+         ----------
+         '''
+
+        parameters = self.decoder.get_block_parameter(self.task_id)
+        parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
+        parameters_neurons['v'] = voltage_reset
+        parameters_neurons['threshold'] = threshold_solid
+        parameters_synapses = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
+        self.change_dict_key(parameters_synapses, 'strength', 'strength_need_random')
+        return parameters_neurons, parameters_synapses
+
+    def pre_initialize_readout(self):
+        '''
+         Initialize the components of readout, readout is a block group.
+
+         Parameters
+         ----------
+         '''
+
+        return  {'parameter_block_neurons': {-1: self.decoder.get_readout_parameter()}}
+
+    def pre_initialize_encoding_reservoir(self):
+        '''
+         Initialize the components of encoding, encoding is a block group.
+
+         Parameters
+         ----------
+         '''
+
+        parameters_encoding_reservoir = self.decoder.get_pathway_parameter('Encoding_Readout')
+        self.decoder.change_dict_key(parameters_encoding_reservoir, 'strength', 'strength_need_random')
+        return parameters_encoding_reservoir
+
+    def pre_initialize_reservoir_single_block(self):
+        '''
+         Initialize the components of reservoir, which contains pathway and block group.
+
+         Parameters
+         ----------
+         '''
+
+        parameter_block_neurons = {}
+        parameter_block_synapses = {}
+        parameter_block_neurons[self.task_id], parameter_block_synapses[self.task_id] = self.pre_initialize_block()
+        parameter_block_group = {'parameter_block_neurons':parameter_block_neurons,
+                                 'parameter_block_synapses':parameter_block_synapses}
+        parameters_reservoir = {'parameter_block_group':parameter_block_group,
+                                'parameter_pathway': {'type': 0.0, 'tau_plasticity': 0.0, 'strength': 0.0}}
+        self.change_dict_key(parameters_reservoir['parameter_pathway'], 'strength', 'strength_need_random')
+        return parameters_reservoir
+
+    def pre_initialize_network(self):
+        '''
+         Initialize the components of network.
+
+         Parameters
+         ----------
+         '''
+
+        parameters = {}
+        parameters['encoding'] = None
+        parameters['reservoir'] = self.pre_initialize_reservoir_single_block()
+        parameters['readout'] = self.pre_initialize_readout()
+        parameters['encoding_reservoir'] = self.pre_initialize_encoding_reservoir()
+        parameters['reservoir_readout'] = None
+
+        return parameters
+
+class Generator_Reservoir(Generator):
+    """
+    This subclass offers the generation functions of each component for the reservoir.
+
+    Parameters
+    ----------
+    random_state: int, random state generated by np.random.
+    """
+
+    def __init__(self, random_state, block_max):
+        super().__init__(random_state)
+        self.block_generators = {}
+        self.block_max = block_max
+
+    def register_block_generator(self):
+        '''
+         Add gen decoder to this generator.
+
+         Parameters
+         ----------
+         '''
+
+        for task_id, optimal_block_gen in self.decoder.get_optimal_block_gens().items():
+            block_generator = Generator_Block(self.random_state, task_id)
+            self.block_generators[task_id] = block_generator
+
+    def initialize_task_ids(self):
+        '''
+         Generate initial task_ids for generating blocks.
+
+         Parameters
+         ----------
+         '''
+
+        self.tasks_ids = [0,1,2] # needs further modified
+
+    def increase_block_reservoir(self, task_id):
+        '''
+         Increase block for new task.
+
+         Parameters
+         ----------
+         '''
+
+        self.tasks_ids.append(task_id)
+
+    def generate_blocks(self):
+        '''
+         Generate blocks for reservoir according to blocks_type,
+         the blocks belong to one block group.
+
+         Parameters
+         ----------
+         '''
+
+        block_group = BlockGroup()
+        for index, task_id in enumerate(self.tasks_ids):
+            block = self.block_generators[task_id].generate_block(index)
+            block_group.add_block(block, task_id)
+        return block_group
+
+    def generate_reservoir(self):
+        '''
+         Generate reservoir and thus generate the block group and pathway in it.
+
+         Parameters
+         ----------
+         '''
+
+        reservoir = Reservoir()
+        p_connection = self.decoder.get_pathway_structure('Reservoir_config')['p_connection']
+        adjacent_matrix = self.decoder.get_reservoir_adjacent_matrix()
+        connection_matrix = self.adjacent_matrix_to_connection_matrix(adjacent_matrix)
+        topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
+        topological_sorting_tarjan.dfs()
+        o, i = topological_sorting_tarjan.suggest_inout()
+        block_group = self.generate_blocks()
+        pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
+        pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
+                               dynamics_reservoir_synapse_post_STDP,  name = 'pathway_reservoir_')
+        pathway.connect(p_connection = p_connection, connect_type = 'probability')
+        reservoir.register_blocks(block_group)
+        reservoir.register_pathway(pathway)
+        reservoir.register_input_output(o, i)
+        return reservoir
+
+    def generate_encoding(self):
+        '''
+         Generate a block group containing only one block as encoding layer.
+
+         Parameters
+         ----------
+         '''
+
+        block_groups = []
+        for generator in self.block_generators.values():
+            block_groups.append(generator.generate_encoding())
+        return block_groups
+
+    def generate_readout(self, reservoir):
+        '''
+         Generate a block group containing only one block as readout layer.
+         The number of neurons is based on the reservoir.
+
+         Parameters
+         ----------
+         reservoir: Reservoir, an instance of Reservoir class.
+         '''
+
+        block_groups = []
+        for generator in self.block_generators.values():
+            block_groups.append(generator.generate_readout(reservoir))
+        return block_groups
+
+    def generate_pathway_encoding_reservoir(self, encodings, reservoir):
+        '''
+         Generate pathway between the block group of encoding and the block group of reservoir.
+
+         Parameters
+         ----------
+         encodings: list[BlockGroup], all instance of BlockGroup class only containing Blocks for each task as encoding layer.
+         reservoir: Reservoir, an instance of Reservoir class.
+         '''
+
+        pathways = []
+        for generator, encoding in zip(self.block_generators.values(), encodings):
+            pathways.append(generator.generate_pathway_encoding_reservoir(encoding, reservoir))
+        return pathways
+
+    def generate_pathway_reservoir_readout(self, reservoir, readouts):
+        '''
+         Generate pathway between the block group of readout and the block group of reservoir.
+
+         Parameters
+         ----------
+         reservoir: Reservoir, an instance of Reservoir class.
+         readouts: list[BlockGroup], all instance of BlockGroup class only containing one Block as readout layer.
+         '''
+
+        pathways = []
+        for generator, readout in zip(self.block_generators.values(), readouts):
+            pathways.append(generator.generate_pathway_reservoir_readout(reservoir, readout))
+        return pathways
+
+    def generate_network(self):
+        '''
+         A comprehensive structure generation function of the LSM_Network.
+
+         Parameters
+         ----------
+         '''
+
+        network = LSM_Network()
+        reservoir = self.generate_reservoir()
+        encodings = self.generate_encoding()
+        readouts = self.generate_readout(reservoir)
+        pathways_encoding_reservoir = self.generate_pathway_encoding_reservoir(encodings, reservoir)
+        pathways_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readouts)
+
+        network.register_layer(reservoir, 'reservoir')
+        for task_id, encoding, readout in enumerate(zip(encodings, readouts)):
+            network.register_layer(encoding, 'encoding_task'+str(task_id))
+            network.register_layer(readout, 'readout_task'+str(task_id))
+        for task_id, pathway_encoding_reservoir, pathway_reservoir_readout \
+                in enumerate(zip(pathways_encoding_reservoir, pathways_reservoir_readout)):
+            network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir_task'+str(task_id))
+            network.register_pathway(pathway_reservoir_readout, 'reservoir_readout_task'+str(task_id))
+        return network
+
+    def pre_initialize_reservoir(self):
+        '''
+         Initialize the components of reservoir, which contains pathway and block group.
+
+         Parameters
+         ----------
+         '''
+
+        parameter_block_neurons = {}
+        parameter_block_synapses = {}
+        for task_id, generator in self.block_generators.items():
+            parameter_block_neurons[task_id], parameter_block_synapses[task_id] = generator.pre_initialize_block()
+        parameter_block_group = {'parameter_block_neurons':parameter_block_neurons,
+                                 'parameter_block_synapses':parameter_block_synapses}
+        parameters_reservoir = {'parameter_block_group':parameter_block_group,
+                                'parameter_pathway': self.decoder.get_pathway_parameter('Reservoir_config')}
+        self.change_dict_key(parameters_reservoir['parameter_pathway'], 'strength', 'strength_need_random')
+        return parameters_reservoir
+
+    def pre_initialize_network(self):
+        '''
+         Initialize the components of network.
+
+         Parameters
+         ----------
+         '''
+
+        parameters = {}
+        parameters['encoding'] = None
+        parameters['reservoir'] = self.pre_initialize_reservoir()
+        for task_id, generator in self.block_generators.items():
+            parameters['readout_task'+str(task_id)] = generator.pre_initialize_readout()
+            parameters['encoding_reservoir_task'+str(task_id)] = generator.pre_initialize_encoding_reservoir()
+        parameters['reservoir_readout'] = None
+
+        return parameters

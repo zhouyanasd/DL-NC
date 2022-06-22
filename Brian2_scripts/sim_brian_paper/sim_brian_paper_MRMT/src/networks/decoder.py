@@ -8,8 +8,8 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_CoE.src.optimizer.ga import dec2bin, bin2dec
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.ga import dec2bin, bin2dec
 
 import numpy as np
 
@@ -22,15 +22,17 @@ class Decoder(BaseFunctions):
     ----------
     config_group, config_keys, config_codes, config_ranges, config_borders,
     config_precisions, config_scales: list, the config of optimization methods.
-    neurons_encoding: the number of encoding neurons .
+    neurons_encoding: the number of encoding neurons.
     """
 
-    def __init__(self, config_group, config_keys, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, neurons_encoding):
+    def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                      config_precisions, config_scales, gen_group, neurons_encoding):
         super(Decoder).__init__()
+        self.gen_group = gen_group
         self.config_group = config_group
         self.config_keys = config_keys
         self.config_codes = config_codes
+        self.config_SubCom = config_SubCom
         self.config_ranges = config_ranges
         self.config_borders = config_borders
         self.config_precisions = config_precisions
@@ -51,6 +53,22 @@ class Decoder(BaseFunctions):
             for key in self.config_keys[index]:
                 keys.append(group_name+'_'+key)
         return keys
+
+    @property
+    def get_SubCom(self):
+        '''
+         Get the SubCom in the config.
+
+         Parameters
+         ----------
+         '''
+        SubCom = []
+        for gen_group in self.gen_group:
+            sub_com = []
+            for group in gen_group:
+                sub_com += self.config_SubCom[group]
+            SubCom.append(sub_com)
+        return SubCom
 
     @property
     def get_dim(self):
@@ -134,7 +152,7 @@ class Decoder(BaseFunctions):
 
     def _float2int(self, Gen):
         '''
-         Register a gen for this decoder, which is ready to be decode for the generator.
+         Register a gen for this decoder, which is ready to be decoded for the generator.
 
          Parameters
          ----------
@@ -151,7 +169,7 @@ class Decoder(BaseFunctions):
 
     def register(self, Gen):
         '''
-         Register a gen for this decoder, which is ready to be decode for the generator.
+         Register a gen for this decoder, which is ready to be decoded for the generator.
 
          Parameters
          ----------
@@ -171,6 +189,7 @@ class Decoder(BaseFunctions):
 
         group = np.where(np.array(self.config_group) == target)[0][0]
         key = self.config_keys[group]
+        SubCom = self.config_SubCom[group]
         codes = self.config_codes[group]
         ranges = self.config_ranges[group]
         parameter = {}
@@ -181,7 +200,15 @@ class Decoder(BaseFunctions):
             parameter[k] = p
         return parameter
 
-    def get_block_type(self, task_id):
+
+class Decoder_Block(Decoder):
+    def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                      config_precisions, config_scales, gen_group, neurons_encoding):
+        super().__init__(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                      config_precisions, config_scales, gen_group, neurons_encoding)
+        self.optimal_block_gens = None
+
+    def get_block_type(self):
         '''
          Decode the type of the block.
 
@@ -190,11 +217,11 @@ class Decoder(BaseFunctions):
          task_id: int, the id of the task.
         '''
 
-        parameters = self.decode('Block_'+str(task_id))
+        parameters = self.decode('Block')
         block_type = bin2dec(parameters['block'])
         return block_type
 
-    def get_block_structure(self, task_id):
+    def get_block_structure(self):
         '''
          Decode the structure information of the block.
 
@@ -202,12 +229,11 @@ class Decoder(BaseFunctions):
          ----------
          task_id: int, the id of the task.
         '''
-
-        parameters = self.decode('Block_'+str(task_id))
+        parameters = self.decode('Block')
         sub_parameters = self.get_sub_dict(parameters, 'N', 'p_0', 'p_1', 'p_2')
         return sub_parameters
 
-    def get_block_parameter(self, task_id):
+    def get_block_parameter(self):
         '''
          Decode the neurons and synapse parameters of the block.
 
@@ -216,36 +242,95 @@ class Decoder(BaseFunctions):
          task_id: int, the id of the task.
         '''
 
-        parameters = self.decode('Block_'+str(task_id))
+        parameters = self.decode('Block')
         sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'tau', 'tau_I', 'type')
         return sub_parameters
 
-    def get_reservoir_structure_type(self):
+    def get_encoding_structure(self):
         '''
-         Decode the block group type of each position of each layer.
+         Decode the encoding structure, the parameters are come from the need of dataloader.
+
+         Parameters
+         ----------
+         '''
+
+        return self.neurons_encoding
+
+    def get_readout_parameter(self, component):
+        '''
+         Decode the readout parameters.
+
+         Parameters
+         ----------
+         component: str, 'Reservoir_config' or based on config
+         '''
+
+        parameters = self.decode(component)
+        return self.get_sub_dict(parameters, 'tau_I')
+
+
+class Decoder_Reservoir(Decoder):
+    def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                      config_precisions, config_scales, gen_group, neurons_encoding):
+        super().__init__(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
+                      config_precisions, config_scales, gen_group, neurons_encoding)
+
+    # def register_task_ids(self, task_ids):
+    #     '''
+    #      Register a gen for this decoder, which is ready to be decoded for the generator.
+    #
+    #      Parameters
+    #      ----------
+    #      task_ids: list, a sequence list of the task ids for the block of the reservoir.
+    #      '''
+    #
+    #     self.task_ids = task_ids
+
+    # def get_task_ids(self):
+    #     '''
+    #      Decode the neurons and synapse parameters of the block.
+    #
+    #      Parameters
+    #      ----------
+    #     '''
+    #
+    #     return self.task_ids
+
+    def register_optimal_block_gens(self, optimal_block_gens):
+        '''
+         Register a gen for this decoder, which is ready to be decoded for the generator.
+
+         Parameters
+         ----------
+         optimal_block_gens: list, {task_id: [optimal block gens]}
+         '''
+
+        # load gens form file
+        self.optimal_block_gens = optimal_block_gens
+
+    def get_optimal_block_gens(self, task_id):
+        '''
+         Decode the neurons and synapse parameters of the block.
+
+         Parameters
+         ----------
+        '''
+
+        return self.optimal_block_gens[task_id]
+
+    def get_reservoir_adjacent_matrix(self):
+        '''
+         Decode the connection matrix of blocks in the reservoir.
 
          Parameters
          ----------
          '''
 
         parameter = self.decode('Reservoir_arc')
-        type_d, block_id = [], 0
-        while True:
-            try:
-                type_d.append(parameter['arc_connections_' + str(block_id)])
-                block_id += 1
-            except KeyError:
-                return type_d
-
-    def get_reservoir_connection_matrix(self):
-        parameter = self.decode('Reservoir_arc')
-        type_d, block_id = [], 0
-        while True:
-            try:
-                type_d.append(parameter['arc_connections_' + str(block_id)])
-                block_id += 1
-            except KeyError:
-                return type_d
+        adjacent_matrix = []
+        for value in parameter.values():
+            adjacent_matrix.append(value)
+        return np.array(adjacent_matrix)
 
     def get_pathway_structure(self, component):
         '''
@@ -270,25 +355,3 @@ class Decoder(BaseFunctions):
         parameters = self.decode(component)
         sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
         return sub_parameters
-
-    def get_encoding_structure(self):
-        '''
-         Decode the encoding structure, the parameters are come from the need of dataloader.
-
-         Parameters
-         ----------
-         '''
-
-        return self.neurons_encoding
-
-    def get_readout_parameter(self, component):
-        '''
-         Decode the readout parameters.
-
-         Parameters
-         ----------
-         component: str, 'Reservoir_config' or based on config
-         '''
-
-        parameters = self.decode(component)
-        return self.get_sub_dict(parameters, 'tau_I')
