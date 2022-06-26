@@ -1,7 +1,6 @@
 import os, pickle
 import numpy as np
 import math
-import brian2
 
 
 class BaseFunctions():

@@ -8,12 +8,12 @@
 """
 
 from .KTH_dataloader import *
-from .UCI_dataloader import *
+from .HAPT_dataloader import *
 from .NMNIST_dataloader import *
 
 
 __all__ = [
     "KTH_classification",
-    "UCI_classification",
+    "HAPT_classification",
     "NMNIST_classification",
 ]

@@ -540,7 +540,8 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        self.tasks_ids.append(task_id)
+        if len(self.tasks_ids) <= self.block_max:
+            self.tasks_ids.append(task_id)
 
     def generate_blocks(self):
         '''

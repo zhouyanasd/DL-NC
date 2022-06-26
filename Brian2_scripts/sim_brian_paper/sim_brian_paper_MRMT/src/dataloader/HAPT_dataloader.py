@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-class UCI_classification(BaseFunctions):
+class HAPT_classification(BaseFunctions):
     def __init__(self, duration):
         super().__init__()
         self.duration = duration

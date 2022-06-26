@@ -37,7 +37,6 @@ class Decoder(BaseFunctions):
         self.config_borders = config_borders
         self.config_precisions = config_precisions
         self.config_scales = config_scales
-        self.neurons_encoding = neurons_encoding
 
     @property
     def get_keys(self):
@@ -205,7 +204,8 @@ class Decoder_Block(Decoder):
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
                       config_precisions, config_scales, gen_group, neurons_encoding):
         super().__init__(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, gen_group, neurons_encoding)
+                      config_precisions, config_scales, gen_group)
+        self.neurons_encoding = neurons_encoding
         self.optimal_block_gens = None
 
     def get_block_type(self):
@@ -271,30 +271,9 @@ class Decoder_Block(Decoder):
 
 class Decoder_Reservoir(Decoder):
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, gen_group, neurons_encoding):
+                      config_precisions, config_scales, gen_group):
         super().__init__(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, gen_group, neurons_encoding)
-
-    # def register_task_ids(self, task_ids):
-    #     '''
-    #      Register a gen for this decoder, which is ready to be decoded for the generator.
-    #
-    #      Parameters
-    #      ----------
-    #      task_ids: list, a sequence list of the task ids for the block of the reservoir.
-    #      '''
-    #
-    #     self.task_ids = task_ids
-
-    # def get_task_ids(self):
-    #     '''
-    #      Decode the neurons and synapse parameters of the block.
-    #
-    #      Parameters
-    #      ----------
-    #     '''
-    #
-    #     return self.task_ids
+                      config_precisions, config_scales, gen_group)
 
     def register_optimal_block_gens(self, optimal_block_gens):
         '''

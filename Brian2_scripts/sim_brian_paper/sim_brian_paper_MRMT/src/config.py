@@ -118,8 +118,6 @@ reset_reservoir = '''
 v = voltage_reset
 threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max)
 '''
-# --- task id and name ---
-# tasks = {'task_0' : 'KTH', 'task_1': 'NMNIST', 'task_2': 'UCI'}
 
 # --- block layer and reservoir structure ---
 structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},

@@ -17,6 +17,8 @@ __all__ = [
     "Pathway",
     "Reservoir",
     "LSM_Network",
-    "Decoder",
-    "Generator",
+    "Decoder_Block",
+    "Decoder_Reservoir",
+    "Generator_Block",
+    "Generator_Reservoir"
 ]
