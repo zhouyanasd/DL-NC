@@ -28,10 +28,17 @@ exec_dir = os.path.split(os.path.realpath(__file__))[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
 project_dir_sever = '/home/zy/Project/DL-NC'
 exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
-
 sys.path.append(project_dir)
-data_path = project_dir_sever + '/Data/HAPT-Dataset/'
-LHS_path = exec_dir + '/LHS_UCI.dat'
+
+data_path_HAPT = project_dir_sever + '/Data/HAPT-Dataset/'
+data_path_KTH = project_dir_sever+'/Data/KTH/'
+data_path_NMNIST = project_dir_sever + '/Data/N_MNIST/'
+
+LHS_path_HAPT = exec_dir + '/LHS_HAPT.dat'
+LHS_path_KTH = exec_dir +'/LHS_KTH.dat'
+LHS_path_NMNIST = exec_dir + '/LHS_NMNIST.dat'
+
+Optimal_gens = exec_dir + '/Optimal_gens.pkl'
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
@@ -83,28 +90,58 @@ seed = 100
 np.random.seed(seed)
 np_state = np.random.get_state()
 
-# -----simulation parameter setting-------
+# -----simulation overall setting-------
 core = 60
 
-method = 'CoE_rf_w'
+method = 'GA'
 total_eva = 600
 load_continue = False
+Training_task = 'KTH'
+Training_part = 'Reservoir'
 
-DataName = 'coe_0.5'
+# -----simulation data setting-------
 
-coding_duration = 30
-coding_n = 3
+DataName_HAPT = 'coe_0.5'
+DataName_KTH = 'coe_[15,5,4]'
+DataName_NMNIST = 'coe_0.05'
 
-F_train = 0.5
-F_pre_train = 0.02
-F_validation = 0.3
-F_test = 0.5
+F_train_HAPT = 0.5
+F_pre_train_HAPT = 0.02
+F_validation_HAPT = 0.3
+F_test_HAPT = 0.5
 
-neurons_encoding = 561 * coding_n
+F_train_KTH = 1
+F_pre_train_KTH = 0.2
+F_validation_KTH = 1
+F_test_KTH = 1
+
+F_train_NMNIST = 0.05833333
+F_pre_train_NMNIST = 0.002
+F_validation_NMNIST = 0.1666667
+F_test_NMNIST = 0.05
+
+# -----simulation encoding setting-------
+
+coding_duration_HAPT = 30
+coding_n_HAPT = 3
+neurons_encoding_HAPT = 561 * coding_n_HAPT
+
+origin_size_KTH = (120, 160)
+pool_size_KTH = (5, 5)
+pool_types_KTH = 'max'
+pool_threshold_KTH = 0.2
+neurons_encoding_KTH = int((origin_size_KTH[0] * origin_size_KTH[1]) / (pool_size_KTH[0] * pool_size_KTH[1]))
+
+coding_duration_NMNIST = 10
+shape_NMNIST = (34, 34)
+neurons_encoding_NMNIST = 2 * shape[0] * shape[1]
 
 ##-----------------------------------------------------
 # --- data and classifier ----------------------
-UCI = UCI_classification(coding_duration)
+HAPT = HAPT_classification(coding_duration_HAPT)
+KTH = KTH_classification()
+NMNIST = NMNIST_classification(shape, neurons_encoding_NMNIST)
+
 evaluator = Evaluation()
 
 # --- create generator and decoder ---
