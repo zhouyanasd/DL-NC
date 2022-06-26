@@ -144,41 +144,123 @@ NMNIST = NMNIST_classification(shape, neurons_encoding_NMNIST)
 
 evaluator = Evaluation()
 
-# --- create generator and decoder ---
-decoder = Decoder(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                  config_precisions, config_scales, neurons_encoding, gen_group)
-
-generator = Generator(np_state)
-generator.register_decoder(decoder)
+# --- create generator and decoder based on task---
+if Training_part == 'Block':
+    if Training_task == 'HAPT':
+        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                                           config_codes_block,
+                                           config_ranges_block, config_borders_block, config_precisions_block,
+                                           config_scales_block,
+                                           gen_group_block, neurons_encoding_HAPT)
+        generator = Generator_Block(np_state, task_id=0)
+        generator.register_decoder(decoder)
+    elif Training_task == 'KTH':
+        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                                          config_codes_block,
+                                          config_ranges_block, config_borders_block, config_precisions_block,
+                                          config_scales_block,
+                                          gen_group_block, neurons_encoding_KTH)
+        generator_block_KTH = Generator_Block(np_state, task_id=1)
+        generator_block_KTH.register_decoder(decoder)
+    elif Training_task == 'NMNIST':
+        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                                             config_codes_block,
+                                             config_ranges_block, config_borders_block, config_precisions_block,
+                                             config_scales_block,
+                                             gen_group_block, neurons_encoding_NMNIST)
+        generator = Generator_Block(np_state, task_id=2)
+        generator.register_decoder(decoder)
+elif Training_part == 'Reservoir':
+    decoder = Decoder_Reservoir(config_group_reservoir, config_keys_reservoir, config_SubCom_reservoir,
+                                          config_codes_reservoir, config_ranges_reservoir, config_borders_reservoir,
+                                          config_precisions_reservoir, config_scales_reservoir, gen_group_reservoir)
+    generator = Generator_Reservoir(np_state)
+    generator.register_decoder(decoder, block_max=block_max)
+    optimal_block_gens = decoder.load_data(Optimal_gens)
+    decoder.register_optimal_block_gens(optimal_block_gens)
+    generator.register_block_generator()
+    generator.initialize_task_ids()
 
 # -------data initialization----------------------
 try:
-    df_en_train = UCI.load_data(data_path + 'Spike_train_Data/train_' + DataName + '.p')
-    df_en_pre_train = UCI.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
-    df_en_validation = UCI.load_data(data_path + 'Spike_train_Data/validation_' + DataName + '.p')
-    df_en_test = UCI.load_data(data_path + 'Spike_train_Data/test_' + DataName + '.p')
+    df_en_train_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/train_' + DataName_HAPT + '.p')
+    df_en_pre_train_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/pre_train_' + DataName_HAPT + '.p')
+    df_en_validation_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/validation_' + DataName_HAPT + '.p')
+    df_en_test_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/test_' + DataName_HAPT + '.p')
+
+    df_en_train_KTH = KTH.load_data(data_path_KTH + 'train_' + DataName_KTH +'.p')
+    df_en_pre_train_KTH = KTH.load_data(data_path_KTH + 'pre_train_' + DataName_KTH + '.p')
+    df_en_validation_KTH = KTH.load_data(data_path_KTH + 'validation_' + DataName_KTH +'.p')
+    df_en_test_KTH = KTH.load_data(data_path_KTH + 'test_' + DataName_KTH +'.p')
+
+    df_en_train_NMNIST = NMNIST.load_data(data_path_NMNIST + 'train_' + DataName_NMNIST +'.p')
+    df_en_pre_train_NMNIST = NMNIST.load_data(data_path_NMNIST + 'pre_train_' + DataName_NMNIST + '.p')
+    df_en_validation_NMNIST = NMNIST.load_data(data_path_NMNIST + 'validation_' + DataName_NMNIST +'.p')
+    df_en_test_NMNIST = NMNIST.load_data(data_path_NMNIST + 'test_' + DataName_NMNIST +'.p')
 except FileNotFoundError:
-    UCI.load_data_UCI_all(data_path)
+    HAPT.load_data_UCI_all(data_path_HAPT)
+    KTH.load_data_KTH_all(data_path_KTH, split_type='mixed', split=[15, 5, 4])
+    NMNIST.load_data_NMNIST_all(data_path_NMNIST)
 
-    df_train_validation = UCI.select_data(F_train, UCI.train, False, selected=[1, 2, 3, 4, 5, 6])
-    df_pre_train = UCI.select_data(F_pre_train, UCI.train, False, selected=[1, 2, 3, 4, 5, 6])
-    df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation, random_state=42)
-    df_test = UCI.select_data(F_test, UCI.test, False, selected=[1, 2, 3, 4, 5, 6])
+    df_train_validation_HAPT = HAPT.select_data(F_train_HAPT, HAPT.train, False, selected=[1, 2, 3, 4, 5, 6])
+    df_pre_train_HAPT = HAPT.select_data(F_pre_train_HAPT, HAPT.train, False, selected=[1, 2, 3, 4, 5, 6])
+    df_train_HAPT, df_validation_HAPT = train_test_split(df_train_validation_HAPT, test_size=F_validation_HAPT, random_state=42)
+    df_test_HAPT = HAPT.select_data(F_test_HAPT, HAPT.test, False, selected=[1, 2, 3, 4, 5, 6])
 
-    df_en_train = UCI.encoding_latency_UCI(UCI._encoding_cos_rank_ignore_0, df_train, coding_n)
-    df_en_pre_train = UCI.encoding_latency_UCI(UCI._encoding_cos_rank_ignore_0, df_pre_train, coding_n)
-    df_en_validation = UCI.encoding_latency_UCI(UCI._encoding_cos_rank_ignore_0, df_validation, coding_n)
-    df_en_test = UCI.encoding_latency_UCI(UCI._encoding_cos_rank_ignore_0, df_test, coding_n)
+    df_train_KTH = KTH.select_data_KTH(F_train_KTH, KTH.train, False)
+    df_pre_train_KTH = KTH.select_data_KTH(F_pre_train_KTH, KTH.train, False)
+    df_validation_KTH = KTH.select_data_KTH(F_validation_KTH, KTH.validation, False)
+    df_test_KTH = KTH.select_data_KTH(F_train_KTH, KTH.test, False)
 
-    UCI.dump_data(data_path + 'Spike_train_Data/train_' + DataName + '.p', df_en_train)
-    UCI.dump_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p', df_en_pre_train)
-    UCI.dump_data(data_path + 'Spike_train_Data/validation_' + DataName + '.p', df_en_validation)
-    UCI.dump_data(data_path + 'Spike_train_Data/test_' + DataName + '.p', df_en_test)
+    df_train_validation_NMNIST = NMNIST.select_data_NMNIST(F_train_NMNIST, NMNIST.train, False)
+    df_pre_train_NMNIST = NMNIST.select_data_NMNIST(F_pre_train_NMNIST, NMNIST.train, False)
+    df_train_NMNIST, df_validation_NMNIST = train_test_split(df_train_validation_NMNIST, test_size=F_validation_NMNIST, random_state=42)
+    df_test_NMNIST = NMNIST.select_data_NMNIST(F_test_NMNIST, NMNIST.test, False)
 
-data_train_index_batch = UCI.data_batch(df_en_train.index.values, core)
-data_pre_train_index_batch = UCI.data_batch(df_en_pre_train.index.values, core)
-data_validation_index_batch = UCI.data_batch(df_en_validation.index.values, core)
-data_test_index_batch = UCI.data_batch(df_en_test.index.values, core)
+    df_en_train_HAPT = HAPT.encoding_latency_UCI(HAPT._encoding_cos_rank_ignore_0, df_train_HAPT, coding_n_HAPT)
+    df_en_pre_train_HAPT = HAPT.encoding_latency_UCI(HAPT._encoding_cos_rank_ignore_0, df_pre_train_HAPT, coding_n_HAPT)
+    df_en_validation_HAPT = HAPT.encoding_latency_UCI(HAPT._encoding_cos_rank_ignore_0, df_validation_HAPT, coding_n_HAPT)
+    df_en_test_HAPT = HAPT.encoding_latency_UCI(HAPT._encoding_cos_rank_ignore_0, df_test_HAPT, coding_n_HAPT)
+
+    df_en_train_KTH = KTH.encoding_latency_KTH(df_train_KTH, origin_size_KTH, pool_size_KTH, pool_types_KTH, pool_threshold_KTH)
+    df_en_pre_train_KTH = KTH.encoding_latency_KTH(df_pre_train_KTH, origin_size_KTH, pool_size_KTH, pool_types_KTH, pool_threshold_KTH)
+    df_en_validation_KTH = KTH.encoding_latency_KTH(df_validation_KTH, origin_size_KTH, pool_size_KTH, pool_types_KTH, pool_threshold_KTH)
+    df_en_test_KTH = KTH.encoding_latency_KTH(df_test_KTH, origin_size_KTH, pool_size_KTH, pool_types_KTH, pool_threshold_KTH)
+
+    df_en_train_NMNIST = NMNIST.encoding_latency_NMNIST(df_train_NMNIST)
+    df_en_pre_train_NMNIST = NMNIST.encoding_latency_NMNIST(df_pre_train_NMNIST)
+    df_en_validation_NMNIST = NMNIST.encoding_latency_NMNIST(df_validation_NMNIST)
+    df_en_test_NMNIST = NMNIST.encoding_latency_NMNIST(df_test_NMNIST)
+
+    HAPT.dump_data(data_path_HAPT + 'Spike_train_Data/train_' + DataName_HAPT + '.p', df_en_train_HAPT)
+    HAPT.dump_data(data_path_HAPT + 'Spike_train_Data/pre_train_' + DataName_HAPT + '.p', df_en_pre_train_HAPT)
+    HAPT.dump_data(data_path_HAPT + 'Spike_train_Data/validation_' + DataName_HAPT + '.p', df_en_validation_HAPT)
+    HAPT.dump_data(data_path_HAPT + 'Spike_train_Data/test_' + DataName_HAPT + '.p', df_en_test_HAPT)
+
+    KTH.dump_data(data_path_KTH + 'train_' + DataName_KTH + '.p', df_en_train_KTH)
+    KTH.dump_data(data_path_KTH + 'pre_train_' + DataName_KTH + '.p', df_en_pre_train_KTH)
+    KTH.dump_data(data_path_KTH + 'validation_' + DataName_KTH + '.p', df_en_validation_KTH)
+    KTH.dump_data(data_path_KTH + 'test_' + DataName_KTH + '.p', df_en_test_KTH)
+
+    NMNIST.dump_data(data_path_NMNIST + 'train_' + DataName_NMNIST + '.p', df_en_train_NMNIST)
+    NMNIST.dump_data(data_path_NMNIST + 'pre_train_' + DataName_NMNIST + '.p', df_en_pre_train_NMNIST)
+    NMNIST.dump_data(data_path_NMNIST + 'validation_' + DataName_NMNIST + '.p', df_en_validation_NMNIST)
+    NMNIST.dump_data(data_path_NMNIST + 'test_' + DataName_NMNIST + '.p', df_en_test_NMNIST)
+
+data_train_index_batch_HAPT = HAPT.data_batch(df_en_train_HAPT.index.values, core)
+data_pre_train_index_batch_HAPT = HAPT.data_batch(df_en_pre_train_HAPT.index.values, core)
+data_validation_index_batch_HAPT = HAPT.data_batch(df_en_validation_HAPT.index.values, core)
+data_test_index_batch_HAPT = HAPT.data_batch(df_en_test_HAPT.index.values, core)
+
+data_train_index_batch_KTH = KTH.data_batch(df_en_train_KTH.index.values, core)
+data_pre_train_index_batch_KTH = KTH.data_batch(df_en_pre_train_KTH.index.values, core)
+data_validation_index_batch_KTH = KTH.data_batch(df_en_validation_KTH.index.values, core)
+data_test_index_batch_KTH = KTH.data_batch(df_en_test_KTH.index.values, core)
+
+data_train_index_batch_NMNIST = NMNIST.data_batch(df_en_train_NMNIST.index.values, core)
+data_pre_train_index_batch_NMNIST = NMNIST.data_batch(df_en_pre_train_NMNIST.index.values, core)
+data_validation_index_batch_NMNIST = NMNIST.data_batch(df_en_validation_NMNIST.index.values, core)
+data_test_index_batch_NMNIST = NMNIST.data_batch(df_en_test_NMNIST.index.values, core)
 
 
 # --- define network run function ---
@@ -204,8 +286,17 @@ def init_net(gen):
 def pre_run_net(gen, data_index):
     exec(exec_env)
     exec(exec_var)
-    UCI_ = UCI_classification(coding_duration)
-    df_en_pre_train = UCI_.load_data(data_path + 'Spike_train_Data/pre_train_' + DataName + '.p')
+
+    # --- choose data based on training task ---
+    if Training_task == 'HAPT':
+        HAPT_ = HAPT_classification(coding_duration_HAPT)
+        df_en_pre_train = HAPT_.load_data(data_path_HAPT + 'Spike_train_Data/pre_train_' + DataName_HAPT + '.p')
+    elif Training_task == 'KTH':
+        KTH_ = KTH_classification()
+        df_en_pre_train = KTH_.load_data(data_path_KTH + 'pre_train_' + DataName_KTH + '.p')
+    elif Training_task == 'NMNIST':
+        NMNIST_ = NMNIST_classification(shape, neurons_encoding_NMNIST)
+        df_en_pre_train = NMNIST_.load_data(data_path_NMNIST + 'pre_train_' + DataName_NMNIST + '.p')
 
     # --- run network ---
     net = init_net(gen)
@@ -236,13 +327,26 @@ def sum_strength(gen, net_state_list):
     return state_init
 
 
-def run_net(gen, state_pre_run, data_indexs):
+def run_net(gen, state_pre_run, data_indexes):
     exec(exec_env)
     exec(exec_var)
-    UCI_ = UCI_classification(coding_duration)
-    df_en_train = UCI_.load_data(data_path + 'Spike_train_Data/train_' + DataName + '.p')
-    df_en_validation = UCI_.load_data(data_path + 'Spike_train_Data/validation_' + DataName + '.p')
-    df_en_test = UCI_.load_data(data_path + 'Spike_train_Data/test_' + DataName + '.p')
+
+    # ---- choose generator based on training purpose ----
+    if Training_task == 'HAPT':
+        HAPT_ = HAPT_classification(coding_duration_HAPT)
+        df_en_train = HAPT_.load_data(data_path_HAPT + 'Spike_train_Data/train_' + DataName_HAPT + '.p')
+        df_en_validation = HAPT_.load_data(data_path_HAPT + 'Spike_train_Data/validation_' + DataName_HAPT + '.p')
+        df_en_test = HAPT_.load_data(data_path_HAPT + 'Spike_train_Data/test_' + DataName_HAPT + '.p')
+    elif Training_task == 'KTH':
+        KTH_ = KTH_classification()
+        df_en_train = KTH_.load_data(data_path_KTH + 'Spike_train_Data/train_' + DataName_KTH + '.p')
+        df_en_validation = KTH_.load_data(data_path_KTH + 'Spike_train_Data/validation_' + DataName_KTH + '.p')
+        df_en_test = KTH_.load_data(data_path_KTH + 'Spike_train_Data/test_' + DataName_KTH + '.p')
+    elif Training_task == 'NMNIST':
+        NMNIST_ = NMNIST_classification(shape, neurons_encoding_NMNIST)
+        df_en_train = NMNIST_.load_data(data_path_NMNIST + 'Spike_train_Data/train_' + DataName_NMNIST + '.p')
+        df_en_validation = NMNIST_.load_data(data_path_NMNIST + 'Spike_train_Data/validation_' + DataName_NMNIST + '.p')
+        df_en_test = NMNIST_.load_data(data_path_NMNIST + 'Spike_train_Data/test_' + DataName_NMNIST + '.p')
 
     # --- run network ---
     net = init_net(gen)
@@ -256,7 +360,7 @@ def run_net(gen, state_pre_run, data_indexs):
     states_test = []
     labels_test = []
 
-    for ind in data_indexs[0]:
+    for ind in data_indexes[0]:
         data = df_en_train.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
@@ -266,7 +370,7 @@ def run_net(gen, state_pre_run, data_indexs):
         labels_train.append(df_en_train.label[ind])
         net.restore('pre_run')
 
-    for ind in data_indexs[1]:
+    for ind in data_indexes[1]:
         data = df_en_validation.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
@@ -276,7 +380,7 @@ def run_net(gen, state_pre_run, data_indexs):
         labels_val.append(df_en_validation.label[ind])
         net.restore('pre_run')
 
-    for ind in data_indexs[2]:
+    for ind in data_indexes[2]:
         data = df_en_test.value[ind]
         stimulus = TimedArray(data, dt=Dt)
         duration = data.shape[0]
@@ -312,15 +416,39 @@ def parallel_run(fun, data):
             ray.shutdown()
             cluster.restart()
 
-
 @ProgressBar
 @Timelog
 def parameters_search(**parameter):
-    # ------convert the parameter to gen-------
+    if Training_part == 'Block':
+        if Training_task == 'HAPT':
+            return parameters_search_one_task(data_pre_train_index_batch_HAPT, data_train_index_batch_HAPT,
+                               data_validation_index_batch_HAPT, data_test_index_batch_HAPT,
+                               **parameter)
+        elif Training_task == 'KTH':
+            return parameters_search_one_task(data_pre_train_index_batch_KTH, data_train_index_batch_KTH,
+                               data_validation_index_batch_KTH, data_test_index_batch_KTH,
+                               **parameter)
+        elif Training_task == 'NMNIST':
+            return parameters_search_one_task(data_pre_train_index_batch_NMNIST, data_train_index_batch_NMNIST,
+                               data_validation_index_batch_NMNIST, data_test_index_batch_NMNIST,
+                               **parameter)
+    elif Training_part == 'Reservoir':
+        score_validation_, score_test_, score_train_ = {}, {}, {}
+
+
+
+@Timelog
+def parameters_search_one_task(data_pre_train_index_batch, data_train_index_batch,
+                               data_validation_index_batch, data_test_index_batch,
+                               **parameter):
+    # ------convert the parameter to gen -------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    net_state_list = parallel_run(partial(pre_run_net, gen), data_pre_train_index_batch)
-    state_pre_run = sum_strength(gen, net_state_list)
+    if Training_part == 'Block':
+        net_state_list = parallel_run(partial(pre_run_net, gen), data_pre_train_index_batch)
+        state_pre_run = sum_strength(gen, net_state_list)
+    elif Training_part == 'Reservoir':
+        state_pre_run = load()
     # ------parallel run for training data-------
     results_list = parallel_run(partial(run_net, gen, state_pre_run), zip(data_train_index_batch,
                                                                           data_validation_index_batch,
@@ -360,24 +488,8 @@ if __name__ == '__main__':
     parameters_search.func.load_continue = load_continue
 
     # -------parameters search---------------
-    if method == 'BO':
-        optimizer = RandomForestRegressor_BayesianOptimization(
-            f=parameters_search,
-            keys=decoder.get_keys,
-            ranges=decoder.get_ranges,
-            borders=decoder.get_borders,
-            precisions=decoder.get_precisions,
-            random_state=np.random.RandomState(),
-        )
-        optimizer.minimize(
-            LHS_path=LHS_path,
-            init_points=100,
-            is_LHS=True,
-            n_iter=500,
-            online=True,
-        )
 
-    elif method == 'CoE':
+    if method == 'GA':
         coe = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                   random_state=seed, maxormin=1)
@@ -385,28 +497,7 @@ if __name__ == '__main__':
                      selectStyle='tour', recombinStyle='reclin',
                      distribute=False, load_continue=load_continue)
 
-    elif method == 'CoE_fi':
-        coe = CoE_fitness_inheritance(parameters_search, None, decoder.get_SubCom, decoder.get_ranges,
-                                      decoder.get_borders,
-                                      decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                                      random_state=seed, maxormin=1,
-                                      p_fi=0.5)
-        coe.optimize(recopt=1, pm=0.2, MAXGEN=19 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
-                     selectStyle='tour', recombinStyle='reclin',
-                     distribute=False, load_continue=load_continue)
-
-    elif method == 'CoE_rf_w':
-        coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
-                            decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                            random_state=seed, maxormin=1,
-                            surrogate_type='rf_w', init_points=100, LHS_path=LHS_path,
-                            n_Q=10, n_estimators=100, c_features=np.floor(decoder.get_dim * 0.5).astype(np.int))
-        coe.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
-                     online=True, eva=2, interval=10,
-                     selectStyle='tour', recombinStyle='reclin',
-                     distribute=False, load_continue=load_continue)
-
-    elif method == 'CoE_rf':
+    elif method == 'GA_rf':
         coe = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                             decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                             random_state=seed, maxormin=1,
