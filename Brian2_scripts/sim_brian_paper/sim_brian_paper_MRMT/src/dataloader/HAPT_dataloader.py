@@ -9,7 +9,7 @@ class HAPT_classification(BaseFunctions):
         super().__init__()
         self.duration = duration
 
-    def load_data_UCI(self, path_value, path_label, is_norm=True):
+    def load_data_HAPT(self, path_value, path_label, is_norm=True):
         data =  [x.reshape(1, -1) for x in list(np.loadtxt(path_value))]
         label = np.loadtxt(path_label)
 
@@ -20,11 +20,11 @@ class HAPT_classification(BaseFunctions):
             df = pd.DataFrame({'value': pd.Series(data), 'label': pd.Series(label)})
         return df
 
-    def load_data_UCI_all(self, path, is_norm=True):
-        self.train = self.load_data_UCI(path + 'Processed-Data/X_train.txt',
-                                          path + 'Processed-Data/y_train.txt', is_norm)
-        self.test = self.load_data_UCI(path + 'Processed-Data/X_test.txt',
-                                         path + 'Processed-Data/y_test.txt', is_norm)
+    def load_data_HAPT_all(self, path, is_norm=True):
+        self.train = self.load_data_HAPT(path + 'Processed-Data/X_train.txt',
+                                         path + 'Processed-Data/y_train.txt', is_norm)
+        self.test = self.load_data_HAPT(path + 'Processed-Data/X_test.txt',
+                                        path + 'Processed-Data/y_test.txt', is_norm)
 
     def select_data(self, fraction, data_frame, is_order=True, **kwargs):
         try:
@@ -61,7 +61,7 @@ class HAPT_classification(BaseFunctions):
                         encoding[int(q) + A * index_0, index_1 * n + i] = 1
         return encoding
 
-    def encoding_latency_UCI(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
+    def encoding_latency_HAPT(self, coding_f, analog_data, coding_n, min=0, max=np.pi):
         f = lambda x: (max - min) * (x - np.min(x)) / (np.max(x) - np.min(x))
         coding_duration = self.duration
         if (coding_duration - int(coding_duration)) == 0.0:
