@@ -283,7 +283,7 @@ if __name__ == '__main__':
 
         df_train = KTH.select_data_KTH(F_train, KTH.train, False)
         df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
-        df_test = KTH.select_data_KTH(F_train, KTH.test, False)
+        df_test = KTH.select_data_KTH(F_test, KTH.test, False)
 
         df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, threshold)
         df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, threshold)

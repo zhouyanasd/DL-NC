@@ -126,7 +126,7 @@ except FileNotFoundError:
     df_train = KTH.select_data_KTH(F_train, KTH.train, False)
     df_pre_train = KTH.select_data_KTH(F_pre_train, KTH.train, False)
     df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
-    df_test = KTH.select_data_KTH(F_train, KTH.test, False)
+    df_test = KTH.select_data_KTH(F_test, KTH.test, False)
 
     df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, pool_threshold)
     df_en_pre_train = KTH.encoding_latency_KTH(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
