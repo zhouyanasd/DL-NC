@@ -14,6 +14,8 @@ __all__ = [
     "RandomForestRegressor_surrogate",
     "RandomForestRegressor_surrogate_wang",
     "GaussianProcess_surrogate",
+    "GA",
+    "GA_surrogate",
     "CoE",
     "CoE_surrogate",
     "CoE_fitness_inheritance",

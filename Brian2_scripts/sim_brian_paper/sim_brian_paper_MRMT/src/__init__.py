@@ -21,6 +21,8 @@ __all__ = [
     "Decoder_Reservoir",
     "Generator_Block",
     "Generator_Reservoir",
+    "GA",
+    "GA_surrogate",
     "CoE",
     "CoE_surrogate",
     "CoE_fitness_inheritance",

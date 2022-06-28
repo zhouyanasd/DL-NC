@@ -100,7 +100,6 @@ Training_task = 'KTH'
 Training_part = 'Reservoir'
 
 # -----simulation data setting-------
-
 DataName_HAPT = 'coe_0.5'
 DataName_KTH = 'coe_[15,5,4]'
 DataName_NMNIST = 'coe_0.05'
@@ -121,7 +120,6 @@ F_validation_NMNIST = 0.1666667
 F_test_NMNIST = 0.05
 
 # -----simulation encoding setting-------
-
 coding_duration_HAPT = 30
 coding_n_HAPT = 3
 neurons_encoding_HAPT = 561 * coding_n_HAPT
@@ -145,43 +143,32 @@ NMNIST = NMNIST_classification(shape, neurons_encoding_NMNIST)
 evaluator = Evaluation()
 
 # --- create generator and decoder based on task---
-if Training_part == 'Block':
-    if Training_task == 'HAPT':
-        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
-                                           config_codes_block,
-                                           config_ranges_block, config_borders_block, config_precisions_block,
-                                           config_scales_block,
-                                           gen_group_block, neurons_encoding_HAPT)
-        generator = Generator_Block(np_state, task_id=0)
-        generator.register_decoder(decoder)
-    elif Training_task == 'KTH':
-        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
-                                          config_codes_block,
-                                          config_ranges_block, config_borders_block, config_precisions_block,
-                                          config_scales_block,
-                                          gen_group_block, neurons_encoding_KTH)
-        generator_block_KTH = Generator_Block(np_state, task_id=1)
-        generator_block_KTH.register_decoder(decoder)
-    elif Training_task == 'NMNIST':
-        decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
-                                             config_codes_block,
-                                             config_ranges_block, config_borders_block, config_precisions_block,
-                                             config_scales_block,
-                                             gen_group_block, neurons_encoding_NMNIST)
-        generator = Generator_Block(np_state, task_id=2)
-        generator.register_decoder(decoder)
-elif Training_part == 'Reservoir':
-    decoder = Decoder_Reservoir(config_group_reservoir, config_keys_reservoir, config_SubCom_reservoir,
-                                          config_codes_reservoir, config_ranges_reservoir, config_borders_reservoir,
-                                          config_precisions_reservoir, config_scales_reservoir, gen_group_reservoir)
-    generator = Generator_Reservoir(np_state)
-    generator.register_decoder(decoder, block_max=block_max)
-    optimal_block_gens = decoder.load_data(Optimal_gens)
-    decoder.register_optimal_block_gens(optimal_block_gens)
-    generator.register_block_generator()
-    generator.initialize_task_ids()
+if Training_task == 'HAPT':
+    decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                            config_codes_block,
+                            config_ranges_block, config_borders_block, config_precisions_block,
+                            config_scales_block,
+                            gen_group_block, neurons_encoding_HAPT)
+    generator = Generator_Block(np_state, task_id=0)
+    generator.register_decoder(decoder)
+elif Training_task == 'KTH':
+    decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                            config_codes_block,
+                            config_ranges_block, config_borders_block, config_precisions_block,
+                            config_scales_block,
+                            gen_group_block, neurons_encoding_KTH)
+    generator_block_KTH = Generator_Block(np_state, task_id=1)
+    generator_block_KTH.register_decoder(decoder)
+elif Training_task == 'NMNIST':
+    decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
+                            config_codes_block,
+                            config_ranges_block, config_borders_block, config_precisions_block,
+                            config_scales_block,
+                            gen_group_block, neurons_encoding_NMNIST)
+    generator = Generator_Block(np_state, task_id=2)
+    generator.register_decoder(decoder)
 
-# -------data initialization----------------------
+# -------data initialization for all tasks----------------------
 try:
     df_en_train_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/train_' + DataName_HAPT + '.p')
     df_en_pre_train_HAPT = HAPT.load_data(data_path_HAPT + 'Spike_train_Data/pre_train_' + DataName_HAPT + '.p')
@@ -283,7 +270,7 @@ def init_net(gen):
     return net
 
 
-def pre_run_net(gen, data_index):
+def pre_run_net(gen, Training_task, data_index):
     exec(exec_env)
     exec(exec_var)
 
@@ -327,7 +314,7 @@ def sum_strength(gen, net_state_list):
     return state_init
 
 
-def run_net(gen, state_pre_run, data_indexes):
+def run_net(gen, state_pre_run,Training_task, data_indexes):
     exec(exec_env)
     exec(exec_var)
 
@@ -416,41 +403,35 @@ def parallel_run(fun, data):
             ray.shutdown()
             cluster.restart()
 
+
 @ProgressBar
 @Timelog
 def parameters_search(**parameter):
-    if Training_part == 'Block':
-        if Training_task == 'HAPT':
-            return parameters_search_one_task(data_pre_train_index_batch_HAPT, data_train_index_batch_HAPT,
-                               data_validation_index_batch_HAPT, data_test_index_batch_HAPT,
-                               **parameter)
-        elif Training_task == 'KTH':
-            return parameters_search_one_task(data_pre_train_index_batch_KTH, data_train_index_batch_KTH,
-                               data_validation_index_batch_KTH, data_test_index_batch_KTH,
-                               **parameter)
-        elif Training_task == 'NMNIST':
-            return parameters_search_one_task(data_pre_train_index_batch_NMNIST, data_train_index_batch_NMNIST,
-                               data_validation_index_batch_NMNIST, data_test_index_batch_NMNIST,
-                               **parameter)
-    elif Training_part == 'Reservoir':
-        score_validation_, score_test_, score_train_ = {}, {}, {}
+    # ---- choose parameter searcher based on training purpose ----
+    if Training_task == 'HAPT':
+        return parameters_search_one_task(data_pre_train_index_batch_HAPT, data_train_index_batch_HAPT,
+                                          data_validation_index_batch_HAPT, data_test_index_batch_HAPT,
+                                          Training_task = 'HAPT', **parameter)
+    elif Training_task == 'KTH':
+        return parameters_search_one_task(data_pre_train_index_batch_KTH, data_train_index_batch_KTH,
+                                          data_validation_index_batch_KTH, data_test_index_batch_KTH,
+                                          Training_task = 'KTH', **parameter)
+    elif Training_task == 'NMNIST':
+        return parameters_search_one_task(data_pre_train_index_batch_NMNIST, data_train_index_batch_NMNIST,
+                                          data_validation_index_batch_NMNIST, data_test_index_batch_NMNIST,
+                                          Training_task = 'NMNIST', **parameter)
 
 
-
-@Timelog
 def parameters_search_one_task(data_pre_train_index_batch, data_train_index_batch,
                                data_validation_index_batch, data_test_index_batch,
-                               **parameter):
+                               Training_task, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in decoder.get_keys]
     # ------init net and run for pre_train-------
-    if Training_part == 'Block':
-        net_state_list = parallel_run(partial(pre_run_net, gen), data_pre_train_index_batch)
-        state_pre_run = sum_strength(gen, net_state_list)
-    elif Training_part == 'Reservoir':
-        state_pre_run = load()
+    net_state_list = parallel_run(partial(pre_run_net, gen, Training_task), data_pre_train_index_batch)
+    state_pre_run = sum_strength(gen, net_state_list)
     # ------parallel run for training data-------
-    results_list = parallel_run(partial(run_net, gen, state_pre_run), zip(data_train_index_batch,
+    results_list = parallel_run(partial(run_net, gen, state_pre_run, Training_task), zip(data_train_index_batch,
                                                                           data_validation_index_batch,
                                                                           data_test_index_batch))
     # ------Readout---------------
@@ -473,6 +454,7 @@ def parameters_search_one_task(data_pre_train_index_batch, data_train_index_batc
     # ------collect the memory-------
     gc.collect()
     # ----------show results-----------
+    print('task: %s', Training_task)
     print('parameter %s' % parameter)
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
