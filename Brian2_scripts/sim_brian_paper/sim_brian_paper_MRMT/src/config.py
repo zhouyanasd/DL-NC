@@ -123,6 +123,7 @@ threshold = clip(threshold+threshold_jump*Switch, threshold_solid, threshold_max
 structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':None, 'p_2':None},
                     'components_1': {'name':'scale_free', 'p_0':[0.1, 1.0], 'p_1':[0.1, 1.0], 'p_2':[0.1, 1.0]},
                     'components_2': {'name':'small_world_2','p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]}}
+block_init = 3
 block_max = 20
 
 # --- parameter settings ---
@@ -144,7 +145,7 @@ config_codes_reservoir = [[None, None, None, None], [1] * block_max]
 config_codes_block = [[1, None, None, None, None, None, None, None, None, None], [None, None, None, None, None]]
 
 config_ranges_reservoir = [[[0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
-                           [[0, 1048575]] * block_max]
+                           [[0, 2**block_max-1]] * block_max]
 config_ranges_block = [[[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
                        [[0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.2]]]
 

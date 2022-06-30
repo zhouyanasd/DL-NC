@@ -26,7 +26,7 @@ class Decoder(BaseFunctions):
     """
 
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
-                      config_precisions, config_scales, gen_group, neurons_encoding):
+                      config_precisions, config_scales, gen_group):
         super(Decoder).__init__()
         self.gen_group = gen_group
         self.config_group = config_group
