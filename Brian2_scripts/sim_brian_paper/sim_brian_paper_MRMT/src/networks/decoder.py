@@ -297,6 +297,17 @@ class Decoder_Reservoir(Decoder):
 
         return self.optimal_block_gens[task_id]
 
+    def increase_block_reservoir(self, block_current, block_max):
+        '''
+         Increase block for new task.
+
+         Parameters
+         ----------
+         '''
+
+        self.config_ranges[1] = \
+            [[0, 2**block_current-1]] * block_current + [[0, 2**0-1]] * (block_max-block_current)
+
     def get_reservoir_adjacent_matrix(self):
         '''
          Decode the connection matrix of blocks in the reservoir.

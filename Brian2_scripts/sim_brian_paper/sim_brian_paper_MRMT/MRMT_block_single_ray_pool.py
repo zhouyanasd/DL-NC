@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     # -------parameters search---------------
     if method == 'GA':
-        ga = GA(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+        ga = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                 decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                 random_state=seed, maxormin=1)
         ga.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                     distribute=False, load_continue=load_continue)
 
     elif method == 'GA_rf':
-        ga = GA_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+        ga = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                           decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                           random_state=seed, maxormin=1,
                           surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,

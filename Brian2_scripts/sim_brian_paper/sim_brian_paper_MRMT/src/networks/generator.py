@@ -23,7 +23,7 @@ def convert_networkx(G):
     return N, np.array([connection_matrix_out, connection_matrix_in])
 
 
-class Generator_connection_matrix(BaseFunctions, NetworkBase):
+class Generator_connection_matrix(NetworkBase):
     """
     This class offers the connection matrix generation functions
     of four kinds of blocks and reservoir.
@@ -549,6 +549,8 @@ class Generator_Reservoir(Generator):
 
         if len(self.tasks_ids) <= self.block_max:
             self.tasks_ids.append(task_id)
+            block_current = len(self.tasks_ids)
+            self.decoder.increase_block_reservoir(block_current, block_max)
 
     def generate_blocks(self):
         '''

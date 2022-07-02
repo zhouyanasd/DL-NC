@@ -85,7 +85,6 @@ for task_evaluator in task_evaluators.values():
 accuracy_evaluator = Evaluation()
 
 # -----parameters search for optimizer-------
-
 @ProgressBar
 @Timelog
 def parameters_search_multi_task(**parameter):
@@ -93,6 +92,10 @@ def parameters_search_multi_task(**parameter):
     for task_id, task_evaluator in task_evaluators.items():
         score_validation_[task_id], score_test_[task_id], score_train_[task_id] = \
             parameters_search(task_evaluator, **parameter)
+    if len(generator.tasks_ids) <= block_max:
+        task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
+        generator.increase_block_reservoir(task_add)
+        ga.ranges = decoder.get_ranges
     return mean(score_validation_.values()), mean(score_test_.values()), mean(score_train_.values())
 
 @Timelog
@@ -100,9 +103,7 @@ def parameters_search(task_evaluator, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    net_state_list = task_evaluator.parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
-                                                 task_evaluator.data_pre_train_index_batch)
-    state_pre_run = task_evaluator.sum_strength(gen, net_state_list)
+    state_pre_run = load()
     # ------parallel run for training data-------
     results_list = task_evaluator.parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,
@@ -134,7 +135,6 @@ def parameters_search(task_evaluator, **parameter):
     print('Test score: ', score_test)
     return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
-
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     # -------parameters search---------------
     if method == 'GA':
-        ga = GA(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+        ga = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                 decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                 random_state=seed, maxormin=1)
         ga.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     distribute=False, load_continue=load_continue)
 
     elif method == 'GA_rf':
-        ga = GA_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+        ga = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                           decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                           random_state=seed, maxormin=1,
                           surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
