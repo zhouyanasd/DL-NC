@@ -2,6 +2,9 @@ import os, sys
 import numpy as np
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import *
 
+# -----save state ------
+is_save_state = False
+
 # --- tasks settings ---
 tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
          1: {'name':'KTH', 'evaluator': task_KTH_evaluator},
@@ -14,7 +17,8 @@ project_dir_sever = '/home/zy/Project/DL-NC'
 exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
 sys.path.append(project_dir)
 
-Optimal_gens = exec_dir + '/Optimal_gens.pkl'
+Optimal_gens = exec_dir + '/Optimal_gens_'
+Optimal_state = exec_dir + '/Optimal_state_'
 
 ray_cluster_address = 'auto'
 
@@ -40,3 +44,5 @@ np_state = np.random.get_state()
 
 # -----simulation overall setting-------
 core = 60
+
+# --------------------------------------

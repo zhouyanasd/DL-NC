@@ -8,6 +8,7 @@
 """
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import BaseFunctions
 
 from brian2 import *
 
@@ -15,12 +16,22 @@ import ray
 from ray.util.multiprocessing import Pool
 from ray.exceptions import RayActorError, WorkerCrashedError, RayError
 
-class task_evaluator():
+class task_evaluator(BaseFunctions):
     """
     Some basic functions for the network runner.
     The class is build for separating name space of different class.
 
     """
+
+    def __init__(self):
+        self.best_test = 1
+
+    def is_best_test(self, test):
+        if test < self.best_test:
+            self.best_test = test
+            return True
+        else:
+            return False
 
     def init_net(self, gen):
         exec(exec_env)

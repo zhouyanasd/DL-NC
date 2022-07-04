@@ -105,6 +105,10 @@ def parameters_search(**parameter):
                                       solver="lbfgs", multi_class="multinomial")
     # ------collect the memory-------
     gc.collect()
+    # ------save best state---------
+    if is_save_state and task_evaluator.is_best_test(score_test):
+        task_evaluator.dump_data(Optimal_state + tasks[task_id]['name'] + 'pkl', state_pre_run)
+        task_evaluator.dump_data(Optimal_gens + tasks[task_id]['name'] + 'pkl', gen)
     # ----------show results-----------
     print('task: %s', tasks[task_evaluator.generator.task_id]['name'])
     print('parameter %s' % parameter)
@@ -120,23 +124,24 @@ if __name__ == '__main__':
     parameters_search.total = total_eva
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
+    parameters_search.func.file_name = tasks[task_id]['name']
 
     # -------parameters search---------------
     if method == 'GA':
-        ga = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
-                decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                random_state=seed, maxormin=1)
-        ga.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
-                    selectStyle='tour', recombinStyle='reclin',
-                    distribute=False, load_continue=load_continue)
+        optimizer = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                        decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                        random_state=seed, maxormin=1)
+        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
+                           selectStyle='tour', recombinStyle='reclin',
+                           distribute=False, load_continue=load_continue)
 
     elif method == 'GA_rf':
-        ga = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
-                          decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                          random_state=seed, maxormin=1,
-                          surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
-                          acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
-        ga.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
-                    online=True, eva=2, interval=10,
-                    selectStyle='tour', recombinStyle='reclin',
-                    distribute=False, load_continue=load_continue)
+        optimizer = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                                  decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                                  random_state=seed, maxormin=1,
+                                  surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
+                                  acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
+        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
+                           online=True, eva=2, interval=10,
+                           selectStyle='tour', recombinStyle='reclin',
+                           distribute=False, load_continue=load_continue)

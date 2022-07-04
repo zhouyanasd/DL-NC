@@ -69,11 +69,12 @@ generator = Generator_Reservoir(np_state)
 generator.register_decoder(decoder, block_init=block_init, block_max=block_max)
 
 #--- initial reservoir generator and decoder ---
-optimal_block_gens = decoder.load_data(Optimal_gens)
-decoder.register_optimal_block_gens(optimal_block_gens)
-neurons_encoding = {}
-for task_id, optimal_block_gen in optimal_block_gens.items():
+optimal_block_gens, neurons_encoding = {}, {}
+for task_id in tasks.values():
+    optimal_block_gen = decoder.load_data(Optimal_gens + tasks[task_id]['name'] + 'pkl')
+    optimal_block_gens[task_id] = optimal_block_gen
     neurons_encoding[task_id] = task_evaluators[task_id].neurons_encoding
+decoder.register_optimal_block_gens(**optimal_block_gens)
 generator.register_block_generator(neurons_encoding=neurons_encoding)
 generator.initialize_task_ids()
 
@@ -90,20 +91,21 @@ accuracy_evaluator = Evaluation()
 def parameters_search_multi_task(**parameter):
     score_validation_, score_test_, score_train_ = {}, {}, {}
     for task_id, task_evaluator in task_evaluators.items():
+        parameters_search.func.file_name = tasks[task_id]['name'] # needs more tests
         score_validation_[task_id], score_test_[task_id], score_train_[task_id] = \
-            parameters_search(task_evaluator, **parameter)
+            parameters_search(task_id, task_evaluator, **parameter)
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
-        ga.ranges = decoder.get_ranges
+        optimizer.ranges = decoder.get_ranges
     return mean(score_validation_.values()), mean(score_test_.values()), mean(score_train_.values())
 
 @Timelog
-def parameters_search(task_evaluator, **parameter):
+def parameters_search(task_id, task_evaluator, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    state_pre_run = load()
+    state_pre_run = task_evaluator.load_data(Optimal_state + tasks[task_id]['name'])
     # ------parallel run for training data-------
     results_list = task_evaluator.parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,
@@ -138,26 +140,27 @@ def parameters_search(task_evaluator, **parameter):
 ##########################################
 # -------optimizer settings---------------
 if __name__ == '__main__':
-    parameters_search.total = total_eva
-    parameters_search.load_continue = load_continue
-    parameters_search.func.load_continue = load_continue
+    parameters_search_multi_task.total = total_eva
+    parameters_search_multi_task.load_continue = load_continue
+    parameters_search_multi_task.func.load_continue = load_continue
+    parameters_search_multi_task.func.file_name = 'reservoir'
 
     # -------parameters search---------------
     if method == 'GA':
-        ga = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
-                decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                random_state=seed, maxormin=1)
-        ga.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
-                    selectStyle='tour', recombinStyle='reclin',
-                    distribute=False, load_continue=load_continue)
+        optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                        decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                        random_state=seed, maxormin=1)
+        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
+                           selectStyle='tour', recombinStyle='reclin',
+                           distribute=False, load_continue=load_continue)
 
     elif method == 'GA_rf':
-        ga = CoE_surrogate(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
-                          decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                          random_state=seed, maxormin=1,
-                          surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
-                          acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
-        ga.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
-                    online=True, eva=2, interval=10,
-                    selectStyle='tour', recombinStyle='reclin',
-                    distribute=False, load_continue=load_continue)
+        optimizer = CoE_surrogate(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                                  decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                                  random_state=seed, maxormin=1,
+                                  surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
+                                  acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
+        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
+                           online=True, eva=2, interval=10,
+                           selectStyle='tour', recombinStyle='reclin',
+                           distribute=False, load_continue=load_continue)
