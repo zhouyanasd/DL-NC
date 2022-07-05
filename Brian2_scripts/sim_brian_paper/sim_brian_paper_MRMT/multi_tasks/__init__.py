@@ -11,6 +11,11 @@ from .task_KTH import *
 from .task_HAPT import *
 from .task_NMNIST import *
 
+# --- tasks settings ---
+tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
+         1: {'name':'KTH', 'evaluator': task_KTH_evaluator},
+         2: {'name':'NMNIST', 'evaluator': task_NMNIST_evaluator}}
+
 __all__ = [
     "task_KTH_evaluator",
     "task_HAPT_evaluator",

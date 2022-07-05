@@ -1,17 +1,11 @@
 import os, sys
 import numpy as np
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import *
 
 # -----save state ------
 is_save_state = False
 
-# --- tasks settings ---
-tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
-         1: {'name':'KTH', 'evaluator': task_KTH_evaluator},
-         2: {'name':'NMNIST', 'evaluator': task_NMNIST_evaluator}}
-
 # -------path settings------------
-exec_dir = os.path.split(os.path.realpath(__file__))[0]
+exec_dir = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
 project_dir_sever = '/home/zy/Project/DL-NC'
 exec_dir_sever = exec_dir.replace(project_dir, project_dir_sever)
