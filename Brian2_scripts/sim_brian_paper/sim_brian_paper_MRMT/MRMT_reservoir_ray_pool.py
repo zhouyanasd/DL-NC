@@ -94,7 +94,7 @@ def parameters_search_multi_task(**parameter):
     score_validation_, score_test_, score_train_ = {}, {}, {}
     for task_id, task_evaluator in task_evaluators.items():
         parameters_search.func.file_name = tasks[task_id]['name'] # needs more tests
-        score_validation_[task_id], score_test_[task_id], score_train_[task_id] = \
+        score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter = \
             parameters_search(task_id, task_evaluator, **parameter)
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
