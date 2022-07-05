@@ -10,6 +10,7 @@
 from .task_KTH import *
 from .task_HAPT import *
 from .task_NMNIST import *
+from .task_ray import parallel_run
 
 # --- tasks settings ---
 tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
@@ -17,6 +18,7 @@ tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
          2: {'name':'NMNIST', 'evaluator': task_NMNIST_evaluator}}
 
 __all__ = [
+    "parallel_run",
     "task_KTH_evaluator",
     "task_HAPT_evaluator",
     "task_NMNIST_evaluator",

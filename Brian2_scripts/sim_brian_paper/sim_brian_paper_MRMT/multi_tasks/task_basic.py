@@ -12,10 +12,6 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import BaseFunction
 
 from brian2 import *
 
-import ray
-from ray.util.multiprocessing import Pool
-from ray.exceptions import RayActorError, WorkerCrashedError, RayError
-
 class task_evaluator(BaseFunctions):
     """
     Some basic functions for the network runner.
@@ -67,26 +63,3 @@ class task_evaluator(BaseFunctions):
                 except:
                     continue
         return state_init
-
-    def parallel_run(self, cluster, fun, data):
-        data_list = [x for x in data]
-        while True:
-            try:
-                # ------apply the pool-------
-                pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild=None)
-                result = pool.map(fun, data_list)
-                # ------close the pool-------
-                pool.close()
-                pool.join()
-                return result
-            except (RayActorError, WorkerCrashedError) as e:
-                print('restart task: ', e)
-                cluster.reconnect(cluster.check_alive())
-            except RayError as e:
-                print('restart task: ', e)
-                ray.shutdown()
-                cluster.restart()
-            except Exception as e:
-                print('restart task: ', e)
-                ray.shutdown()
-                cluster.restart()

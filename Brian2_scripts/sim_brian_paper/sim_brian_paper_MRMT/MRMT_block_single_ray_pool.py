@@ -27,7 +27,7 @@ from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.ray_config import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks, parallel_run
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler
@@ -80,11 +80,11 @@ def parameters_search(**parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    net_state_list = task_evaluator.parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
+    net_state_list = parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
                                                  task_evaluator.data_pre_train_index_batch)
     state_pre_run = task_evaluator.sum_strength(gen, net_state_list)
     # ------parallel run for training data-------
-    results_list = task_evaluator.parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
+    results_list = parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,
                                                    task_evaluator.data_validation_index_batch,
                                                    task_evaluator.data_test_index_batch))
