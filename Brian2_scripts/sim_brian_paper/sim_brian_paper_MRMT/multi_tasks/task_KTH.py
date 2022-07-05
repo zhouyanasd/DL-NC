@@ -20,13 +20,14 @@ class task_KTH_evaluator(task_evaluator):
 
     """
 
-    def init_task(self):
-
-        ###################################
+    def __init__(self):
+        super().__init__()
         # -----data path setting-------
         self.data_path = project_dir_sever+'/Data/KTH/'
         self.DataName = 'coe_[15,5,4]'
         self.LHS_path = exec_dir +'/LHS_KTH.dat'
+
+    def init_task(self):
 
         # -----simulation parameter setting-------
         origin_size = (120, 160)

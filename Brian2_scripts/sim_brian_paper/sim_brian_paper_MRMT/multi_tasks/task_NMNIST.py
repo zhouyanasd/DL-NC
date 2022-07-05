@@ -21,13 +21,14 @@ class task_NMNIST_evaluator(task_evaluator):
 
     """
 
-    def init_task(self):
-
-        ###################################
+    def __init__(self):
+        super().__init__()
         # -----data path setting-------
         self.data_path = project_dir_sever + '/Data/N_MNIST/'
         self.DataName = 'coe_0.05'
         self.LHS_path = exec_dir + '/LHS_NMNIST.dat'
+
+    def init_task(self):
 
         # -----simulation parameter setting-------
         self.coding_duration = 10
