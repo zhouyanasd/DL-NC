@@ -69,10 +69,10 @@ class task_HAPT_evaluator(task_evaluator):
             HAPT.dump_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName + '.p', df_en_validation)
             HAPT.dump_data(self.data_path + 'Spike_train_Data/test_' + self.DataName + '.p', df_en_test)
 
-        self.data_train_index_batch = HAPT.data_batch(df_en_train.index.values, core)
-        self.data_pre_train_index_batch = HAPT.data_batch(df_en_pre_train.index.values, core)
-        self.data_validation_index_batch = HAPT.data_batch(df_en_validation.index.values, core)
-        self.data_test_index_batch = HAPT.data_batch(df_en_test.index.values, core)
+        self.data_train_index_batch = HAPT.data_batch(df_en_train.index.values, cores)
+        self.data_pre_train_index_batch = HAPT.data_batch(df_en_pre_train.index.values, cores)
+        self.data_validation_index_batch = HAPT.data_batch(df_en_validation.index.values, cores)
+        self.data_test_index_batch = HAPT.data_batch(df_en_test.index.values, cores)
 
     def register_decoder_generator(self, decoder, generator):
         self.decoder = decoder

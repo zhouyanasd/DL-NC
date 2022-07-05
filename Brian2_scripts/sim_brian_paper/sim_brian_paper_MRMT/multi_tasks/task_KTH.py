@@ -70,10 +70,10 @@ class task_KTH_evaluator(task_evaluator):
             KTH.dump_data(self.data_path + 'validation_' + self.DataName + '.p', df_en_validation)
             KTH.dump_data(self.data_path + 'test_' + self.DataName + '.p', df_en_test)
 
-        self.data_train_index_batch = KTH.data_batch(df_en_train.index.values, core)
-        self.data_pre_train_index_batch = KTH.data_batch(df_en_pre_train.index.values, core)
-        self.data_validation_index_batch = KTH.data_batch(df_en_validation.index.values, core)
-        self.data_test_index_batch = KTH.data_batch(df_en_test.index.values, core)
+        self.data_train_index_batch = KTH.data_batch(df_en_train.index.values, cores)
+        self.data_pre_train_index_batch = KTH.data_batch(df_en_pre_train.index.values, cores)
+        self.data_validation_index_batch = KTH.data_batch(df_en_validation.index.values, cores)
+        self.data_test_index_batch = KTH.data_batch(df_en_test.index.values, cores)
 
     def register_decoder_generator(self, decoder, generator):
         self.decoder = decoder
