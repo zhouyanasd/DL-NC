@@ -69,15 +69,39 @@ class Linux(object):
     @:param upload_path 上传到目标路径 例如：/tmp/test_new.py
     '''
 
+    def mkdir_p(self, sftp, remote_directory):
+        """
+        Change to this directory, recursively making new folders if needed.
+        Returns True if any folders were created.
+        """
+
+        if remote_directory == '/':
+            # absolute path so change directory to root
+            sftp.chdir('/')
+            return
+        if remote_directory == '':
+            # top-level relative directory must exist
+            return
+        try:
+            sftp.chdir(remote_directory) # sub-directory exists
+        except IOError:
+            dirname, basename = os.path.split(remote_directory.rstrip('/'))
+            self.mkdir_p(sftp, dirname) # make parent directories
+            sftp.mkdir(basename) # sub-directory missing, so created it
+            sftp.chdir(basename)
+            return True
+
     def upload_file(self, upload_files, upload_path):
         try:
             tran = paramiko.Transport(sock=(self.ip, self.port))
             tran.connect(username=self.username, password=self.password)
             sftp = paramiko.SFTPClient.from_transport(tran)
+            # 判断当前文件夹是否存在, 不存在则逐级创建
+            self.mkdir_p(sftp, os.path.split(upload_path)[0])
             result = sftp.put(upload_files, upload_path)
             return True if result else False
         except Exception as ex:
-            print(ex)
+            print(ex.__class__.__name__,ex)
             tran.close()
         finally:
             tran.close()
