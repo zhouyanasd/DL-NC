@@ -32,8 +32,8 @@ start_scope()
 exec_var = open(os.path.join(exec_dir, "src/config.py")).read()
 
 # -------get numpy random state------------
-seed = 100
-np.random.seed(seed)
+seeds = 100
+np.random.seed(seeds)
 np_state = np.random.get_state()
 
 # -----simulation overall setting-------

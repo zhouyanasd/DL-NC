@@ -67,8 +67,8 @@ for task_id, task in tasks.items():
 decoder = Decoder_Reservoir(config_group_reservoir, config_keys_reservoir, config_SubCom_reservoir,
                             config_codes_reservoir, config_ranges_reservoir, config_borders_reservoir,
                             config_precisions_reservoir, config_scales_reservoir, gen_group_reservoir)
-generator = Generator_Reservoir(np_state)
-generator.register_decoder(decoder, block_init=block_init, block_max=block_max)
+generator = Generator_Reservoir(np_state, block_init=block_init, block_max=block_max)
+generator.register_decoder(decoder)
 
 #--- initial reservoir generator and decoder ---
 optimal_block_gens, neurons_encoding = {}, {}
@@ -93,8 +93,8 @@ accuracy_evaluator = Evaluation()
 def parameters_search_multi_task(**parameter):
     score_validation_, score_test_, score_train_ = {}, {}, {}
     for task_id, task_evaluator in task_evaluators.items():
-        parameters_search.func.file_name = tasks[task_id]['name'] # needs more tests
-        score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter = \
+        parameters_search.file_name = tasks[task_id]['name']
+        score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_id, task_evaluator, **parameter)
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     if method == 'GA':
         optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                         decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                        random_state=seed, maxormin=1)
+                        random_state=seeds, maxormin=1)
         optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=9 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
                            selectStyle='tour', recombinStyle='reclin',
                            distribute=False, load_continue=load_continue)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     elif method == 'GA_rf':
         optimizer = CoE_surrogate(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
-                                  random_state=seed, maxormin=1,
+                                  random_state=seeds, maxormin=1,
                                   surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
                                   acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
         optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
