@@ -35,6 +35,6 @@ def parallel_run(cluster, fun, data):
             ray.shutdown()
             cluster.restart()
         except Exception as e:
-            print('restart task: ', e)
+            print('restart task: ', e.__class__.__name__, e)
             ray.shutdown()
             cluster.restart()
