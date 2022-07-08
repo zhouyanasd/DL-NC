@@ -21,7 +21,7 @@ def parallel_run(cluster, fun, data):
     while True:
         try:
             # ------apply the pool-------
-            pool = Pool(processes=core, ray_address=ray_cluster_address, maxtasksperchild=None)
+            pool = Pool(processes=cores, ray_address=ray_cluster_address, maxtasksperchild=None)
             result = pool.map(fun, data_list)
             # ------close the pool-------
             pool.close()
