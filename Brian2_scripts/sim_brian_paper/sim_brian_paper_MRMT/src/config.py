@@ -130,14 +130,14 @@ block_max = 20
 # --- parameter settings ---
 Reservoir_config = ['type', 'strength', 'tau_plasticity', 'p_connection']
 Reservoir_arc = ['connections_' + str(x) for x in range(block_max)]
-Block = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
+Block_config = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 Encoding_Readout = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
 
 config_group_reservoir = ['Reservoir_config', 'Reservoir_arc']
 config_group_block = ['Block', 'Encoding_Readout']
 
 config_keys_reservoir = [Reservoir_config, Reservoir_arc]
-config_keys_block = [Block, Encoding_Readout]
+config_keys_block = [Block_config, Encoding_Readout]
 
 config_SubCom_reservoir = [[0, 1, 2, 3], [x + 3 for x in range(block_max)]]
 config_SubCom_block = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
