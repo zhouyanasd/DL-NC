@@ -47,10 +47,10 @@ class task_NMNIST_evaluator(task_evaluator):
 
         # -------data initialization----------------------
         try:
-            self.df_en_train = NMNIST.load_data(self.data_path + 'train_' + self.DataName+'.p')
-            self.df_en_pre_train = NMNIST.load_data(self.data_path + 'pre_train_' + self.DataName + '.p')
-            self.df_en_validation = NMNIST.load_data(self.data_path + 'validation_' + self.DataName+'.p')
-            self.df_en_test = NMNIST.load_data(self.data_path + 'test_' + self.DataName+'.p')
+            df_en_train = NMNIST.load_data(self.data_path + 'train_' + self.DataName+'.p')
+            df_en_pre_train = NMNIST.load_data(self.data_path + 'pre_train_' + self.DataName + '.p')
+            df_en_validation = NMNIST.load_data(self.data_path + 'validation_' + self.DataName+'.p')
+            df_en_test = NMNIST.load_data(self.data_path + 'test_' + self.DataName+'.p')
         except FileNotFoundError:
             NMNIST.load_data_NMNIST_all(self.data_path)
 
@@ -59,20 +59,22 @@ class task_NMNIST_evaluator(task_evaluator):
             df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation, random_state=42)
             df_test = NMNIST.select_data_NMNIST(F_test, NMNIST.test, False)
 
-            self.df_en_train = NMNIST.encoding_latency_NMNIST(df_train)
-            self.df_en_pre_train = NMNIST.encoding_latency_NMNIST(df_pre_train)
-            self.df_en_validation = NMNIST.encoding_latency_NMNIST(df_validation)
-            self.df_en_test = NMNIST.encoding_latency_NMNIST(df_test)
+            df_en_train = NMNIST.encoding_latency_NMNIST(df_train)
+            df_en_pre_train = NMNIST.encoding_latency_NMNIST(df_pre_train)
+            df_en_validation = NMNIST.encoding_latency_NMNIST(df_validation)
+            df_en_test = NMNIST.encoding_latency_NMNIST(df_test)
 
-            NMNIST.dump_data(self.data_path + 'train_' + self.DataName + '.p', self.self.df_en_train)
-            NMNIST.dump_data(self.data_path + 'pre_train_' + self.DataName + '.p', self.df_en_pre_train)
-            NMNIST.dump_data(self.data_path + 'validation_' + self.DataName + '.p', self.df_en_validation)
-            NMNIST.dump_data(self.data_path + 'test_' + self.DataName + '.p', self.df_en_test)
+            NMNIST.dump_data(self.data_path + 'train_' + self.DataName + '.p', df_en_train)
+            NMNIST.dump_data(self.data_path + 'pre_train_' + self.DataName + '.p', df_en_pre_train)
+            NMNIST.dump_data(self.data_path + 'validation_' + self.DataName + '.p', df_en_validation)
+            NMNIST.dump_data(self.data_path + 'test_' + self.DataName + '.p', df_en_test)
 
-        self.data_train_index_batch = NMNIST.data_batch(self.df_en_train.index.values, cores)
-        self.data_pre_train_index_batch = NMNIST.data_batch(self.df_en_pre_train.index.values, cores)
-        self.data_validation_index_batch = NMNIST.data_batch(self.df_en_validation.index.values, cores)
-        self.data_test_index_batch = NMNIST.data_batch(self.df_en_test.index.values, cores)
+        self.data_train_index_batch = NMNIST.data_batch(df_en_train.index.values, cores)
+        self.data_pre_train_index_batch = NMNIST.data_batch(df_en_pre_train.index.values, cores)
+        self.data_validation_index_batch = NMNIST.data_batch(df_en_validation.index.values, cores)
+        self.data_test_index_batch = NMNIST.data_batch(df_en_test.index.values, cores)
+
+        return df_en_train, df_en_pre_train, df_en_validation, df_en_test
 
     def register_decoder_generator(self, decoder, generator):
         self.decoder = decoder

@@ -9,8 +9,6 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
 
-from brian2 import *
-
 import ray
 from ray.util.multiprocessing import Pool
 from ray.exceptions import RayActorError, WorkerCrashedError, RayError

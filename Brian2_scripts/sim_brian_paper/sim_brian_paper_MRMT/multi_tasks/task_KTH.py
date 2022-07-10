@@ -48,10 +48,10 @@ class task_KTH_evaluator(task_evaluator):
 
         # -------data initialization----------------------
         try:
-            self.df_en_train = KTH.load_data(self.data_path + 'train_' + self.DataName+'.p')
-            self.df_en_pre_train = KTH.load_data(self.data_path + 'pre_train_' + self.DataName + '.p')
-            self.df_en_validation = KTH.load_data(self.data_path + 'validation_' + self.DataName+'.p')
-            self.df_en_test = KTH.load_data(self.data_path + 'test_' + self.DataName+'.p')
+            df_en_train = KTH.load_data(self.data_path + 'train_' + self.DataName+'.p')
+            df_en_pre_train = KTH.load_data(self.data_path + 'pre_train_' + self.DataName + '.p')
+            df_en_validation = KTH.load_data(self.data_path + 'validation_' + self.DataName+'.p')
+            df_en_test = KTH.load_data(self.data_path + 'test_' + self.DataName+'.p')
         except FileNotFoundError:
             KTH.load_data_KTH_all(self.data_path, split_type='mixed', split=[15, 5, 4])
 
@@ -60,20 +60,22 @@ class task_KTH_evaluator(task_evaluator):
             df_validation = KTH.select_data_KTH(F_validation, KTH.validation, False)
             df_test = KTH.select_data_KTH(F_test, KTH.test, False)
 
-            self.df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, pool_threshold)
-            self.df_en_pre_train = KTH.encoding_latency_KTH(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
-            self.df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, pool_threshold)
-            self.df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, pool_threshold)
+            df_en_train = KTH.encoding_latency_KTH(df_train, origin_size, pool_size, pool_types, pool_threshold)
+            df_en_pre_train = KTH.encoding_latency_KTH(df_pre_train, origin_size, pool_size, pool_types, pool_threshold)
+            df_en_validation = KTH.encoding_latency_KTH(df_validation, origin_size, pool_size, pool_types, pool_threshold)
+            df_en_test = KTH.encoding_latency_KTH(df_test, origin_size, pool_size, pool_types, pool_threshold)
 
-            KTH.dump_data(self.data_path + 'train_' + self.DataName + '.p', self.df_en_train)
-            KTH.dump_data(self.data_path + 'pre_train_' + self.DataName + '.p', self.df_en_pre_train)
-            KTH.dump_data(self.data_path + 'validation_' + self.DataName + '.p', self.df_en_validation)
-            KTH.dump_data(self.data_path + 'test_' + self.DataName + '.p', self.df_en_test)
+            KTH.dump_data(self.data_path + 'train_' + self.DataName + '.p', df_en_train)
+            KTH.dump_data(self.data_path + 'pre_train_' + self.DataName + '.p', df_en_pre_train)
+            KTH.dump_data(self.data_path + 'validation_' + self.DataName + '.p', df_en_validation)
+            KTH.dump_data(self.data_path + 'test_' + self.DataName + '.p', df_en_test)
 
-        self.data_train_index_batch = KTH.data_batch(self.df_en_train.index.values, cores)
-        self.data_pre_train_index_batch = KTH.data_batch(self.df_en_pre_train.index.values, cores)
-        self.data_validation_index_batch = KTH.data_batch(self.df_en_validation.index.values, cores)
-        self.data_test_index_batch = KTH.data_batch(self.df_en_test.index.values, cores)
+        self.data_train_index_batch = KTH.data_batch(df_en_train.index.values, cores)
+        self.data_pre_train_index_batch = KTH.data_batch(df_en_pre_train.index.values, cores)
+        self.data_validation_index_batch = KTH.data_batch(df_en_validation.index.values, cores)
+        self.data_test_index_batch = KTH.data_batch(df_en_test.index.values, cores)
+
+        return df_en_train, df_en_pre_train, df_en_validation, df_en_test
 
     def register_decoder_generator(self, decoder, generator):
         self.decoder = decoder

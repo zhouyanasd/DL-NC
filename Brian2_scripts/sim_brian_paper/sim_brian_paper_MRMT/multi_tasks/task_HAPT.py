@@ -47,10 +47,10 @@ class task_HAPT_evaluator(task_evaluator):
 
         # -------data initialization----------------------
         try:
-            self.df_en_train = HAPT.load_data(self.data_path + 'Spike_train_Data/train_' + self.DataName+'.p')
-            self.df_en_pre_train = HAPT.load_data(self.data_path + 'Spike_train_Data/pre_train_' + self.DataName + '.p')
-            self.df_en_validation = HAPT.load_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName+'.p')
-            self.df_en_test = HAPT.load_data(self.data_path + 'Spike_train_Data/test_' + self.DataName+'.p')
+            df_en_train = HAPT.load_data(self.data_path + 'Spike_train_Data/train_' + self.DataName+'.p')
+            df_en_pre_train = HAPT.load_data(self.data_path + 'Spike_train_Data/pre_train_' + self.DataName + '.p')
+            df_en_validation = HAPT.load_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName+'.p')
+            df_en_test = HAPT.load_data(self.data_path + 'Spike_train_Data/test_' + self.DataName+'.p')
         except FileNotFoundError:
             HAPT.load_data_HAPT_all(self.data_path)
 
@@ -59,20 +59,22 @@ class task_HAPT_evaluator(task_evaluator):
             df_train, df_validation = train_test_split(df_train_validation, test_size=F_validation, random_state=42)
             df_test = HAPT.select_data(F_test, HAPT.test, False, selected=[1, 2, 3, 4, 5, 6])
 
-            self.df_en_train = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_train, self.coding_n)
-            self.df_en_pre_train = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_pre_train, self.coding_n)
-            self.df_en_validation =HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_validation, self.coding_n)
-            self.df_en_test = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_test, self.coding_n)
+            df_en_train = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_train, self.coding_n)
+            df_en_pre_train = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_pre_train, self.coding_n)
+            df_en_validation =HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_validation, self.coding_n)
+            df_en_test = HAPT.encoding_latency_HAPT(HAPT._encoding_cos_rank_ignore_0, df_test, self.coding_n)
 
-            HAPT.dump_data(self.data_path + 'Spike_train_Data/train_' + self.DataName + '.p', self.df_en_train)
-            HAPT.dump_data(self.data_path + 'Spike_train_Data/pre_train_' + self.DataName + '.p', self.df_en_pre_train)
-            HAPT.dump_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName + '.p', self.df_en_validation)
-            HAPT.dump_data(self.data_path + 'Spike_train_Data/test_' + self.DataName + '.p', self.df_en_test)
+            HAPT.dump_data(self.data_path + 'Spike_train_Data/train_' + self.DataName + '.p', df_en_train)
+            HAPT.dump_data(self.data_path + 'Spike_train_Data/pre_train_' + self.DataName + '.p', df_en_pre_train)
+            HAPT.dump_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName + '.p', df_en_validation)
+            HAPT.dump_data(self.data_path + 'Spike_train_Data/test_' + self.DataName + '.p', df_en_test)
 
-        self.data_train_index_batch = HAPT.data_batch(self.df_en_train.index.values, cores)
-        self.data_pre_train_index_batch = HAPT.data_batch(self.df_en_pre_train.index.values, cores)
-        self.data_validation_index_batch = HAPT.data_batch(self.df_en_validation.index.values, cores)
-        self.data_test_index_batch = HAPT.data_batch(self.df_en_test.index.values, cores)
+        self.data_train_index_batch = HAPT.data_batch(df_en_train.index.values, cores)
+        self.data_pre_train_index_batch = HAPT.data_batch(df_en_pre_train.index.values, cores)
+        self.data_validation_index_batch = HAPT.data_batch(df_en_validation.index.values, cores)
+        self.data_test_index_batch = HAPT.data_batch(df_en_test.index.values, cores)
+
+        return df_en_train, df_en_pre_train, df_en_validation, df_en_test
 
     def register_decoder_generator(self, decoder, generator):
         self.decoder = decoder
