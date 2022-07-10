@@ -66,8 +66,8 @@ class Generator_connection_matrix(NetworkBase):
 
         block_generator_type = {'random': self.generate_connection_matrix_blocks_random,
                                 'scale_free': self.generate_connection_matrix_blocks_scale_free,
-                                'small_world_2': self.generate_connection_matrix_blocks_small_world_2,
-                                'three_layer': self.generate_connection_matrix_blocks_three_layer}
+                                'small_world_2': self.generate_connection_matrix_blocks_small_world_2
+                                }
         return block_generator_type[ component['name']](**parameters_)
 
     def generate_connection_matrix_blocks_random(self, N, p):
