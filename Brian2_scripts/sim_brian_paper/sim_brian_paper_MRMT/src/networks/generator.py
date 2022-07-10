@@ -315,7 +315,7 @@ class Generator_Block(Generator, Generator_connection_matrix):
         reservoir = Reservoir()
         block_group = BlockGroup()
         block = self.generate_block(index=0)
-        block_group.add_block(block)
+        block_group.add_block(block, self.task_id)
         pathway = Pathway(block_group.blocks, block_group.blocks, [[],[]])
         pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
                                dynamics_reservoir_synapse_post_STDP,
