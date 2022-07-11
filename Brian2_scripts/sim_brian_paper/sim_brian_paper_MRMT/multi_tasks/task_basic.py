@@ -9,7 +9,6 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
 
 from brian2 import *
 
@@ -24,8 +23,9 @@ class task_evaluator(BaseFunctions):
         self.best_test = 1
 
     def get_task_id(self):
+        from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
         for task_id, task in tasks.items():
-            if self.__name__ == task['evaluator'].__name__:
+            if isinstance(self, task['evaluator']):
                 return task_id
 
     def is_best_test(self, test):
