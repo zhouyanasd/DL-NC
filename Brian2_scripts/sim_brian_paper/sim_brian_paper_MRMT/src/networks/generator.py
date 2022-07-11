@@ -449,7 +449,7 @@ class Generator_Block(Generator, Generator_connection_matrix):
          ----------
          '''
 
-        return  {'parameter_block_neurons': {-1: self.decoder.get_readout_parameter()}}
+        return  {'parameter_block_neurons': {self.task_id : self.decoder.get_readout_parameter()}}
 
     def pre_initialize_encoding_reservoir(self):
         '''
