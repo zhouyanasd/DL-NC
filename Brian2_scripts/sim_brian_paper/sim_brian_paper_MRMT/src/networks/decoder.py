@@ -255,16 +255,15 @@ class Decoder_Block(Decoder):
 
         return self.neurons_encoding
 
-    def get_readout_parameter(self, component):
+    def get_readout_parameter(self):
         '''
          Decode the readout parameters.
 
          Parameters
          ----------
-         component: str, 'Reservoir_config' or based on config
          '''
 
-        parameters = self.decode(component)
+        parameters = self.decode('Encoding_Readout')
         return self.get_sub_dict(parameters, 'tau_I')
 
     def get_pathway_structure(self, component):

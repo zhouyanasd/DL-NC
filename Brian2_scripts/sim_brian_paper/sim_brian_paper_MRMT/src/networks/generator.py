@@ -415,9 +415,9 @@ class Generator_Block(Generator, Generator_connection_matrix):
         pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
         pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
 
-        network.register_layer(encoding, 'encoding')
-        network.register_layer(reservoir, 'reservoir')
-        network.register_layer(readout, 'readout')
+        network.register_layer(encoding, 'encoding_task'+str(self.task_id))
+        network.register_layer(reservoir, 'reservoir_task'+str(self.task_id))
+        network.register_layer(readout, 'readout_task'+str(self.task_id))
 
         network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir_task'+str(self.task_id))
         network.register_pathway(pathway_reservoir_readout, 'reservoir_readout_task'+str(self.task_id))
@@ -488,11 +488,11 @@ class Generator_Block(Generator, Generator_connection_matrix):
          '''
 
         parameters = {}
-        parameters['encoding'] = None
-        parameters['reservoir'] = self.pre_initialize_reservoir_single_block()
-        parameters['readout'] = self.pre_initialize_readout()
-        parameters['encoding_reservoir'] = self.pre_initialize_encoding_reservoir()
-        parameters['reservoir_readout'] = None
+        parameters['encoding_task'+str(self.task_id)] = None
+        parameters['reservoir_task'+str(self.task_id)] = self.pre_initialize_reservoir_single_block()
+        parameters['readout_task'+str(self.task_id)] = self.pre_initialize_readout()
+        parameters['encoding_reservoir_task'+str(self.task_id)] = self.pre_initialize_encoding_reservoir()
+        parameters['reservoir_readout_task'+str(self.task_id)] = None
 
         return parameters
 

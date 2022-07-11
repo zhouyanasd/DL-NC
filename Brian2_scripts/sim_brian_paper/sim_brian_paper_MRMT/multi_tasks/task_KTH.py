@@ -22,6 +22,7 @@ class task_KTH_evaluator(task_evaluator):
 
     def __init__(self):
         super().__init__()
+        self.task_id = self.get_task_id()
         # -----data path setting-------
         self.data_path = project_dir_sever+'/Data/KTH/'
         self.DataName = 'coe_[15,5,4]'
@@ -127,7 +128,7 @@ class task_KTH_evaluator(task_evaluator):
             stimulus = TimedArray(data, dt=Dt)
             duration = data.shape[0]
             net.run(duration * Dt)
-            state = net.get_states()['block_readout']['v']
+            state = net.get_states()['block_readout_task'+str(self.task_id)]['v']
             states_train.append(state)
             labels_train.append(df_en_train.label[ind])
             net.restore('pre_run')
@@ -137,7 +138,7 @@ class task_KTH_evaluator(task_evaluator):
             stimulus = TimedArray(data, dt=Dt)
             duration = data.shape[0]
             net.run(duration * Dt)
-            state = net.get_states()['block_readout']['v']
+            state = net.get_states()['block_readout_task'+str(self.task_id)]['v']
             states_val.append(state)
             labels_val.append(df_en_validation.label[ind])
             net.restore('pre_run')
@@ -147,7 +148,7 @@ class task_KTH_evaluator(task_evaluator):
             stimulus = TimedArray(data, dt=Dt)
             duration = data.shape[0]
             net.run(duration * Dt)
-            state = net.get_states()['block_readout']['v']
+            state = net.get_states()['block_readout_task'+str(self.task_id)]['v']
             states_test.append(state)
             labels_test.append(df_en_test.label[ind])
             net.restore('pre_run')

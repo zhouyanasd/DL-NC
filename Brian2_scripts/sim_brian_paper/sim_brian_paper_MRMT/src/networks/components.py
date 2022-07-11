@@ -259,15 +259,15 @@ class BlockGroup(BaseFunctions):
          parameter_block_group: dict{dict{dict}}, the parameter of neuron and synapse.
          '''
 
-        for block, blocks_position in zip(self.blocks, self.blocks_position):
+        for block, task_ids in zip(self.blocks, self.task_ids):
             try:
                 parameter_neuron = parameter_block_group['parameter_block_neurons']
-                block.initialize(block.neurons, **parameter_neuron[blocks_position])
+                block.initialize(block.neurons, **parameter_neuron[task_ids])
             except:
                 pass
             try:
                 parameter_synapse = parameter_block_group['parameter_block_synapses']
-                block.initialize(block.synapses, **parameter_synapse[blocks_position])
+                block.initialize(block.synapses, **parameter_synapse[task_ids])
             except:
                 pass
 

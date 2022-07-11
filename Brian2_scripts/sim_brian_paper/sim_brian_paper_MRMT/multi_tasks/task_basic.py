@@ -9,6 +9,7 @@
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
 
 from brian2 import *
 
@@ -21,6 +22,11 @@ class task_evaluator(BaseFunctions):
 
     def __init__(self):
         self.best_test = 1
+
+    def get_task_id(self):
+        for task_id, task in tasks.items():
+            if self.__name__ == task['evaluator'].__name__:
+                return task_id
 
     def is_best_test(self, test):
         if test < self.best_test:
