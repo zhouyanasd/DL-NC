@@ -239,7 +239,6 @@ class Decoder_Block(Decoder):
 
          Parameters
          ----------
-         task_id: int, the id of the task.
         '''
 
         parameters = self.decode('Block')

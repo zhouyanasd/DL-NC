@@ -431,7 +431,7 @@ class Generator_Block(Generator, Generator_connection_matrix):
          ----------
          '''
 
-        parameters = self.decoder.get_block_parameter(self.task_id)
+        parameters = self.decoder.get_block_parameter()
         parameters_neurons = self.get_sub_dict(parameters, 'tau', 'tau_I')
         parameters_neurons['v'] = voltage_reset
         parameters_neurons['threshold'] = threshold_solid
