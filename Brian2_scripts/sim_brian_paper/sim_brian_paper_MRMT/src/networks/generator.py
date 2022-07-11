@@ -66,8 +66,8 @@ class Generator_connection_matrix(NetworkBase):
 
         block_generator_type = {'random': self.generate_connection_matrix_blocks_random,
                                 'scale_free': self.generate_connection_matrix_blocks_scale_free,
-                                'small_world_2': self.generate_connection_matrix_blocks_small_world_2
-                                }
+                                'small_world_2': self.generate_connection_matrix_blocks_small_world_2,
+                                'three_layer': self.generate_connection_matrix_blocks_three_layer}
         return block_generator_type[ component['name']](**parameters_)
 
     def generate_connection_matrix_blocks_random(self, N, p):
@@ -214,6 +214,49 @@ class Generator_connection_matrix(NetworkBase):
                 if np.random.rand() <= p_backward * decay:
                     connection_matrix_out.append(node_post)
                     connection_matrix_in.append(node_pre)
+        return N, np.array([connection_matrix_out, connection_matrix_in])
+
+    def generate_connection_matrix_blocks_three_layer(self, N, p_out, p_in, decay):
+        '''
+         Generate connection matrix of three_layer block.
+         The three_layer structure separate the neurons as three layer.
+
+         Parameters
+         ----------
+         N_i, N_h, N_o: int, number of neurons of the block for different layer.
+         p_out, p_in: double, the connection probability between two neurons.
+         decay: double, the decay of connection probability.
+         '''
+
+        N_i, N_o = int(np.floor(N/3)), int(np.floor(N/3))
+        N_h = N - N_i - N_o
+
+        connection_matrix_out, connection_matrix_in = [], []
+        nodes = np.arange(N_i + N_h + N_o)
+        nodes_ = [nodes[:N_i], nodes[N_i:N_h + N_i], nodes[N_h + N_i:N_i + N_h + N_o]]
+        p_out_ = [np.array([p_out] * N_i), np.array([p_out] * N_h), np.array([p_out] * N_o)]
+        p_in_ = [np.array([p_in] * N_i), np.array([p_in] * N_h), np.array([p_in] * N_o)]
+        circle = [0, 1, 2] + [0, 1, 2]
+        for i in circle[:3]:
+            nodes_mid, p_out_mid, p_in_mid = nodes_[circle[i]], p_out_[circle[i]], p_in_[circle[i]]
+            nodes_pre, p_out_pre, p_in_pre = nodes_[circle[i - 1]], p_out_[circle[i - 1]], p_in_[circle[i - 1]]
+            nodes_post, p_out_post, p_in_post = nodes_[circle[i + 1]], p_out_[circle[i + 1]], p_in_[circle[i + 1]]
+            for out_mid_index, node in enumerate(nodes_mid):
+                in_post, in_pre = p_in_post.argsort()[::-1], p_in_pre.argsort()[::-1]
+                for in_post_index in in_post:
+                    if np.random.rand() <= p_out_mid[out_mid_index] \
+                            and np.random.rand() <= p_in_post[in_post_index]:
+                        connection_matrix_out.append(node)
+                        connection_matrix_in.append(nodes_post[in_post_index])
+                        p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
+                        p_in_post[in_post_index] = p_in_post[in_post_index] * decay
+                for in_pre_index in in_pre:
+                    if np.random.rand() <= p_out_mid[out_mid_index] \
+                            and np.random.rand() <= p_in_pre[in_pre_index]:
+                        connection_matrix_out.append(node)
+                        connection_matrix_in.append(nodes_pre[in_pre_index])
+                        p_out_mid[out_mid_index] = p_out_mid[out_mid_index] * decay
+                        p_in_pre[in_pre_index] = p_in_pre[in_pre_index] * decay
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
 
