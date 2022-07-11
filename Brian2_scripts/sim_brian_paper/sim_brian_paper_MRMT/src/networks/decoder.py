@@ -268,6 +268,30 @@ class Decoder_Block(Decoder):
         parameters = self.decode(component)
         return self.get_sub_dict(parameters, 'tau_I')
 
+    def get_pathway_structure(self, component):
+        '''
+         Decode structure information of the reservoir and encoding_readout.
+
+         Parameters
+         ----------
+         component: str, 'Reservoir_config' based on config
+         '''
+        parameters = self.decode(component)
+        sub_parameters = self.get_sub_dict(parameters, 'p_connection')
+        return sub_parameters
+
+    def get_pathway_parameter(self, component):
+        '''
+         Decode parameters of the reservoir and encoding_readout.
+
+         Parameters
+         ----------
+         component: str, 'Reservoir_config' based on config
+         '''
+        parameters = self.decode(component)
+        sub_parameters = self.get_sub_dict(parameters, 'tau_plasticity', 'strength', 'type')
+        return sub_parameters
+
 
 class Decoder_Reservoir(Decoder):
     def __init__(self, config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
