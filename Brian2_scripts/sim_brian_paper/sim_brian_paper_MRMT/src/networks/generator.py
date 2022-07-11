@@ -292,13 +292,15 @@ class Generator_Block(Generator, Generator_connection_matrix):
 
         block_type =  self.decoder.get_block_type()
         parameter_structure = self.decoder.get_block_structure()
-        component_name = structure_blocks['components_' + str(block_type)]['name'] + '_' + str(index)
+        component_name = structure_blocks['components_' + str(block_type)]['name']
         N, connect_matrix = self.generate_connection_matrix_blocks(block_type, **parameter_structure)
         block = Block(N, connect_matrix)
         block.create_neurons(dynamics_reservoir, threshold = threshold_reservoir, reset = reset_reservoir,
-                             refractory = refractory_reservoir, name='block_' + component_name+'_task'+str(self.task_id))
+                             refractory = refractory_reservoir,
+                             name='block_' + component_name +'_task'+str(self.task_id) + '_' + str(index))
         block.create_synapse(dynamics_block_synapse_STDP, dynamics_block_synapse_pre_STDP,
-                             dynamics_block_synapse_post_STDP, name='block_block_' + component_name+'_task'+str(self.task_id))
+                             dynamics_block_synapse_post_STDP,
+                             name='block_block_' + component_name +'_task'+str(self.task_id) + '_' + str(index))
         block.separate_ex_inh()
         block.connect()
         block.determine_input_output()
