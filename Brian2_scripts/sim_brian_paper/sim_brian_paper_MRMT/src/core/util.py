@@ -37,7 +37,7 @@ class Timelog():
         return time.time() - self.itime
 
     def load(self):
-        with open('Results_Record' + '.dat', 'r') as f:
+        with open('Results_Record_' + str(self.file_name) + '.dat', 'r') as f:
             l = f.readlines()
         l.pop(0)
         return  int(l[-1].split(' ')[0]), float(l[-1].split(' ')[1])
