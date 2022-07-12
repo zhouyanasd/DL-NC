@@ -107,9 +107,9 @@ class task_KTH_evaluator(task_evaluator):
 
         # ---- choose generator based on training purpose ----
         KTH_ = KTH_classification()
-        df_en_train = KTH_.load_data(self.data_path + 'Spike_train_Data/train_' + self.DataName + '.p')
-        df_en_validation = KTH_.load_data(self.data_path + 'Spike_train_Data/validation_' + self.DataName + '.p')
-        df_en_test = KTH_.load_data(self.data_path + 'Spike_train_Data/test_' + self.DataName + '.p')
+        df_en_train = KTH_.load_data(self.data_path + 'train_' + self.DataName + '.p')
+        df_en_validation = KTH_.load_data(self.data_path + 'validation_' + self.DataName + '.p')
+        df_en_test = KTH_.load_data(self.data_path + 'test_' + self.DataName + '.p')
 
         # --- run network ---
         net = self.init_net(gen)
