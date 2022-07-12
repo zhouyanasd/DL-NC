@@ -73,7 +73,7 @@ generator.register_decoder(decoder)
 #--- initial reservoir generator and decoder ---
 optimal_block_gens, neurons_encoding = {}, {}
 for task_id in tasks.values():
-    optimal_block_gen = decoder.load_data(Optimal_gens + tasks[task_id]['name'] + 'pkl')
+    optimal_block_gen = decoder.load_data(Optimal_gens + tasks[task_id]['name'] + '.pkl')
     optimal_block_gens[task_id] = optimal_block_gen
     neurons_encoding[task_id] = task_evaluators[task_id].neurons_encoding
 decoder.register_optimal_block_gens(**optimal_block_gens)
@@ -107,7 +107,7 @@ def parameters_search(task_id, task_evaluator, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    state_pre_run = task_evaluator.load_data(Optimal_state + tasks[task_id]['name'])
+    state_pre_run = task_evaluator.load_data(Optimal_state + tasks[task_id]['name'] + '.pkl')
     # ------parallel run for training data-------
     results_list = parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,

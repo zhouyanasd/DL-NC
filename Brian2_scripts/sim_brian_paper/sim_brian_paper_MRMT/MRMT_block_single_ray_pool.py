@@ -109,8 +109,8 @@ def parameters_search(**parameter):
     gc.collect()
     # ------save best state---------
     if is_save_state and task_evaluator.is_best_test(score_test):
-        task_evaluator.dump_data(Optimal_state + tasks[task_id]['name'] + 'pkl', state_pre_run)
-        task_evaluator.dump_data(Optimal_gens + tasks[task_id]['name'] + 'pkl', gen)
+        task_evaluator.dump_data(Optimal_state + tasks[task_id]['name'] + '.pkl', state_pre_run)
+        task_evaluator.dump_data(Optimal_gens + tasks[task_id]['name'] + '.pkl', gen)
     # ----------show results-----------
     print('task: ', tasks[task_evaluator.generator.task_id]['name'])
     print('parameter %s' % parameter)
