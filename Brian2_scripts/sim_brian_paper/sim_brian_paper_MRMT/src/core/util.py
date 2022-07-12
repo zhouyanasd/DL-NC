@@ -77,6 +77,7 @@ class ProgressBar():
         self.total = 0
         self.now = 0
         self.load_continue = False
+        self.file_name = 'undefined'
 
     def __call__(self, *arg, **kwargs):
         if self.load_continue:
@@ -88,7 +89,7 @@ class ProgressBar():
         return self.func(**kwargs)
 
     def load(self):
-        with open('Results_Record' + '.dat', 'r') as f:
+        with open('Results_Record_' + str(self.file_name) + '.dat', 'r') as f:
             l = f.readlines()
         l.pop(0)
         return  int(l[-1].split(' ')[0])

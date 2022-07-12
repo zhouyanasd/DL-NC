@@ -145,6 +145,7 @@ if __name__ == '__main__':
     parameters_search_multi_task.total = total_eva
     parameters_search_multi_task.load_continue = load_continue
     parameters_search_multi_task.func.load_continue = load_continue
+    parameters_search_multi_task.file_name = 'reservoir'
     parameters_search_multi_task.func.file_name = 'reservoir'
 
     # -------parameters search---------------
