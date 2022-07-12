@@ -112,7 +112,7 @@ def parameters_search(**parameter):
         task_evaluator.dump_data(Optimal_state + tasks[task_id]['name'] + 'pkl', state_pre_run)
         task_evaluator.dump_data(Optimal_gens + tasks[task_id]['name'] + 'pkl', gen)
     # ----------show results-----------
-    print('task: %s', tasks[task_evaluator.generator.task_id]['name'])
+    print('task: ', tasks[task_evaluator.generator.task_id]['name'])
     print('parameter %s' % parameter)
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)

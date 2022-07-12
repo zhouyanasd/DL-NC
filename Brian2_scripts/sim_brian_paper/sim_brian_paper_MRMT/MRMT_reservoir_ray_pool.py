@@ -132,7 +132,7 @@ def parameters_search(task_id, task_evaluator, **parameter):
     # ------collect the memory-------
     gc.collect()
     # ----------show results-----------
-    print('task: %s', tasks[task_evaluator.generator.task_id]['name'])
+    print('task: ', tasks[task_evaluator.generator.task_id]['name'])
     print('parameter %s' % parameter)
     print('Train score: ', score_train)
     print('Validation score: ', score_validation)
