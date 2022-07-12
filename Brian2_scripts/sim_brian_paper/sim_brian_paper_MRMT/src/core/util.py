@@ -53,7 +53,7 @@ class Timelog():
                         + 'result_train' + ' '
                         + 'parameters' + ' '
                         + '\n')
-        with open('Results_Record_' + str(self.file_name) + '.dat', 'w') as f:
+        with open('Results_Record_' + str(self.file_name) + '.dat', 'a') as f:
             f.write(str(self.iteration) + ' ' + str(self.elapsed) + ' ' + str(validation) + ' '
                     + str(test) + ' ' + str(train) + ' ' + str(parameters) + ' ' + '\n')
 

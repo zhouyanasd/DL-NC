@@ -2,7 +2,7 @@ import os, sys
 import numpy as np
 
 # -----save state ------
-is_save_state = False
+is_save_state = True
 
 # -------path settings------------
 exec_dir = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
