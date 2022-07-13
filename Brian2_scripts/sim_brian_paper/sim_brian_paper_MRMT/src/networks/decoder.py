@@ -297,7 +297,7 @@ class Decoder_Reservoir(Decoder):
         super().__init__(config_group, config_keys, config_SubCom, config_codes, config_ranges, config_borders,
                       config_precisions, config_scales, gen_group)
 
-    def register_optimal_block_gens(self, **optimal_block_gens):
+    def register_optimal_block_gens(self, optimal_block_gens):
         '''
          Register a gen for this decoder, which is ready to be decoded for the generator.
 

@@ -556,7 +556,7 @@ class Generator_Reservoir(Generator):
         self.block_init = block_init
         self.block_max = block_max
 
-    def register_block_generator(self, **neurons_encoding):
+    def register_block_generator(self, neurons_encoding):
         '''
          Add gen decoder to this generator.
 
@@ -564,11 +564,11 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        for task_id, optimal_block_gen in self.decoder.get_optimal_block_gens().items():
+        for task_id, encoding in neurons_encoding.items():
             block_decoder = (config_group_block, config_keys_block, config_SubCom_block,
                              config_codes_block, config_ranges_block, config_borders_block,
                              config_precisions_block, config_scales_block,
-                              gen_group_block, neurons_encoding[task_id])
+                             gen_group_block, encoding)
             block_generator = Generator_Block(self.random_state, task_id)
             block_generator.register_decoder(block_decoder)
             self.block_generators[task_id] = block_generator
@@ -581,7 +581,7 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        self.tasks_ids = (list(self.decoder.get_optimal_block_gens().items())*\
+        self.tasks_ids = (list(self.decoder.optimal_block_gens.keys()) *\
                             np.ceil(self.block_max/self.block_init).astype(int))[:self.block_init]
 
     def increase_block_reservoir(self, task_id):

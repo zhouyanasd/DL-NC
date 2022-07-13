@@ -72,11 +72,11 @@ generator.register_decoder(decoder)
 
 #--- initial reservoir generator and decoder ---
 optimal_block_gens, neurons_encoding = {}, {}
-for task_id in tasks.values():
+for task_id in tasks.keys():
     optimal_block_gen = decoder.load_data(Optimal_gens + tasks[task_id]['name'] + '.pkl')
     optimal_block_gens[task_id] = optimal_block_gen
     neurons_encoding[task_id] = task_evaluators[task_id].neurons_encoding
-decoder.register_optimal_block_gens(**optimal_block_gens)
+decoder.register_optimal_block_gens(optimal_block_gens)
 generator.register_block_generator(neurons_encoding=neurons_encoding)
 generator.initialize_task_ids()
 
