@@ -143,11 +143,11 @@ config_keys_block = [Block_config, Encoding_Readout]
 config_SubCom_reservoir = [[0, 1, 2, 3], [x + 3 for x in range(block_max)]]
 config_SubCom_block = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
 
-config_codes_reservoir = [[None, None, None, None], [1] * block_max]
+config_codes_reservoir = [[None, None, None, None], [1] * block_init + [None] * (block_max-block_init)]
 config_codes_block = [[1, None, None, None, None, None, None, None, None, None], [None, None, None, None, None]]
 
 config_ranges_reservoir = [[[0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
-                           [[0, 2**block_init-1]] * block_init + [[0, 2**0-1]] * (block_max-block_init)]
+                           [[0, 2**block_init-1]] * block_init + [[0, 0]] * (block_max-block_init)]
 config_ranges_block = [[[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
                        [[0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.2]]]
 

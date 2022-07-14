@@ -328,7 +328,9 @@ class Decoder_Reservoir(Decoder):
          '''
 
         self.config_ranges[1] = \
-            [[0, 2**block_current-1]] * block_current + [[0, 2**0-1]] * (block_max-block_current)
+            [[0, 2**block_current-1]] * block_current + [[0, 0]] * (block_max-block_current)
+        self.config_codes[1] = \
+            [[1]] * block_current + [None] * (block_max-block_current)
 
     def get_reservoir_adjacent_matrix(self):
         '''
@@ -340,8 +342,9 @@ class Decoder_Reservoir(Decoder):
 
         parameter = self.decode('Reservoir_arc')
         adjacent_matrix = []
-        for value in parameter.values():
-            adjacent_matrix.append(value)
+        for value, code in zip(parameter.values(), self.config_codes):
+            if code is not None:
+                adjacent_matrix.append(value)
         return np.array(adjacent_matrix)
 
     def get_pathway_structure(self, component):
