@@ -22,6 +22,9 @@ class task_evaluator(BaseFunctions):
     def __init__(self):
         self.best_test = 1
 
+    def register_generator(self, generator):
+        self.generator = generator
+
     def get_task_id(self):
         from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
         for task_id, task in tasks.items():
@@ -69,3 +72,6 @@ class task_evaluator(BaseFunctions):
                 except:
                     continue
         return state_init
+
+    def get_state_pre_run(self):
+        pass

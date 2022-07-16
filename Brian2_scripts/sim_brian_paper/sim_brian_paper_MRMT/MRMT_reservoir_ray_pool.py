@@ -84,7 +84,7 @@ generator.initialize_task_ids()
 
 #--- register generator and decoder ---
 for task_evaluator in task_evaluators.values():
-    task_evaluator.register_decoder_generator(decoder, generator)
+    task_evaluator.register_generator(generator)
 
 # -----classifier-------
 accuracy_evaluator = Evaluation()
@@ -109,9 +109,7 @@ def parameters_search(task_evaluator, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    net_state_list = parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
-                                  task_evaluator.data_pre_train_index_batch)
-    state_pre_run = task_evaluator.sum_strength(gen, net_state_list)
+    state_pre_run = task_evaluator.get_state_pre_run(state_pre_runs)
     # ------parallel run for training data-------
     results_list = parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,

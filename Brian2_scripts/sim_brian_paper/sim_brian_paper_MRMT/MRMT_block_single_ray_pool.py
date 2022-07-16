@@ -69,7 +69,7 @@ generator = Generator_Block(np_state, task_id = task_id)
 generator.register_decoder(decoder)
 
 #--- register generator and decoder ---
-task_evaluator.register_decoder_generator(decoder, generator)
+task_evaluator.register_generator(generator)
 
 # -----classifier-------
 accuracy_evaluator = Evaluation()

@@ -77,10 +77,6 @@ class task_HAPT_evaluator(task_evaluator):
 
         return df_en_train, df_en_pre_train, df_en_validation, df_en_test
 
-    def register_decoder_generator(self, decoder, generator):
-        self.decoder = decoder
-        self.generator = generator
-
     # --- define network run function ---
     def pre_run_net(self, gen, data_index):
         exec(exec_env)
