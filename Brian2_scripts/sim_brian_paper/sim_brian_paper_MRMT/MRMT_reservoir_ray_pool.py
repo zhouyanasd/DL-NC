@@ -71,10 +71,12 @@ generator = Generator_Reservoir(np_state, block_init=block_init, block_max=block
 generator.register_decoder(decoder)
 
 #--- initial reservoir generator and decoder ---
-optimal_block_gens, neurons_encoding = {}, {}
+optimal_block_gens, state_pre_runs, neurons_encoding = {}, {}, {}
 for task_id in tasks.keys():
     optimal_block_gen = decoder.load_data(Optimal_gens + tasks[task_id]['name'] + '.pkl')
+    state_pre_run = decoder.load_data(Optimal_state + tasks[task_id]['name'] + '.pkl')
     optimal_block_gens[task_id] = optimal_block_gen
+    state_pre_runs[task_id] = state_pre_run
     neurons_encoding[task_id] = task_evaluators[task_id].neurons_encoding
 decoder.register_optimal_block_gens(optimal_block_gens)
 generator.register_block_generator(neurons_encoding=neurons_encoding)
@@ -95,7 +97,7 @@ def parameters_search_multi_task(**parameter):
     for task_id, task_evaluator in task_evaluators.items():
         parameters_search.file_name = tasks[task_id]['name']
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
-            parameters_search(task_id, task_evaluator, **parameter)
+            parameters_search(task_evaluator, **parameter)
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
@@ -103,11 +105,13 @@ def parameters_search_multi_task(**parameter):
     return mean(score_validation_.values()), mean(score_test_.values()), mean(score_train_.values())
 
 @Timelog
-def parameters_search(task_id, task_evaluator, **parameter):
+def parameters_search(task_evaluator, **parameter):
     # ------convert the parameter to gen -------
     gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    state_pre_run = task_evaluator.load_data(Optimal_state + tasks[task_id]['name'] + '.pkl')
+    net_state_list = parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
+                                  task_evaluator.data_pre_train_index_batch)
+    state_pre_run = task_evaluator.sum_strength(gen, net_state_list)
     # ------parallel run for training data-------
     results_list = parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,
