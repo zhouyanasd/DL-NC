@@ -108,9 +108,9 @@ def parameters_search_multi_task(**parameter):
 @Timelog
 def parameters_search(task_evaluator, **parameter):
     # ------convert the parameter to gen -------
-    gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
+    gen = [parameter[key] for key in task_evaluator.generator.decoder.get_keys]
     # ------init net and run for pre_train-------
-    state_pre_run = task_evaluator.get_state_pre_run(state_pre_runs)
+    state_pre_run = task_evaluator.get_state_pre_run(gen, state_pre_runs)
     # ------parallel run for training data-------
     results_list = parallel_run(cluster, partial(task_evaluator.run_net, gen, state_pre_run),
                                                zip(task_evaluator.data_train_index_batch,

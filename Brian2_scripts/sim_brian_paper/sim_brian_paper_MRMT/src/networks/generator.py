@@ -260,7 +260,7 @@ class Generator_connection_matrix(NetworkBase):
         return N, np.array([connection_matrix_out, connection_matrix_in])
 
 
-class Generator(BaseFunctions):
+class Generator(NetworkBase):
     """
     This class offers a basic generation functions of each component in network.
     **This class can not be instantiated, use subclass instead.**

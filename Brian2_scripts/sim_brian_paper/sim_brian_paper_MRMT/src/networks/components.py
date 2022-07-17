@@ -19,8 +19,6 @@ class NetworkBase(BaseFunctions):
     Some basic functions for the network
 
     """
-    def __init__(self):
-        super().__init__()
 
     def initialize_parameters(self, object, parameter_name, parameter_value):
         '''

@@ -79,7 +79,7 @@ accuracy_evaluator = Evaluation()
 @Timelog
 def parameters_search(**parameter):
     # ------convert the parameter to gen -------
-    gen = [parameter[key] for key in task_evaluator.decoder.get_keys]
+    gen = [parameter[key] for key in task_evaluator.generator.decoder.get_keys]
     # ------init net and run for pre_train-------
     net_state_list = parallel_run(cluster, partial(task_evaluator.pre_run_net, gen),
                                                  task_evaluator.data_pre_train_index_batch)
