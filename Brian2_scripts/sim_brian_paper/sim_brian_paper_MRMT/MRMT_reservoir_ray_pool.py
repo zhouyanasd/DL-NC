@@ -96,6 +96,7 @@ def parameters_search_multi_task(**parameter):
     score_validation_, score_test_, score_train_ = {}, {}, {}
     for task_id, task_evaluator in task_evaluators.items():
         parameters_search.file_name = tasks[task_id]['name']
+        generator.mark_current_task(task_id)
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
     if len(generator.tasks_ids) <= block_max:

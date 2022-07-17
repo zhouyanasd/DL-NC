@@ -57,7 +57,13 @@ class NetworkBase(BaseFunctions):
         return adjacent_matrix
 
     def adjacent_matrix_to_connection_matrix(self, adjacent_matrix):
-        pass
+        connection_matrix_out, connection_matrix_in = [], []
+        for idx, i in enumerate(adjacent_matrix):
+            for jdx, j in enumerate(i):
+                if j == 1:
+                    connection_matrix_out.append(idx)
+                    connection_matrix_in.append(jdx)
+        return np.array([connection_matrix_out, connection_matrix_in])
 
     def vis_block(self, edges):
         import networkx as nx

@@ -556,6 +556,9 @@ class Generator_Reservoir(Generator):
         self.block_init = block_init
         self.block_max = block_max
 
+    def mark_current_task(self, task_id):
+        self.current_task = task_id
+
     def register_block_generator(self, neurons_encoding):
         '''
          Add gen decoder to this generator.
@@ -645,10 +648,9 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        block_groups = []
-        for generator in self.block_generators.values():
-            block_groups.append(generator.generate_encoding())
-        return block_groups
+
+        block_group = self.block_generators[self.current_task].generate_encoding()
+        return block_group
 
     def generate_readout(self, reservoir):
         '''
@@ -660,40 +662,35 @@ class Generator_Reservoir(Generator):
          reservoir: Reservoir, an instance of Reservoir class.
          '''
 
-        block_groups = []
-        for generator in self.block_generators.values():
-            block_groups.append(generator.generate_readout(reservoir))
-        return block_groups
+        block_group = self.block_generators[self.current_task].generate_readout(reservoir)
+        return block_group
 
-    def generate_pathway_encoding_reservoir(self, encodings, reservoir):
+    def generate_pathway_encoding_reservoir(self, encoding, reservoir):
         '''
          Generate pathway between the block group of encoding and the block group of reservoir.
 
          Parameters
          ----------
-         encodings: list[BlockGroup], all instance of BlockGroup class only containing Blocks for each task as encoding layer.
+         encoding: BlockGroup, an instance of BlockGroup class only containing Blocks for the task as encoding layer.
          reservoir: Reservoir, an instance of Reservoir class.
          '''
 
-        pathways = []
-        for generator, encoding in zip(self.block_generators.values(), encodings):
-            pathways.append(generator.generate_pathway_encoding_reservoir(encoding, reservoir))
-        return pathways
+        pathway = self.block_generators[self.current_task].generate_pathway_encoding_reservoir(encoding, reservoir)
+        return pathway
 
-    def generate_pathway_reservoir_readout(self, reservoir, readouts):
+    def generate_pathway_reservoir_readout(self, reservoir, readout):
         '''
          Generate pathway between the block group of readout and the block group of reservoir.
 
          Parameters
          ----------
          reservoir: Reservoir, an instance of Reservoir class.
-         readouts: list[BlockGroup], all instance of BlockGroup class only containing one Block as readout layer.
+         readouts: BlockGroup, an instance of BlockGroup class only containing one Block as readout layer.
          '''
 
-        pathways = []
-        for generator, readout in zip(self.block_generators.values(), readouts):
-            pathways.append(generator.generate_pathway_reservoir_readout(reservoir, readout))
-        return pathways
+
+        pathway = self.block_generators[self.current_task].generate_pathway_reservoir_readout(reservoir, readout)
+        return pathway
 
     def generate_network(self):
         '''
@@ -705,19 +702,16 @@ class Generator_Reservoir(Generator):
 
         network = LSM_Network()
         reservoir = self.generate_reservoir()
-        encodings = self.generate_encoding()
-        readouts = self.generate_readout(reservoir)
-        pathways_encoding_reservoir = self.generate_pathway_encoding_reservoir(encodings, reservoir)
-        pathways_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readouts)
+        encoding = self.generate_encoding()
+        readout = self.generate_readout(reservoir)
+        pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
+        pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
 
         network.register_layer(reservoir, 'reservoir')
-        for task_id, encoding, readout in enumerate(zip(encodings, readouts)):
-            network.register_layer(encoding, 'encoding_task'+str(task_id))
-            network.register_layer(readout, 'readout_task'+str(task_id))
-        for task_id, pathway_encoding_reservoir, pathway_reservoir_readout \
-                in enumerate(zip(pathways_encoding_reservoir, pathways_reservoir_readout)):
-            network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir_task'+str(task_id))
-            network.register_pathway(pathway_reservoir_readout, 'reservoir_readout_task'+str(task_id))
+        network.register_layer(encoding, 'encoding_task'+str(self.current_task))
+        network.register_layer(readout, 'readout_task'+str(self.current_task))
+        network.register_pathway(pathway_encoding_reservoir, 'encoding_reservoir_task'+str(self.current_task))
+        network.register_pathway(pathway_reservoir_readout, 'reservoir_readout_task'+str(self.current_task))
         return network
 
     def pre_initialize_reservoir(self):
@@ -750,9 +744,8 @@ class Generator_Reservoir(Generator):
         parameters = {}
         parameters['encoding'] = None
         parameters['reservoir'] = self.pre_initialize_reservoir()
-        for task_id, generator in self.block_generators.items():
-            parameters['readout_task'+str(task_id)] = generator.pre_initialize_readout()
-            parameters['encoding_reservoir_task'+str(task_id)] = generator.pre_initialize_encoding_reservoir()
+        parameters['readout_task'+str(self.current_task)] = self.block_generators[self.current_task].pre_initialize_readout()
+        parameters['encoding_reservoir_task'+str(self.current_task)] = self.block_generators[self.current_task].pre_initialize_encoding_reservoir()
         parameters['reservoir_readout'] = None
 
         return parameters
