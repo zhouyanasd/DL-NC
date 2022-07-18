@@ -10,6 +10,7 @@
 
 
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.networks.components import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.networks.decoder import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
 from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import *
 
@@ -568,7 +569,7 @@ class Generator_Reservoir(Generator):
          '''
 
         for task_id, encoding in neurons_encoding.items():
-            block_decoder = (config_group_block, config_keys_block, config_SubCom_block,
+            block_decoder = Decoder_Block(config_group_block, config_keys_block, config_SubCom_block,
                              config_codes_block, config_ranges_block, config_borders_block,
                              config_precisions_block, config_scales_block,
                              gen_group_block, encoding)
