@@ -162,8 +162,8 @@ config_precisions_block = [[0, 0, 2, 1, 0, 8, 2, 8, 8, 8], [1, 0, 8, 2, 8]]
 config_scales_reservoir = [[0] * 4, [0] * block_max]
 config_scales_block = [[0] * 10, [0] * 5]
 
-gen_group_reservoir = [[0], [1]]
-gen_group_block = [[0], [1]]
+gen_group_reservoir = [[0, 1]]
+gen_group_block = [[0, 1]]
 
 '''
 All gen is in float.

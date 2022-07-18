@@ -22,6 +22,7 @@ class Timelog():
         self.iteration = 0
         self.load_continue = False
         self.file_name = 'undefined'
+        self.return_all = False
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters = self.func(*args, **kwargs)
@@ -30,7 +31,10 @@ class Timelog():
             self.iteration, time = self.load()
             self.itime = self.itime - time
         self.save(validation, test, train, parameters)
-        return validation
+        if self.return_all :
+            return validation, test, train, parameters
+        else:
+            return validation
 
     @property
     def elapsed(self):
