@@ -573,6 +573,7 @@ class Generator_Reservoir(Generator):
                              config_codes_block, config_ranges_block, config_borders_block,
                              config_precisions_block, config_scales_block,
                              gen_group_block, encoding)
+            block_decoder.register(self.decoder.get_optimal_block_gens(task_id))
             block_generator = Generator_Block(self.random_state, task_id)
             block_generator.register_decoder(block_decoder)
             self.block_generators[task_id] = block_generator
