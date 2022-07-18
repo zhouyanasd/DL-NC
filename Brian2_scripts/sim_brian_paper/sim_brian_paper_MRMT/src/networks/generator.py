@@ -631,7 +631,7 @@ class Generator_Reservoir(Generator):
         connection_matrix = self.adjacent_matrix_to_connection_matrix(adjacent_matrix)
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
-        o, i = topological_sorting_tarjan.suggest_inout()
+        o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.3)
         block_group = self.generate_blocks()
         pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
         pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
@@ -744,10 +744,10 @@ class Generator_Reservoir(Generator):
          '''
 
         parameters = {}
-        parameters['encoding'] = None
+        parameters['encoding_task'+str(self.current_task)] = None
         parameters['reservoir'] = self.pre_initialize_reservoir()
         parameters['readout_task'+str(self.current_task)] = self.block_generators[self.current_task].pre_initialize_readout()
         parameters['encoding_reservoir_task'+str(self.current_task)] = self.block_generators[self.current_task].pre_initialize_encoding_reservoir()
-        parameters['reservoir_readout'] = None
+        parameters['reservoir_readout_task'+str(self.current_task)] = None
 
         return parameters

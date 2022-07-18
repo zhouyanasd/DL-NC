@@ -140,7 +140,7 @@ config_group_block = ['Block', 'Encoding_Readout']
 config_keys_reservoir = [Reservoir_config, Reservoir_arc]
 config_keys_block = [Block_config, Encoding_Readout]
 
-config_SubCom_reservoir = [[0, 1, 2, 3], [x + 3 for x in range(block_max)]]
+config_SubCom_reservoir = [[0, 1, 2, 3], [x + 4 for x in range(block_max)]]
 config_SubCom_block = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
 
 config_codes_reservoir = [[None, None, None, None], [1] * block_init + [None] * (block_max-block_init)]

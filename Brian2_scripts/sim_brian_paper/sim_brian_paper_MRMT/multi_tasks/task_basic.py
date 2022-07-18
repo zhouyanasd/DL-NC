@@ -80,12 +80,14 @@ class task_evaluator(BaseFunctions):
         strength_pathway_encoding = {}
         for task_id, state_pre_run in state_pre_runs.items():
             for com in list(state_pre_run.keys()):
-                if 'block_block_' in com and '_pre' not in com and '_post' not in com:
+                if 'block_block_' in com and '_pre' not in com and '_post' not in com and 'encoding'not in com \
+                        and 'readout'not in com:
                     strength_block_block[task_id] = list(state_pre_run[com]['strength'])
                 if 'pathway_encoding_' in com and '_pre' not in com and '_post' not in com:
                     strength_pathway_encoding[task_id] = list(state_pre_run[com]['strength'])
         for com in list(state_init.keys()):
-            if 'block_block_' in com and '_pre' not in com and '_post' not in com:
+            if 'block_block_' in com and '_pre' not in com and '_post' not in com and 'encoding' not in com \
+                    and 'readout' not in com:
                 state_init[com]['strength'] = tuple(strength_block_block[int(com[-3])])
             if 'pathway_encoding_' in com and '_pre' not in com and '_post' not in com:
                 if state_init[com]['strength'][0].shape == strength_pathway_encoding[int(com[-3])][0].shape:

@@ -177,6 +177,17 @@ class Decoder(BaseFunctions):
 
         self.Gen = self._float2int(Gen)
 
+    def search(self, target):
+        '''
+         Find the target index from the config group.
+
+         Parameters
+         ----------
+         target: str, the name of target variate.
+         '''
+
+        return np.where(np.array(self.config_group) == target)[0][0]
+
     def decode(self, target):
         '''
          Decode the target variate from the registered gen.
@@ -186,7 +197,7 @@ class Decoder(BaseFunctions):
          target: str, the name of target variate.
          '''
 
-        group = np.where(np.array(self.config_group) == target)[0][0]
+        group = self.search(target)
         key = self.config_keys[group]
         SubCom = self.config_SubCom[group]
         codes = self.config_codes[group]
@@ -342,10 +353,13 @@ class Decoder_Reservoir(Decoder):
 
         parameter = self.decode('Reservoir_arc')
         adjacent_matrix = []
-        for value, code in zip(parameter.values(), self.config_codes):
+        for value, code in zip(parameter.values(), self.config_codes[self.search('Reservoir_arc')]):
             if code is not None:
                 adjacent_matrix.append(value)
-        return np.array(adjacent_matrix)
+        for i in range(len(adjacent_matrix)): # remove self connections
+            if adjacent_matrix[i][i] == 1:
+                adjacent_matrix[i][i] = 0
+        return adjacent_matrix
 
     def get_pathway_structure(self, component):
         '''
