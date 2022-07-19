@@ -76,20 +76,20 @@ class task_evaluator(BaseFunctions):
     def get_state_pre_run(self, gen, state_pre_runs):
         net = self.init_net(gen)
         state_init = net._full_state()
-        strength_block_block = {}
-        strength_pathway_encoding = {}
+        block_block = {}
+        pathway_encoding = {}
         for task_id, state_pre_run in state_pre_runs.items():
             for com in list(state_pre_run.keys()):
                 if 'block_block_' in com and '_pre' not in com and '_post' not in com and 'encoding'not in com \
                         and 'readout'not in com:
-                    strength_block_block[task_id] = list(state_pre_run[com]['strength'])
+                    block_block[task_id] = state_pre_run[com]
                 if 'pathway_encoding_' in com and '_pre' not in com and '_post' not in com:
-                    strength_pathway_encoding[task_id] = list(state_pre_run[com]['strength'])
+                    pathway_encoding[task_id] = state_pre_run[com]
         for com in list(state_init.keys()):
             if 'block_block_' in com and '_pre' not in com and '_post' not in com and 'encoding' not in com \
                     and 'readout' not in com:
-                state_init[com]['strength'] = tuple(strength_block_block[int(com[-3])])
+                state_init[com] = block_block[int(com[-3])]
             if 'pathway_encoding_' in com and '_pre' not in com and '_post' not in com:
-                if state_init[com]['strength'][0].shape == strength_pathway_encoding[int(com[-3])][0].shape:
-                    state_init[com]['strength'] = tuple(strength_block_block[int(com[-3])])
+                if com[-3] == net[com].target.name[-3]:
+                    state_init[com] = block_block[int(com[-3])]
         return state_init
