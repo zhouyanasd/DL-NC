@@ -630,7 +630,7 @@ class Generator_Reservoir(Generator):
         connection_matrix = self.adjacent_matrix_to_connection_matrix(adjacent_matrix)
         topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
         topological_sorting_tarjan.dfs()
-        o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.3)
+        o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.4)
         block_group = self.generate_blocks()
         pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
         pathway.create_synapse(dynamics_reservoir_synapse, dynamics_reservoir_synapse_pre, None,

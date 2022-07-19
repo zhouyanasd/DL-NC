@@ -94,18 +94,25 @@ accuracy_evaluator = Evaluation()
 @Timelog
 def parameters_search_multi_task(**parameter):
     score_validation_, score_test_, score_train_ = {}, {}, {}
+    parameters_search.iteration += 1
     for task_id, task_evaluator in task_evaluators.items():
         parameters_search.file_name = tasks[task_id]['name']
         generator.mark_current_task(task_id)
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
-    parameters_search.iteration += 1
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
-    return mean(list(score_validation_.values())), mean(list(score_test_.values())), \
-           mean(list(score_train_.values())), parameter
+    score_validation, score_test, score_train = mean(list(score_validation_.values())), \
+                                                mean(list(score_test_.values())), \
+                                                mean(list(score_train_.values()))
+    # ----------show results-----------
+    print('task average: ')
+    print('Train score: ', score_train)
+    print('Validation score: ', score_validation)
+    print('Test score: ', score_test)
+    return score_validation, score_test, score_train, parameter
 
 @Timelog
 def parameters_search(task_evaluator, **parameter):
