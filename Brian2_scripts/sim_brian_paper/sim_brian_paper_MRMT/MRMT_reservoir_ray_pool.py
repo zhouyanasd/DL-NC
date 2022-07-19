@@ -146,9 +146,9 @@ def parameters_search(task_evaluator, **parameter):
     # ----------show results-----------
     print('task: ', tasks[task_evaluator.task_id]['name'])
     print('parameter %s' % parameter)
-    print('Train score: ', score_train)
-    print('Validation score: ', score_validation)
-    print('Test score: ', score_test)
+    print('Train score: ', 1-score_train)
+    print('Validation score: ', 1-score_validation)
+    print('Test score: ', 1-score_test)
     return 1 - score_validation, 1 - score_test, 1 - score_train, parameter
 
 ##########################################
