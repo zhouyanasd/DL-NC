@@ -363,8 +363,7 @@ class Generator_Block(Generator, Generator_connection_matrix):
         block = self.generate_block(index=0)
         block_group.add_block(block, self.task_id)
         pathway = Pathway(block_group.blocks, block_group.blocks, [[],[]])
-        pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
-                               dynamics_reservoir_synapse_post_STDP,
+        pathway.create_synapse(dynamics_reservoir_synapse, dynamics_reservoir_synapse_pre, None,
                                name = 'pathway_block_single_task'+str(self.task_id)+'_')
         pathway.connect(p_connection= 0, connect_type='probability')
         reservoir.register_blocks(block_group)
@@ -634,8 +633,8 @@ class Generator_Reservoir(Generator):
         o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.3)
         block_group = self.generate_blocks()
         pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
-        pathway.create_synapse(dynamics_reservoir_synapse_STDP, dynamics_reservoir_synapse_pre_STDP,
-                               dynamics_reservoir_synapse_post_STDP,  name = 'pathway_reservoir_')
+        pathway.create_synapse(dynamics_reservoir_synapse, dynamics_reservoir_synapse_pre, None,
+                               name = 'pathway_reservoir_')
         pathway.connect(p_connection = p_connection, connect_type = 'probability')
         reservoir.register_blocks(block_group)
         reservoir.register_pathway(pathway)

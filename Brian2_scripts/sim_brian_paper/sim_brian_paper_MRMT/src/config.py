@@ -67,23 +67,12 @@ apost += Apost * (strength-wmin)**type
 strength = clip(strength+apre*Switch, wmin, wmax)
 '''
 
-dynamics_reservoir_synapse_STDP = '''
+dynamics_reservoir_synapse = '''
 strength : 1
-tau_plasticity : 1
-type : 1
-dapre/dt = -apre/(taupre*tau_plasticity) : 1 (clock-driven)
-dapost/dt = -apost/(taupost*tau_plasticity) : 1 (clock-driven)
 '''
 
-dynamics_reservoir_synapse_pre_STDP = '''
+dynamics_reservoir_synapse_pre = '''
 I += A_strength_reservoir * strength * property_pre
-apre += Apre * (wmax-strength)**type
-strength = clip(strength+apost*Switch, wmin, wmax)
-'''
-
-dynamics_reservoir_synapse_post_STDP = '''
-apost += Apost * (strength-wmin)**type
-strength = clip(strength+apre*Switch, wmin, wmax)
 '''
 
 dynamics_encoding_synapse_STDP = '''
@@ -129,7 +118,7 @@ block_max = 20
 # increase_threshold = 0.05
 
 # --- parameter settings ---
-Reservoir_config = ['type', 'strength', 'tau_plasticity', 'p_connection']
+Reservoir_config = ['strength', 'p_connection']
 Reservoir_arc = ['connections_' + str(x) for x in range(block_max)]
 Block_config = ['block', 'N', 'tau', 'tau_I', 'type', 'strength', 'tau_plasticity', 'p_0', 'p_1', 'p_2']
 Encoding_Readout = ['tau_I', 'type', 'strength', 'tau_plasticity', 'p_connection']
@@ -140,26 +129,26 @@ config_group_block = ['Block', 'Encoding_Readout']
 config_keys_reservoir = [Reservoir_config, Reservoir_arc]
 config_keys_block = [Block_config, Encoding_Readout]
 
-config_SubCom_reservoir = [[0, 1, 2, 3], [x + 4 for x in range(block_max)]]
+config_SubCom_reservoir = [[0, 1], [x + 2 for x in range(block_max)]]
 config_SubCom_block = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
 
-config_codes_reservoir = [[None, None, None, None], [1] * block_init + [None] * (block_max-block_init)]
+config_codes_reservoir = [[None, None], [1] * block_init + [None] * (block_max-block_init)]
 config_codes_block = [[1, None, None, None, None, None, None, None, None, None], [None, None, None, None, None]]
 
-config_ranges_reservoir = [[[0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.9]],
+config_ranges_reservoir = [[[0.0001, 1.0], [0.001, 0.9]],
                            [[0, 2**block_init-1]] * block_init + [[0, 0]] * (block_max-block_init)]
 config_ranges_block = [[[0, 3], [15, 300], [0.1, 1.5], [0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
                        [[0.1, 1.0], [0, 1], [0.0001, 1.0], [0.0001, 1.0], [0.001, 0.2]]]
 
-config_borders_reservoir = [[[1, 1], [0, 1], [0, 1], [0, 1]],
+config_borders_reservoir = [[[0, 1], [0, 1]],
                             [[1, 1]] * block_max]
 config_borders_block = [[[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1]],
                         [[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]]
 
-config_precisions_reservoir = [[0, 8, 2, 8], [0] * block_max]
+config_precisions_reservoir = [[8, 8], [0] * block_max]
 config_precisions_block = [[0, 0, 2, 1, 0, 8, 2, 8, 8, 8], [1, 0, 8, 2, 8]]
 
-config_scales_reservoir = [[0] * 4, [0] * block_max]
+config_scales_reservoir = [[0] * 2, [0] * block_max]
 config_scales_block = [[0] * 10, [0] * 5]
 
 gen_group_reservoir = [[0, 1]]
