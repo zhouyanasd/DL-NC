@@ -99,11 +99,13 @@ def parameters_search_multi_task(**parameter):
         generator.mark_current_task(task_id)
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
+    parameters_search.iteration += 1
     if len(generator.tasks_ids) <= block_max:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
-    return mean(score_validation_.values()), mean(score_test_.values()), mean(score_train_.values()), parameter
+    return mean(list(score_validation_.values())), mean(list(score_test_.values())), \
+           mean(list(score_train_.values())), parameter
 
 @Timelog
 def parameters_search(task_evaluator, **parameter):
@@ -146,6 +148,7 @@ def parameters_search(task_evaluator, **parameter):
 # -------optimizer settings---------------
 if __name__ == '__main__':
     parameters_search.return_all = True
+    parameters_search.auto_increase = False
     parameters_search_multi_task.total = total_eva
     parameters_search_multi_task.load_continue = load_continue
     parameters_search_multi_task.func.load_continue = load_continue

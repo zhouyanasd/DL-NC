@@ -23,6 +23,7 @@ class Timelog():
         self.load_continue = False
         self.file_name = 'undefined'
         self.return_all = False
+        self.auto_increase = True
 
     def __call__(self, *args, **kwargs):
         validation, test, train, parameters = self.func(*args, **kwargs)
@@ -47,7 +48,8 @@ class Timelog():
         return  int(l[-1].split(' ')[0]), float(l[-1].split(' ')[1])
 
     def save(self, validation, test, train, parameters):
-        self.iteration += 1
+        if self.auto_increase:
+            self.iteration += 1
         if self.iteration == 1:
             with open('Results_Record_' + str(self.file_name) + '.dat', 'w') as f:
                 f.write('iteration' + ' '
