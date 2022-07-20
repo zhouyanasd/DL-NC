@@ -55,6 +55,7 @@ ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 method = 'GA'
 total_eva = 600
 load_continue = False
+LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
 
 # -----task runner selector-------
 task_evaluators = {}
@@ -175,7 +176,7 @@ if __name__ == '__main__':
         optimizer = CoE_surrogate(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                                   random_state=seeds, maxormin=1,
-                                  surrogate_type='rf', init_points=100, LHS_path=task_evaluator.LHS_path,
+                                  surrogate_type='rf', init_points=100, LHS_path=LHS_path_reservoir,
                                   acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
         optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
                            online=True, eva=2, interval=10,
