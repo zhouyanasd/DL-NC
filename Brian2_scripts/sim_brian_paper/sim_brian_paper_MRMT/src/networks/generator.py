@@ -585,8 +585,7 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        self.tasks_ids = (list(self.decoder.optimal_block_gens.keys()) *\
-                            np.ceil(self.block_max/self.block_init).astype(int))[:self.block_init]
+        self.tasks_ids = (list(self.decoder.optimal_block_gens.keys()) * self.block_max)[:self.block_init]
 
     def increase_block_reservoir(self, task_id):
         '''
