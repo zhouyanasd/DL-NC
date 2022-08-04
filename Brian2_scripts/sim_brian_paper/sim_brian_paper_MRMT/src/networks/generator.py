@@ -595,7 +595,7 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
-        if len(self.tasks_ids) <= self.block_max:
+        if len(self.tasks_ids) < self.block_max:
             self.tasks_ids.append(task_id)
             block_current = len(self.tasks_ids)
             self.decoder.increase_block_reservoir(block_current, block_max)

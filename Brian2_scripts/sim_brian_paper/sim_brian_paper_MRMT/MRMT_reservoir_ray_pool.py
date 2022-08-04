@@ -57,6 +57,9 @@ total_eva = 600
 load_continue = False
 LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
 
+evaluates = 0
+NIND = {'GA': 10, 'GA_rf':20}
+
 # -----task runner selector-------
 task_evaluators = {}
 for task_id, task in tasks.items():
@@ -94,6 +97,7 @@ accuracy_evaluator = Evaluation()
 @ProgressBar
 @Timelog
 def parameters_search_multi_task(**parameter):
+    global evaluates
     score_validation_, score_test_, score_train_ = {}, {}, {}
     parameters_search.iteration += 1
     for task_id, task_evaluator in task_evaluators.items():
@@ -101,10 +105,13 @@ def parameters_search_multi_task(**parameter):
         generator.mark_current_task(task_id)
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
-    if len(generator.tasks_ids) <= block_max:
+    evaluates += 1
+    if len(generator.tasks_ids) < block_max and evaluates >= NIND[method]:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
+        optimizer.codes = decoder.get_codes
+        evaluates = 0
     score_validation, score_test, score_train = mean(list(score_validation_.values())), \
                                                 mean(list(score_test_.values())), \
                                                 mean(list(score_train_.values()))
@@ -168,7 +175,7 @@ if __name__ == '__main__':
         optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                         decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                         random_state=seeds, maxormin=1)
-        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=29 + 2, NIND=10, SUBPOP=1, GGAP=0.5,
+        optimizer.optimize(recopt=0.9, pm=0.6, MAXGEN=29 + 2, NIND=NIND['GA'], SUBPOP=1, GGAP=0.5,
                            selectStyle='tour', recombinStyle='reclin',
                            distribute=False, load_continue=load_continue)
 
@@ -178,7 +185,7 @@ if __name__ == '__main__':
                                   random_state=seeds, maxormin=1,
                                   surrogate_type='rf', init_points=100, LHS_path=LHS_path_reservoir,
                                   acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
-        optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=1450 + 50, NIND=20, SUBPOP=1, GGAP=0.5,
+        optimizer.optimize(recopt=0.9, pm=0.6, MAXGEN=1450 + 50, NIND=NIND['GA_rf'], SUBPOP=1, GGAP=0.5,
                            online=True, eva=2, interval=10,
                            selectStyle='tour', recombinStyle='reclin',
                            distribute=False, load_continue=load_continue)

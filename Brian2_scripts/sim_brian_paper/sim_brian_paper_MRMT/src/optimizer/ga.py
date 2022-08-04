@@ -289,7 +289,7 @@ def mutint(OldChrom, FieldDR, Pm=None, params3=None, params4=None):
 
 def mutbin(OldChrom, Pm=None, params3=None, params4=None):
     Nind, Nvar = OldChrom.shape
-    FieldDR = np.array([[0] * Nvar, [1] * Nvar])
+    FieldDR = np.array([[0] * Nvar, [1.1] * Nvar])
 
     NewChrom = mutint(OldChrom, FieldDR, Pm)
 

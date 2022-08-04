@@ -341,7 +341,7 @@ class Decoder_Reservoir(Decoder):
         self.config_ranges[1] = \
             [[0, 2**block_current-1]] * block_current + [[0, 0]] * (block_max-block_current)
         self.config_codes[1] = \
-            [[1]] * block_current + [None] * (block_max-block_current)
+            [1] * block_current + [None] * (block_max-block_current)
 
     def get_reservoir_adjacent_matrix(self):
         '''
