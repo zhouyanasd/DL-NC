@@ -27,7 +27,7 @@ class task_evaluator(BaseFunctions):
         self.generator = generator
 
     def get_task_id(self):
-        from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
+        from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks import tasks
         for task_id, task in tasks.items():
             if isinstance(self, task['evaluator']):
                 return task_id
