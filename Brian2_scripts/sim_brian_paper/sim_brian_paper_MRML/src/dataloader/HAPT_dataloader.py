@@ -1,4 +1,4 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.core import BaseFunctions
 
 import numpy as np
 import pandas as pd

@@ -9,10 +9,10 @@
 """
 
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.networks.components import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.networks.decoder import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.networks.components import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.networks.decoder import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.core import *
 
 from brian2 import *
 

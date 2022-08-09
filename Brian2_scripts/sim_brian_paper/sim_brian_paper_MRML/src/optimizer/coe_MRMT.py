@@ -1,4 +1,4 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.coe import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.optimizer.coe import *
 
 class CoE_MRMT_reservoir(CoE):
     def __init__(self, f, f_p, SubCom, ranges, borders, precisions, codes, scales, keys, random_state, maxormin,

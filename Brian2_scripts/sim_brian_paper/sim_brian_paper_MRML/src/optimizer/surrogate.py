@@ -1,6 +1,6 @@
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.random_forest import \
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.optimizer.random_forest import \
     RandomForestRegressor, RandomForestRegressor_wang
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.utility_functions import UtilityFunction
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.optimizer.utility_functions import UtilityFunction
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 

@@ -23,12 +23,12 @@ Citation
 =======
 
 """
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.ray_config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks import tasks
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.task_ray import parallel_run
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks.ray_config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks.sim_config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks import tasks
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks.task_ray import parallel_run
 
 from brian2 import *
 from sklearn.preprocessing import MinMaxScaler

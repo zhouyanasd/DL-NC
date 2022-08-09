@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.core import BaseFunctions
 
 import os
 import re

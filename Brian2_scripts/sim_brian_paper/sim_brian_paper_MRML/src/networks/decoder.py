@@ -8,8 +8,8 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.core import BaseFunctions
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.src.optimizer.ga import dec2bin, bin2dec
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.core import BaseFunctions
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.src.optimizer.ga import dec2bin, bin2dec
 
 import numpy as np
 

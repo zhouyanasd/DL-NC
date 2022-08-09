@@ -7,7 +7,7 @@
 :License: BSD 3-Clause, see LICENSE file.
 """
 
-from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRMT.multi_tasks.sim_config import *
+from Brian2_scripts.sim_brian_paper.sim_brian_paper_MRML.multi_tasks.sim_config import *
 
 import ray
 from ray.util.multiprocessing import Pool
