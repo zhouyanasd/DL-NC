@@ -126,8 +126,8 @@ if __name__ == '__main__':
     parameters_search.total = total_eva
     parameters_search.load_continue = load_continue
     parameters_search.func.load_continue = load_continue
-    parameters_search.file_name = tasks[task_id]['name']
-    parameters_search.func.file_name = tasks[task_id]['name']
+    parameters_search.file_name = tasks[task_id]['name'] + '_single'
+    parameters_search.func.file_name = tasks[task_id]['name'] + '_single'
 
     # -------parameters search---------------
     if method == 'GA':
