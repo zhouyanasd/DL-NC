@@ -59,6 +59,7 @@ LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
 
 evaluates = 0
 NIND = {'GA': 10, 'GA_rf':20}
+N_LHS = 100
 
 # -----task runner selector-------
 task_evaluators = {}
@@ -106,7 +107,8 @@ def parameters_search_multi_task(**parameter):
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
     evaluates += 1
-    if len(generator.tasks_ids) < block_max and evaluates >= NIND[method]:
+    if (len(generator.tasks_ids) < block_max and evaluates >= NIND[method]) and \
+        (method != 'GA_rf' or LHS_path_reservoir != None or evaluates > N_LHS):
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
@@ -183,7 +185,7 @@ if __name__ == '__main__':
         optimizer = CoE_surrogate(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                                   random_state=seeds, maxormin=1,
-                                  surrogate_type='rf', init_points=100, LHS_path=LHS_path_reservoir,
+                                  surrogate_type='rf', init_points=N_LHS, LHS_path=LHS_path_reservoir,
                                   acq='lcb', kappa=2.576, xi=0.0, n_estimators=100, min_variance=0.0)
         optimizer.optimize(recopt=0.9, pm=0.6, MAXGEN=1450 + 50, NIND=NIND['GA_rf'], SUBPOP=1, GGAP=0.5,
                            online=True, eva=2, interval=10,
