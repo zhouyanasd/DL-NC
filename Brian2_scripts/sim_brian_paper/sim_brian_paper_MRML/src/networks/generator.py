@@ -627,9 +627,11 @@ class Generator_Reservoir(Generator):
         p_connection = self.decoder.get_pathway_structure('Reservoir_config')['p_connection']
         adjacent_matrix = self.decoder.get_reservoir_adjacent_matrix()
         connection_matrix = self.adjacent_matrix_to_connection_matrix(adjacent_matrix)
-        topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
-        topological_sorting_tarjan.dfs()
-        o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.4)
+        # topological_sorting_tarjan = Topological_sorting_tarjan(adjacent_matrix)
+        # topological_sorting_tarjan.dfs()
+        # o, i = topological_sorting_tarjan.suggest_inout_multi_io(multi_io=0.4)
+        o, i = list(np.arange(len(self.tasks_ids))), \
+               list(np.where(np.array(self.tasks_ids)==self.current_task)[0])
         block_group = self.generate_blocks()
         pathway = Pathway(block_group.blocks, block_group.blocks, connection_matrix)
         pathway.create_synapse(dynamics_reservoir_synapse, dynamics_reservoir_synapse_pre, None,
@@ -701,8 +703,8 @@ class Generator_Reservoir(Generator):
          '''
 
         network = LSM_Network()
-        reservoir = self.generate_reservoir()
         encoding = self.generate_encoding()
+        reservoir = self.generate_reservoir()
         readout = self.generate_readout(reservoir)
         pathway_encoding_reservoir = self.generate_pathway_encoding_reservoir(encoding, reservoir)
         pathway_reservoir_readout = self.generate_pathway_reservoir_readout(reservoir, readout)
