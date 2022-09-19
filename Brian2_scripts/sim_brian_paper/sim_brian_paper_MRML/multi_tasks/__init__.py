@@ -17,8 +17,8 @@ tasks = {0: {'name':'HAPT', 'evaluator': task_HAPT_evaluator},
          2: {'name':'NMNIST', 'evaluator': task_NMNIST_evaluator}}
 
 __all__ = [
-    "task_KTH_evaluator",
     "task_HAPT_evaluator",
+    "task_KTH_evaluator",
     "task_NMNIST_evaluator",
 ]
 

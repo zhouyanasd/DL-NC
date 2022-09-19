@@ -609,8 +609,10 @@ class Generator_Reservoir(Generator):
          ----------
          '''
 
+        np_state_block = np.random.get_state()
         block_group = BlockGroup()
         for index, task_id in enumerate(self.tasks_ids):
+            np.random.set_state(np_state_block)
             block = self.block_generators[task_id].generate_block(index)
             block_group.add_block(block, task_id)
         return block_group
