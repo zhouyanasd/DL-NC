@@ -57,6 +57,9 @@ total_eva = 600
 load_continue = False
 task_id = 0
 
+# -----save state ------
+is_save_state = False
+
 # -----task runner selector-------
 task_evaluator = tasks[task_id]['evaluator']()
 task_evaluator.init_task()

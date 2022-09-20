@@ -1,9 +1,6 @@
 import os, sys
 import numpy as np
 
-# -----save state ------
-is_save_state = False
-
 # -------path settings------------
 exec_dir = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]
