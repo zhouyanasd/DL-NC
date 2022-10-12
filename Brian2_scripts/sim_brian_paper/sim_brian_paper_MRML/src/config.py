@@ -114,7 +114,7 @@ structure_blocks = {'components_0': {'name':'random', 'p_0':[0.01, 0.3], 'p_1':N
                     'components_2': {'name':'small_world_2', 'p_0':[0.3, 0.8], 'p_1':[0.3, 0.8], 'p_2':[0.3, 0.7]},
                     'components_3': {'name':'three_layer', 'p_0':[0.5, 1.0], 'p_1':[0.5, 1.0], 'p_2':[0.5, 1.0]}}
 block_init = 3
-block_max = 20
+block_max = 10
 # increase_threshold = 0.05
 
 # --- parameter settings ---

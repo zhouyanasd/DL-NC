@@ -59,7 +59,7 @@ LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
 
 evaluates = 0
 NIND = {'GA': 10, 'GA_rf':20}
-N_LHS = 100
+N_LHS = 10
 
 # -----task runner selector-------
 task_evaluators = {}
