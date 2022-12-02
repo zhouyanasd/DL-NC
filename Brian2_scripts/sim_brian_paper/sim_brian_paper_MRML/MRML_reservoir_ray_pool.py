@@ -52,7 +52,7 @@ ray.init(address=ray_cluster_address, logging_level=logging.ERROR)
 
 ###################################
 # -----simulation settings-------
-method = 'GA'
+method = 'GA_rf'
 total_eva = 600
 load_continue = False
 LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
