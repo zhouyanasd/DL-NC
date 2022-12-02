@@ -58,8 +58,8 @@ load_continue = False
 LHS_path_reservoir = exec_dir + '/LHS_reservoir.dat'
 
 evaluates = 0
-NIND = {'GA': 10, 'GA_rf':20}
-N_LHS = 10
+NIND = {'Pre': 2, 'GA': 10, 'GA_rf':20}
+N_LHS = 50
 
 # -----task runner selector-------
 task_evaluators = {}
@@ -107,8 +107,7 @@ def parameters_search_multi_task(**parameter):
         score_validation_[task_id], score_test_[task_id], score_train_[task_id], parameter_ = \
             parameters_search(task_evaluator, **parameter)
     evaluates += 1
-    if (len(generator.tasks_ids) < block_max and evaluates >= NIND[method]) and \
-        (method != 'GA_rf' or LHS_path_reservoir != None or evaluates > N_LHS):
+    if len(generator.tasks_ids) < block_max and evaluates >= NIND['Pre']:
         task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
@@ -174,6 +173,14 @@ if __name__ == '__main__':
 
     # -------parameters search---------------
     if method == 'GA':
+        print('------------ increasing blocks --------------------------')
+        optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                        decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                        random_state=seeds, maxormin=1)
+        optimizer.optimize(recopt=0.9, pm=0.6, MAXGEN=block_max-block_init-1, NIND=NIND['Pre'], SUBPOP=1, GGAP=0.5,
+                       selectStyle='tour', recombinStyle='reclin',
+                       distribute=False, load_continue=False)
+        print('------------ officially optimizing ----------------------')
         optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                         decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                         random_state=seeds, maxormin=1)
@@ -182,6 +189,14 @@ if __name__ == '__main__':
                            distribute=False, load_continue=load_continue)
 
     elif method == 'GA_rf':
+        print('------------ increasing blocks ---------------')
+        optimizer = CoE(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
+                    decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
+                    random_state=seeds, maxormin=1)
+        optimizer.optimize(recopt=0.9, pm=0.6, MAXGEN=block_max-block_init-1, NIND=NIND['Pre'], SUBPOP=1, GGAP=0.5,
+                       selectStyle='tour', recombinStyle='reclin',
+                       distribute=False, load_continue=False)
+        print('------------ officially optimizing ---------------')
         optimizer = CoE_surrogate(parameters_search_multi_task, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                                   decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                                   random_state=seeds, maxormin=1,
