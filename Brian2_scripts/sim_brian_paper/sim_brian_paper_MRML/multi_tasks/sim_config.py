@@ -1,6 +1,8 @@
 import os, sys
 import numpy as np
 
+sys.setrecursionlimit(5000)
+
 # -------path settings------------
 exec_dir = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
 project_dir = os.path.split(os.path.split(os.path.split(exec_dir)[0])[0])[0]

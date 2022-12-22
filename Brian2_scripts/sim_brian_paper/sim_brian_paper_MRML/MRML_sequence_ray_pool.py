@@ -56,7 +56,7 @@ method = 'GA_rf'
 total_eva = 600
 load_continue = False
 
-config_ranges_block[0][1] = [2999, 3000]
+config_ranges_block[0][1] = [1999, 2000]
 
 # -----task runner selector-------
 task_evaluators = {}
@@ -113,7 +113,7 @@ def parameters_search(**parameter):
     gc.collect()
 
     # ----------show results-----------
-    print('task: ', tasks[task_evaluators[task_id].generator.task_id]['name'])
+    print('task: ', tasks[task_id]['name'])
     print('parameter %s' % parameter)
     print('Train score: ', 1-score_train)
     print('Validation score: ', 1-score_validation)
@@ -133,13 +133,14 @@ if __name__ == '__main__':
             load_continue = True
         parameters_search.file_name = tasks[task_id]['name'] + '_sequence'
         parameters_search.func.file_name = tasks[task_id]['name'] + '_sequence'
+        decoder = task_evaluators[task_id].generator.decoder
 
         # -------parameters search---------------
         if method == 'GA':
             optimizer = CoE(parameters_search, None, decoder.get_SubCom, decoder.get_ranges, decoder.get_borders,
                             decoder.get_precisions, decoder.get_codes, decoder.get_scales, decoder.get_keys,
                             random_state=seeds, maxormin=1)
-            optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=30*(task_id+1), NIND=2, SUBPOP=1, GGAP=0.5,
+            optimizer.optimize(recopt=0.9, pm=0.2, MAXGEN=30*(task_id+1), NIND=10, SUBPOP=1, GGAP=0.5,
                                selectStyle='tour', recombinStyle='reclin',
                                distribute=False, load_continue=load_continue)
 
