@@ -89,7 +89,7 @@ traittypes==0.0.6
 umap-learn==0.2.3
 urllib3==1.21.1
 wcwidth==0.1.7
-Werkzeug==0.12.2
+Werkzeug==0.15.5
 widgetsnbextension==3.0.3
 opencv-python==3.3.0.10
 bayesian-optimization==1.0.0
