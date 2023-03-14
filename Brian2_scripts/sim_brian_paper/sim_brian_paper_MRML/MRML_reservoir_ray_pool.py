@@ -61,6 +61,8 @@ evaluates = 0
 NIND = {'Pre': 2, 'GA': 10, 'GA_rf':20}
 N_LHS = 50
 
+last_test = dict(zip(tasks.keys(),[0.0]*len(tasks.keys())))
+
 # -----task runner selector-------
 task_evaluators = {}
 for task_id, task in tasks.items():
@@ -98,7 +100,7 @@ accuracy_evaluator = Evaluation()
 @ProgressBar
 @Timelog
 def parameters_search_multi_task(**parameter):
-    global evaluates
+    global evaluates, last_test
     score_validation_, score_test_, score_train_ = {}, {}, {}
     parameters_search.iteration += 1
     for task_id, task_evaluator in task_evaluators.items():
@@ -108,7 +110,15 @@ def parameters_search_multi_task(**parameter):
             parameters_search(task_evaluator, **parameter)
     evaluates += 1
     if len(generator.tasks_ids) < block_max and evaluates >= NIND['Pre']:
-        task_add = sorted(score_test_.items(), key=lambda x:x[1], reverse=True)[0][0]
+        diff = dict(zip(tasks.keys(),
+                                   [x-y if x-y>0 else 0.0 for x, y in
+                                    zip(score_test_.values(),last_test.values())]))
+        p_evaluation = dict(zip(diff.keys(),
+                        [(max(diff.values())-x)/sum([max(diff.values())-x for x in diff.values()])
+                         for x in diff.values()]))
+        last_test = score_test_
+        p = np.array(list(p_evaluation.values()))
+        task_add = np.random.choice(list(tasks.keys()), p = p.ravel())
         generator.increase_block_reservoir(task_add)
         optimizer.ranges = decoder.get_ranges
         optimizer.codes = decoder.get_codes
