@@ -25,7 +25,7 @@ nbformat==4.4.0
 neat-python==0.92
 numba==0.38.0
 numexpr==2.6.5
-numpy==1.16.0
+numpy==1.22.0
 olefile==0.44
 pandas==0.23.3
 pandocfilters==1.4.2
