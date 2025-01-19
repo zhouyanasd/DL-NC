@@ -36,6 +36,6 @@ np.random.seed(seeds)
 np_state = np.random.get_state()
 
 # -----simulation overall setting-------
-cores = 60
+cores = 40
 
 # --------------------------------------
