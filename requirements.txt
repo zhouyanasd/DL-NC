@@ -57,7 +57,7 @@ protobuf==3.4.0
 ptyprocess==0.5.1
 py-cpuinfo==3.3.0
 pycosat==0.6.1
-Pygments==2.1.3
+Pygments==2.7.4
 PyLEMS==0.4.9
 PyMySQL==0.7.11
 pyparsing==2.2.0
