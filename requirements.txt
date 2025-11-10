@@ -53,7 +53,7 @@ ply==3.10
 ppca==0.0.3
 progressbar2==3.10.0
 prompt-toolkit==1.0.9
-protobuf==3.4.0
+protobuf==3.18.3
 ptyprocess==0.5.1
 py-cpuinfo==3.3.0
 pycosat==0.6.1
